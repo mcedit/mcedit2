@@ -1,0 +1,9 @@
+WorldListItemWidget:checked {
+    background-color: palette(highlighted-text);
+    border: none;
+}
+
+WorldListItemWidget:pressed {
+    background-color: palette(highlighted-text);
+    border: none;
+}

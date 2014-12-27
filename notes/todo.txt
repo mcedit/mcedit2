@@ -1,0 +1,69 @@
+
+update lighting!!!!!
+
+add a way to resize the selection box when the iso view is head-on with a face
+disjoint selections (halfway there, just need UI)
+
+change EditorSession/Tab to provide menu bar/menu actions instead of MainWindow
+
+world metadata panel (seed, time, etc)
+pregenerated structures (data/mineshaft.dat etc)
+stats panel?
+
+Brush tool shape buttons toggle
+Move tool should exclude air
+move tool relative coordinates
+Flood fill options
+Generate tool
+Edit Player should become a panel, not a tool
+Edit Chunk's non-nbt editor
+Edit Entity has specialized editors for every entity
+Edit Block tool for TileEntities, don't scan them with Edit Entity
+
+Select tool commands:
+Analyze
+Find
+(also Select menu?)
+
+Paste blocks command
+Paste entities command
+
+undo blocker should trigger on undo and beginUndo
+
+add interactable 3d handles/buttons to world view scenes
+
+figure out why each editorsession needs its own tools
+figure out why iso view gets depth clipped when xrot is close to zero
+
+NBT editor edit function
+
+16-bit block IDs; remove Data and Add arrays
+16-bit mapped ID schematic2 export format
+export to new world
+
+load block models from MC jar
+cython/c++ chunk building
+cython/c++ scene/rendergraph?
+load blockstates
+redo block defs to use blockstates
+load block mapping from forge level.dat?
+
+leaves should only be a solid block for rendering if fastLeaves=True
+
+texture pack/version selector in editor tab
+View buttons don't toggle on programmatic view change, let view provide toggle action
+Toggle buttons for view layers, better controls for every view, make controls consistent
+Space to drag view
+
+viewCenter is wonky since depthBufferReadNode was added
+
+Mess with widget margins and placement
+
+World list buttons:
+Repair
+Backup
+Delete
+Show on startup checkbox
+in versions selector, sort 1.8.1-pre4 after 1.8 and before 1.8.1 (hint: load 1.8.1.json and read timestamps)
+
+Control visual style with qstylesheets (dark theme?)

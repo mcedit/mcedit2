@@ -1,0 +1,170 @@
+[
+{
+    "id": 0,
+    "englishName": "Air",
+    "internalName": "minecraft:air",
+    "opacity": 0
+},
+{
+    "id": 17,
+    "renderType": 0
+},
+{
+    "id": 17,
+    "damage": 4,
+    "englishName": "Wood (East/West)",
+    "textureDown": "log_oak",
+    "textureUp": "log_oak",
+    "textureSouth": "log_oak",
+    "textureNorth": "log_oak",
+    "textureWest": "log_oak_top",
+    "textureEast": "log_oak_top"
+},
+{
+    "id": 17,
+    "damage": 5,
+    "englishName": "Spruce Wood (East/West)",
+    "textureDown": "log_spruce",
+    "textureUp": "log_spruce",
+    "textureSouth": "log_spruce",
+    "textureNorth": "log_spruce",
+    "textureWest": "log_spruce_top",
+    "textureEast": "log_spruce_top"
+},
+{
+    "id": 17,
+    "damage": 6,
+    "englishName": "Birch Wood (East/West)",
+    "textureDown": "log_birch",
+    "textureUp": "log_birch",
+    "textureSouth": "log_birch",
+    "textureNorth": "log_birch",
+    "textureWest": "log_birch_top",
+    "textureEast": "log_birch_top"
+},
+{
+    "id": 17,
+    "damage": 7,
+    "englishName": "Jungle Wood (East/West)",
+    "textureDown": "log_jungle",
+    "textureUp": "log_jungle",
+    "textureSouth": "log_jungle",
+    "textureNorth": "log_jungle",
+    "textureWest": "log_jungle_top",
+    "textureEast": "log_jungle_top"
+},
+
+{
+    "id": 17,
+    "damage": 8,
+    "englishName": "Wood (North/South)",
+    "textureDown": "log_oak",
+    "textureUp": "log_oak",
+    "textureSouth": "log_oak_top",
+    "textureNorth": "log_oak_top",
+    "textureWest": "log_oak",
+    "textureEast": "log_oak"
+},
+{
+    "id": 17,
+    "damage": 9,
+    "englishName": "Spruce Wood (North/South)",
+    "textureDown": "log_spruce",
+    "textureUp": "log_spruce",
+    "textureSouth": "log_spruce_top",
+    "textureNorth": "log_spruce_top",
+    "textureWest": "log_spruce",
+    "textureEast": "log_spruce"
+},
+{
+    "id": 17,
+    "damage": 10,
+    "englishName": "Birch Wood (North/South)",
+    "textureDown": "log_birch",
+    "textureUp": "log_birch",
+    "textureSouth": "log_birch_top",
+    "textureNorth": "log_birch_top",
+    "textureWest": "log_birch",
+    "textureEast": "log_birch"
+},
+{
+    "id": 17,
+    "damage": 11,
+    "englishName": "Jungle Wood (North/South)",
+    "textureDown": "log_jungle",
+    "textureUp": "log_jungle",
+    "textureSouth": "log_jungle_top",
+    "textureNorth": "log_jungle_top",
+    "textureWest": "log_jungle",
+    "textureEast": "log_jungle"
+},
+
+{
+    "id": 17,
+    "damage": 12,
+    "englishName": "Wood (Bark-covered)",
+    "textureDown": "log_oak",
+    "textureUp": "log_oak",
+    "textureSouth": "log_oak",
+    "textureNorth": "log_oak",
+    "textureWest": "log_oak",
+    "textureEast": "log_oak"
+},
+{
+    "id": 17,
+    "damage": 13,
+    "englishName": "Spruce Wood (Bark-covered)",
+    "textureDown": "log_spruce",
+    "textureUp": "log_spruce",
+    "textureSouth": "log_spruce",
+    "textureNorth": "log_spruce",
+    "textureWest": "log_spruce",
+    "textureEast": "log_spruce"
+},
+{
+    "id": 17,
+    "damage": 14,
+    "englishName": "Birch Wood (Bark-covered)",
+    "textureDown": "log_birch",
+    "textureUp": "log_birch",
+    "textureSouth": "log_birch",
+    "textureNorth": "log_birch",
+    "textureWest": "log_birch",
+    "textureEast": "log_birch"
+},
+{
+    "id": 17,
+    "damage": 15,
+    "englishName": "Jungle Wood (Bark-covered)",
+    "textureDown": "log_jungle",
+    "textureUp": "log_jungle",
+    "textureSouth": "log_jungle",
+    "textureNorth": "log_jungle",
+    "textureWest": "log_jungle",
+    "textureEast": "log_jungle"
+},
+{"id": 43, "englishName": "Double Slab"},
+{"id": 43, "damage": 1, "englishName": "Sandstone Double Slab", "textureDown": "sandstone_bottom", "textureUp": "sandstone_top", "textureSouth": "sandstone_normal", "textureNorth": "sandstone_normal", "textureWest": "sandstone_normal", "textureEast": "sandstone_normal"},
+{"id": 43, "damage": 2, "englishName": "Faux Wood Double Slab", "textureDown": "planks_oak", "textureUp": "planks_oak", "textureSouth": "planks_oak", "textureNorth": "planks_oak", "textureWest": "planks_oak", "textureEast": "planks_oak"},
+{"id": 43, "damage": 3, "englishName": "Cobblestone Double Slab", "textureDown": "cobblestone", "textureUp": "cobblestone", "textureSouth": "cobblestone", "textureNorth": "cobblestone", "textureWest": "cobblestone", "textureEast": "cobblestone"},
+{"id": 43, "damage": 4, "englishName": "Bricks Double Slab", "textureDown": "brick", "textureUp": "brick", "textureSouth": "brick", "textureNorth": "brick", "textureWest": "brick", "textureEast": "brick"},
+{"id": 43, "damage": 5, "englishName": "Stone Bricks Double Slab", "textureDown": "stonebrick", "textureUp": "stonebrick", "textureSouth": "stonebrick", "textureNorth": "stonebrick", "textureWest": "stonebrick", "textureEast": "stonebrick"},
+{"id": 43, "damage": 6, "englishName": "Nether Brick Double Slab", "textureDown": "nether_brick", "textureUp": "nether_brick", "textureSouth": "nether_brick", "textureNorth": "nether_brick", "textureWest": "nether_brick", "textureEast": "nether_brick"},
+{"id": 43, "damage": 7, "englishName": "Quartz Double Slab", "textureDown": "quartz_block_bottom", "textureUp": "quartz_block_top", "textureSouth": "quartz_block_side", "textureNorth": "quartz_block_side", "textureWest": "quartz_block_side", "textureEast": "quartz_block_side"},
+{"id": 43, "damage": 8, "englishName": "Smooth Stone Double Slab", "textureDown": "stone_slab_top", "textureUp": "stone_slab_top", "textureSouth": "stone_slab_top", "textureNorth": "stone_slab_top", "textureWest": "stone_slab_top", "textureEast": "stone_slab_top"},
+{"id": 43, "damage": 9, "englishName": "Smooth Sandstone Double Slab", "textureDown": "sandstone_top", "textureUp": "sandstone_top", "textureSouth": "sandstone_top", "textureNorth": "sandstone_top", "textureWest": "sandstone_top", "textureEast": "sandstone_top"},
+{"id": 43, "damage": 15, "englishName": "Tile Quartz Double Slab", "textureDown": "quartz_block_top", "textureUp": "quartz_block_top", "textureSouth": "quartz_block_top", "textureNorth": "quartz_block_top", "textureWest": "quartz_block_top", "textureEast": "quartz_block_top"},
+
+{"id": 44, "damage": 8, "englishName": "Upper Slab", "miny": 0.5, "maxy":1.0},
+{"id": 44, "damage": 9, "englishName": "Sandstone Upper Slab", "textureDown": "sandstone_bottom", "textureUp": "sandstone_top", "textureSouth": "sandstone_normal", "textureNorth": "sandstone_normal", "textureWest": "sandstone_normal", "textureEast": "sandstone_normal", "miny": 0.5, "maxy":1.0},
+{"id": 44, "damage": 10, "englishName": "Faux Wood Upper Slab", "textureDown": "planks_oak", "textureUp": "planks_oak", "textureSouth": "planks_oak", "textureNorth": "planks_oak", "textureWest": "planks_oak", "textureEast": "planks_oak", "miny": 0.5, "maxy":1.0},
+{"id": 44, "damage": 11, "englishName": "Cobblestone Upper Slab", "textureDown": "cobblestone", "textureUp": "cobblestone", "textureSouth": "cobblestone", "textureNorth": "cobblestone", "textureWest": "cobblestone", "textureEast": "cobblestone", "miny": 0.5, "maxy":1.0},
+{"id": 44, "damage": 12, "englishName": "Bricks Upper Slab", "textureDown": "brick", "textureUp": "brick", "textureSouth": "brick", "textureNorth": "brick", "textureWest": "brick", "textureEast": "brick", "miny": 0.5, "maxy":1.0},
+{"id": 44, "damage": 13, "englishName": "Stone Bricks Upper Slab", "textureDown": "stonebrick", "textureUp": "stonebrick", "textureSouth": "stonebrick", "textureNorth": "stonebrick", "textureWest": "stonebrick", "textureEast": "stonebrick", "miny": 0.5, "maxy":1.0},
+{"id": 44, "damage": 14, "englishName": "Nether Brick Upper Slab", "textureDown": "nether_brick", "textureUp": "nether_brick", "textureSouth": "nether_brick", "textureNorth": "nether_brick", "textureWest": "nether_brick", "textureEast": "nether_brick", "miny": 0.5, "maxy":1.0},
+{"id": 44, "damage": 15, "englishName": "Quartz Upper Slab", "textureDown": "quartz_block_bottom", "textureUp": "quartz_block_top", "textureSouth": "quartz_block_side", "textureNorth": "quartz_block_side", "textureWest": "quartz_block_side", "textureEast": "quartz_block_side", "miny": 0.5, "maxy":1.0},
+
+{"id": 126, "englishName": "Wooden Slab"}
+
+]
+

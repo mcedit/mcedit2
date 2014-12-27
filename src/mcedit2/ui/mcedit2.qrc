@@ -1,0 +1,7 @@
+<RCC>
+  <qresource prefix="editortools">
+    <file>editortools/images/brush_diamond.png</file>
+    <file>editortools/images/brush_round.png</file>
+    <file>editortools/images/brush_square.png</file>
+  </qresource>
+</RCC>
