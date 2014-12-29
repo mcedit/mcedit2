@@ -1,5 +1,10 @@
 
-update lighting!!!!!
+update lighting (halfway there)
+
+find or create a release framework
+$ (cd dist; rm mcedit2-tech-demo.exe; mkdir mcedit2-tech-demo; mv mcedit2.exe mcedit2-tech-demo/; /c/Program\ Files/7-Zip/7z a -sfx7z.sfx mcedit2-tech-demo.exe mcedit2-tech-demo -m0=Copy)
+
+exclude assets_raw from pyinstaller
 
 add a way to resize the selection box when the iso view is head-on with a face
 disjoint selections (halfway there, just need UI)

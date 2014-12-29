@@ -79,6 +79,13 @@ class NBTListAttr(object):
 
 class CompoundAttrs(object):
     def __init__(self, rootTag):
+        """
+
+        :param rootTag:
+        :type rootTag: nbt.TAG_Compound
+        :return:
+        :rtype:
+        """
         super(CompoundAttrs, self).__init__()
         self.rootTag = rootTag
         # xxx parent instance.dirty

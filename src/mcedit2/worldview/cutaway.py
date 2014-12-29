@@ -277,7 +277,7 @@ class CutawaySliceWheelAction(ViewMouseAction):
         delta = event.delta()
         if delta == 0:
             return
-        
+
         p = list(event.view.centerPoint)
         p[event.view.dim] += delta / abs(delta)
 

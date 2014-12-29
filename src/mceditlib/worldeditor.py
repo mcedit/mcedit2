@@ -489,7 +489,7 @@ class WorldEditor(object):
             self.dimensions[dimName] = dim
         return dim
 
-class WorldEditorDimension():
+class WorldEditorDimension(object):
     def __init__(self, worldEditor, dimName):
         self.worldEditor = worldEditor
         self.adapter = worldEditor.adapter

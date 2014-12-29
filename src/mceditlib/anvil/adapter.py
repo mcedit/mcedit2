@@ -391,6 +391,7 @@ class AnvilWorldAdapter(object):
         :type filename: str or unicode
         :type create: bool
         :type readonly: bool
+        :rtype: AnvilWorldAdapter
         """
         self.lockTime = 0
 
