@@ -97,7 +97,7 @@ def splitVersion(version):
     :rtype: int, int, unicode
     """
     try:
-        match = re.search(r"(\d+)\.(\d+)(.+)", version)
+        match = re.search(r"(\d+)\.(\d+)(.*)", version)
         if match is None:
             return 0, 0, ""
         groups = match.groups()
