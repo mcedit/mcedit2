@@ -58,7 +58,7 @@ class BlockModels(object):
             # another optional key is 'uvlock', which needs investigating
 
             variantBlockState = block.resourceVariant
-
+            log.debug("Loading %s#%s for %s", block.resourcePath, block.resourceVariant, block)
             variantDict = variants[variantBlockState]
             if isinstance(variantDict, list):
                 variantDict = variantDict[0]  # do the random pick thing later, if at all

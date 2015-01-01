@@ -160,15 +160,17 @@ class TextureAtlas(object):
             for name, left, top, width, height, data in slot.textures:
                 log.debug("Texture %s at (%d,%d,%d,%d)", name, left, top, width, height)
                 texDataView = texData[top:top + height, left:left + width]
-                texDataView[b:-b, b:-b] = data
+                if b:
+                    texDataView[b:-b, b:-b] = data
 
-                # Wrap texture edges to avoid antialiasing bugs at edges of blocks
-                texDataView[-b:, b:-b] = data[:b]
-                texDataView[:b, b:-b] = data[-b:]
+                    # Wrap texture edges to avoid antialiasing bugs at edges of blocks
+                    texDataView[-b:, b:-b] = data[:b]
+                    texDataView[:b, b:-b] = data[-b:]
 
-                texDataView[:, -b:] = texDataView[:, b:2 * b]
-                texDataView[:, :b] = texDataView[:, -b * 2:-b]
-
+                    texDataView[:, -b:] = texDataView[:, b:2 * b]
+                    texDataView[:, :b] = texDataView[:, -b * 2:-b]
+                else:
+                    texDataView[:] = data
                 self.texCoordsByName[name] = left + b, top + b, width - 2 * b, height - 2 * b
 
         def _load():
