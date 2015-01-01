@@ -69,13 +69,13 @@ class BlockModels(object):
             # 'parent' will be the name of a model
             # following 'parent' keys will eventually lead to a model with 'elements'
             #
-            # 'elements' is a list of dicts each describing a cube that makes up the model.
-            # each cube dict has 'from' and 'to' keys, which are lists of 3 float coordinates.
+            # 'elements' is a list of dicts each describing a box that makes up the model.
+            # each box dict has 'from' and 'to' keys, which are lists of 3 float coordinates.
             #
-            # the 'crossed squares' model demonstrates most of the keys found in a cube element
+            # the 'crossed squares' model demonstrates most of the keys found in a box element
             #
             # {   "from": [ 0.8, 0, 8 ],
-            # "to": [ 15.2, 16, 8 ],
+            #     "to": [ 15.2, 16, 8 ],
             #     "rotation": { "origin": [ 8, 8, 8 ], "axis": "y", "angle": 45, "rescale": true },
             #     "shade": false,
             #     "faces": {
@@ -87,9 +87,9 @@ class BlockModels(object):
             # model may also have a 'textures' dict which assigns a texture file to a texture variable,
             # or a texture variable to another texture variable.
             #
-            # the result of loading a model should be a list of quads, with four vertexes and four pairs of texture
-            # coordinates each, plus a Face telling which adjacent block when present causes that quad to be
-            # culled.
+            # the result of loading a model should be a list of quads, each with four vertexes, four pairs of
+            # texture coordinates, four RGBA values for shading, plus a Face telling which adjacent block when
+            # present causes that quad to be culled.
 
             textureVars = {}
             allElements = []
