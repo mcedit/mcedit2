@@ -153,10 +153,10 @@ class NBTTreeList(object):
         if column == 1:
             tagID = self.tag.list_type
 
-            if tagID in (nbt.TAG_COMPOUND, nbt.TAG_LIST):
+            if tagID in (nbt.ID_COMPOUND, nbt.ID_LIST):
                 return "%d %ss" % (len(self.tag), nbt.tag_classes[tagID].__name__)
 
-            if tagID in (nbt.TAG_FLOAT, nbt.TAG_DOUBLE):
+            if tagID in (nbt.ID_FLOAT, nbt.ID_DOUBLE):
                 fmt = "%.03f"
             else:
                 fmt = "%s"
@@ -338,7 +338,7 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
         item = self.getItem(index)
         column = index.column()
         if column == 0:
-            if item.parentItem.tag.tagID == nbt.TAG_COMPOUND:
+            if item.parentItem.tag.tagID == nbt.ID_COMPOUND:
                 item.parentItem.tag[value] = item.tag
                 item.tag.name = value
                 result = True
@@ -379,8 +379,8 @@ class NBTFilterProxyModel(QtGui.QSortFilterProxyModel):
         if column == 0:
             leftTag = self.sourceModel().tagID(left)
             rightTag = self.sourceModel().tagID(right)
-            leftTuple = (leftTag not in (nbt.TAG_COMPOUND, nbt.TAG_LIST), leftData and leftData.lower())
-            rightTuple = (rightTag not in (nbt.TAG_COMPOUND, nbt.TAG_LIST), rightData and rightData.lower())
+            leftTuple = (leftTag not in (nbt.ID_COMPOUND, nbt.ID_LIST), leftData and leftData.lower())
+            rightTuple = (rightTag not in (nbt.ID_COMPOUND, nbt.ID_LIST), rightData and rightData.lower())
 
             return leftTuple < rightTuple
         if column == 1:
