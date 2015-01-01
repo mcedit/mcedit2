@@ -10,7 +10,7 @@ install_requires = [
     "numpy",
 ]
 
-ext_modules = cythonize("mceditlib/nbt.pyx")
+ext_modules = cythonize("src/mceditlib/nbt.pyx")
 
 setup(name='mceditlib',
       version=version,
@@ -32,6 +32,7 @@ setup(name='mceditlib',
       url='https://github.com/mcedit/mcedit2',
       license='MIT License',
       packages=["mceditlib"],
+      package_dir={'': 'src'},
       ext_modules=ext_modules,
       include_dirs=numpy.get_include(),
       include_package_data=True,
@@ -66,6 +67,7 @@ setup(name='mcedit2',
       url='https://github.com/mcedit/mcedit2',
       license='MIT License',
       packages=["mcedit2"],
+      package_dir={'': 'src'},
       include_dirs=numpy.get_include(),
       include_package_data=True,
       zip_safe=False,
