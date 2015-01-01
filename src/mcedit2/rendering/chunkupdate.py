@@ -442,13 +442,9 @@ class BlockModelMesh(object):
             if block.renderType != 3:  # only model blocks for now
                 continue
             nameAndState = block.internalName + block.blockState
-            try:
-                quads = blockModels.cookedModels[nameAndState]
-            except KeyError as e:
-                log.exception("%s!\nModel keys: %s", e, pprint.pformat(blockModels.cookedModels.keys()))
-                raise SystemExit
+            quads = blockModels.cookedModels[nameAndState]
 
-            for face, xyzuv, cullface in quads:
+            for face, xyzuvc, cullface in quads:
                 if cullface is not None:
                     dx, dy, dz = cullface.vector
                     nx = x + dx
@@ -460,9 +456,8 @@ class BlockModelMesh(object):
                         if nBlock.opaqueCube:
                             continue
 
-                verts = numpy.array(xyzuv)
-
-                verts.shape = 1, 4, 5
+                verts = numpy.array(xyzuvc)
+                verts.shape = 1, 4, 6
                 verts[..., :3] += (x - 1, y - 1 + (cy << 4), z - 1)
                 faceQuadVerts.append(verts)
                 # log.info("Block %s:\nVertices: %s", (x-1, y-1, z-1), verts)
@@ -470,6 +465,6 @@ class BlockModelMesh(object):
         # raise SystemExit
         if len(faceQuadVerts):
             vertexArray = VertexArrayBuffer(len(faceQuadVerts), lights=False)
-            vertexArray.buffer[..., :5] = numpy.vstack(faceQuadVerts)
+            vertexArray.buffer[..., :6] = numpy.vstack(faceQuadVerts)
             self.vertexArrays = [vertexArray]
 
