@@ -82,7 +82,7 @@ def testFill(world):
     box = BoundingBox(bounds.origin + (bounds.size / 2), (64, bounds.height / 2, 64))
     x, y, z = numpy.array(list(box.positions)).transpose()
 
-    dim.fillBlocks(box, world.blocktypes.WoodPlanks)
+    dim.fillBlocks(box, world.blocktypes.OakWoodPlanks)
 
     def checkEqual(a, b):
         """
@@ -99,9 +99,9 @@ def testFill(world):
             for cy in chunk.bounds.sectionPositions(*cp):
                 assert chunk.getSection(cy) is not None, "Section %s not found" % cy
 
-    checkEqual(dim.getBlocks(x, y, z).Blocks, world.blocktypes.WoodPlanks.ID)
+    checkEqual(dim.getBlocks(x, y, z).Blocks, world.blocktypes.OakWoodPlanks.ID)
 
-    dim.fillBlocks(box, world.blocktypes.Stone, [world.blocktypes.WoodPlanks])
+    dim.fillBlocks(box, world.blocktypes.Stone, [world.blocktypes.OakWoodPlanks])
     world.saveChanges()
     world.close()
 
@@ -112,14 +112,14 @@ def testFill(world):
 
 def testOldReplace(world):
     dim = world.getDimension()
-    dim.fillBlocks(BoundingBox((-11, 0, -7), (38, dim.bounds.height, 25)), world.blocktypes.WoodPlanks,
+    dim.fillBlocks(BoundingBox((-11, 0, -7), (38, dim.bounds.height, 25)), world.blocktypes.OakWoodPlanks,
                    [world.blocktypes.Dirt, world.blocktypes.Grass])
 
 
 def testMultiReplace(world):
     dim = world.getDimension()
     dim.fillBlocks(BoundingBox((-11, 0, -7), (38, dim.bounds.height, 25)),
-                   [(world.blocktypes.WoodPlanks, world.blocktypes.Dirt),
+                   [(world.blocktypes.OakWoodPlanks, world.blocktypes.Dirt),
                     (world.blocktypes.Grass, world.blocktypes.IronOre)])
 
 

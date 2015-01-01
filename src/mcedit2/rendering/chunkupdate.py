@@ -3,15 +3,17 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+import itertools
+import pprint
 
 import numpy
 
-from mcedit2.rendering import layers
-from mcedit2.rendering.blockmeshes import getRendererClasses
-from mcedit2.rendering.blockmeshes.entitymesh import TileEntityMesh, MonsterRenderer, ItemRenderer
-from mcedit2.rendering.blockmeshes.lowdetail import LowDetailBlockMesh, OverheadBlockMesh
-from mcedit2.rendering.blockmeshes.terrainpop import TerrainPopulatedRenderer
-from mcedit2.rendering.blockmeshes.tileticks import TileTicksRenderer
+from mcedit2.rendering import layers, renderstates
+from mcedit2.rendering.chunkmeshes.entitymesh import TileEntityMesh, MonsterRenderer, ItemRenderer
+from mcedit2.rendering.chunkmeshes.lowdetail import LowDetailBlockMesh, OverheadBlockMesh
+from mcedit2.rendering.chunkmeshes.terrainpop import TerrainPopulatedRenderer
+from mcedit2.rendering.chunkmeshes.tileticks import TileTicksRenderer
+from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 from mcedit2.util import profiler
 from mcedit2.util.lazyprop import lazyprop
 from mceditlib import faces
@@ -25,10 +27,10 @@ log = logging.getLogger(__name__)
 class ChunkUpdate(object):
     def __init__(self, updateTask, chunkInfo, chunk):
         """
-        :type updateTask: SceneUpdateTask
+        :type updateTask: mcedit2.rendering.worldscene.SceneUpdateTask
         :type chunkInfo: mcedit2.rendering.chunknode.ChunkRenderInfo
         :type chunk: AnvilChunk
-
+        :rtype: ChunkUpdate
         """
         self.updateTask = updateTask
         self.chunkInfo = chunkInfo
@@ -188,15 +190,19 @@ class SectionUpdate(object):
         """
         self.chunkUpdate = chunkUpdate
         self.chunkSection = chunkSection
+        self.cy = chunkSection.Y
         self.y = chunkSection.Y << 4
 
         self.blockMeshes = blockMeshes
-        self.renderType = self.blocktypes.renderType
-        IDs = getRendererClasses().keys()
-        lookup = numpy.zeros((256,), bool)
-        lookup[IDs] = True
-        okayIDs = lookup[self.renderType[1:]]
-        self.renderType[1:][~okayIDs] = 0
+        # new rendertypes:
+        # 0: ??
+        # 1. lava/water
+        # 2: item?
+        # 3: block model
+
+        self.renderType = numpy.zeros((256*256,), 'uint8')
+        for block in self.blocktypes:
+            self.renderType[block.ID] = block.renderType
 
 
 
@@ -380,10 +386,6 @@ class SectionUpdate(object):
     def Data(self):
         return self.chunkSection.Data
 
-    @property
-    def lookupTextures(self):
-        return self.chunkUpdate.updateTask.lookupTextures
-
     @profiler.iterator("SectionUpdate")
     def __iter__(self):
         renderTypeCounts = numpy.bincount(self.blockRenderTypes.ravel())
@@ -396,34 +398,78 @@ class SectionUpdate(object):
         if bounds:
             sectionBounds = sectionBounds.intersect(bounds)
 
-        for renderType, blockMeshClass in self.chunkUpdate.updateTask.blockMeshClasses.iteritems():
-            if renderType >= len(renderTypeCounts) or renderTypeCounts[renderType] == 0:
-                continue
-
-            blockMesh = cache.get((cx, cz, self.y, sectionBounds, renderType))
-            if blockMesh is not None:
-                #blockMesh = blockMeshClass.fromCachedData(self, cachedData)
-                self.blockMeshes.append(blockMesh)
-                #blockMesh.blocktypes = self.blocktypes
-                #blockMesh.y = self.y
-                log.debug("Block mesh %s (type %s) cached.", (cx, cz, self.y), renderType)
-            else:
-
-                blockMesh = blockMeshClass(self)
-                blockMesh.blocktypes = self.blocktypes
-                blockMesh.y = self.y
-                worker = blockMesh.makeVertices()
-                name = blockMeshClass.__name__
-
-                for _ in profiler.iterate(worker, name):
-                    yield
-                self.blockMeshes.append(blockMesh)
-                blockMesh.sectionUpdate = None
-                for vertexArray in blockMesh.vertexArrays:
-                    vertexArray.vertex[..., 1] += self.y
-
-                cache[cx, cz, self.y, renderType] = blockMesh
-
+        modelMesh = BlockModelMesh(self)
+        for _ in modelMesh.createVertexArrays():
             yield
+        self.blockMeshes.append(modelMesh)
+        yield
 
+class BlockModelMesh(object):
+    renderstate = renderstates.RenderstateAlphaTestNode
+    def __init__(self, sectionUpdate):
+        """
+
+        :param sectionUpdate:
+        :type sectionUpdate: SectionUpdate
+        :return:
+        :rtype:
+        """
+        self.sectionUpdate = sectionUpdate
+        self.vertexArrays = []
+
+    def createVertexArrays(self):
+        chunk = self.sectionUpdate.chunkUpdate.chunk
+        cx, cz = chunk.chunkPosition
+        cy = self.sectionUpdate.cy
+        section = chunk.getSection(cy)
+        if section is None:
+            return
+
+        blockModels = self.sectionUpdate.chunkUpdate.updateTask.textureAtlas.blockModels
+        blocktypes = self.sectionUpdate.blocktypes
+        areaBlocks = self.sectionUpdate.areaBlocks
+        faceQuadVerts = []
+
+        for y in xrange(1, 17):
+          yield
+          for z, x in itertools.product(xrange(1, 17), xrange(1, 17)):
+            ID = areaBlocks[y, z, x]
+            if ID == 0:
+                continue
+            meta = section.Data[y-1, z-1, x-1]
+
+            block = blocktypes[ID, meta]
+            if block.renderType != 3:  # only model blocks for now
+                continue
+            nameAndState = block.internalName + block.blockState
+            try:
+                quads = blockModels.cookedModels[nameAndState]
+            except KeyError as e:
+                log.exception("%s!\nModel keys: %s", e, pprint.pformat(blockModels.cookedModels.keys()))
+                raise SystemExit
+
+            for face, xyzuv, cullface in quads:
+                if cullface is not None:
+                    dx, dy, dz = cullface.vector
+                    nx = x + dx
+                    ny = y + dy
+                    nz = z + dz
+                    nID = areaBlocks[ny, nz, nx]
+                    if nID != 0:
+                        nBlock = blocktypes[nID]
+                        if nBlock.opaqueCube:
+                            continue
+
+                verts = numpy.array(xyzuv)
+
+                verts.shape = 1, 4, 5
+                verts[..., :3] += (x - 1, y - 1 + (cy << 4), z - 1)
+                faceQuadVerts.append(verts)
+                # log.info("Block %s:\nVertices: %s", (x-1, y-1, z-1), verts)
+
+        # raise SystemExit
+        if len(faceQuadVerts):
+            vertexArray = VertexArrayBuffer(len(faceQuadVerts), lights=False)
+            vertexArray.buffer[..., :5] = numpy.vstack(faceQuadVerts)
+            self.vertexArrays = [vertexArray]
 

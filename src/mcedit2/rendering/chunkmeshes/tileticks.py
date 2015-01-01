@@ -3,7 +3,7 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
-from mcedit2.rendering.blockmeshes.entitymesh import EntityMeshBase
+from mcedit2.rendering.chunkmeshes.entitymesh import EntityMeshBase
 from mcedit2.rendering.layers import Layer
 
 log = logging.getLogger(__name__)

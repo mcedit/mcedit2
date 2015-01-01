@@ -8,7 +8,7 @@ import collections
 
 from mcedit2.rendering.layers import Layer
 from mcedit2.rendering import chunkupdate, scenegraph
-from mcedit2.rendering import blockmeshes, renderstates
+from mcedit2.rendering import chunkmeshes, renderstates
 from mcedit2.rendering.chunknode import ChunkNode, ChunkRenderInfo, ChunkGroupNode
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.geometrycache import GeometryCache
@@ -40,12 +40,11 @@ class SceneUpdateTask(object):
     spaceHeight = 64
     targetFPS = 30
 
-    def __init__(self, worldScene, dimension, textureAtlas, bounds=None):
+    def __init__(self, worldScene, textureAtlas, bounds=None):
         """
 
         :type worldScene: WorldScene
         :type bounds: BoundingBox
-        :type dimension: ISectionWorld
         :type textureAtlas: TextureAtlas
         """
         self.worldScene = worldScene
@@ -56,27 +55,6 @@ class SceneUpdateTask(object):
         self.alpha = 255
 
         self.textureAtlas = textureAtlas
-
-        self.blockMeshClasses = blockmeshes.getRendererClasses()
-
-        self.textureAtlas = textureAtlas
-        # leaves = self.textureAtlas.texCoordsTable[dimension.blocktypes.Leaves.ID]
-        # self.fastLeaves = False
-        # if self.fastLeaves:
-        #     opaqueLeaves = [[self.textureAtlas.texCoordsByName["leaves_%s_opaque" % t]] for t in
-        #                     ("oak", "spruce", "birch", "jungle")]
-        #     leaves[0:4] = opaqueLeaves
-        # else:
-        #     dimension.blocktypes.opaqueCube[dimension.blocktypes.Leaves.ID] = False
-        #
-        # leaves[4:8] = leaves[0:4]
-        # leaves[8:16] = leaves[0:8]
-
-    def lookupTextures(self, blocks, blockData=0, direction=None):
-        if direction is None:
-            direction = slice(None)
-
-        return self.textureAtlas.texCoordsTable[blocks, blockData, direction]
 
     overheadMode = False
 
@@ -158,7 +136,7 @@ class WorldScene(scenegraph.Node):
         self.chunkRenderInfo = {}
         self.visibleLayers = set(Layer.AllLayers)
 
-        self.updateTask = SceneUpdateTask(self, dimension, textureAtlas, bounds)
+        self.updateTask = SceneUpdateTask(self, textureAtlas, bounds)
 
         if geometryCache is None:
             geometryCache = GeometryCache()

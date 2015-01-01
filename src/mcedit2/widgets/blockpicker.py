@@ -120,7 +120,7 @@ class BlockThumbView(QtGui.QWidget):
 #
 #    def data(self, index, role=Qt.DisplayRole):
 #        if role == Qt.DisplayRole:
-#            return self.allBlocks[index.row()].englishName
+#            return self.allBlocks[index.row()].displayName
 #            #return self.makeIcon(index)
 #        elif role == Qt.UserRole:
 #            return self.allBlocks[index.row()]
@@ -156,20 +156,20 @@ class BlockTypesItemWidget(QtGui.QWidget):
             block = blocks[0]
             self.blockIcon = BlockTypeIcon(block, textureAtlas)
 
-            nameLabel = QtGui.QLabel(block.englishName)
+            nameLabel = QtGui.QLabel(block.displayName)
 
-            internalNameLimit = 40
-            internalName = block.internalName
+            internalNameLimit = 60
+            internalName = block.internalName + block.blockState
             if len(internalName) > internalNameLimit:
-                internalName = block.internalName[:internalNameLimit-3]+"..."
+                internalName = internalName[:internalNameLimit-3]+"..."
 
-            internalNameLabel = QtGui.QLabel("(%d:%d) %s" % (block.ID, block.blockData, internalName), enabled=False)
+            internalNameLabel = QtGui.QLabel("(%d:%d) %s" % (block.ID, block.meta, internalName), enabled=False)
 
             parentTypeLabel = QtGui.QLabel("")
-            if block.blockData != 0:
-                parentBlock = block.blocktypeSet[block.ID, 0]
-                if parentBlock.englishName != block.englishName:
-                    parentTypeLabel.setText("<font color='blue'>%s</font>" % parentBlock.englishName)
+            if block.meta != 0:
+                parentBlock = block.blocktypeSet[block.internalName]
+                if parentBlock.displayName != block.displayName:
+                    parentTypeLabel.setText("<font color='blue'>%s</font>" % parentBlock.displayName)
 
             labelsColumn = Column(Row(nameLabel, None, parentTypeLabel),
                                   internalNameLabel)
@@ -202,7 +202,7 @@ class BlockTypesItemWidget(QtGui.QWidget):
             nameLimit = 6
             remaining = len(blocks) - nameLimit
             blocksToName = blocks[:nameLimit]
-            iconNames = ", ".join(b.englishName for b in blocksToName)
+            iconNames = ", ".join(b.displayName for b in blocksToName)
             if remaining > 0:
                 iconNames += " and %d more..." % remaining
             self.setLayout(Row(frame, QtGui.QLabel(iconNames, wordWrap=True)))
@@ -248,7 +248,7 @@ class BlockTypeListWidget(QtGui.QListWidget):
     def setSearchString(self, val):
         self._searchValue = val
         for item in self.findItems("", Qt.MatchContains):
-            item.setHidden(val.lower() not in item.block.englishName.lower())
+            item.setHidden(val.lower() not in item.block.displayName.lower())
 
     def updateList(self):
         if self.textureAtlas is None:
@@ -260,7 +260,7 @@ class BlockTypeListWidget(QtGui.QListWidget):
 
         for block in self.blocktypes:
             if self._searchValue:
-                for s in block.englishName, block.internalName:
+                for s in block.displayName, block.internalName:
                     if self._searchValue not in s:
                         continue
 
@@ -294,8 +294,8 @@ class BlockTypePicker(QtGui.QDialog):
         if not self.multipleSelect:
             if len(self.selectedBlocks):
                 block = self.selectedBlocks[0]
-                self.nameLabel.setText("%s" % block.englishName)
-                self.internalNameLabel.setText("(%d:%d) %s" % (block.ID, block.blockData, block.internalName))
+                self.nameLabel.setText("%s" % block.displayName)
+                self.internalNameLabel.setText("(%d:%d) %s" % (block.ID, block.meta, block.internalName))
                 self.brightnessLabel.setText("Brightness: %d" % block.brightness)
                 self.opacityLabel.setText("Opacity: %d" % block.opacity)
                 self.rendertypeLabel.setText("Render: %d" % block.renderType)

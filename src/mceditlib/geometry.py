@@ -253,13 +253,17 @@ class DifferenceBox(CombinationBox):
 class BoundingBox(SelectionBox):
     type = int
 
-    def __init__(self, origin=(0, 0, 0), size=(0, 0, 0)):
+    def __init__(self, origin=(0, 0, 0), size=(0, 0, 0), maximum=None):
         if isinstance(origin, BoundingBox):
             self._origin = origin._origin
             self._size = origin._size
         else:
             self._origin = Vector(*(self.type(a) for a in origin))
-            self._size = Vector(*(self.type(a) for a in size))
+            if maximum is not None:
+                maximum = Vector(*maximum)
+                self._size = maximum - self._origin
+            else:
+                self._size = Vector(*(self.type(a) for a in size))
 
     def __repr__(self):
         return "BoundingBox(origin={0}, size={1})".format(self.origin, self.size)

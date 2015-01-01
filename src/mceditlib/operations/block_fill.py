@@ -21,7 +21,7 @@ def blockReplaceTable(blockReplacements):
     blockTable = numpy.rollaxis(numpy.indices((blocktypes.id_limit, 16), dtype='u2'), 0, 3)
 
     for old, new in blockReplacements:
-        blockTable[old.ID, old.blockData] = [new.ID, new.blockData]
+        blockTable[old.ID, old.meta] = [new.ID, new.meta]
 
     return blockTable
 
@@ -135,7 +135,7 @@ class FillBlocksOperation(Operation):
 
             else:
                 Blocks[mask] = self.blockType.ID
-                Data[mask] = self.blockType.blockData
+                Data[mask] = self.blockType.meta
 
             if self.changesLighting and self.updateLights:
                 import mceditlib.relight

@@ -8,7 +8,7 @@ def timeFill():
     editor = temp
     dim = editor.getDimension()
     editor.loadedChunkLimit = 1
-    exhaust(dim.fillBlocksIter(dim.bounds, editor.blocktypes.WoodPlanks))
+    exhaust(dim.fillBlocksIter(dim.bounds, editor.blocktypes.OakWoodPlanks))
 
 
 if __name__ == "__main__":

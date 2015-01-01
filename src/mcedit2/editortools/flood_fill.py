@@ -30,7 +30,7 @@ class FloodFillTool(EditorTool):
         self.toolWidget = toolWidget
 
         self.blockTypeWidget = BlockTypeButton()
-        self.blockTypeWidget.block = self.editorSession.worldEditor.blocktypes.Stone
+        self.blockTypeWidget.block = self.editorSession.worldEditor.blocktypes["stone"]
         self.blockTypeWidget.editorSession = self.editorSession
 
         toolWidget.setLayout(Column(Row(QtGui.QLabel("Block:"),
@@ -65,7 +65,7 @@ class FloodFillCommand(SimplePerformCommand):
 
         x, y, z = point
         dim.setBlockID(x, y, z, self.blockInfo.ID)
-        dim.setBlockData(x, y, z, self.blockInfo.blockData)
+        dim.setBlockData(x, y, z, self.blockInfo.meta)
 
         def processCoords(coords):
             newcoords = collections.deque()
@@ -86,7 +86,7 @@ class FloodFillCommand(SimplePerformCommand):
                                 continue
 
                         dim.setBlockID(nx, ny, nz, self.blockInfo.ID)
-                        dim.setBlockData(nx, ny, nz, self.blockInfo.blockData)
+                        dim.setBlockData(nx, ny, nz, self.blockInfo.meta)
                         newcoords.append(p)
 
             return newcoords

@@ -766,7 +766,7 @@ class WorldCursorInfo(InfoPanel):
                 #log.info("HeightMap (%s:%s): \n%s", cPos, (ix, iz), chunk.HeightMap)
                 desc += "\tHeightMap(%s:%s): %d" % (cPos, (ix, iz), chunk.HeightMap[iz, ix])
 
-            desc += "\tName: %s" % dim.blocktypes[result.Blocks[0], result.Data[0]].englishName
+            desc += "\tName: %s" % dim.blocktypes[result.Blocks[0], result.Data[0]].displayName
             return desc
 
         except (EnvironmentError, LevelFormatError) as e:

@@ -7,6 +7,7 @@ from PySide.QtCore import Qt
 
 from mcedit2 import editortools
 from mcedit2.command import SimpleRevisionCommand
+from mcedit2.rendering.blockmodels import BlockModels
 from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.resources import resourcePath
 from mcedit2.util.showprogress import showProgress
@@ -82,7 +83,8 @@ class EditorSession(QtCore.QObject):
         i, v, p = self.versionInfo
         self.resourceLoader = i.getResourceLoader(v, p)
         self.geometryCache = GeometryCache()
-        self.textureAtlas = TextureAtlas(self.worldEditor, self.resourceLoader, blockmeshes.getExtraTextureNames())
+        self.blockModels = BlockModels(self.worldEditor.blocktypes, self.resourceLoader)
+        self.textureAtlas = TextureAtlas(self.worldEditor, self.resourceLoader, self.blockModels)
 
         self.editorOverlay = scenegraph.Node()
 
@@ -299,7 +301,7 @@ class EditorSession(QtCore.QObject):
             id = self.currentDimension.getBlockID(*event.blockPosition)
             data = self.currentDimension.getBlockData(*event.blockPosition)
             block = self.worldEditor.blocktypes[id, data]
-            editorapp.MCEditApp.app.updateStatusLabel(event.blockPosition, block.englishName, self.loader.cps, event.view.fps)
+            editorapp.MCEditApp.app.updateStatusLabel(event.blockPosition, block.displayName, self.loader.cps, event.view.fps)
         else:
             editorapp.MCEditApp.app.updateStatusLabel('(N/A)', "", self.loader.cps, event.view.fps)
 

@@ -4,6 +4,7 @@ import os
 from arrow import arrow
 from PySide import QtGui, QtCore
 from mcedit2.rendering import blockmeshes
+from mcedit2.rendering.blockmodels import BlockModels
 from mcedit2.rendering.chunkloader import ChunkLoader
 from mcedit2.rendering.textureatlas import TextureAtlas
 from mcedit2.util import profiler, minecraftinstall
@@ -221,6 +222,7 @@ class WorldListWidget(QtGui.QDialog):
             return
         self.selectedWorldIndex = i
         import gc; gc.collect()
+        models = {}
         try:
             worldEditor = worldeditor.WorldEditor(self.itemWidgets[i].filename, readonly=True)
         except (EnvironmentError, LevelFormatError) as e:
@@ -231,7 +233,11 @@ class WorldListWidget(QtGui.QDialog):
             self.worldViewBox.addWidget(self.errorWidget)
         else:
             i, v, p = self.getSelectedIVP()
-            textureAtlas = TextureAtlas(worldEditor, i.getResourceLoader(v, p), blockmeshes.getExtraTextureNames())
+            blockModels = models.get(worldEditor.blocktypes)
+            resLoader = i.getResourceLoader(v, p)
+            if blockModels is None:
+                models[worldEditor.blocktypes] = blockModels = BlockModels(worldEditor.blocktypes, resLoader)
+            textureAtlas = TextureAtlas(worldEditor, resLoader, blockModels)
 
             dim = worldEditor.getDimension()
             self.setWorldView(MinimapWorldView(dim, textureAtlas))

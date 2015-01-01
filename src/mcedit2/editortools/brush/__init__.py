@@ -360,7 +360,7 @@ class FakeBrushChunk(object):
             section.Y = y
             if fillBlock.ID:
                 section.Blocks = numpy.array([0, fillBlock.ID])[mask.astype(numpy.uint8)]
-                section.Data = numpy.array([0, fillBlock.blockData])[mask.astype(numpy.uint8)]
+                section.Data = numpy.array([0, fillBlock.meta])[mask.astype(numpy.uint8)]
             else:
                 section.Blocks = numpy.array([0, NULL_ID])[mask.astype(numpy.uint8)]
 
@@ -395,7 +395,7 @@ class BrushTool(EditorTool):
 
         self.toolWidget.brushShapeInput.shapeChanged.connect(self.updateCursor)
 
-        self.fillBlock = editorSession.worldEditor.blocktypes.Stone
+        self.fillBlock = editorSession.worldEditor.blocktypes["stone"]
 
         self.brushSize = BrushSizeSetting.value(QtGui.QVector3D(5, 5, 5)).toTuple()  # calls updateCursor
 
@@ -444,13 +444,14 @@ class BrushTool(EditorTool):
 
     def mousePress(self, event):
         pos = event.blockPosition
+        pos += event.blockFace.vector
         command = BrushCommand(self.editorSession, [pos], self.options)
         self.editorSession.pushCommand(command)
 
     def mouseMove(self, event):
         #box = self.brushBoxForPoint(event.blockPosition)
         if event.blockPosition:
-            self.cursorNode.translateOffset = event.blockPosition
+            self.cursorNode.translateOffset = event.blockPosition + event.blockFace.vector
 
 
     @property

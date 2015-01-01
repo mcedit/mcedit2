@@ -49,15 +49,12 @@ class TextureSlot(object):
 
 def allTextureNames(blocktypes):
     for b in blocktypes:
-        for t in b.textureIconNames:
-            yield t.encode('ascii')
+        yield b.internalName
 
 
 class TextureAtlas(object):
     """
     Important members:
-    texCoordsTable: Lookup table for texture coordinates. Axes are BlockID, BlockData, Direction and members are
-        (left, top, right, bottom) lists.
 
     textureData: RGBA Texture Data as a numpy array.
     texCoordsByName: Dictionary of texture coordinates. Usable for textures loaded using the extraTextures argument
@@ -66,23 +63,22 @@ class TextureAtlas(object):
 
     """
 
-    def __init__(self, world, resourceLoader, extraTextures=(), maxLOD=2):
+    def __init__(self, world, resourceLoader, blockModels, maxLOD=2):
         """
 
         :type world: mceditlib.worldeditor.WorldEditor
         :type resourceLoader: mcedit2.resourceloader.ResourceLoader
-        :param extraTextures: Names of extra textures to load, not listed in world's blocktypes
-        :type extraTextures: collection of strings
+        :type blockModels: mcedit2.rendering.blockmodels.BlockModels
         :param maxLOD: Adds wrapped borders to each texture to allow mipmapping at this level of detail
         :return:
         :rtype:
         """
+        self.blockModels = blockModels
         self._blocktypes = world.blocktypes
         self._filename = world.filename
         self._resourceLoader = resourceLoader
         self._lightTexture = None
         self._terrainTexture = None
-        self._extraTextures = extraTextures
         self._maxLOD = maxLOD
 
         missingno = numpy.empty((16, 16, 4), 'uint8')
@@ -92,21 +88,21 @@ class TextureAtlas(object):
         names = set()
         self._rawTextures = rawTextures = []
 
-        for n in itertools.chain(allTextureNames(self._blocktypes), self._extraTextures):
-            if n in names:
+        for filename in blockModels.getTextureNames():
+            if filename in names:
                 continue
             try:
-                if n == "missingno":
-                    rawTextures.append((n,) + missingnoTexture)
+                if filename == "missingno":
+                    rawTextures.append((filename,) + missingnoTexture)
                 else:
-                    f = self._openImageStream(n)
-                    rawTextures.append((n,) + loadPNGData(f.read()))
-                names.add(n)
-                log.debug("Loaded texture %s", n)
+                    f = self._openImageStream(filename)
+                    rawTextures.append((filename,) + loadPNGData(f.read()))
+                names.add(filename)
+                log.debug("Loaded texture %s", filename)
             except KeyError as e:
-                log.error("Could not load texture %s: %s", n, e)
+                log.error("Could not load texture %s: %s", filename, e)
             except Exception as e:
-                log.exception("%s while loading texture '%s', skipping...", e, n)
+                log.exception("%s while loading texture '%s', skipping...", e, filename)
 
         rawSize = sum(a.nbytes for (n, w, h, a) in rawTextures)
 
@@ -129,11 +125,11 @@ class TextureAtlas(object):
         atlasHeight = 0
         self._rawTextures.sort(key=lambda (_, w, h, __): max(w, h), reverse=True)
 
-        for name, w, h, d in self._rawTextures:
+        for name, w, h, data in self._rawTextures:
             w += borderSize * 2
             h += borderSize * 2
             for slot in slots:
-                if slot.addTexture(name, w, h, d):
+                if slot.addTexture(name, w, h, data):
                     log.debug("Slotting %s into an existing slot", name)
                     break
             else:
@@ -151,7 +147,7 @@ class TextureAtlas(object):
                     raise ValueError("Building texture atlas: Textures too large for maximum texture size. (Needed "
                                      "%s, only got %s", (atlasWidth, atlasHeight), (maxSize, maxSize))
 
-                if not slots[-1].addTexture(name, w, h, d):
+                if not slots[-1].addTexture(name, w, h, data):
                     raise ValueError("Building texture atlas: Internal error.")
 
                 log.debug("Slotting %s into a newly created slot", name)
@@ -175,18 +171,6 @@ class TextureAtlas(object):
 
                 self.texCoordsByName[name] = left + b, top + b, width - 2 * b, height - 2 * b
 
-        self._texCoordsTable = numpy.zeros((4096, 16, 6, 4))
-        for b in self._blocktypes:
-            for face, t in enumerate(b.textureIconNames):
-                if t in self.texCoordsByName:
-                    left, top, width, height = self.texCoordsByName[t]
-                    side = min(width, height) #xxx load .meta files
-                    data = b.blockData
-                    if data == 0:
-                        data = slice(None)
-                    self._texCoordsTable[b.ID, data, face] = left, top, side, side
-
-
         def _load():
             GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, atlasWidth, atlasHeight, 0, GL.GL_RGBA,
                             GL.GL_UNSIGNED_BYTE, self.textureData.ravel())
@@ -201,22 +185,19 @@ class TextureAtlas(object):
         usedSize = sum(sum(width * height for _, _, _, width, height, _ in slot.textures) for slot in slots) * 4
         log.info("Terrain atlas created for world %s (%d/%d kB)", util.displayName(self._filename), usedSize / 1024,
                  totalSize / 1024)
+        self.blockModels.cookQuads(self)
+
         #file("terrain-%sw-%sh.raw" % (atlasWidth, atlasHeight), "wb").write(texData.tostring())
         #raise SystemExit
 
     def _openImageStream(self, name):
         if name == "missingno":
             name = "stone"
-        return self._resourceLoader.openStream("textures/blocks/" + name + ".png")
+        return self._resourceLoader.openStream("textures/" + name + ".png")
 
     def bindTerrain(self):
         self.load()
         self._terrainTexture.bind()
-
-    @property
-    def texCoordsTable(self):
-        self.load()
-        return self._texCoordsTable
 
     _dayTime = 1.0
 

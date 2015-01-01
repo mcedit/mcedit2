@@ -32,8 +32,8 @@ class BlockListWidget(QtGui.QWidget):
         table.setHorizontalHeaderLabels(columns)
         for row, block in enumerate(blocktypes):
             icon = QtGui.QIcon(BlockTypePixmap(block, textureAtlas))
-            table.setItem(row, 0, QtGui.QTableWidgetItem(icon, block.internalName))
-            datas = (None, block.englishName, str(block.ID), str(block.blockData), block.unlocalizedName)
+            table.setItem(row, 0, QtGui.QTableWidgetItem(icon, block.internalName + block.blockState))
+            datas = (None, block.displayName, str(block.ID), str(block.meta), block.internalName + block.blockState)
 
             for i, data in enumerate(datas):
                 if data is not None:
@@ -41,14 +41,28 @@ class BlockListWidget(QtGui.QWidget):
 
 
 def BlockTypePixmap(block, textureAtlas):
-    texname = block.textureIconNames[0]
-    io = textureAtlas._openImageStream(texname)
-    data = io.read()
-    array = QtCore.QByteArray(data)
-    buf = QtCore.QBuffer(array)
-    reader = QtGui.QImageReader(buf)
-    image = reader.read()
-    pixmap = QtGui.QPixmap.fromImage(image)
+    """
+
+    :param block:
+    :type block: mceditlib.blocktypes.BlockType
+    :param textureAtlas:
+    :type textureAtlas: mcedit2.rendering.textureatlas.TextureAtlas
+    :return:
+    :rtype: QtGui.QPixmap
+    """
+    models = textureAtlas.blockModels
+    texname = models.firstTextures.get(block.internalName + block.blockState)
+    if texname:
+        io = textureAtlas._openImageStream(texname)
+        data = io.read()
+        array = QtCore.QByteArray(data)
+        buf = QtCore.QBuffer(array)
+        reader = QtGui.QImageReader(buf)
+        image = reader.read()
+        pixmap = QtGui.QPixmap.fromImage(image)
+    else:
+        return QtGui.QPixmap(32, 32)
+
     w = pixmap.width()
     h = pixmap.height()
     s = min(w, h)

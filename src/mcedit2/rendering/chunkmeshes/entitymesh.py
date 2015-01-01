@@ -6,7 +6,7 @@ import logging
 import numpy
 from mcedit2.rendering import renderstates
 from mcedit2.rendering.blockmeshes import standardCubeTemplates
-from mcedit2.rendering.blockmeshes.blockmesh import ChunkMeshBase
+from mcedit2.rendering.blockmeshes import ChunkMeshBase
 from mcedit2.rendering.layers import Layer
 from mcedit2.rendering.slices import _XYZ
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
