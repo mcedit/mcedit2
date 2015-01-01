@@ -48,8 +48,7 @@ class BlockModels(object):
                 log.warn("Could not get blockstates resource for %s, skipping...", block)
                 continue
             variants = statesJson['variants']
-            # variants is a dict with each key a blockstate, without the "[]" around them
-            # for blocks without blockstates, the key is "normal"
+            # variants is a dict with each key a resourceVariant value (from the block's ModelResourceLocation)
             # the value for this key is either a dict describing which model to use
             # ... or a list of such models to be selected from randomly
             #
@@ -58,129 +57,116 @@ class BlockModels(object):
             # around that axis
             # another optional key is 'uvlock', which needs investigating
 
-            def matchVariantState(variantState, blockState):
-                # if not all keys in variantState are found in blockState, return false
-                if variantState == "all":
-                    return True
-                blockState = blockState[1:-1]
-                vd = [s.split("=") for s in variantState.split(",")]
-                bd = {k: v for (k, v) in (s.split("=") for s in blockState.split(","))}
-                for k, v in vd:
-                    if bd.get(k) != v:
-                        return False
-                return True
+            variantBlockState = block.resourceVariant
 
-            for variantBlockState in variants:
-                if variantBlockState != "normal" and not matchVariantState(variantBlockState, block.blockState):
-                    continue
-                variantDict = variants[variantBlockState]
-                if isinstance(variantDict, list):
-                    variantDict = variantDict[0]  # do the random pick thing later, if at all
-                modelName = variantDict['model']
-                modelDict = self._getBlockModel("block/" + modelName)
+            variantDict = variants[variantBlockState]
+            if isinstance(variantDict, list):
+                variantDict = variantDict[0]  # do the random pick thing later, if at all
+            modelName = variantDict['model']
+            modelDict = self._getBlockModel("block/" + modelName)
 
-                # model will either have an 'elements' key or a 'parent' key (maybe both).
-                # 'parent' will be the name of a model
-                # following 'parent' keys will eventually lead to a model with 'elements'
-                #
-                # 'elements' is a list of dicts each describing a cube that makes up the model.
-                # each cube dict has 'from' and 'to' keys, which are lists of 3 float coordinates.
-                #
-                # the 'crossed squares' model demonstrates most of the keys found in a cube element
-                #
-                # {   "from": [ 0.8, 0, 8 ],
-                # "to": [ 15.2, 16, 8 ],
-                #     "rotation": { "origin": [ 8, 8, 8 ], "axis": "y", "angle": 45, "rescale": true },
-                #     "shade": false,
-                #     "faces": {
-                #         "north": { "uv": [ 0, 0, 16, 16 ], "texture": "#cross" },
-                #         "south": { "uv": [ 0, 0, 16, 16 ], "texture": "#cross" }
-                #     }
-                # }
-                #
-                # model may also have a 'textures' dict which assigns a texture file to a texture variable,
-                # or a texture variable to another texture variable.
-                #
-                # the result of loading a model should be a list of quads, with four vertexes and four pairs of texture
-                # coordinates each, plus a Face telling which adjacent block when present causes that quad to be
-                # culled.
+            # model will either have an 'elements' key or a 'parent' key (maybe both).
+            # 'parent' will be the name of a model
+            # following 'parent' keys will eventually lead to a model with 'elements'
+            #
+            # 'elements' is a list of dicts each describing a cube that makes up the model.
+            # each cube dict has 'from' and 'to' keys, which are lists of 3 float coordinates.
+            #
+            # the 'crossed squares' model demonstrates most of the keys found in a cube element
+            #
+            # {   "from": [ 0.8, 0, 8 ],
+            # "to": [ 15.2, 16, 8 ],
+            #     "rotation": { "origin": [ 8, 8, 8 ], "axis": "y", "angle": 45, "rescale": true },
+            #     "shade": false,
+            #     "faces": {
+            #         "north": { "uv": [ 0, 0, 16, 16 ], "texture": "#cross" },
+            #         "south": { "uv": [ 0, 0, 16, 16 ], "texture": "#cross" }
+            #     }
+            # }
+            #
+            # model may also have a 'textures' dict which assigns a texture file to a texture variable,
+            # or a texture variable to another texture variable.
+            #
+            # the result of loading a model should be a list of quads, with four vertexes and four pairs of texture
+            # coordinates each, plus a Face telling which adjacent block when present causes that quad to be
+            # culled.
 
-                textureVars = {}
-                allElements = []
+            textureVars = {}
+            allElements = []
 
-                # grab textures and elements from this model, then get parent and merge its textures and elements
-                # continue until no parent is found
-                for i in range(30):
-                    textures = modelDict.get("textures")
-                    if textures is not None:
-                        textureVars.update(textures)
-                    elements = modelDict.get("elements")
-                    if elements is not None:
-                        allElements.extend(elements)
-                    parentName = modelDict.get("parent")
-                    if parentName is None:
-                        break
-                    modelDict = self._getBlockModel(parentName)
-                else:
-                    raise ValueError("Parent loop detected in block model %s" % modelName)
+            # grab textures and elements from this model, then get parent and merge its textures and elements
+            # continue until no parent is found
+            for i in range(30):
+                textures = modelDict.get("textures")
+                if textures is not None:
+                    textureVars.update(textures)
+                elements = modelDict.get("elements")
+                if elements is not None:
+                    allElements.extend(elements)
+                parentName = modelDict.get("parent")
+                if parentName is None:
+                    break
+                modelDict = self._getBlockModel(parentName)
+            else:
+                raise ValueError("Parent loop detected in block model %s" % modelName)
 
-                try:
-                    # each element describes a box with up to six faces, each with a texture. convert the box into
-                    # quads.
-                    allQuads = []
+            try:
+                # each element describes a box with up to six faces, each with a texture. convert the box into
+                # quads.
+                allQuads = []
 
-                    for element in allElements:
-                        shade = element.get("shade", True)
-                        fromPoint = Vector(*element["from"])
-                        toPoint = Vector(*element["to"])
-                        fromPoint /= 16.
-                        toPoint /= 16.
+                for element in allElements:
+                    shade = element.get("shade", True)
+                    fromPoint = Vector(*element["from"])
+                    toPoint = Vector(*element["to"])
+                    fromPoint /= 16.
+                    toPoint /= 16.
 
-                        box = FloatBox(fromPoint, maximum=toPoint)
-                        for face, info in element["faces"].iteritems():
-                            texture = info["texture"]
-                            uv = info.get("uv", [0, 0, 16, 16])
-                            textureRotation = info.get("rotation")
-                            if textureRotation is not None:
-                                textureRotation %= 360
-                                while textureRotation > 0:
-                                    uv = uv[3:] + uv[:3]
-                                    textureRotation -= 90
+                    box = FloatBox(fromPoint, maximum=toPoint)
+                    for face, info in element["faces"].iteritems():
+                        texture = info["texture"]
+                        uv = info.get("uv", [0, 0, 16, 16])
+                        textureRotation = info.get("rotation")
+                        if textureRotation is not None:
+                            textureRotation %= 360
+                            while textureRotation > 0:
+                                uv = uv[3:] + uv[:3]
+                                textureRotation -= 90
 
-                            lastvar = texture
+                        lastvar = texture
 
-                            # resolve texture variables
-                            for i in range(30):
-                                if texture is None:
-                                    raise ValueError("Texture variable %s is not assigned." % lastvar)
-                                elif texture[0] == "#":
-                                    lastvar = texture
-                                    texture = textureVars[texture[1:]]
-                                else:
-                                    break
+                        # resolve texture variables
+                        for i in range(30):
+                            if texture is None:
+                                raise ValueError("Texture variable %s is not assigned." % lastvar)
+                            elif texture[0] == "#":
+                                lastvar = texture
+                                texture = textureVars[texture[1:]]
                             else:
-                                raise ValueError("Texture variable loop detected!")
+                                break
+                        else:
+                            raise ValueError("Texture variable loop detected!")
 
-                            self.firstTextures.setdefault(name, texture)
-                            self._textureNames.add(texture)
-                            allQuads.append((box, facesByCardinal[face], texture, uv, info.get("cullface"), shade))
+                        self.firstTextures.setdefault(name, texture)
+                        self._textureNames.add(texture)
+                        allQuads.append((box, facesByCardinal[face], texture, uv, info.get("cullface"), shade))
 
-                        rotation = element.get("rotation")
-                        if rotation is not None:
-                            origin = rotation["origin"]
-                            axis = rotation["axis"]
-                            angle = rotation["angle"]
-                            rescale = rotation.get("rescale", False)
-                            # construct rotation matrix, run quad vertices through it
+                    rotation = element.get("rotation")
+                    if rotation is not None:
+                        origin = rotation["origin"]
+                        axis = rotation["axis"]
+                        angle = rotation["angle"]
+                        rescale = rotation.get("rescale", False)
+                        # construct rotation matrix, run quad vertices through it
 
 
 
-                    self.modelQuads[block.internalName + block.blockState] = allQuads
+                self.modelQuads[block.internalName + block.blockState] = allQuads
 
-                except Exception as e:
-                    log.error("Failed to parse variant of block %s\nelements:\n%s\ntextures:\n%s", name,
-                              allElements, textureVars)
-                    raise
+            except Exception as e:
+                log.error("Failed to parse variant of block %s\nelements:\n%s\ntextures:\n%s", name,
+                          allElements, textureVars)
+                raise
 
         # for name in self.modelQuads:
         #    log.info("Quads for %s:\n%s\n", name, self.modelQuads[name])
