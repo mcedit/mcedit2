@@ -301,7 +301,7 @@ class EditorSession(QtCore.QObject):
             id = self.currentDimension.getBlockID(*event.blockPosition)
             data = self.currentDimension.getBlockData(*event.blockPosition)
             block = self.worldEditor.blocktypes[id, data]
-            editorapp.MCEditApp.app.updateStatusLabel(event.blockPosition, block.displayName, self.loader.cps, event.view.fps)
+            editorapp.MCEditApp.app.updateStatusLabel(event.blockPosition, block, self.loader.cps, event.view.fps)
         else:
             editorapp.MCEditApp.app.updateStatusLabel('(N/A)', "", self.loader.cps, event.view.fps)
 
