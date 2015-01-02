@@ -82,20 +82,21 @@ def inflate(data):
 
 
 def sanitizeBlocks(section, blocktypes):
-    # change grass to dirt where needed so Minecraft doesn't flip out and die
-    grass = section.Blocks == blocktypes.Grass.ID
-    grass |= section.Blocks == blocktypes.Dirt.ID
-    badgrass = grass[1:, :, :] & grass[:-1, :, :]
-
-    section.Blocks[:-1, :, :][badgrass] = blocktypes.Dirt.ID
-
-    # remove any thin snow layers immediately above other thin snow layers.
-    # minecraft doesn't flip out, but it's almost never intended
-    if hasattr(blocktypes, "SnowLayer"):
-        snowlayer = section.Blocks == blocktypes.SnowLayer.ID
-        badsnow = snowlayer[:, :, 1:] & snowlayer[:, :, :-1]
-
-        section.Blocks[:, :, 1:][badsnow] = 0
+    return
+    # # change grass to dirt where needed so Minecraft doesn't flip out and die
+    # grass = section.Blocks == blocktypes.Grass.ID
+    # grass |= section.Blocks == blocktypes.Dirt.ID
+    # badgrass = grass[1:, :, :] & grass[:-1, :, :]
+    #
+    # section.Blocks[:-1, :, :][badgrass] = blocktypes.Dirt.ID
+    #
+    # # remove any thin snow layers immediately above other thin snow layers.
+    # # minecraft doesn't flip out, but it's almost never intended
+    # if hasattr(blocktypes, "SnowLayer"):
+    #     snowlayer = section.Blocks == blocktypes.SnowLayer.ID
+    #     badsnow = snowlayer[:, :, 1:] & snowlayer[:, :, :-1]
+    #
+    #     section.Blocks[:, :, 1:][badsnow] = 0
 
 # --- Sections and chunks ---
 

@@ -89,6 +89,7 @@ class BlockTypeSet(object):
             'opacity': 15,
             'brightness': 0,
             'internalName': 'UNKNOWN_NAME',
+            'blockState': '[UNKNOWN_STATE]',
             'unlocalizedName': 'name.unknown',
             'opaqueCube': True,
             'renderType': -1, #xxx unknowns

@@ -4,9 +4,11 @@
 from __future__ import absolute_import, division, print_function
 import json
 import logging
+import math
+
 import numpy
 from mceditlib import faces
-from mceditlib.geometry import BoundingBox, Vector, FloatBox
+from mceditlib.geometry import Vector, FloatBox
 
 log = logging.getLogger(__name__)
 
@@ -56,6 +58,20 @@ class BlockModels(object):
             # model dict may also have optional keys 'x', 'y', 'z' with a value in degrees, to rotate the model
             # around that axis
             # another optional key is 'uvlock', which needs investigating
+            # variant dict for 'rail':
+
+            # "variants": {
+            #     "shape=north_south": { "model": "normal_rail_flat" },
+            #     "shape=east_west": { "model": "normal_rail_flat", "y": 90 },
+            #     "shape=ascending_east": { "model": "normal_rail_raised_ne", "y": 90 },
+            #     "shape=ascending_west": { "model": "normal_rail_raised_sw", "y": 90 },
+            #     "shape=ascending_north": { "model": "normal_rail_raised_ne" },
+            #     "shape=ascending_south": { "model": "normal_rail_raised_sw" },
+            #     "shape=south_east": { "model": "normal_rail_curved" },
+            #     "shape=south_west": { "model": "normal_rail_curved", "y": 90 },
+            #     "shape=north_west": { "model": "normal_rail_curved", "y": 180 },
+            #     "shape=north_east": { "model": "normal_rail_curved", "y": 270 }
+            # }
 
             variantBlockState = block.resourceVariant
             log.debug("Loading %s#%s for %s", block.resourcePath, block.resourceVariant, block)
@@ -63,7 +79,14 @@ class BlockModels(object):
             if isinstance(variantDict, list):
                 variantDict = variantDict[0]  # do the random pick thing later, if at all
             modelName = variantDict['model']
-            modelDict = self._getBlockModel("block/" + modelName)
+            try:
+                modelDict = self._getBlockModel("block/" + modelName)
+            except ValueError as e:
+                log.exception("Error parsing json for block/%s: %s", modelName, e)
+                continue
+            variantXrot = variantDict.get("x", 0)
+            variantYrot = variantDict.get("y", 0)
+            variantZrot = variantDict.get("z", 0)
 
             # model will either have an 'elements' key or a 'parent' key (maybe both).
             # 'parent' will be the name of a model
@@ -106,7 +129,11 @@ class BlockModels(object):
                 parentName = modelDict.get("parent")
                 if parentName is None:
                     break
-                modelDict = self._getBlockModel(parentName)
+                try:
+                    modelDict = self._getBlockModel(parentName)
+                except ValueError as e:
+                    log.exception("Error parsing json for block/%s: %s", parentName, e)
+                    raise
             else:
                 raise ValueError("Parent loop detected in block model %s" % modelName)
 
@@ -121,17 +148,14 @@ class BlockModels(object):
                     toPoint = Vector(*element["to"])
                     fromPoint /= 16.
                     toPoint /= 16.
-
                     box = FloatBox(fromPoint, maximum=toPoint)
+
                     for face, info in element["faces"].iteritems():
+                        face = facesByCardinal[face]
                         texture = info["texture"]
+                        cullface = info.get("cullface")
+
                         uv = info.get("uv", [0, 0, 16, 16])
-                        textureRotation = info.get("rotation")
-                        if textureRotation is not None:
-                            textureRotation %= 360
-                            while textureRotation > 0:
-                                uv = uv[3:] + uv[:3]
-                                textureRotation -= 90
 
                         lastvar = texture
 
@@ -149,15 +173,11 @@ class BlockModels(object):
 
                         self.firstTextures.setdefault(name, texture)
                         self._textureNames.add(texture)
-                        allQuads.append((box, facesByCardinal[face], texture, uv, info.get("cullface"), shade))
+                        allQuads.append((box, face,
+                                         texture, uv, cullface,
+                                         shade, element.get("rotation"), info.get("rotation"),
+                                         variantXrot, variantYrot, variantZrot))
 
-                    rotation = element.get("rotation")
-                    if rotation is not None:
-                        origin = rotation["origin"]
-                        axis = rotation["axis"]
-                        angle = rotation["angle"]
-                        rescale = rotation.get("rescale", False)
-                        # construct rotation matrix, run quad vertices through it
 
 
 
@@ -179,26 +199,146 @@ class BlockModels(object):
         cookedModels = {}
         for nameAndState, allQuads in self.modelQuads.iteritems():
             cookedQuads = []
-            for (box, face, texture, uv, cullface, shade) in allQuads:
+            for (box, face, texture, uv, cullface, shade, rotation, textureRotation,
+                 variantXrot, variantYrot, variantZrot) in allQuads:
+
                 l, t, w, h = textureAtlas.texCoordsByName[texture]
-                u1, v1, u2, v2 = uv # xxxx (u2-u1) / w etc scale to texture width
+                u1, v1, u2, v2 = uv
+                uw = (u2 - u1) / 16
+                vh = (v2 - v1) / 16
                 u1 += l
-                u2 += l
-                v1 += t
-                v2 += t
+                u2 = u1 + uw * w
+
+                # flip v axis - texcoords origin is top left but model uv origin is from bottom left
+                v1 = t + h - v1
+                v2 = v1 - vh * w
+
                 uv = (u1, v1, u2, v2)
 
-                xyzuvc = getBlockFaceVertices(box, face, uv)
+                xyzuvc = getBlockFaceVertices(box, face, uv, textureRotation)
+                xyzuvc.shape = 4, 6
+
+                if variantZrot:
+                    face = rotateFace(face, 2, variantZrot)
+                if variantXrot:
+                    face = rotateFace(face, 0, variantXrot)
+                if variantYrot:
+                    face = rotateFace(face, 1, variantYrot)
                 if cullface:
                     cullface = facesByCardinal[cullface]
+                    if variantZrot:
+                        cullface = rotateFace(cullface, 2, variantZrot)
+                    if variantXrot:
+                        cullface = rotateFace(cullface, 0, variantXrot)
+                    if variantYrot:
+                        cullface = rotateFace(cullface, 1, variantYrot)
+
+
+                if rotation is not None:
+                    origin = rotation["origin"]
+                    axis = rotation["axis"]
+                    angle = rotation["angle"]
+                    rescale = rotation.get("rescale", False)
+                    matrix = npRotate(axis, angle, rescale)
+                    ox, oy, oz = origin
+                    origin = ox/16., oy/16., oz/16.
+
+                    xyzuvc[:, :3] -= origin
+                    xyz = xyzuvc[:, :3].transpose()
+                    xyzuvc[:, :3] = (matrix[:3, :3] * xyz).transpose()
+                    xyzuvc[:, :3] += origin
+
+                rotate = variantXrot or variantYrot or variantZrot
+                if rotate:
+                    matrix = numpy.matrix(numpy.identity(4))
+                    if variantYrot:
+                        matrix *= npRotate("y", -variantYrot)
+                    if variantXrot:
+                        matrix *= npRotate("x", -variantXrot)
+                    if variantZrot:
+                        matrix *= npRotate("z", -variantZrot)
+                    xyzuvc[:, :3] -= 0.5, 0.5, 0.5
+                    xyz = xyzuvc[:, :3].transpose()
+                    xyzuvc[:, :3] = (matrix[:3, :3] * xyz).transpose()
+                    xyzuvc[:, :3] += 0.5, 0.5, 0.5
+
                 if shade:
-                    xyzuvc.shape = 4, 6
                     xyzuvc.view('uint8')[:, 20:] = faceShades[face]
+                else:
+                    xyzuvc.view('uint8')[:, 20:] = 0xff
+
+
+
                 cookedQuads.append((face, xyzuvc, cullface))
 
             cookedModels[nameAndState] = cookedQuads
 
         self.cookedModels = cookedModels
+
+faceRotations = (
+    (
+        faces.FaceYIncreasing,
+        faces.FaceZIncreasing,
+        faces.FaceYDecreasing,
+        faces.FaceZDecreasing,
+    ),
+    (
+        faces.FaceXIncreasing,
+        faces.FaceZDecreasing,
+        faces.FaceXDecreasing,
+        faces.FaceZIncreasing,
+    ),
+    (
+        faces.FaceXIncreasing,
+        faces.FaceYIncreasing,
+        faces.FaceXDecreasing,
+        faces.FaceYDecreasing,
+    ),
+
+)
+
+def rotateFace(face, axis, degrees):
+    rots = faceRotations[axis]
+    try:
+        idx = rots.index(face)
+    except ValueError:
+        return face
+
+    while degrees > 0:
+        idx -= 1
+        degrees -= 90
+    idx %= 4
+    return rots[idx]
+
+
+def npRotate(axis, angle, rescale=False):
+    # ( xx(1-c)+c	xy(1-c)-zs  xz(1-c)+ys	 0  )
+    # | yx(1-c)+zs	yy(1-c)+c   yz(1-c)-xs	 0  |
+    # | xz(1-c)-ys	yz(1-c)+xs  zz(1-c)+c	 0  |
+    # (	 0	        0		    0	         1  )
+    # axis:
+    # "x": (1, 0, 0)
+    # "y": (0, 1, 0)
+    # "z": (0, 0, 1)
+    x = y = z = 0
+    if axis == "x":
+        x = 1
+    elif axis == "y":
+        y = 1
+    elif axis == "z":
+        z = 1
+    else:
+        raise ValueError("Unknown axis: %r" % axis)
+
+    s = math.sin(math.radians(angle))
+    c = math.cos(math.radians(angle))
+    rotate = numpy.matrix([[x*x*(1-c)+c,    x*y*(1-c)-z*s,  x*z*(1-c)+y*s,  0],
+                           [y*x*(1-c)+z*s,  y*y*(1-c)+c,    y*z*(1-c)-x*s,  0],
+                           [x*z*(1-c)-y*s,  y*z*(1-c)+x*s,  z*z*(1-c)+c,    0],
+                           [0,              0,              0,              1]])
+    # xxx rescale
+    return rotate
+
 
 facesByCardinal = dict(
     north=faces.FaceNorth,
@@ -211,68 +351,83 @@ facesByCardinal = dict(
 )
 
 faceShades = {
-    faces.FaceNorth: 0xBB,
-    faces.FaceSouth: 0xBB,
-    faces.FaceEast: 0xDD,
-    faces.FaceWest: 0xDD,
+    faces.FaceNorth: 0x99,
+    faces.FaceSouth: 0x99,
+    faces.FaceEast: 0xCC,
+    faces.FaceWest: 0xCC,
     faces.FaceUp: 0xFF,
     faces.FaceDown: 0x77,
 }
 
-# teutures = (u1, v1, u2, v1, u2, v2, u1, v2)
 
-def getBlockFaceVertices(box, face, uv):
+def getBlockFaceVertices(box, face, uv, textureRotation):
     x1, y1, z1, = box.origin
     x2, y2, z2 = box.maximum
     u1, v1, u2, v2 = uv
+    tc = [
+        (u1, v1),
+        (u1, v2),
+        (u2, v2),
+        (u2, v1),
+    ]
+    if textureRotation:
+        while textureRotation > 0:
+            tc = tc[1:] + tc[:1]
+            textureRotation -= 90
+
+    tc = numpy.array(tc)
+
     if face == faces.FaceXDecreasing:
         faceVertices = numpy.array(
-            (x1, y1, z1, u1, v1, 0.0,
-             x1, y2, z1, u1, v2, 0.0,
-             x1, y2, z2, u2, v2, 0.0,
-             x1, y1, z2, u2, v1, 0.0,
+            (x1, y2, z1, 0.0, 0.0, 0.0,
+             x1, y1, z1, 0.0, 0.0, 0.0,
+             x1, y1, z2, 0.0, 0.0, 0.0,
+             x1, y2, z2, 0.0, 0.0, 0.0,
              ), dtype='f4')
 
     elif face == faces.FaceXIncreasing:
         faceVertices = numpy.array(
-            (x2, y1, z1, u1, v1, 0.0,
-             x2, y2, z1, u1, v2, 0.0,
-             x2, y2, z2, u2, v2, 0.0,
-             x2, y1, z2, u2, v1, 0.0,
+            (x2, y2, z2, 0.0, 0.0, 0.0,
+             x2, y1, z2, 0.0, 0.0, 0.0,
+             x2, y1, z1, 0.0, 0.0, 0.0,
+             x2, y2, z1, 0.0, 0.0, 0.0,
              ), dtype='f4')
 
     elif face == faces.FaceYDecreasing:
         faceVertices = numpy.array(
-            (x2, y1, z2, u1, v1, 0.0,
-             x1, y1, z2, u1, v2, 0.0,
-             x1, y1, z1, u2, v2, 0.0,
-             x2, y1, z1, u2, v1, 0.0,
+            (x1, y1, z2, 0.0, 0.0, 0.0,
+             x1, y1, z1, 0.0, 0.0, 0.0,
+             x2, y1, z1, 0.0, 0.0, 0.0,
+             x2, y1, z2, 0.0, 0.0, 0.0,
              ), dtype='f4')
 
     elif face == faces.FaceYIncreasing:
         faceVertices = numpy.array(
-            (x2, y2, z1, u1, v1, 0.0,
-             x1, y2, z1, u1, v2, 0.0,
-             x1, y2, z2, u2, v2, 0.0,
-             x2, y2, z2, u2, v1, 0.0,
+            (x1, y2, z1, 0.0, 0.0, 0.0,
+             x1, y2, z2, 0.0, 0.0, 0.0,
+             x2, y2, z2, 0.0, 0.0, 0.0,
+             x2, y2, z1, 0.0, 0.0, 0.0,
              ), dtype='f4')
 
     elif face == faces.FaceZDecreasing:
         faceVertices = numpy.array(
-            (x1, y1, z1, u1, v1, 0.0,
-             x1, y2, z1, u1, v2, 0.0,
-             x2, y2, z1, u2, v2, 0.0,
-             x2, y1, z1, u2, v1, 0.0,
+            (x2, y2, z1, 0.0, 0.0, 0.0,
+             x2, y1, z1, 0.0, 0.0, 0.0,
+             x1, y1, z1, 0.0, 0.0, 0.0,
+             x1, y2, z1, 0.0, 0.0, 0.0,
              ), dtype='f4')
 
     elif face == faces.FaceZIncreasing:
         faceVertices = numpy.array(
-            (x2, y1, z2, u1, v1, 0.0,
-             x2, y2, z2, u1, v2, 0.0,
-             x1, y2, z2, u2, v2, 0.0,
-             x1, y1, z2, u2, v1, 0.0,
+            (x1, y2, z2, 0.0, 0.0, 0.0,
+             x1, y1, z2, 0.0, 0.0, 0.0,
+             x2, y1, z2, 0.0, 0.0, 0.0,
+             x2, y2, z2, 0.0, 0.0, 0.0,
              ), dtype='f4')
     else:
         raise ValueError("Unknown face %s" % face)
+
+    faceVertices.shape = 4, 6
+    faceVertices[:, 3:5] = tc
 
     return faceVertices
