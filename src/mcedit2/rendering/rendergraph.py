@@ -144,8 +144,10 @@ class TextureAtlasRenderNode(RenderstateRenderNode):
         GL.glScale(1. / 16, 1. / 16, 1.)
 
         GL.glActiveTexture(GL.GL_TEXTURE0)
+        GL.glEnable(GL.GL_CULL_FACE)
 
     def exit(self):
+        GL.glDisable(GL.GL_CULL_FACE)
         GL.glActiveTexture(GL.GL_TEXTURE1)
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
         GL.glDisable(GL.GL_TEXTURE_2D)
