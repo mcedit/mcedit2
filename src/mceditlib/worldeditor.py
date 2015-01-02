@@ -252,8 +252,11 @@ class WorldEditor(object):
         :return:
         :rtype:
         """
+        dirtyPlayers = 0
         for player in self.playerCache.itervalues():
-            player.save()
+            if player.dirty:
+                dirtyPlayers += 1
+                player.save()
 
         dirtyChunkCount = 0
         for chunk in self._loadedChunkData.itervalues():
@@ -261,7 +264,8 @@ class WorldEditor(object):
                 dirtyChunkCount += 1
                 self.adapter.writeChunk(chunk)
                 chunk.dirty = False
-        log.info(u"Saved {0} chunks".format(dirtyChunkCount))
+        self.adapter.syncToDisk()
+        log.info(u"Saved %d chunks and %d players", dirtyChunkCount, dirtyPlayers)
 
     def saveChanges(self):
         if self.readonly:

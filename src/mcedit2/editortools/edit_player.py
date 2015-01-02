@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 from PySide.QtCore import Qt
+from mcedit2.command import SimpleRevisionCommand
 from mcedit2.editortools import EditorTool
 from mcedit2.nbt_treemodel import NBTTreeModel, NBTFilterProxyModel
 from mcedit2.util.load_ui import load_ui
@@ -52,7 +53,16 @@ class PlayerTool(EditorTool):
     def movePlayerToCamera(self):
         view = self.editorSession.editorTab.currentView()
         if view.viewID == "Cam":
-            self.selectedPlayer.Position = view.centerPoint
+            command = SimpleRevisionCommand(self.editorSession, "Move Player")
+            with command.begin():
+                self.selectedPlayer.Position = view.centerPoint
+                try:
+                    self.selectedPlayer.Rotation = view.yawPitch
+                except AttributeError:
+                    pass
+
+                self.selectedPlayer.dirty = True  # xxx do in AnvilPlayerRef
+            self.editorSession.pushCommand(command)
         else:
             raise ValueError("Current view is not camera view.")
 

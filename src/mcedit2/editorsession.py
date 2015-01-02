@@ -259,6 +259,11 @@ class EditorSession(QtCore.QObject):
             player = self.worldEditor.getPlayer()
             center = Vector(*player.Position)
             log.info("Centering on single-player player.")
+            rotation = player.Rotation
+            try:
+                self.editorTab.currentView().yawPitch = rotation
+            except AttributeError:
+                pass
         except PlayerNotFound:
             try:
                 center = self.worldEditor.worldSpawnPosition()

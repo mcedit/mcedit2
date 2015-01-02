@@ -335,6 +335,7 @@ class AnvilWorldMetadata(object):
     def __init__(self, metadataTag):
         self.metadataTag = metadataTag
         self.rootTag = metadataTag["Data"]
+        self.dirty = False
 
     # --- NBT Tag variables ---
 
@@ -487,7 +488,9 @@ class AnvilWorldAdapter(object):
         :return:
         :rtype:
         """
-        self.selectedRevision.writeFile("level.dat", self.metadata.metadataTag.save())
+        if self.metadata.dirty:
+            self.selectedRevision.writeFile("level.dat", self.metadata.metadataTag.save())
+            self.metadata.dirty = False
 
     def saveChanges(self):
         """
@@ -801,7 +804,7 @@ class AnvilWorldAdapter(object):
     def savePlayerTag(self, tag, playerUUID):
         if playerUUID == "":
             # sync metadata?
-            return
+            self.metadata.dirty = True
         else:
             self.selectedRevision.writeFile("playerdata/%s.dat" % playerUUID, tag.save())
 
@@ -920,6 +923,7 @@ class AnvilPlayerRef(object):
     def save(self):
         if self.dirty:
             self.adapter.savePlayerTag(self.rootTag, self.playerUUID)
+            self.dirty = False
 
     _dimNames = {
         -1:"DIM-1",
