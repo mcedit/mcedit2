@@ -33,7 +33,7 @@ class LowDetailBlockMesh(ChunkMeshBase):
         """
 
         :param chunk:
-        :type chunk: AnvilChunk
+        :type chunk: WorldEditorChunk
         :param limitBox:
         :return: :raise:
         """
@@ -51,7 +51,8 @@ class LowDetailBlockMesh(ChunkMeshBase):
         y = (heightMap - 1)[:chunkLength, :chunkWidth]
         numpy.clip(y, 0, chunkHeight - 1, y)
 
-        nonZeroHeights = y != 0
+        nonZeroHeights = y > 0
+        heights = y.reshape((16, 16))
 
         x = x[nonZeroHeights]
         if not len(x):
@@ -59,7 +60,7 @@ class LowDetailBlockMesh(ChunkMeshBase):
 
         z = z[nonZeroHeights]
         y = y[nonZeroHeights]
-        heights = y.reshape((16, 16))
+
         # Get the top block in each column
         blockResult = dim.getBlocks(x + (cx * 16), y, z + (cz * 16), return_Data=True)
         topBlocks = blockResult.Blocks
@@ -110,12 +111,14 @@ class LowDetailBlockMesh(ChunkMeshBase):
                                      heights[1:-1, 2:],
                                      heights[:-2, 1:-1],
                                      heights[2:, 1:-1]))
+        depths = depths[nonZeroHeights]
         yield
 
         va1 = vertexBuffer.copy()
         va1.vertex[..., :3] += standardCubeTemplates[faces.FaceXIncreasing, ..., :3]
 
-        va1.vertex[:, (0, 1), 1] = depths.ravel()[:, numpy.newaxis]  # stretch to floor
+        va1.vertex[:, 0, 1] = depths
+        va1.vertex[:, 0, 1] = depths  # stretch to floor
         va1.vertex[:, (2, 3), 1] -= 0.5  # drop down to prevent intersection pixels
 
 
