@@ -11,7 +11,7 @@ The rest of this file is of interest to programmers only.
 
 # Getting Started
 
-This guide is written with Windows developers in mind. Linux and OS X users may find some things easier or harder. 
+This guide is written with Windows developers in mind. Linux / OS X developers can read how to install below. 
 Windows developers are assumed to be using a unix shell such as the _GIT Bash_ included with the Windows distribution 
 of Git.
 
@@ -74,17 +74,25 @@ As a bonus, you can use the `-debug` flag to enable the Debug menu and a few ext
 
 `mcedit2 -debug`
 
-## Linux/OS X (untested)
+## Linux/OS X (not tested fully)
+
+Make sure to delete pywin32 from the requirements list because that is a windows only library. 
 
 
-    cd Documents/src/mcedit2
+    cd (Your mcedit2 location)
     virtualenv ENV
     . ENV/bin/activate
     pip install -r requirements.txt
     python setup.py develop
     mcedit2
 
-_TODO: test this._
+If you get a `Library not loaded: libpyside-python2.7.1.2.dylib` error, try running `pyside_postinstall.py -install` to fix this. 
+
+If after that, you get a `Library not loaded: /usr/local/lib/QtGui.framework/Versions/4/QtGui` error after that, try installing `qt` using a package manager like Homebrew or apt-get. 
+
+Example: `brew install qt`
+
+_Note: This information is not fully tested and might not work for you_
 
 # Troubleshooting
 
