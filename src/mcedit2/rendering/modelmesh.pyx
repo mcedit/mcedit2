@@ -17,7 +17,7 @@ class BlockModelMesh(object):
         """
 
         :param sectionUpdate:
-        :type sectionUpdate: SectionUpdate
+        :type sectionUpdate: mcedit2.rendering.chunkupdate.SectionUpdate
         :return:
         :rtype:
         """
@@ -36,7 +36,7 @@ class BlockModelMesh(object):
         blocktypes = self.sectionUpdate.blocktypes
         areaBlocks = self.sectionUpdate.areaBlocks
         faceQuadVerts = []
-        
+
         cdef unsigned short y, z, x, ID, meta
         cdef short dx, dy, dz,
         cdef unsigned short nx, ny, nz, nID
@@ -52,10 +52,11 @@ class BlockModelMesh(object):
                     block = blocktypes[ID, meta]
                     if block.renderType != 3:  # only model blocks for now
                         continue
-                    nameAndState = block.internalName + block.blockState
-                    quads = blockModels.cookedModels[nameAndState]
+                    quads = blockModels.cookedModelsByID.get((ID, meta))
+                    if quads is None:
+                        continue
 
-                    for face, xyzuvc, cullface in quads:
+                    for xyzuvc, cullface in quads:
                         if cullface is not None:
                             dx, dy, dz = cullface.vector
                             nx = x + dx
