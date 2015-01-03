@@ -245,47 +245,46 @@ class BlockModels(object):
                     if variantYrot:
                         cullface = rotateFace(cullface, 1, variantYrot)
 
-
-                if rotation is not None:
-                    origin = rotation["origin"]
-                    axis = rotation["axis"]
-                    angle = rotation["angle"]
-                    rescale = rotation.get("rescale", False)
-                    matrix = npRotate(axis, angle, rescale)
-                    ox, oy, oz = origin
-                    origin = ox/16., oy/16., oz/16.
-
-                    xyzuvc[:, :3] -= origin
-                    xyz = xyzuvc[:, :3].transpose()
-                    xyzuvc[:, :3] = (matrix[:3, :3] * xyz).transpose()
-                    xyzuvc[:, :3] += origin
-
-                rotate = variantXrot or variantYrot or variantZrot
-                if rotate:
-                    matrix = numpy.matrix(numpy.identity(4))
-                    if variantYrot:
-                        matrix *= npRotate("y", -variantYrot)
-                    if variantXrot:
-                        matrix *= npRotate("x", -variantXrot)
-                    if variantZrot:
-                        matrix *= npRotate("z", -variantZrot)
-                    xyzuvc[:, :3] -= 0.5, 0.5, 0.5
-                    xyz = xyzuvc[:, :3].transpose()
-                    xyzuvc[:, :3] = (matrix[:3, :3] * xyz).transpose()
-                    xyzuvc[:, :3] += 0.5, 0.5, 0.5
+                self.rotateVertices(rotation, variantXrot, variantYrot, variantZrot, xyzuvc)
 
                 if shade:
                     xyzuvc.view('uint8')[:, 20:] = faceShades[face]
                 else:
                     xyzuvc.view('uint8')[:, 20:] = 0xff
 
-
-
                 cookedQuads.append((face, xyzuvc, cullface))
 
             cookedModels[nameAndState] = cookedQuads
 
         self.cookedModels = cookedModels
+
+    def rotateVertices(self, rotation, variantXrot, variantYrot, variantZrot, xyzuvc):
+        if rotation is not None:
+            origin = rotation["origin"]
+            axis = rotation["axis"]
+            angle = rotation["angle"]
+            rescale = rotation.get("rescale", False)
+            matrix = npRotate(axis, angle, rescale)
+            ox, oy, oz = origin
+            origin = ox / 16., oy / 16., oz / 16.
+
+            xyzuvc[:, :3] -= origin
+            xyz = xyzuvc[:, :3].transpose()
+            xyzuvc[:, :3] = (matrix[:3, :3] * xyz).transpose()
+            xyzuvc[:, :3] += origin
+        rotate = variantXrot or variantYrot or variantZrot
+        if rotate:
+            matrix = numpy.matrix(numpy.identity(4))
+            if variantYrot:
+                matrix *= npRotate("y", -variantYrot)
+            if variantXrot:
+                matrix *= npRotate("x", -variantXrot)
+            if variantZrot:
+                matrix *= npRotate("z", -variantZrot)
+            xyzuvc[:, :3] -= 0.5, 0.5, 0.5
+            xyz = xyzuvc[:, :3].transpose()
+            xyzuvc[:, :3] = (matrix[:3, :3] * xyz).transpose()
+            xyzuvc[:, :3] += 0.5, 0.5, 0.5
 
 faceRotations = (
     (
