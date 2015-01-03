@@ -397,8 +397,10 @@ class SectionUpdate(object):
             sectionBounds = sectionBounds.intersect(bounds)
 
         modelMesh = BlockModelMesh(self)
-        for _ in modelMesh.createVertexArrays():
-            yield
+        worker = modelMesh.createVertexArrays()
+        if worker:
+            for _ in worker:
+                yield
         self.blockMeshes.append(modelMesh)
         yield
 
