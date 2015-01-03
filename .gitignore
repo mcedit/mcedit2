@@ -12,8 +12,10 @@ build
 _build
 *.egg-info
 
-# The "standard" virtualenv directory.
+# virtualenv directories.
 ENV
+ENV32
+ENV64
 
 #profiling/outputs
 *.log

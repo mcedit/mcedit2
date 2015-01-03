@@ -1,5 +1,9 @@
-numpy
-PySide
+pyside
 pyopengl
-# more?
+pywin32
+cython
+ipython
 pygments
+pyzmq
+numpy
+arrow

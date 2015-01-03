@@ -38,11 +38,6 @@ setup(name='mceditlib',
       include_package_data=True,
       zip_safe=False,
       install_requires=install_requires,
-      entry_points="""
-      # -*- Entry points: -*-
-      [console_scripts]
-      mce.py=mceditlib.mce:main
-      """,
       )
 
 setup(name='mcedit2',
@@ -75,6 +70,6 @@ setup(name='mcedit2',
       entry_points="""
       # -*- Entry points: -*-
       [console_scripts]
-      mcedit2.py=mcedit2.main:main
+      mcedit2=mcedit2.main:main
       """,
       )
