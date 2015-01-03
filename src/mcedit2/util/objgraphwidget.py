@@ -9,18 +9,25 @@ import tempfile
 from PySide import QtGui
 import logging
 from PySide.QtCore import Qt
-from PySide.QtGui import QWidget
 import gc
 from mcedit2.rendering import rendergraph
 from mcedit2.widgets.layout import Column, Row
 
 log = logging.getLogger(__name__)
 
-import objgraph
+try:
+    import objgraph
+except ImportError:
+    objgraph = None
 
-class ObjGraphWidget(QWidget):
+class ObjGraphWidget(QtGui.QWidget):
     def __init__(self, *a, **kw):
         super(ObjGraphWidget, self).__init__(*a, **kw)
+
+        if objgraph is None:
+            self.setLayout(Row(QtGui.QLabel("objgraph is not installed (andyou probably don't have GraphViz "
+                                            "either...) "), None))
+            return
 
         self.inputWidget = QtGui.QLineEdit()
 
