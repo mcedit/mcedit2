@@ -397,10 +397,9 @@ cdef getBlockFaceVertices(box, face, tuple uv, textureRotation):
         (u2, v1),
     ]
     if textureRotation:
-        while textureRotation > 0:
-            tc = tc[1:] + tc[:1]
-            textureRotation -= 90
-
+        roll = textureRotation / 90
+        roll %= 4
+        tc = tc[roll:] + tc[:roll]
     tc = numpy.array(tc)
 
     if face == faces.FaceXDecreasing:
