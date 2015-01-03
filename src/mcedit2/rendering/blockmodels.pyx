@@ -1,12 +1,17 @@
 """
     blockmodels
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import, print_function
 import json
 import logging
 import math
 
 import numpy
+cimport numpy
+
+from cpython cimport array
+from array import array
+
 from mceditlib import faces
 from mceditlib.geometry import Vector, FloatBox
 
@@ -211,6 +216,9 @@ class BlockModels(object):
     def cookQuads(self, textureAtlas):
         cookedModels = {}
         cookedModelsByID = {}
+        cdef int l, t, w, h
+        cdef int u1, u2, v1, v2
+        cdef int uw, vh
         for nameAndState, allQuads in self.modelQuads.iteritems():
             cookedQuads = []
             for (box, face, texture, uv, cullface, shade, rotation, textureRotation,
@@ -218,14 +226,14 @@ class BlockModels(object):
 
                 l, t, w, h = textureAtlas.texCoordsByName[texture]
                 u1, v1, u2, v2 = uv
-                uw = (u2 - u1) / 16
-                vh = (v2 - v1) / 16
+                uw = (w * (u2 - u1)) / 16
+                vh = (h * (v2 - v1)) / 16
                 u1 += l
-                u2 = u1 + uw * w
+                u2 = u1 + uw
 
                 # flip v axis - texcoords origin is top left but model uv origin is from bottom left
                 v1 = t + h - v1
-                v2 = v1 - vh * w
+                v2 = v1 - vh
 
                 uv = (u1, v1, u2, v2)
 
@@ -376,8 +384,10 @@ faceShades = {
 }
 
 
-def getBlockFaceVertices(box, face, uv, textureRotation):
-    x1, y1, z1, = box.origin
+cdef getBlockFaceVertices(box, face, tuple uv, textureRotation):
+    cdef float x1, y1, z1, x2, y2, z2,
+    cdef int u1, v1, u2, v2
+    x1, y1, z1 = box.origin
     x2, y2, z2 = box.maximum
     u1, v1, u2, v2 = uv
     tc = [

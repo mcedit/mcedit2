@@ -2,9 +2,11 @@
     ${NAME}
 """
 from __future__ import absolute_import, division, print_function
-import itertools
 import logging
+
 import numpy
+cimport numpy
+
 from mcedit2.rendering import renderstates
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 
@@ -25,6 +27,11 @@ class BlockModelMesh(object):
         self.vertexArrays = []
 
     def createVertexArrays(self):
+        cdef numpy.ndarray[numpy.uint16_t, ndim=3] areaBlocks
+        #cdef numpy.ndarray[numpy.uint8_t, ndim=3] data
+        cdef numpy.ndarray[numpy.uint8_t, ndim=1] renderType
+        cdef numpy.ndarray[numpy.uint8_t, ndim=1] opaqueCube
+
         chunk = self.sectionUpdate.chunkUpdate.chunk
         cx, cz = chunk.chunkPosition
         cy = self.sectionUpdate.cy
@@ -35,6 +42,10 @@ class BlockModelMesh(object):
         blockModels = self.sectionUpdate.chunkUpdate.updateTask.textureAtlas.blockModels
         blocktypes = self.sectionUpdate.blocktypes
         areaBlocks = self.sectionUpdate.areaBlocks
+        data = section.Data
+        renderType = self.sectionUpdate.renderType
+        opaqueCube = blocktypes.opaqueCube
+
         faceQuadVerts = []
 
         cdef unsigned short y, z, x, ID, meta
@@ -47,10 +58,9 @@ class BlockModelMesh(object):
                     ID = areaBlocks[y, z, x]
                     if ID == 0:
                         continue
-                    meta = section.Data[y-1, z-1, x-1]
+                    meta = data[y-1, z-1, x-1]
 
-                    block = blocktypes[ID, meta]
-                    if block.renderType != 3:  # only model blocks for now
+                    if renderType[ID] != 3:  # only model blocks for now
                         continue
                     quads = blockModels.cookedModelsByID.get((ID, meta))
                     if quads is None:
@@ -63,10 +73,8 @@ class BlockModelMesh(object):
                             ny = y + dy
                             nz = z + dz
                             nID = areaBlocks[ny, nz, nx]
-                            if nID != 0:
-                                nBlock = blocktypes[nID]
-                                if nBlock.opaqueCube:
-                                    continue
+                            if opaqueCube[nID]:
+                                continue
 
                         verts = numpy.array(xyzuvc)
                         verts.shape = 1, 4, 6

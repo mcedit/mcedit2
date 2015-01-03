@@ -108,7 +108,7 @@ class BlockTypeSet(object):
         self.mapColor = numpy.zeros((id_limit, 16, 3), dtype='uint8')
         self.mapColor[:] = 0xFF
 
-        self.opaqueCube = numpy.ones((id_limit, ), dtype='bool')
+        self.opaqueCube = numpy.ones((id_limit, ), dtype='uint8')
         self.opaqueCube[0] = 0
 
         self.name = "Unnamed Set"
