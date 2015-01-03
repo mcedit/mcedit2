@@ -15,11 +15,18 @@ log = logging.getLogger(__name__)
 
 class BlockModels(object):
     def _getBlockModel(self, modelName):
-        model = self.modelJsons.get(modelName)
+        model = self.modelBlockJsons.get(modelName)
         if model is None:
             model = json.load(self.resourceLoader.openStream("models/%s.json" % modelName))
-            self.modelJsons[modelName] = model
+            self.modelBlockJsons[modelName] = model
         return model
+
+    def _getBlockState(self, stateName):
+        state = self.modelStateJsons.get(stateName)
+        if state is None:
+            state = json.load(self.resourceLoader.openStream("blockstates/%s.json" % stateName))
+            self.modelStateJsons[stateName] = state
+        return state
 
     def __init__(self, blocktypes, resourceLoader):
         """
@@ -34,7 +41,8 @@ class BlockModels(object):
         self.resourceLoader = resourceLoader
         self.blocktypes = blocktypes
 
-        self.modelJsons = {}
+        self.modelBlockJsons = {}
+        self.modelStateJsons = {}
         self.modelQuads = {}
         self._textureNames = set()
         self.firstTextures = {}  # first texture found for each block - used for icons (xxx)
@@ -48,7 +56,7 @@ class BlockModels(object):
                 continue
             name = block.internalName.replace(blocktypes.namePrefix, "")
             try:
-                statesJson = json.load(resourceLoader.openStream("blockstates/%s.json" % block.resourcePath))
+                statesJson = self._getBlockState(block.resourcePath)
             except KeyError:
                 log.warn("Could not get blockstates resource for %s, skipping...", block)
                 continue
