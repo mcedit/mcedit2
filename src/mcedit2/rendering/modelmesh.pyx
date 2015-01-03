@@ -1,3 +1,4 @@
+#cython: boundscheck=False
 """
     ${NAME}
 """
