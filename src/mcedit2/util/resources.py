@@ -11,11 +11,15 @@ log = logging.getLogger(__name__)
 
 def resourcePath(filename):
     filename = filename.replace('/', os.path.sep)
-    return os.path.join(
+    path = os.path.join(
         getattr(
             sys,
-            "_MEIPASS",
-            os.path.abspath(".")
+            "_MEIPASS",  # if pyinstaller'd
+            os.path.abspath("src")  # if running from source
         ),
         filename
     )
+    if not os.path.exists(path):
+        raise RuntimeError("Could not get resource path for %s\n(Tried %s which does not exist)" % (filename, path))
+
+    return path
