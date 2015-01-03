@@ -154,41 +154,8 @@ class BlockModels(object):
                 allQuads = []
 
                 for element in allElements:
-                    shade = element.get("shade", True)
-                    fromPoint = Vector(*element["from"])
-                    toPoint = Vector(*element["to"])
-                    fromPoint /= 16.
-                    toPoint /= 16.
-                    box = FloatBox(fromPoint, maximum=toPoint)
-
-                    for face, info in element["faces"].iteritems():
-                        face = facesByCardinal[face]
-                        texture = info["texture"]
-                        cullface = info.get("cullface")
-
-                        uv = info.get("uv", [0, 0, 16, 16])
-
-                        lastvar = texture
-
-                        # resolve texture variables
-                        for i in range(30):
-                            if texture is None:
-                                raise ValueError("Texture variable %s is not assigned." % lastvar)
-                            elif texture[0] == "#":
-                                lastvar = texture
-                                texture = textureVars[texture[1:]]
-                            else:
-                                break
-                        else:
-                            raise ValueError("Texture variable loop detected!")
-
-                        self.firstTextures.setdefault(name, texture)
-                        self._textureNames.add(texture)
-                        allQuads.append((box, face,
-                                         texture, uv, cullface,
-                                         shade, element.get("rotation"), info.get("rotation"),
-                                         variantXrot, variantYrot, variantZrot))
-
+                    quads = self.buildBoxQuads(element, name, textureVars, variantXrot, variantYrot, variantZrot)
+                    allQuads.extend(quads)
 
 
 
@@ -199,9 +166,43 @@ class BlockModels(object):
                           allElements, textureVars)
                 raise
 
-        # for name in self.modelQuads:
-        #    log.info("Quads for %s:\n%s\n", name, self.modelQuads[name])
-        # raise SystemExit
+    def buildBoxQuads(self, element, name, textureVars, variantXrot, variantYrot, variantZrot):
+        quads = []
+        shade = element.get("shade", True)
+        fromPoint = Vector(*element["from"])
+        toPoint = Vector(*element["to"])
+        fromPoint /= 16.
+        toPoint /= 16.
+        box = FloatBox(fromPoint, maximum=toPoint)
+        for face, info in element["faces"].iteritems():
+            face = facesByCardinal[face]
+            texture = info["texture"]
+            cullface = info.get("cullface")
+
+            uv = info.get("uv", [0, 0, 16, 16])
+
+            lastvar = texture
+
+            # resolve texture variables
+            for i in range(30):
+                if texture is None:
+                    raise ValueError("Texture variable %s is not assigned." % lastvar)
+                elif texture[0] == "#":
+                    lastvar = texture
+                    texture = textureVars[texture[1:]]
+                else:
+                    break
+            else:
+                raise ValueError("Texture variable loop detected!")
+
+            self.firstTextures.setdefault(name, texture)
+            self._textureNames.add(texture)
+            quads.append((box, face,
+                    texture, uv, cullface,
+                    shade, element.get("rotation"), info.get("rotation"),
+                    variantXrot, variantYrot, variantZrot))
+
+        return quads
 
     def getTextureNames(self):
         return iter(self._textureNames)
