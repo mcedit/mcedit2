@@ -40,7 +40,10 @@ class BlockModels(object):
         self.firstTextures = {}  # first texture found for each block - used for icons (xxx)
         self.cookedModels = {}  # nameAndState -> [face -> xyzuv, cullface]
 
-        for block in blocktypes:
+        for i, block in enumerate(blocktypes):
+            if i % 100 == 0:
+                log.info("Loading block models %s/%s", i, len(blocktypes))
+
             if block.renderType != 3:  # only rendertype 3 uses block models
                 continue
             name = block.internalName.replace(blocktypes.namePrefix, "")
