@@ -131,6 +131,13 @@ class MCInstallError(ValueError):
     """
 
 def getDefaultInstall():
+    """
+
+    :return:
+    :rtype: MCInstall
+    """
+    if _installations is None:
+        listInstalls()
     minecraftDir = directories.minecraftDir
     defaultInstall = MCInstall(minecraftDir, "(Default)")
     defaultInstall.checkUsable()
@@ -162,6 +169,7 @@ def listInstalls():
     global _installations
     if _installations is None:
         _installations = list(_listInstalls())
+    getDefaultInstall()
 
     return _installations
 
@@ -179,7 +187,6 @@ def ensureInstallation():
     """
     try:
         listInstalls()
-        defaultInstall = getDefaultInstall()
 
         #raise MCInstallError("Displaying Minecraft Install dialog! xxx remove me")
     except MCInstallError as e:

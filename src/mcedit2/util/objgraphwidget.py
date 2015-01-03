@@ -25,7 +25,7 @@ class ObjGraphWidget(QtGui.QWidget):
         super(ObjGraphWidget, self).__init__(*a, **kw)
 
         if objgraph is None:
-            self.setLayout(Row(QtGui.QLabel("objgraph is not installed (andyou probably don't have GraphViz "
+            self.setLayout(Row(QtGui.QLabel("objgraph is not installed (and you probably don't have GraphViz "
                                             "either...) "), None))
             return
 

@@ -53,26 +53,32 @@ def allTextureNames(blocktypes):
 
 
 class TextureAtlas(object):
-    """
-    Important members:
 
-    textureData: RGBA Texture Data as a numpy array.
-    texCoordsByName: Dictionary of texture coordinates. Usable for textures loaded using the extraTextures argument
-        or from block definitions.
-        Maps "texture_name" -> (left, top, right, bottom)
-
-    """
-
-    def __init__(self, world, resourceLoader, blockModels, maxLOD=2):
+    def __init__(self, world, resourceLoader, blockModels, maxLOD=2, overrideMaxSize=None):
         """
+        Important members:
 
+            textureData: RGBA Texture Data as a numpy array.
+
+            texCoordsByName: Dictionary of texture coordinates. Usable for textures loaded using the extraTextures argument
+                or from block definitions.
+                Maps "texture_name" -> (left, top, right, bottom)
+
+
+        :param world:
         :type world: mceditlib.worldeditor.WorldEditor
+        :param resourceLoader:
         :type resourceLoader: mcedit2.resourceloader.ResourceLoader
+        :param blockModels:
         :type blockModels: mcedit2.rendering.blockmodels.BlockModels
         :param maxLOD: Adds wrapped borders to each texture to allow mipmapping at this level of detail
+        :type maxLOD: int
+        :param overrideMaxSize: Override the maximum texture size - ONLY use for testing TextureAtlas without creating a GL context.
+        :type overrideMaxSize: int or None
         :return:
-        :rtype:
+        :rtype: TextureAtlas
         """
+        self.overrideMaxSize = overrideMaxSize
         self.blockModels = blockModels
         self._blocktypes = world.blocktypes
         self._filename = world.filename
@@ -113,7 +119,11 @@ class TextureAtlas(object):
         if self._terrainTexture:
             return
 
-        maxSize = getGLMaximumTextureSize()
+        if self.overrideMaxSize is None:
+            maxSize = getGLMaximumTextureSize()
+        else:
+            maxSize = self.overrideMaxSize
+
         maxLOD = min(4, self._maxLOD)
         if maxLOD:
             borderSize = 1 << (maxLOD - 1)
@@ -177,8 +187,11 @@ class TextureAtlas(object):
             GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, atlasWidth, atlasHeight, 0, GL.GL_RGBA,
                             GL.GL_UNSIGNED_BYTE, self.textureData.ravel())
 
-        self._terrainTexture = glutils.Texture(_load, minFilter=GL.GL_NEAREST_MIPMAP_LINEAR, maxLOD=maxLOD)
-        self._terrainTexture.load()
+        if self.overrideMaxSize is None:
+            self._terrainTexture = glutils.Texture(_load, minFilter=GL.GL_NEAREST_MIPMAP_LINEAR, maxLOD=maxLOD)
+            self._terrainTexture.load()
+        else:
+            self._terrainTexture = object()
 
         self.width = atlasWidth
         self.height = atlasHeight
