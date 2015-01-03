@@ -76,8 +76,6 @@ As a bonus, you can use the `-debug` flag to enable the Debug menu and a few ext
 
 ## Linux/OS X (not tested fully)
 
-Make sure to delete pywin32 from the requirements list because that is a windows only library. 
-
 
     cd (Your mcedit2 location)
     virtualenv ENV

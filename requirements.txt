@@ -1,6 +1,5 @@
 pyside
 pyopengl
-pywin32
 cython
 ipython
 pygments
