@@ -10,6 +10,10 @@ cimport numpy
 
 from mcedit2.rendering import renderstates
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
+from mcedit2.rendering cimport blockmodels
+
+from libc.stdlib cimport malloc, realloc, free
+from libc.string cimport memcpy
 
 log = logging.getLogger(__name__)
 
@@ -32,12 +36,9 @@ class BlockModelMesh(object):
         cdef numpy.ndarray[numpy.uint8_t, ndim=3] data
         cdef numpy.ndarray[numpy.uint8_t, ndim=1] renderType
         cdef numpy.ndarray[numpy.uint8_t, ndim=1] opaqueCube
+        cdef blockmodels.BlockModels blockModels
 
-        chunk = self.sectionUpdate.chunkUpdate.chunk
         cdef short cy = self.sectionUpdate.cy
-        section = chunk.getSection(cy)
-        if section is None:
-            return
 
         atlas = self.sectionUpdate.chunkUpdate.updateTask.textureAtlas
         blockModels = atlas.blockModels
@@ -45,28 +46,33 @@ class BlockModelMesh(object):
 
         blocktypes = self.sectionUpdate.blocktypes
         areaBlocks = self.sectionUpdate.areaBlocks
-        data = section.Data
+        data = self.sectionUpdate.Data
         renderType = self.sectionUpdate.renderType
         opaqueCube = blocktypes.opaqueCube
 
-        faceQuadVerts = []
+        #faceQuadVerts = []
 
         cdef unsigned short y, z, x, ID, meta
         cdef short dx, dy, dz,
         cdef unsigned short nx, ny, nz, nID
-        cdef numpy.ndarray verts
-        cdef list quads
-        cdef tuple quad
+        cdef blockmodels.ModelQuadList quads
+        cdef blockmodels.ModelQuad quad
 
-        cdef numpy.ndarray[numpy.uint16_t, ndim=1] coords = numpy.zeros(3, dtype=numpy.uint16)
-        cdef numpy.ndarray[list, ndim=2] cookedModelsByID = blockModels.cookedModelsByID
+        cdef unsigned short rx, ry, rz
 
+        cdef unsigned int buffer_ptr = 0
+        cdef unsigned int buffer_size = 256
+        cdef float * vertexBuffer = <float *>malloc(buffer_size * sizeof(float) * 24)
+        cdef float * xyzuvc
+        cdef numpy.ndarray vabuffer
+        if vertexBuffer == NULL:
+            return
         for y in range(1, 17):
-            coords[1] = y - 1 + (cy << 4)
+            ry = y - 1 + (cy << 4)
             for z in range(1, 17):
-                coords[2] = z - 1
+                rz = z - 1
                 for x in range(1, 17):
-                    coords[0] = x - 1
+                    rx = x - 1
                     ID = areaBlocks[y, z, x]
                     if ID == 0:
                         continue
@@ -74,27 +80,47 @@ class BlockModelMesh(object):
 
                     if renderType[ID] != 3:  # only model blocks for now
                         continue
-                    quads = cookedModelsByID[ID, meta]
-                    if quads is None:
+                    quads = blockModels.cookedModelsByID[ID][meta]
+                    if quads.count == 0:
                         continue
 
-                    for xyzuvc, cullface in quads:
-                        if cullface is not None:
-                            dx, dy, dz = cullface.vector
-                            nx = x + dx
-                            ny = y + dy
-                            nz = z + dz
+                    for i in range(quads.count):
+                        quad = quads.quads[i]
+                        if quad.cullface[0]:
+                            nx = x + quad.cullface[1]
+                            ny = y + quad.cullface[2]
+                            nz = z + quad.cullface[3]
                             nID = areaBlocks[ny, nz, nx]
                             if opaqueCube[nID]:
                                 continue
 
-                        verts = numpy.array(xyzuvc)
-                        verts[..., :3] += coords
-                        faceQuadVerts.append(verts)
-                        # log.info("Block %s:\nVertices: %s", (x-1, y-1, z-1), verts)
+                        xyzuvc = vertexBuffer + buffer_ptr * 24
+                        memcpy(xyzuvc, quad.xyzuvc, sizeof(float) * 24)
 
-        # raise SystemExit
-        if len(faceQuadVerts):
-            vertexArray = VertexArrayBuffer(len(faceQuadVerts), lights=False)
-            vertexArray.buffer[..., :6] = numpy.vstack(faceQuadVerts)
+                        #(<object>verts).shape = 1, 4, 6
+                        #verts[..., :3] += coords
+                        xyzuvc[0] += rx
+                        xyzuvc[1] += ry
+                        xyzuvc[2] += rz
+                        xyzuvc[6] += rx
+                        xyzuvc[7] += ry
+                        xyzuvc[8] += rz
+                        xyzuvc[12] += rx
+                        xyzuvc[13] += ry
+                        xyzuvc[14] += rz
+                        xyzuvc[18] += rx
+                        xyzuvc[19] += ry
+                        xyzuvc[20] += rz
+                        buffer_ptr += 1
+                        if buffer_ptr >= buffer_size:
+                            buffer_size *= 2
+                            vertexBuffer = <float *>realloc(vertexBuffer, buffer_size * sizeof(float) * 24)
+                            #buffer.resize((buffer_size, 24))
+                        #faceQuadVerts.append(verts)
+
+        if buffer_ptr:  # now buffer size
+            vertexArray = VertexArrayBuffer(buffer_ptr, lights=False)
+            vabuffer = vertexArray.buffer
+            memcpy(vabuffer.data, vertexBuffer, buffer_ptr * sizeof(float) * 24)
             self.vertexArrays = [vertexArray]
+        free(vertexBuffer)

@@ -16,10 +16,21 @@ from array import array
 from mceditlib import faces
 from mceditlib.geometry import Vector, FloatBox
 
+from libc.stdlib cimport malloc, free
+from libc.string cimport memset
+
 log = logging.getLogger(__name__)
 
+cdef struct ModelQuad:
+    float[24] xyzuvc
+    char[4] cullface  # isCulled, dx, dy, dz
 
-class BlockModels(object):
+cdef struct ModelQuadList:
+    int count
+    ModelQuad *quads
+
+cdef class BlockModels(object):
+
     def _getBlockModel(self, modelName):
         model = self.modelBlockJsons.get(modelName)
         if model is None:
@@ -53,7 +64,8 @@ class BlockModels(object):
         self._textureNames = set()
         self.firstTextures = {}  # first texture found for each block - used for icons (xxx)
         self.cookedModels = {}  # nameAndState -> list[(xyzuvc, cullface)]
-        self.cookedModelsByID = numpy.zeros((256*16, 16), dtype=list)  # (id, meta) -> list[(xyzuvc, cullface)]
+        #self.cookedModelsByID = numpy.zeros((256*16, 16), dtype=list)  # (id, meta) -> list[(xyzuvc, cullface)]
+        memset(self.cookedModelsByID, 0, sizeof(self.cookedModelsByID))
         self.cooked = False
 
         for i, block in enumerate(blocktypes):
@@ -266,16 +278,43 @@ class BlockModels(object):
                     xyzuvc.view('uint8')[:, 20:] = faceShades[face]
                 else:
                     xyzuvc.view('uint8')[:, 20:] = 0xff
-                xyzuvc.shape = 1, 4, 6  # add the first dimension to stack along in modelmesh.pyx
+                xyzuvc.shape = 24  # flatten to store in ModelQuad.xyzuvc
 
                 cookedQuads.append((xyzuvc, cullface))
 
             cookedModels[nameAndState] = cookedQuads
             ID, meta = self.blocktypes.IDsByState[nameAndState]
-            self.cookedModelsByID[ID, meta] = cookedQuads
-            
+            self.storeQuads(cookedQuads, ID, meta)
+
         self.cookedModels = cookedModels
         self.cooked = True
+
+    def storeQuads(self, list cookedQuads, unsigned short ID, unsigned char meta):
+        cdef ModelQuadList modelQuads
+        modelQuads.count = len(cookedQuads)
+        cdef void * quads = malloc(modelQuads.count * sizeof(ModelQuad))
+        modelQuads.quads = <ModelQuad *>quads
+        cdef float[:] xyzuvc, quadxyzuvc
+        cdef int i
+        for i in range(modelQuads.count):
+            xyzuvc, cullface = cookedQuads[i]
+            quadxyzuvc = modelQuads.quads[i].xyzuvc
+            quadxyzuvc[:] = xyzuvc[:]
+            if cullface:
+                modelQuads.quads[i].cullface[0] = 1
+                dx, dy, dz = cullface.vector
+                modelQuads.quads[i].cullface[1] = dx
+                modelQuads.quads[i].cullface[2] = dy
+                modelQuads.quads[i].cullface[3] = dz
+            else:
+                modelQuads.quads[i].cullface[0] = 0
+                modelQuads.quads[i].cullface[1] = 0
+                modelQuads.quads[i].cullface[2] = 0
+                modelQuads.quads[i].cullface[3] = 0
+
+
+
+        self.cookedModelsByID[ID][meta] = modelQuads
 
     def rotateVertices(self, rotation, variantXrot, variantYrot, variantZrot, xyzuvc):
         if rotation is not None:
