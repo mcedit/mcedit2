@@ -1,4 +1,4 @@
-#cython: boundscheck=False
+#cython: boundscheck=False, profile=True
 """
     blockmodels
 """
