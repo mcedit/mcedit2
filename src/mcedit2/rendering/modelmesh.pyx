@@ -29,7 +29,7 @@ class BlockModelMesh(object):
 
     def createVertexArrays(self):
         cdef numpy.ndarray[numpy.uint16_t, ndim=3] areaBlocks
-        #cdef numpy.ndarray[numpy.uint8_t, ndim=3] data
+        cdef numpy.ndarray[numpy.uint8_t, ndim=3] data
         cdef numpy.ndarray[numpy.uint8_t, ndim=1] renderType
         cdef numpy.ndarray[numpy.uint8_t, ndim=1] opaqueCube
 

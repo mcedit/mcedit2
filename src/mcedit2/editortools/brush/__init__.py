@@ -359,8 +359,8 @@ class FakeBrushChunk(object):
             section = FakeBrushSection()
             section.Y = y
             if fillBlock.ID:
-                section.Blocks = numpy.array([0, fillBlock.ID])[mask.astype(numpy.uint8)]
-                section.Data = numpy.array([0, fillBlock.meta])[mask.astype(numpy.uint8)]
+                section.Blocks = numpy.array([0, fillBlock.ID], dtype=numpy.uint16)[mask.astype(numpy.uint8)]
+                section.Data = numpy.array([0, fillBlock.meta], dtype=numpy.uint8)[mask.astype(numpy.uint8)]
             else:
                 section.Blocks = numpy.array([0, NULL_ID])[mask.astype(numpy.uint8)]
 
