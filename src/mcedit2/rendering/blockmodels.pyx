@@ -262,6 +262,7 @@ class BlockModels(object):
                     xyzuvc.view('uint8')[:, 20:] = faceShades[face]
                 else:
                     xyzuvc.view('uint8')[:, 20:] = 0xff
+                xyzuvc.shape = 1, 4, 6  # add the first dimension to stack along in modelmesh.pyx
 
                 cookedQuads.append((xyzuvc, cullface))
 

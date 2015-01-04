@@ -52,10 +52,15 @@ class BlockModelMesh(object):
         cdef unsigned short y, z, x, ID, meta
         cdef short dx, dy, dz,
         cdef unsigned short nx, ny, nz, nID
+        cdef numpy.ndarray verts
 
+        cdef numpy.ndarray[numpy.uint16_t, ndim=1] coords = numpy.zeros(3, dtype=numpy.uint16)
         for y in range(1, 17):
+            coords[1] = y - 1 + (cy << 4)
             for z in range(1, 17):
+                coords[2] = z - 1
                 for x in range(1, 17):
+                    coords[0] = x - 1
                     ID = areaBlocks[y, z, x]
                     if ID == 0:
                         continue
@@ -78,8 +83,7 @@ class BlockModelMesh(object):
                                 continue
 
                         verts = numpy.array(xyzuvc)
-                        verts.shape = 1, 4, 6
-                        verts[..., :3] += (x - 1, y - 1 + (cy << 4), z - 1)
+                        verts[..., :3] += coords
                         faceQuadVerts.append(verts)
                         # log.info("Block %s:\nVertices: %s", (x-1, y-1, z-1), verts)
 
