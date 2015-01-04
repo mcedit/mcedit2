@@ -34,8 +34,7 @@ class BlockModelMesh(object):
         cdef numpy.ndarray[numpy.uint8_t, ndim=1] opaqueCube
 
         chunk = self.sectionUpdate.chunkUpdate.chunk
-        cx, cz = chunk.chunkPosition
-        cy = self.sectionUpdate.cy
+        cdef short cy = self.sectionUpdate.cy
         section = chunk.getSection(cy)
         if section is None:
             return
@@ -53,8 +52,12 @@ class BlockModelMesh(object):
         cdef short dx, dy, dz,
         cdef unsigned short nx, ny, nz, nID
         cdef numpy.ndarray verts
+        cdef list quads
+        cdef tuple quad
 
         cdef numpy.ndarray[numpy.uint16_t, ndim=1] coords = numpy.zeros(3, dtype=numpy.uint16)
+        cdef numpy.ndarray[list, ndim=2] cookedModelsByID = blockModels.cookedModelsByID
+
         for y in range(1, 17):
             coords[1] = y - 1 + (cy << 4)
             for z in range(1, 17):
@@ -68,7 +71,7 @@ class BlockModelMesh(object):
 
                     if renderType[ID] != 3:  # only model blocks for now
                         continue
-                    quads = blockModels.cookedModelsByID.get((ID, meta))
+                    quads = cookedModelsByID[ID, meta]
                     if quads is None:
                         continue
 

@@ -52,8 +52,8 @@ class BlockModels(object):
         self.modelQuads = {}
         self._textureNames = set()
         self.firstTextures = {}  # first texture found for each block - used for icons (xxx)
-        self.cookedModels = {}  # nameAndState -> [face -> xyzuv, cullface]
-        self.cookedModelsByID = {}  # (id, meta) -> [face -> xyzuv, cullface]
+        self.cookedModels = {}  # nameAndState -> list[(xyzuvc, cullface)]
+        self.cookedModelsByID = numpy.zeros((256*16, 16), dtype=list)  # (id, meta) -> list[(xyzuvc, cullface)]
 
         for i, block in enumerate(blocktypes):
             if i % 100 == 0:
@@ -216,10 +216,10 @@ class BlockModels(object):
 
     def cookQuads(self, textureAtlas):
         cookedModels = {}
-        cookedModelsByID = {}
         cdef int l, t, w, h
         cdef int u1, u2, v1, v2
         cdef int uw, vh
+        cdef list cookedQuads
         for nameAndState, allQuads in self.modelQuads.iteritems():
             cookedQuads = []
             for (box, face, texture, uv, cullface, shade, rotation, textureRotation,
@@ -268,10 +268,9 @@ class BlockModels(object):
 
             cookedModels[nameAndState] = cookedQuads
             ID, meta = self.blocktypes.IDsByState[nameAndState]
-            cookedModelsByID[ID, meta] = cookedQuads
+            self.cookedModelsByID[ID, meta] = cookedQuads
 
         self.cookedModels = cookedModels
-        self.cookedModelsByID = cookedModelsByID
 
     def rotateVertices(self, rotation, variantXrot, variantYrot, variantZrot, xyzuvc):
         if rotation is not None:
