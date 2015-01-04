@@ -228,7 +228,7 @@ class BlockModels(object):
                 l, t, w, h = textureAtlas.texCoordsByName[texture]
                 u1, v1, u2, v2 = uv
                 uw = (w * (u2 - u1)) / 16
-                vh = (h * (v2 - v1)) / 16
+                vh = (w * (v2 - v1)) / 16  # w is assumed to be the height of a single frame in an animation xxxxx read .mcmeta
                 u1 += l
                 u2 = u1 + uw
 
