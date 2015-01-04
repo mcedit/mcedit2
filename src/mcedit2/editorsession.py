@@ -308,7 +308,7 @@ class EditorSession(QtCore.QObject):
             block = self.worldEditor.blocktypes[id, data]
             editorapp.MCEditApp.app.updateStatusLabel(event.blockPosition, block, self.loader.cps, event.view.fps)
         else:
-            editorapp.MCEditApp.app.updateStatusLabel('(N/A)', "", self.loader.cps, event.view.fps)
+            editorapp.MCEditApp.app.updateStatusLabel('(N/A)', None, self.loader.cps, event.view.fps)
 
     def viewMousePress(self, event):
         self.updateStatusFromEvent(event)
