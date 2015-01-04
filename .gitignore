@@ -44,3 +44,4 @@ src/mcedit2/rendering/modelmesh.html
 src/mcedit2/rendering/blockmodels.c
 src/mcedit2/rendering/modelmesh.c
 *.pyd
+src/mceditlib/nbt.html
