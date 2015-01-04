@@ -39,7 +39,10 @@ class BlockModelMesh(object):
         if section is None:
             return
 
-        blockModels = self.sectionUpdate.chunkUpdate.updateTask.textureAtlas.blockModels
+        atlas = self.sectionUpdate.chunkUpdate.updateTask.textureAtlas
+        blockModels = atlas.blockModels
+        blockModels.cookQuads(atlas)
+
         blocktypes = self.sectionUpdate.blocktypes
         areaBlocks = self.sectionUpdate.areaBlocks
         data = section.Data

@@ -200,8 +200,6 @@ class TextureAtlas(object):
         usedSize = sum(sum(width * height for _, _, _, width, height, _ in slot.textures) for slot in slots) * 4
         log.info("Terrain atlas created for world %s (%d/%d kB)", util.displayName(self._filename), usedSize / 1024,
                  totalSize / 1024)
-        if self.overrideMaxSize is None:
-            self.blockModels.cookQuads(self)
 
         #file("terrain-%sw-%sh.raw" % (atlasWidth, atlasHeight), "wb").write(texData.tostring())
         #raise SystemExit
