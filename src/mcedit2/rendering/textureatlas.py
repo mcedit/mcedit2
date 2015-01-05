@@ -54,7 +54,7 @@ def allTextureNames(blocktypes):
 
 class TextureAtlas(object):
 
-    def __init__(self, world, resourceLoader, blockModels, maxLOD=2, overrideMaxSize=None):
+    def __init__(self, world, resourceLoader, blockModels, maxLOD=0, overrideMaxSize=None):
         """
         Important members:
 
