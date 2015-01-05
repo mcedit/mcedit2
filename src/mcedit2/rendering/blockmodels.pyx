@@ -300,7 +300,7 @@ cdef class BlockModels(object):
             xyzuvc, cullface = cookedQuads[i]
             quadxyzuvc = modelQuads.quads[i].xyzuvc
             quadxyzuvc[:] = xyzuvc[:]
-            if cullface:
+            if cullface is not None:
                 modelQuads.quads[i].cullface[0] = 1
                 dx, dy, dz = cullface.vector
                 modelQuads.quads[i].cullface[1] = dx
