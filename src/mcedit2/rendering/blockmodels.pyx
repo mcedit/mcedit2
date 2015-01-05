@@ -1,4 +1,4 @@
-#cython: boundscheck=False, profile=True
+#cython: boundscheck=False
 """
     blockmodels
 """
@@ -173,8 +173,17 @@ cdef class BlockModels(object):
                 # quads.
                 allQuads = []
 
+                if block.internalName == "minecraft:redstone_wire":
+                    blockColor = (0xff, 0x33, 0x00)
+                else:
+                    blockColor = block.color
+                    r = (blockColor >> 16) & 0xff
+                    g = (blockColor >> 8) & 0xff
+                    b = blockColor & 0xff
+                    blockColor = r, g, b
+
                 for element in allElements:
-                    quads = self.buildBoxQuads(element, name, textureVars, variantXrot, variantYrot, variantZrot)
+                    quads = self.buildBoxQuads(element, name, textureVars, variantXrot, variantYrot, variantZrot, blockColor)
                     allQuads.extend(quads)
 
 
@@ -186,7 +195,7 @@ cdef class BlockModels(object):
                           allElements, textureVars)
                 raise
 
-    def buildBoxQuads(self, element, name, textureVars, variantXrot, variantYrot, variantZrot):
+    def buildBoxQuads(self, element, name, textureVars, variantXrot, variantYrot, variantZrot, blockColor):
         quads = []
         shade = element.get("shade", True)
         fromPoint = Vector(*element["from"])
@@ -203,6 +212,12 @@ cdef class BlockModels(object):
 
             lastvar = texture
 
+            tintindex = info.get("tintindex")
+            if tintindex is not None:
+                tintcolor = blockColor
+            else:
+                tintcolor = None
+
             # resolve texture variables
             for i in range(30):
                 if texture is None:
@@ -217,10 +232,11 @@ cdef class BlockModels(object):
 
             self.firstTextures.setdefault(name, texture)
             self._textureNames.add(texture)
+
             quads.append((box, face,
                     texture, uv, cullface,
                     shade, element.get("rotation"), info.get("rotation"),
-                    variantXrot, variantYrot, variantZrot))
+                    variantXrot, variantYrot, variantZrot, tintcolor))
 
         return quads
 
@@ -239,7 +255,7 @@ cdef class BlockModels(object):
         for nameAndState, allQuads in self.modelQuads.iteritems():
             cookedQuads = []
             for (box, face, texture, uv, cullface, shade, rotation, textureRotation,
-                 variantXrot, variantYrot, variantZrot) in allQuads:
+                 variantXrot, variantYrot, variantZrot, tintcolor) in allQuads:
 
                 l, t, w, h = textureAtlas.texCoordsByName[texture]
                 u1, v1, u2, v2 = uv
@@ -274,10 +290,17 @@ cdef class BlockModels(object):
 
                 self.rotateVertices(rotation, variantXrot, variantYrot, variantZrot, xyzuvc)
 
+                rgba = xyzuvc.view('uint8')[:, 20:]
                 if shade:
-                    xyzuvc.view('uint8')[:, 20:] = faceShades[face]
+                    rgba[:] = faceShades[face]
                 else:
-                    xyzuvc.view('uint8')[:, 20:] = 0xff
+                    rgba[:] = 0xff
+
+                if tintcolor is not None:
+                    rgba[..., 0] = (tintcolor[0] * int(rgba[0, 0])) >> 8
+                    rgba[..., 1] = (tintcolor[1] * int(rgba[0, 1])) >> 8
+                    rgba[..., 2] = (tintcolor[2] * int(rgba[0, 2])) >> 8
+
                 xyzuvc.shape = 24  # flatten to store in ModelQuad.xyzuvc
 
                 cookedQuads.append((xyzuvc, cullface))

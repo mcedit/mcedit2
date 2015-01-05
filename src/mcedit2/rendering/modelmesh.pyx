@@ -1,4 +1,4 @@
-#cython: boundscheck=False, profile=True
+#cython: boundscheck=False
 """
     ${NAME}
 """
@@ -60,8 +60,8 @@ class BlockModelMesh(object):
 
         cdef unsigned short rx, ry, rz
 
-        cdef unsigned int buffer_ptr = 0
-        cdef unsigned int buffer_size = 256
+        cdef size_t buffer_ptr = 0
+        cdef size_t buffer_size = 256
         cdef float * vertexBuffer = <float *>malloc(buffer_size * sizeof(float) * 24)
         cdef float * xyzuvc
         cdef numpy.ndarray vabuffer
