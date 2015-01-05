@@ -1,3 +1,5 @@
+# MCEdit and MCEditLib license
+
 Copyright (c) 2010-2015, David Rio Vierra
 All rights reserved.
 
