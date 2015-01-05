@@ -222,8 +222,9 @@ class Texture(object):
                               GL.GL_NEAREST_MIPMAP_LINEAR,
                               GL.GL_NEAREST_MIPMAP_NEAREST):
 
-            GL.glTexParameter(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAX_LOD, self.maxLOD)
-            GL.glGenerateMipmap(GL.GL_TEXTURE_2D)
+            if bool(GL.glGenerateMipmap):
+                GL.glTexParameter(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAX_LOD, self.maxLOD)
+                GL.glGenerateMipmap(GL.GL_TEXTURE_2D)
 
     def dispose(self):
         if self._texID is not None:

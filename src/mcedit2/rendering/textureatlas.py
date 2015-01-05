@@ -125,6 +125,8 @@ class TextureAtlas(object):
             maxSize = self.overrideMaxSize
 
         maxLOD = min(4, self._maxLOD)
+        if not bool(GL.glGenerateMipmap):
+            maxLOD = 0
         if maxLOD:
             borderSize = 1 << (maxLOD - 1)
         else:
@@ -188,7 +190,11 @@ class TextureAtlas(object):
                             GL.GL_UNSIGNED_BYTE, self.textureData.ravel())
 
         if self.overrideMaxSize is None:
-            self._terrainTexture = glutils.Texture(_load, minFilter=GL.GL_NEAREST_MIPMAP_LINEAR, maxLOD=maxLOD)
+            if maxLOD:
+                minFilter = GL.GL_NEAREST_MIPMAP_LINEAR
+            else:
+                minFilter = None
+            self._terrainTexture = glutils.Texture(_load, minFilter=minFilter, maxLOD=maxLOD)
             self._terrainTexture.load()
         else:
             self._terrainTexture = object()
