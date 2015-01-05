@@ -3,6 +3,7 @@
 """
 from __future__ import absolute_import, division, print_function
 import logging
+import weakref
 
 from mcedit2.rendering import rendergraph
 
@@ -20,10 +21,22 @@ class Node(object):
         self._dirty = True
         self.childrenChanged = False
         self.descendentChildrenChanged = False
-        self.parent = None
 
     def __repr__(self):
         return "%s(visible=%s, children=%d)" % (self.__class__.__name__, self.visible, len(self._children))
+
+    _parent = None
+    @property
+    def parent(self):
+        if self._parent:
+            return self._parent()
+
+    @parent.setter
+    def parent(self, value):
+        if value:
+            self._parent = weakref.ref(value)
+        else:
+            self._parent = value
 
     def touchChildren(self):
         node = self

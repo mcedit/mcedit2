@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function
 import collections
 import logging
+import weakref
 from OpenGL import GL
 import numpy
 from mcedit2.rendering import cubes
@@ -24,10 +25,22 @@ class RenderNode(object):
         self.displayList = DisplayList()          # Recompiled whenever this node's scenegraph node is dirty
                                                   # or node gains or loses children
         self.childNeedsRecompile = True
-        self.parent = None
 
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, self.sceneNode)
+
+    _parent = None
+    @property
+    def parent(self):
+        if self._parent:
+            return self._parent()
+
+    @parent.setter
+    def parent(self, value):
+        if value:
+            self._parent = weakref.ref(value)
+        else:
+            self._parent = value
 
     def addChild(self, node):
         self.children.append(node)
@@ -98,6 +111,12 @@ class RenderNode(object):
 
     def drawSelf(self):
         pass
+
+    def destroyLists(self):
+        for child in self.children:
+            child.destroyLists()
+        self.displayList.destroy()
+
 
 
 class RenderstateRenderNode(RenderNode):
@@ -362,6 +381,7 @@ def updateChildren(renderNode):
 
     for dc in deadChildren:
         renderNode.removeChild(dc)
+        dc.destroyLists()
 
     for index, sceneChild in enumerate(sceneNode.children):
         renderChild = renderNode.childrenBySceneNode.get(sceneChild)
