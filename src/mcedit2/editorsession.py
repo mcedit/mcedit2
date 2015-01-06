@@ -22,7 +22,7 @@ from mcedit2.worldview.camera import CameraWorldViewFrame
 from mcedit2.worldview.cutaway import CutawayWorldViewFrame
 from mcedit2.worldview.minimap import MinimapWorldView
 from mcedit2.worldview.overhead import OverheadWorldViewFrame
-from mceditlib.geometry import Vector
+from mceditlib.geometry import Vector, BoundingBox
 from mceditlib.exceptions import PlayerNotFound
 from mceditlib.revisionhistory import UndoFolderExists
 from mceditlib.worldeditor import WorldEditor
@@ -190,13 +190,17 @@ class EditorSession(QtCore.QObject):
             self.worldEditor.close()
             self.worldEditor = None
 
+    selectionChanged = QtCore.Signal(BoundingBox)
+    _currentSelection = None
+
     @property
     def currentSelection(self):
-        return self.selectionTool.currentSelection
+        return self._currentSelection
 
     @currentSelection.setter
     def currentSelection(self, value):
-        self.selectionTool.currentSelection = value
+        self._currentSelection = value
+        self.selectionChanged.emit(value)
 
     # --- Menu commands ---
 

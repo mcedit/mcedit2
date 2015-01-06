@@ -159,6 +159,8 @@ class SelectionTool(EditorTool):
         super(SelectionTool, self).__init__(editorSession, *args, **kwargs)
         toolWidget = QtGui.QWidget()
 
+        editorSession.selectionChanged.connect(self.selectionDidChange)
+
         self.toolWidget = toolWidget
 
         self.coordInput = SelectionCoordinateWidget()
@@ -194,7 +196,6 @@ class SelectionTool(EditorTool):
         self.overlayNode.addChild(self.faceHoverNode)
 
         self.newSelectionNode = None
-        self.currentSelection = None
 
     @property
     def hideSelectionWalls(self):
@@ -204,19 +205,19 @@ class SelectionTool(EditorTool):
     def hideSelectionWalls(self, value):
         self.selectionNode.filled = not value
 
-
     @property
     def currentSelection(self):
-        return self._currentSelection
+        return self.editorSession.currentSelection
 
     @currentSelection.setter
     def currentSelection(self, value):
-        self._currentSelection = value
-        self.coordInput.boundingBox = value
-        self.updateNodes()
+        self.editorSession.currentSelection = value
 
     def coordInputChanged(self, box):
-        self._currentSelection = box
+        self.currentSelection = box
+
+    def selectionDidChange(self, value):
+        self.coordInput.boundingBox = value
         self.updateNodes()
 
     def updateNodes(self):
