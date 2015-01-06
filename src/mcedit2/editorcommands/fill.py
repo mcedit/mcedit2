@@ -31,7 +31,7 @@ def fillCommand(editorSession):
 
     :type editorSession: mcedit2.editorsession.EditorSession
     """
-    box = editorSession.selectionBox
+    box = editorSession.currentSelection
     if box is None or box.volume == 0:
         return
 

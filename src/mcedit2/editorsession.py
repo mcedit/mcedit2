@@ -191,11 +191,11 @@ class EditorSession(QtCore.QObject):
             self.worldEditor = None
 
     @property
-    def selectionBox(self):
+    def currentSelection(self):
         return self.selectionTool.currentSelection
 
-    @selectionBox.setter
-    def selectionBox(self, value):
+    @currentSelection.setter
+    def currentSelection(self, value):
         self.selectionTool.currentSelection = value
 
     # --- Menu commands ---
@@ -213,14 +213,14 @@ class EditorSession(QtCore.QObject):
     def cut(self):
         command = SimpleRevisionCommand(self, "Cut")
         with command.begin():
-            task = self.currentDimension.exportSchematicIter(self.selectionBox)
+            task = self.currentDimension.exportSchematicIter(self.currentSelection)
             self.copiedSchematic = showProgress("Cutting...", task)
-            task = self.currentDimension.fillBlocksIter(self.selectionBox, "air")
+            task = self.currentDimension.fillBlocksIter(self.currentSelection, "air")
             showProgress("Cutting...", task)
         self.undoStack.push(command)
 
     def copy(self):
-        task = self.currentDimension.exportSchematicIter(self.selectionBox)
+        task = self.currentDimension.exportSchematicIter(self.currentSelection)
         self.copiedSchematic = showProgress("Copying...", task)
 
     def paste(self):

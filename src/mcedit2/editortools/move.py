@@ -236,16 +236,16 @@ class MoveTool(EditorTool):
         if self.currentCommand is None and self.movingSchematic is None:
             # Need to cut out selection
             # xxxx for huge selections, don't cut, just do everything at the end?
-            if self.editorSession.selectionBox is None:
+            if self.editorSession.currentSelection is None:
                 return
-            export = self.editorSession.currentDimension.exportSchematicIter(self.editorSession.selectionBox)
+            export = self.editorSession.currentDimension.exportSchematicIter(self.editorSession.currentSelection)
             self.movingSchematic = showProgress("Lifting...", export)
-            self.movePosition = self.editorSession.selectionBox.origin
+            self.movePosition = self.editorSession.currentSelection.origin
 
             self.currentCommand = SimpleRevisionCommand(self.editorSession, self.tr("Move"))
             self.currentCommand.previousRevision = self.editorSession.currentRevision
             self.editorSession.beginUndo()
-            fill = self.editorSession.currentDimension.fillBlocksIter(self.editorSession.selectionBox, "air")
+            fill = self.editorSession.currentDimension.fillBlocksIter(self.editorSession.currentSelection, "air")
             showProgress("Lifting...", fill)
             self.editorSession.commitUndo()
             self.editorSession.setUndoBlock(self.completeMove)

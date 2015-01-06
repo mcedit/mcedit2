@@ -136,6 +136,6 @@ def replaceCommand(editorSession):
         replacements = dialog.getReplacements()
         command = SimpleRevisionCommand(editorSession, "Replace")
         with command.begin():
-            task = editorSession.currentDimension.fillBlocksIter(editorSession.selectionBox, replacements)
+            task = editorSession.currentDimension.fillBlocksIter(editorSession.currentSelection, replacements)
             showProgress("Replacing...", task)
         editorSession.pushCommand(command)

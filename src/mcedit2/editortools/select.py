@@ -231,8 +231,8 @@ class SelectionTool(EditorTool):
     def deleteSelection(self):
         command = SimpleRevisionCommand(self.editorSession, "Delete")
         with command.begin():
-            fillTask = self.editorSession.currentDimension.fillBlocksIter(self.editorSession.selectionBox, "air")
-            entitiesTask = RemoveEntitiesOperation(self.editorSession.currentDimension, self.editorSession.selectionBox)
+            fillTask = self.editorSession.currentDimension.fillBlocksIter(self.editorSession.currentSelection, "air")
+            entitiesTask = RemoveEntitiesOperation(self.editorSession.currentDimension, self.editorSession.currentSelection)
             task = ComposeOperations(fillTask, entitiesTask)
             showProgress("Deleting...", task)
         self.editorSession.pushCommand(command)
