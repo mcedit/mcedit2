@@ -21,13 +21,13 @@ def _Box(box, *a):
 
 def Row(*a, **kw):
     """
-    :rtype: QHBoxLayout
+    :rtype: QtGui.QHBoxLayout
     """
     margin = kw.pop('margin', None)
     box = QtGui.QHBoxLayout(**kw)
-    if margin:
-        box.setContentsMargins((margin,) * 4)
     _Box(box, *a)
+    if margin is not None:
+        box.setContentsMargins(margin, margin, margin, margin)
     return box
 
 
@@ -37,9 +37,9 @@ def Column(*a, **kw):
     """
     margin = kw.pop('margin', None)
     box = QtGui.QVBoxLayout(**kw)
-    if margin:
-        box.setContentsMargins((margin,) * 4)
     _Box(box, *a)
+    if margin is not None:
+        box.setContentsMargins(margin, margin, margin, margin)
     return box
 
 def setWidgetError(widget, exc):
