@@ -53,20 +53,6 @@
     <addaction name="separator"/>
     <addaction name="actionExit_MCEdit"/>
    </widget>
-   <widget class="QMenu" name="menuEdit">
-    <property name="title">
-     <string>Edit</string>
-    </property>
-    <addaction name="actionUndo"/>
-    <addaction name="actionRedo"/>
-    <addaction name="separator"/>
-    <addaction name="actionCut"/>
-    <addaction name="actionCopy"/>
-    <addaction name="actionPaste"/>
-    <addaction name="actionPaste_Blocks"/>
-    <addaction name="actionPaste_Entities"/>
-    <addaction name="actionClear"/>
-   </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Help</string>
@@ -79,7 +65,6 @@
     </property>
    </widget>
    <addaction name="menuMCEdit"/>
-   <addaction name="menuEdit"/>
    <addaction name="menuWindow"/>
    <addaction name="menuHelp"/>
   </widget>
@@ -142,46 +127,6 @@
   <action name="actionExit_MCEdit">
    <property name="text">
     <string>Exit MCEdit</string>
-   </property>
-  </action>
-  <action name="actionUndo">
-   <property name="text">
-    <string>Undo</string>
-   </property>
-  </action>
-  <action name="actionRedo">
-   <property name="text">
-    <string>Redo</string>
-   </property>
-  </action>
-  <action name="actionCut">
-   <property name="text">
-    <string>Cut</string>
-   </property>
-  </action>
-  <action name="actionCopy">
-   <property name="text">
-    <string>Copy</string>
-   </property>
-  </action>
-  <action name="actionPaste">
-   <property name="text">
-    <string>Paste</string>
-   </property>
-  </action>
-  <action name="actionPaste_Blocks">
-   <property name="text">
-    <string>Paste Blocks</string>
-   </property>
-  </action>
-  <action name="actionPaste_Entities">
-   <property name="text">
-    <string>Paste Entities</string>
-   </property>
-  </action>
-  <action name="actionClear">
-   <property name="text">
-    <string>Clear</string>
    </property>
   </action>
   <action name="actionAbout_MCEdit">

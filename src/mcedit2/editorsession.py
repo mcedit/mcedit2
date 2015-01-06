@@ -78,6 +78,49 @@ class EditorSession(QtCore.QObject):
         self.loader.chunkCompleted.connect(self.chunkDidComplete)
         self.loader.allChunksDone.connect(lambda: self.editorTab.currentView().update())
 
+        # --- Menus ---
+
+        self.menus = []
+
+        self.menuEdit = QtGui.QMenu(self.tr("Edit"))
+        self.menuEdit.setObjectName("menuEdit")
+        self.actionUndo = QtGui.QAction(self.tr("Undo"), self, triggered=self.undo, enabled=False)
+        self.actionUndo.setObjectName("actionUndo")
+        self.actionRedo = QtGui.QAction(self.tr("Redo"), self, triggered=self.redo, enabled=False)
+        self.actionRedo.setObjectName("actionRedo")
+        self.actionCut = QtGui.QAction(self.tr("Cut"), self, triggered=self.cut, enabled=False)
+        self.actionCut.setObjectName("actionCut")
+        self.actionCopy = QtGui.QAction(self.tr("Copy"), self, triggered=self.copy, enabled=False)
+        self.actionCopy.setObjectName("actionCopy")
+        self.actionPaste = QtGui.QAction(self.tr("Paste"), self, triggered=self.paste, enabled=False)
+        self.actionPaste.setObjectName("actionPaste")
+        self.actionPaste_Blocks = QtGui.QAction(self.tr("Paste Blocks"), self, triggered=self.pasteBlocks, enabled=False)
+        self.actionPaste_Blocks.setObjectName("actionPaste_Blocks")
+        self.actionPaste_Entities = QtGui.QAction(self.tr("Paste Entities"), self, triggered=self.pasteEntities, enabled=False)
+        self.actionPaste_Entities.setObjectName("actionPaste_Entities")
+        self.actionClear = QtGui.QAction(self.tr("Clear"), self, triggered=self.clear, enabled=False)
+        self.actionClear.setObjectName("actionClear")
+        self.menuEdit.addAction(self.actionUndo)
+        self.menuEdit.addAction(self.actionRedo)
+        self.menuEdit.addSeparator()
+        self.menuEdit.addAction(self.actionCut)
+        self.menuEdit.addAction(self.actionCopy)
+        self.menuEdit.addAction(self.actionPaste)
+        self.menuEdit.addAction(self.actionPaste_Blocks)
+        self.menuEdit.addAction(self.actionPaste_Entities)
+        self.menuEdit.addAction(self.actionClear)
+
+        self.actionUndo.setShortcut(QtGui.QKeySequence.Undo)
+        self.actionRedo.setShortcut(QtGui.QKeySequence.Redo)
+        self.actionCut.setShortcut(QtGui.QKeySequence.Cut)
+        self.actionCopy.setShortcut(QtGui.QKeySequence.Copy)
+        self.actionPaste.setShortcut(QtGui.QKeySequence.Paste)
+        self.actionPaste_Blocks.setShortcut(QtGui.QKeySequence("Ctrl+Shift+V"))
+        self.actionPaste_Entities.setShortcut(QtGui.QKeySequence("Ctrl+Alt+V"))
+        self.actionClear.setShortcut(QtGui.QKeySequence.Quit)
+
+        self.menus.append(self.menuEdit)
+
         # --- Resources ---
 
         i, v, p = self.versionInfo
@@ -196,6 +239,9 @@ class EditorSession(QtCore.QObject):
 
     def pasteEntities(self):
         NotImplementedYet()
+
+    def clear(self):
+        self.selectionTool.deleteSelection()
 
     # --- Undo support ---
 
@@ -362,6 +408,7 @@ class EditorSession(QtCore.QObject):
         self.worldEditor = None
         return True
 
+
 class EditorTab(QtGui.QWidget):
     """
     EditorTab is the widget containing the editor viewports, the minimap, and
@@ -433,10 +480,6 @@ class EditorTab(QtGui.QWidget):
         self.cameraViewFrame = CameraWorldViewFrame(editorSession.currentDimension, editorSession.textureAtlas, editorSession.geometryCache, self.miniMap)
         self.cameraViewFrame.worldView.viewID = "Cam"
         self._addView(self.cameraViewFrame)
-        #
-        # self.isoViewFrame = IsoWorldViewFrame(editorSession.currentDimension, editorSession.textureAtlas, editorSession.geometryCache, self.miniMap)
-        # self.isoViewFrame.worldView.viewID = "Iso"
-        # self._addView(self.isoViewFrame)
 
         self.viewStack.currentChanged.connect(self._viewChanged)
         self.viewChanged.connect(self.viewDidChange)

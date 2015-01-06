@@ -100,6 +100,7 @@ class MCEditApp(QtGui.QApplication):
 
         # --- Sessions
 
+        self._currentSession = None
         self.sessions = []
         self.sessionDockWidgets = []
         self.sessionChanged.connect(self.sessionDidChange)
@@ -192,31 +193,6 @@ class MCEditApp(QtGui.QApplication):
 
         mainWindow.actionExit_MCEdit.triggered.connect(self.exitEditor)
         mainWindow.actionExit_MCEdit.setShortcut(QtGui.QKeySequence.Quit)
-
-        # -- Edit menu --
-        mainWindow.actionUndo.triggered.connect(self.undo)
-        mainWindow.actionUndo.setShortcut(QtGui.QKeySequence.Undo)
-
-        mainWindow.actionRedo.triggered.connect(self.redo)
-        mainWindow.actionRedo.setShortcut(QtGui.QKeySequence.Redo)
-
-        mainWindow.actionCut.triggered.connect(self.cut)
-        mainWindow.actionCut.setShortcut(QtGui.QKeySequence.Cut)
-
-        mainWindow.actionCopy.triggered.connect(self.copy)
-        mainWindow.actionCopy.setShortcut(QtGui.QKeySequence.Copy)
-
-        mainWindow.actionPaste.triggered.connect(self.paste)
-        mainWindow.actionPaste.setShortcut(QtGui.QKeySequence.Paste)
-
-        mainWindow.actionPaste_Blocks.triggered.connect(self.pasteBlocks)
-        mainWindow.actionPaste_Blocks.setShortcut(QtGui.QKeySequence("Ctrl+Shift+V"))
-
-        mainWindow.actionPaste_Entities.triggered.connect(self.pasteEntities)
-        mainWindow.actionPaste_Entities.setShortcut(QtGui.QKeySequence("Ctrl+Alt+V"))
-
-        mainWindow.actionClear.triggered.connect(self.clear)
-        mainWindow.actionClear.setShortcut(QtGui.QKeySequence.Quit)
 
         # -- Help menu --
         mainWindow.actionAbout_MCEdit.triggered.connect(self.showAbout)
@@ -319,10 +295,6 @@ class MCEditApp(QtGui.QApplication):
             except EnvironmentError as e:
                 log.info("%r", e)
 
-
-
-
-
     def updateStatusLabel(self, pos=None, blocktype=None, cps=None, fps=None):
         if pos is not None:
             self.positionLabel.setText("%s" % (tuple(pos),))
@@ -353,11 +325,20 @@ class MCEditApp(QtGui.QApplication):
             log.debug("Loading timer idle (no chunks)")
             self.loadTimer.setInterval(self.idleTime)
 
-    def sessionDidChange(self, session):
+    def sessionDidChange(self, session, previousSession):
         """
         :type session: EditorSession
         """
         view = session.editorTab.currentView()
+
+        menuBar = self.mainWindow.menuBar()
+        if previousSession:
+            for menu in previousSession.menus:
+                menuBar.removeAction(menu.menuAction())
+        log.info("Adding session menus: %s", session.menus)
+        for menu in session.menus:
+            menuBar.insertMenu(self.mainWindow.menuWindow.menuAction(), menu)
+
 
         self.mainWindow.toolsToolBar.clear()
         for action in session.toolActions:
@@ -484,14 +465,15 @@ class MCEditApp(QtGui.QApplication):
         if self.tabWidget.count() == 0:
             self.showWorldList()
 
-    sessionChanged = QtCore.Signal(EditorSession)
+    sessionChanged = QtCore.Signal(EditorSession, EditorSession)
 
     def tabChanged(self):
         session = self.currentSession()
         if session:
             if hasattr(session, 'undoStack'):
                 self.undoGroup.setActiveStack(session.undoStack)
-            self.sessionChanged.emit(session)
+            self.sessionChanged.emit(session, self._currentSession)
+            self._currentSession = session
 
     def currentTab(self):
         """
@@ -603,35 +585,6 @@ class MCEditApp(QtGui.QApplication):
 
         self.mainWindow.saveSettings()
         raise SystemExit
-
-    # --- Edit Menu Actions ---
-
-    def undo(self):
-        self.currentSession().undo()
-
-    def redo(self):
-        self.currentSession().redo()
-
-    def cut(self):
-        self.currentSession().cut()
-
-    def copy(self):
-        self.currentSession().copy()
-
-    def paste(self):
-        self.currentSession().paste()
-
-    def pasteBlocks(self):
-        self.currentSession().pasteBlocks()
-
-    def pasteEntities(self):
-        self.currentSession().pasteEntities()
-
-    def clear(self):
-        self.currentSession().clear()
-
-
-
 
     # --- Help Menu Actions ---
 
