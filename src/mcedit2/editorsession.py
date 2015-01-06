@@ -375,6 +375,8 @@ class EditorTab(QtGui.QWidget):
         settings = Settings()
 
         QtGui.QWidget.__init__(self)
+        self.setContentsMargins(0, 0, 0, 0)
+
         self.editorSession = editorSession
         self.debugLastCenters = []
 
@@ -440,7 +442,7 @@ class EditorTab(QtGui.QWidget):
         self.viewChanged.connect(self.viewDidChange)
 
         self.setLayout(Column(self.viewButtonToolbar,
-                              Row(self.viewStack, margin=0)))
+                              Row(self.viewStack, margin=0), margin=0))
 
         currentViewName = settings.value("mainwindow/currentview", "Cam")
         if currentViewName not in self.viewButtons:
