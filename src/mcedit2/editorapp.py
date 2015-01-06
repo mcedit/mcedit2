@@ -237,6 +237,8 @@ class MCEditApp(QtGui.QApplication):
 
         QtCore.QTimer.singleShot(0, self.didFinishLaunching)
 
+    # --- Startup code ---
+
     def didFinishLaunching(self):
         # --- Open files from command line ---
 
@@ -250,6 +252,39 @@ class MCEditApp(QtGui.QApplication):
             session = self.sessions[-1]
             eval_globals = {"session": session}
             exec(self.args.eval, eval_globals)
+
+    consoleWidget = None
+
+    def createDebugMenu(self):
+        debugMenu = self.mainWindow.menuBar().addMenu("&Debug")
+
+        def raiseError():
+            raise ValueError("User requested error")
+
+        debugMenu.addAction("Raise Error").triggered.connect(raiseError)
+
+        def showConsole():
+            if self.consoleWidget is None:
+                self.consoleWidget = terminal_widget(sessions=self.sessions)
+            self.consoleWidget.show()
+
+        debugMenu.addAction("IPython Console").triggered.connect(showConsole)
+
+        objGraph = ObjGraphWidget()
+
+        def showObjGraph():
+            objGraph.show()
+
+        debugMenu.addAction("ObjGraph").triggered.connect(showObjGraph)
+
+        def showHeapy():
+            from guppy import hpy
+            h = hpy()
+            print(h.heap())
+
+        debugMenu.addAction("Heap Trace").triggered.connect(showHeapy)
+
+        return debugMenu
 
 
     def ensureSingle(self):
@@ -294,6 +329,8 @@ class MCEditApp(QtGui.QApplication):
                     log.info("File not found: %s", filename)
             except EnvironmentError as e:
                 log.info("%r", e)
+
+    # --- Status Bar ---
 
     def updateStatusLabel(self, pos=None, blocktype=None, cps=None, fps=None):
         if pos is not None:
@@ -382,6 +419,8 @@ class MCEditApp(QtGui.QApplication):
 
         self.sessionDockWidgets[:] = ()
 
+    # --- Recent files ---
+
     def updateRecentFilesMenu(self):
         recentFiles = RecentFilesSetting.value()
         for filename in recentFiles:
@@ -408,39 +447,15 @@ class MCEditApp(QtGui.QApplication):
         #     self.mceditMenu.addAction(act)
         #     self.recentFilesActions.append(act)
 
+    def addRecentFile(self, filename):
+        recentFiles = RecentFilesSetting.jsonValue([])
+        recentFiles.append(filename)
+        if len(recentFiles) > self.recentFileLimit:
+            recentFiles = recentFiles[1:]
 
-    consoleWidget = None
+        RecentFilesSetting.setJsonValue(recentFiles)
 
-    def createDebugMenu(self):
-        debugMenu = self.mainWindow.menuBar().addMenu("&Debug")
-
-        def raiseError():
-            raise ValueError("User requested error")
-
-        debugMenu.addAction("Raise Error").triggered.connect(raiseError)
-
-        def showConsole():
-            if self.consoleWidget is None:
-                self.consoleWidget = terminal_widget(sessions=self.sessions)
-            self.consoleWidget.show()
-
-        debugMenu.addAction("IPython Console").triggered.connect(showConsole)
-
-        objGraph = ObjGraphWidget()
-
-        def showObjGraph():
-            objGraph.show()
-
-        debugMenu.addAction("ObjGraph").triggered.connect(showObjGraph)
-
-        def showHeapy():
-            from guppy import hpy
-            h = hpy()
-            print(h.heap())
-
-        debugMenu.addAction("Heap Trace").triggered.connect(showHeapy)
-
-        return debugMenu
+    # --- Tabs and sessions ---
 
     def tabCloseRequested(self, index):
         tab = self.tabWidget.widget(index)
@@ -491,16 +506,6 @@ class MCEditApp(QtGui.QApplication):
         tab = self.currentTab()
         return getattr(tab, 'editorSession', None)
 
-    def showBlockList(self):
-        session = self.currentSession()
-
-        blockList = BlockListWidget(session.worldEditor.blocktypes, session.textureAtlas)
-        self.tabWidget.insertTab(0, blockList, "Blocks for world %s" % session.filename)
-        self.tabWidget.setCurrentIndex(0)
-
-    def hideWorldList(self):
-        self.tabWidget.removeTab(self.tabWidget.indexOf(self.worldList))
-
     def loadFile(self, filename, readonly=False):
         self.hideWorldList()
         try:
@@ -520,6 +525,8 @@ class MCEditApp(QtGui.QApplication):
 
         # XXX trigger viewportMoved to update minimap after GL initialization
         # session.editorTab.currentView().viewportMoved.emit(session.editorTab.currentView())
+
+    # --- World List actions ---
 
     def editWorldFromList(self, filename):
         for editor in self.sessions:
@@ -597,12 +604,16 @@ class MCEditApp(QtGui.QApplication):
 
     recentFileLimit = 15
 
-    def addRecentFile(self, filename):
-        recentFiles = RecentFilesSetting.jsonValue([])
-        recentFiles.append(filename)
-        if len(recentFiles) > self.recentFileLimit:
-            recentFiles = recentFiles[1:]
+    # --- App-level widgets(?) ---
 
-        RecentFilesSetting.setJsonValue(recentFiles)
+    def showBlockList(self):
+        session = self.currentSession()
+
+        blockList = BlockListWidget(session.worldEditor.blocktypes, session.textureAtlas)
+        self.tabWidget.insertTab(0, blockList, "Blocks for world %s" % session.filename)
+        self.tabWidget.setCurrentIndex(0)
+
+    def hideWorldList(self):
+        self.tabWidget.removeTab(self.tabWidget.indexOf(self.worldList))
 
 RecentFilesSetting = Settings().getOption('open_world_dialog/recent_files')
