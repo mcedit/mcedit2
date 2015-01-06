@@ -90,22 +90,28 @@ class SelectionCoordinateWidget(QtGui.QWidget):
                 self.yMaxInput.setValue(box.maxy)
                 self.zMaxInput.setValue(box.maxz)
 
-        self.boxChanged.emit(box)
 
     def setMinX(self, value):
         origin, size = self.boundingBox
         origin = value, origin[1], origin[2]
-        self.boundingBox = BoundingBox(origin, size)
+        box = BoundingBox(origin, size)
+        self.boundingBox = box
+        self.boxChanged.emit(box)
+
 
     def setMinY(self, value):
         origin, size = self.boundingBox
         origin = origin[0], value, origin[2]
-        self.boundingBox = BoundingBox(origin, size)
+        box = BoundingBox(origin, size)
+        self.boundingBox = box
+        self.boxChanged.emit(box)
 
     def setMinZ(self, value):
         origin, size = self.boundingBox
         origin = origin[0], origin[1], value
-        self.boundingBox = BoundingBox(origin, size)
+        box = BoundingBox(origin, size)
+        self.boundingBox = box
+        self.boxChanged.emit(box)
 
     def setMaxX(self, value):
         origin, size = self.boundingBox
@@ -113,7 +119,9 @@ class SelectionCoordinateWidget(QtGui.QWidget):
             size = value, size[1], size[2]
         else:
             size = value - origin[0], size[1], size[2]
-        self.boundingBox = BoundingBox(origin, size)
+        box = BoundingBox(origin, size)
+        self.boundingBox = box
+        self.boxChanged.emit(box)
 
     def setMaxY(self, value):
         origin, size = self.boundingBox
@@ -121,7 +129,9 @@ class SelectionCoordinateWidget(QtGui.QWidget):
             size = size[0], value, size[2]
         else:
             size = size[0], value - origin[1], size[2]
-        self.boundingBox = BoundingBox(origin, size)
+        box = BoundingBox(origin, size)
+        self.boundingBox = box
+        self.boxChanged.emit(box)
 
     def setMaxZ(self, value):
         origin, size = self.boundingBox
@@ -129,7 +139,9 @@ class SelectionCoordinateWidget(QtGui.QWidget):
             size = size[0], size[1], value
         else:
             size = size[0], size[1], value - origin[2]
-        self.boundingBox = BoundingBox(origin, size)
+        box = BoundingBox(origin, size)
+        self.boundingBox = box
+        self.boxChanged.emit(box)
 
 
 
