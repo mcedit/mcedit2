@@ -587,17 +587,17 @@ def findBlockFace(level, point):
     potentialOffsets = []
 
     try:
-        block = level.getBlockID(*blockPosition)
+        block = level.getBlock(*blockPosition)
     except (EnvironmentError, exceptions.LevelFormatError):
         return Vector(*blockPosition), faces.FaceYIncreasing
 
-    if block == blocktypes.pc_blocktypes.SnowLayer.ID:
+    if block.internalName == "minecraft:snow_layer":
         potentialOffsets.append((0, 1, 0))
     else:
         for face, offsets in faces.faceDirections:
             point = map(lambda a, b: a + b, blockPosition, offsets)
             try:
-                neighborBlock = level.getBlockID(*point)
+                neighborBlock = level.getBlock(*point)
                 if block != neighborBlock:
                     potentialOffsets.append(offsets)
             except (EnvironmentError, exceptions.LevelFormatError):
