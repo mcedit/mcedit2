@@ -1,8 +1,8 @@
 # -*- mode: python -*-
 
-a = Analysis(['src/main.py'],
+a = Analysis(['src/mcedit2/main.py'],
              pathex=[r'c:\Users\Rio\Documents\mcedit2-distrib\mcedit2\src'],
-             hiddenimports=['PySide.QtXml'],
+             hiddenimports=['PySide.QtXml', 'zmq'],
              hookspath=['.'],
              runtime_hooks=None,
              excludes=['tkinter', 'tcl', 'tk', 'wx']
@@ -13,7 +13,6 @@ for d in a.datas:
     if 'pyconfig' in d[0]:
         a.datas.remove(d)
         break
-
 
 a.binaries = a.binaries - TOC([
    ('sqlite3.dll', '', ''),
@@ -28,8 +27,6 @@ onefile = True
 
 if onefile:
     a.scripts += a.binaries + a.zipfiles + a.datas
-
-
 
 exe = EXE(pyz,
           a.scripts + [('i', '', 'OPTION')],
