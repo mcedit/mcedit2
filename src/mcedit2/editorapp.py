@@ -78,7 +78,7 @@ class MCEditApp(QtGui.QApplication):
         # --- Necessities ---
 
         translator = QtCore.QTranslator()
-        translator.load('i18n/en_US')
+        translator.load(resourcePath('mcedit2/i18n/en_US.ts'))
         self.installTranslator(translator)
 
         self.setOrganizationName("MCEdit")
