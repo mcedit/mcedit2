@@ -198,7 +198,9 @@ class BlockTypeSet(object):
         if isinstance(nameAndState, tuple):
             internalName, blockState = nameAndState
             if isinstance(internalName, basestring):
-                ID, meta = self.IDsByState[nameAndState]
+                if not internalName.startswith(self.namePrefix):
+                    internalName = self.namePrefix + internalName
+                ID, meta = self.IDsByState[internalName + blockState]
             else:  # (ID, meta)
                 ID, meta = nameAndState
 

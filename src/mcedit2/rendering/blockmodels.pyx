@@ -74,7 +74,7 @@ cdef class BlockModels(object):
 
             if block.renderType != 3:  # only rendertype 3 uses block models
                 continue
-            name = block.internalName.replace(blocktypes.namePrefix, "")
+            nameAndState = block.internalName + block.blockState
             try:
                 statesJson = self._getBlockState(block.resourcePath)
             except KeyError:
@@ -183,7 +183,7 @@ cdef class BlockModels(object):
                     blockColor = r, g, b
 
                 for element in allElements:
-                    quads = self.buildBoxQuads(element, name, textureVars, variantXrot, variantYrot, variantZrot, blockColor)
+                    quads = self.buildBoxQuads(element, nameAndState, textureVars, variantXrot, variantYrot, variantZrot, blockColor)
                     allQuads.extend(quads)
 
 
@@ -191,11 +191,11 @@ cdef class BlockModels(object):
                 self.modelQuads[block.internalName + block.blockState] = allQuads
 
             except Exception as e:
-                log.error("Failed to parse variant of block %s\nelements:\n%s\ntextures:\n%s", name,
+                log.error("Failed to parse variant of block %s\nelements:\n%s\ntextures:\n%s", nameAndState,
                           allElements, textureVars)
                 raise
 
-    def buildBoxQuads(self, element, name, textureVars, variantXrot, variantYrot, variantZrot, blockColor):
+    def buildBoxQuads(self, element, nameAndState, textureVars, variantXrot, variantYrot, variantZrot, blockColor):
         quads = []
         shade = element.get("shade", True)
         fromPoint = Vector(*element["from"])
@@ -230,7 +230,7 @@ cdef class BlockModels(object):
             else:
                 raise ValueError("Texture variable loop detected!")
 
-            self.firstTextures.setdefault(name, texture)
+            self.firstTextures.setdefault(nameAndState, texture)
             self._textureNames.add(texture)
 
             quads.append((box, face,

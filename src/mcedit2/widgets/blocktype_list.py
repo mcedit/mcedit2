@@ -61,6 +61,7 @@ def BlockTypePixmap(block, textureAtlas):
         image = reader.read()
         pixmap = QtGui.QPixmap.fromImage(image)
     else:
+        log.info("No texture for %s!", block.internalName + block.blockState)
         return QtGui.QPixmap(32, 32)
 
     w = pixmap.width()
