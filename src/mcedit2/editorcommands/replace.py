@@ -38,27 +38,6 @@ class ReplaceDialog(QtGui.QDialog):
         self.tableWidget.resizeRowsToContents()
         self.tableWidget.resizeColumnsToContents()
 
-        self.addRow([
-                        self.blocktypes["stone"],
-                        self.blocktypes["iron_ore"],
-                        self.blocktypes["gold_block"],
-                        self.blocktypes["sand"],
-                        self.blocktypes["log"],
-                        self.blocktypes["diamond_block"],
-                        self.blocktypes["dirt"],
-                        self.blocktypes["cobblestone"],
-                        self.blocktypes["planks"],
-                    ], self.blocktypes["cobblestone"])
-
-        self.addRow([self.blocktypes["wool", 9]],
-                    self.blocktypes["stained_hardened_clay", 9])
-        self.addRow([self.blocktypes["wool", 4]],
-                    self.blocktypes["stained_hardened_clay", 4])
-        self.addRow([self.blocktypes["wool", 5]],
-                    self.blocktypes["stained_hardened_clay", 5])
-        self.addRow([self.blocktypes["wool", 11]],
-                    self.blocktypes["stained_hardened_clay", 11])
-
 
     def addNewRow(self):
         self.addRow([self.blocktypes["air"]], self.blocktypes["air"])
