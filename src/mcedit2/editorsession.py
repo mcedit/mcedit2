@@ -174,7 +174,7 @@ class EditorSession(QtCore.QObject):
         self.editorTab = EditorTab(self)
         self.toolChanged.connect(self.editorTab.toolDidChange)
 
-        self.undoStack.indexChanged.connect(lambda: self.editorTab.currentView().update())
+        self.undoStack.indexChanged.connect(self.undoIndexChanged)
 
         if len(self.toolActions):
             self.toolActions[0].trigger()  # Must be called after toolChanged is connected to editorTab
@@ -198,11 +198,20 @@ class EditorSession(QtCore.QObject):
         return self._currentSelection
 
     @currentSelection.setter
-    def currentSelection(self, value):
-        self._currentSelection = value
-        self.selectionChanged.emit(value)
+    def currentSelection(self, box):
+        self._currentSelection = box
+        self.enableSelectionCommands(box is not None and box.volume != 0)
+        self.selectionChanged.emit(box)
 
     # --- Menu commands ---
+
+    def enableSelectionCommands(self, enable):
+        self.actionCut.setEnabled(enable)
+        self.actionCopy.setEnabled(enable)
+        self.actionPaste.setEnabled(enable)
+        self.actionPaste_Blocks.setEnabled(enable)
+        self.actionPaste_Entities.setEnabled(enable)
+        self.actionClear.setEnabled(enable)
 
     def save(self):
         self.worldEditor.saveChanges()
@@ -249,7 +258,14 @@ class EditorSession(QtCore.QObject):
 
     # --- Undo support ---
 
+    def undoIndexChanged(self, index):
+        self.actionUndo.setEnabled(index != 0)
+        self.actionRedo.setEnabled(index != self.undoStack.count() - 1)
+        self.editorTab.currentView().update()
+
     def pushCommand(self, command):
+        self.actionUndo.setEnabled(True)
+
         self.undoStack.push(command)
 
     def setUndoBlock(self, callback):
