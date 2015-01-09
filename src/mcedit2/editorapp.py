@@ -98,21 +98,21 @@ class MCEditApp(QtGui.QApplication):
         self.tabWidget.tabCloseRequested.connect(self.tabCloseRequested)
         self.tabWidget.currentChanged.connect(self.tabChanged)
 
-        # --- Sessions
+        # --- Sessions ---
 
         self._currentSession = None
         self.sessions = []
         self.sessionDockWidgets = []
         self.sessionChanged.connect(self.sessionDidChange)
 
-        # --- Dock Widgets ---
+        # --- Panel Widgets ---
 
         self.undoView = QtGui.QUndoView(self.undoGroup)
-        undoDockWidget = QtGui.QDockWidget("History", mainWindow, objectName="HistoryWidget")
-        undoDockWidget.setWidget(self.undoView)
-        mainWindow.addDockWidget(Qt.RightDockWidgetArea, undoDockWidget)
-        mainWindow.panelsToolBar.addAction(undoDockWidget.toggleViewAction())
-        undoDockWidget.close()
+        self.undoDockWidget = QtGui.QDockWidget("History", mainWindow, objectName="HistoryWidget")
+        self.undoDockWidget.setWidget(self.undoView)
+        mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.undoDockWidget)
+        mainWindow.panelsToolBar.addAction(self.undoDockWidget.toggleViewAction())
+        self.undoDockWidget.close()
 
         self.logViewWidget = LogViewFrame(mainWindow)
         self.logViewDockWidget = QtGui.QDockWidget("Error Log", mainWindow, objectName="ErrorsWidget")
@@ -120,6 +120,8 @@ class MCEditApp(QtGui.QApplication):
         mainWindow.addDockWidget(Qt.BottomDockWidgetArea, self.logViewDockWidget)
         mainWindow.panelsToolBar.addAction(self.logViewDockWidget.toggleViewAction())
         self.logViewDockWidget.close()
+
+        self.globalPanels = [self.undoDockWidget, self.logViewDockWidget]
 
         # --- Debug Widgets ---
 
@@ -167,6 +169,8 @@ class MCEditApp(QtGui.QApplication):
 
             mainWindow.addDockWidget(Qt.BottomDockWidgetArea, infoDockWidget)
             mainWindow.tabifyDockWidget(infoDockWidget, self.logViewDockWidget)
+
+            self.globalPanels.append(infoDockWidget)
             mainWindow.panelsToolBar.addAction(infoDockWidget.toggleViewAction())
             infoDockWidget.close()
 
@@ -199,7 +203,7 @@ class MCEditApp(QtGui.QApplication):
         mainWindow.actionAbout_MCEdit.setShortcut(QtGui.QKeySequence.Quit)
 
         # -- Window Menu --
-        mainWindow.menuWindow.addAction(undoDockWidget.toggleViewAction())
+        mainWindow.menuWindow.addAction(self.undoDockWidget.toggleViewAction())
         mainWindow.menuWindow.addAction(self.logViewDockWidget.toggleViewAction())
 
         # --- World List ---
@@ -376,6 +380,11 @@ class MCEditApp(QtGui.QApplication):
         for menu in session.menus:
             menuBar.insertMenu(self.mainWindow.menuWindow.menuAction(), menu)
 
+        self.mainWindow.panelsToolBar.clear()
+        for panel in self.globalPanels:
+            self.mainWindow.panelsToolBar.addAction(panel.toggleViewAction())
+        for panel in session.panels:
+            self.mainWindow.panelsToolBar.addAction(panel.toggleViewAction())
 
         self.mainWindow.toolsToolBar.clear()
         for action in session.toolActions:

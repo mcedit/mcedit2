@@ -38,7 +38,6 @@ def ToolClasses():
     from . import generate
     from . import edit_chunk
     from . import edit_entity
-    from . import edit_player
     from . import select
     from . import flood_fill
 
@@ -49,7 +48,6 @@ def ToolClasses():
             generate.GenerateTool,
             edit_chunk.ChunkTool,
             edit_entity.EntityTool,
-            edit_player.PlayerTool,
     )
 
 #     global _scanned_modules

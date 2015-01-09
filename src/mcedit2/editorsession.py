@@ -8,6 +8,7 @@ from PySide.QtCore import Qt
 from mcedit2 import editortools
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.rendering.blockmodels import BlockModels
+from mcedit2.panels.player import PlayerPanel
 from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.resources import resourcePath
 from mcedit2.util.showprogress import showProgress
@@ -130,6 +131,11 @@ class EditorSession(QtCore.QObject):
         self.textureAtlas = TextureAtlas(self.worldEditor, self.resourceLoader, self.blockModels)
 
         self.editorOverlay = scenegraph.Node()
+
+        # --- Panels ---
+
+        self.playerPanel = PlayerPanel(self)
+        self.panels = [self.playerPanel]
 
         # --- Tools ---
         def PickToolAction(tool):
@@ -438,6 +444,7 @@ class EditorTab(QtGui.QWidget):
         """
 
         :type editorSession: mcedit2.editorsession.EditorSession
+        :rtype: EditorTab
         """
         settings = Settings()
 
@@ -466,7 +473,6 @@ class EditorTab(QtGui.QWidget):
             self.viewButtons[name] = button
 
         self.viewStack = QtGui.QStackedWidget()
-
 
         self.miniMap = MinimapWorldView(editorSession.currentDimension, editorSession.textureAtlas, editorSession.geometryCache)
         self.miniMapDockWidget = QtGui.QDockWidget("Minimap", objectName="MinimapWidget", floating=True)
@@ -499,6 +505,7 @@ class EditorTab(QtGui.QWidget):
 
         self.cameraViewFrame = CameraWorldViewFrame(editorSession.currentDimension, editorSession.textureAtlas, editorSession.geometryCache, self.miniMap)
         self.cameraViewFrame.worldView.viewID = "Cam"
+        self.cameraView = self.cameraViewFrame.worldView
         self._addView(self.cameraViewFrame)
 
         self.viewStack.currentChanged.connect(self._viewChanged)
