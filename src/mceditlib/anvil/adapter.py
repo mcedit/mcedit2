@@ -868,6 +868,8 @@ class AnvilPlayerRef(object):
     #         return tag
     #     return self.playerTag()
 
+    UUID = nbtattr.NBTUUIDAttr()
+
     id = nbtattr.NBTAttr("id", nbt.TAG_String)
     Position = nbtattr.NBTVectorAttr("Pos", nbt.TAG_Double)
     Motion = nbtattr.NBTVectorAttr("Motion", nbt.TAG_Double)

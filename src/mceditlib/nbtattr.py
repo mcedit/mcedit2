@@ -3,6 +3,7 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+import uuid
 from mceditlib import nbt
 from mceditlib.geometry import Vector
 
@@ -31,6 +32,27 @@ class NBTAttr(object):
         else:
             tag[self.name].value = value
         instance.dirty = True
+
+class NBTUUIDAttr(object):
+    def __repr__(self):
+        return "NBTUUIDAttr()"
+
+    def __get__(self, instance, owner):
+        tag = instance.rootTag
+        least = tag["UUIDLeast"].value & 0xffffffffffffffffL
+        most = tag["UUIDMost"].value & 0xffffffffffffffffL
+        uuidInt = (most << 64 | least) & 0xffffffffffffffffffffffffffffffffL
+        UUID = uuid.UUID(int=uuidInt)
+        return UUID
+
+    def __set__(self, instance, value):
+        uuidInt = value.int
+        least = uuidInt & 0xffffffffffffffffL
+        most = (uuidInt >> 64) & 0xffffffffffffffffL
+        tag = instance.rootTag
+        tag["UUIDLeast"].value = least
+        tag["UUIDMost"].value = most
+
 
 
 class NBTCompoundListAttr(object):
