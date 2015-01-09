@@ -11,12 +11,17 @@ class MCEUndoStack(QtGui.QUndoStack):
     undoBlock = None
 
     def undo(self):
-        self.clearUndoBlock(False)
+        self.clearUndoBlock()
         super(MCEUndoStack, self).undo()
 
     def redo(self):
-        self.clearUndoBlock(False)  # Shouldn't ever find a block
+        self.clearUndoBlock()  # Shouldn't ever find a block
         super(MCEUndoStack, self).redo()
+
+    def push(self, *args, **kwargs):
+        self.clearUndoBlock()
+        super(MCEUndoStack, self).push(*args, **kwargs)
+
 
     def setUndoBlock(self, callback):
         """
@@ -42,17 +47,15 @@ class MCEUndoStack(QtGui.QUndoStack):
                                  self.undoBlock, callback)
             self.undoBlock = None
 
-    def clearUndoBlock(self, complete):
+    def clearUndoBlock(self):
         """
         If an undo block is set, calls its callback and removes it.
 
-        :param complete: Whether to complete or abort the command which set the undo block
-        :type complete: bool
         :return:
         :rtype:
         """
         if self.undoBlock:
             callback = self.undoBlock
             self.undoBlock = None
-            callback(complete)
+            callback()
 

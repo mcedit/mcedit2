@@ -226,6 +226,7 @@ class WorldEditor(object):
         :return:
         :rtype:
         """
+        assert index is not None, "None is not a revision index!"
         self.syncToDisk()
 
         changes = self.adapter.selectRevision(index)
@@ -508,6 +509,11 @@ class WorldEditorDimension(object):
 
     @property
     def bounds(self):
+        """
+
+        :return:
+        :rtype: BoundingBox
+        """
         if self._bounds is None:
             if hasattr(self.adapter, "getDimensionBounds"):
                 self._bounds = self.adapter.getDimensionBounds(self.dimName)

@@ -47,7 +47,9 @@ class EditorSession(QtCore.QObject):
         self.undoBlock = None
         self.currentTool = None
         self.dirty = False
+
         self.copiedSchematic = None
+        """:type : WorldEditor"""
         self.versionInfo = versionInfo
 
         # --- Open world editor ---
@@ -241,10 +243,11 @@ class EditorSession(QtCore.QObject):
             return
 
         moveTool = self.tools["Move"]
-        if moveTool is self.currentTool:
-            moveTool.completeMove()
-        moveTool.movingSchematic = self.copiedSchematic
-        moveTool.movePosition = self.editorTab.currentView().viewCenter()
+
+        ray = self.editorTab.currentView().rayAtCenter()
+        point = ray.point + ray.vector * (self.copiedSchematic.getDimension().bounds.size.length() * 2)
+        point = Vector(*[int(i) for i in point])
+        moveTool.pasteSchematic(self.copiedSchematic, point)
         self.chooseTool("Move")
 
     def pasteBlocks(self):
@@ -271,7 +274,7 @@ class EditorSession(QtCore.QObject):
         self.undoStack.removeUndoBlock(callback)
 
     def beginUndo(self):
-        self.undoStack.clearUndoBlock(True)
+        self.undoStack.clearUndoBlock()
         self.dirty = True
         self.worldEditor.beginUndo()
 
@@ -544,7 +547,7 @@ class EditorTab(QtGui.QWidget):
     def currentView(self):
         """
 
-        :rtype: WorldView
+        :rtype: mcedit2.worldview.worldview.WorldView
         """
         return self.viewStack.currentWidget().worldView
 

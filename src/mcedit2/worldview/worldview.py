@@ -402,11 +402,14 @@ class WorldView(QGLWidget):
         Parameters:
             x and y are coordinates local to this QWidget
 
-        Returns a Ray
+        :rtype: Ray
         """
 
         p0, p1 = self.pointsAtPositions((x, y, 0.0), (x, y, 0.1))
         return Ray(p0, (p1 - p0).normalize())
+
+    def rayAtCenter(self):
+        return self.rayAtPosition(self.width()/2, self.height()/2)
 
     def pointsAtPositions(self, *screenPoints):
         w = float(self.width())

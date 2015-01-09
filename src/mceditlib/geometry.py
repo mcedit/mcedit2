@@ -284,27 +284,33 @@ class BoundingBox(SelectionBox):
 
     @property
     def origin(self):
-        "The smallest position in the box"
+        """
+        The smallest position in the box
+        :rtype: Vector
+        """
         return self._origin
 
     @property
     def size(self):
-        "The size of the box"
+        """
+        The size of the box
+        :rtype: Vector
+        """
         return self._size
 
     @property
     def width(self):
-        "The dimension along the X axis"
+        """The dimension along the X axis"""
         return self._size.x
 
     @property
     def height(self):
-        "The dimension along the Y axis"
+        """The dimension along the Y axis"""
         return self._size.y
 
     @property
     def length(self):
-        "The dimension along the Z axis"
+        """The dimension along the Z axis"""
         return self._size.z
 
     @property

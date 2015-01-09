@@ -21,6 +21,65 @@ from mceditlib.geometry import BoundingBox, Vector
 
 log = logging.getLogger(__name__)
 
+class MoveSelectionCommand(SimpleRevisionCommand):
+    def __init__(self, moveTool, movingSchematic, movePosition=None, text=None, *args, **kwargs):
+        if text is None:
+            text = moveTool.tr("Move Selected Blocks")
+        if movePosition is None:
+            movePosition = moveTool.editorSession.currentSelection.origin
+        super(MoveSelectionCommand, self).__init__(moveTool.editorSession, text, *args, **kwargs)
+        self.moveTool = moveTool
+        self.movingSchematic = movingSchematic
+        self.movePosition = movePosition
+
+    def undo(self):
+        super(MoveSelectionCommand, self).undo()
+        self.moveTool.movingSchematic = None
+        self.moveTool.movePosition = None
+        self.moveTool.editorSession.chooseTool("Select")
+
+    def redo(self):
+        self.moveTool.movingSchematic = self.movingSchematic
+        self.moveTool.movePosition = self.movePosition
+        self.moveTool.editorSession.chooseTool("Move")
+        super(MoveSelectionCommand, self).redo()
+
+
+class MoveOffsetCommand(QtGui.QUndoCommand):
+
+    def __init__(self, moveTool, oldPoint, newPoint):
+        super(MoveOffsetCommand, self).__init__()
+        self.setText(moveTool.tr("Move Selection"))
+        self.newPoint = newPoint
+        self.oldPoint = oldPoint
+        self.moveTool = moveTool
+
+    def undo(self):
+        self.moveTool.movePosition = self.oldPoint
+
+    def redo(self):
+        self.moveTool.movePosition = self.newPoint
+
+class MoveFinishCommand(SimpleRevisionCommand):
+    def __init__(self, moveTool, movingSchematic, *args, **kwargs):
+        super(MoveFinishCommand, self).__init__(moveTool.editorSession, moveTool.tr("Finish Move"), *args, **kwargs)
+        self.movingSchematic = movingSchematic
+        self.moveTool = moveTool
+
+    def undo(self):
+        super(MoveFinishCommand, self).undo()
+        self.moveTool.movingSchematic = self.movingSchematic
+        self.moveTool.movePosition = self.movePosition
+        self.editorSession.currentSelection = self.previousSelection
+        self.editorSession.chooseTool("Move")
+
+    def redo(self):
+        super(MoveFinishCommand, self).redo()
+        self.previousSelection = self.editorSession.currentSelection
+        self.movePosition = self.moveTool.movePosition
+        self.editorSession.currentSelection = BoundingBox(self.movePosition, self.previousSelection.size)
+        self.moveTool.movingSchematic = None
+
 
 class CoordinateWidget(QtGui.QWidget):
     def __init__(self, *args, **kwargs):
@@ -86,7 +145,6 @@ class MoveTool(EditorTool):
 
         self.movingWorldScene = None
         self.loader = None
-        self.currentCommand = None
         self.dragStartFace = None
         self.dragStartPoint = None
 
@@ -115,6 +173,13 @@ class MoveTool(EditorTool):
         """
         self.pointInput.point = value
         self.pointInputChanged(value)
+
+    def doMoveOffsetCommand(self, oldPoint, newPoint):
+        if newPoint != oldPoint:
+            command = MoveOffsetCommand(self, oldPoint, newPoint)
+            self.editorSession.removeUndoBlock(self.moveUndoBlock)
+            self.editorSession.pushCommand(command)
+            self.editorSession.setUndoBlock(self.moveUndoBlock)
 
     def pointInputChanged(self, value):
         self._movePosition = value
@@ -185,7 +250,7 @@ class MoveTool(EditorTool):
 
     def mouseMove(self, event):
         # Hilite face cursor is over
-        if self.movingSchematic is None:
+        if self.movingSchematic is None or self.movePosition is None:
             return
 
         point, face = boxFaceUnderCursor(self.schematicBox, event.ray)
@@ -229,26 +294,31 @@ class MoveTool(EditorTool):
         # Don't paste cut selection in yet. Wait for tool switch or "Confirm" button press. Begin new revision
         # for paste operation, paste stored world, store revision after paste (should be previously stored revision
         # +2), commit MoveCommand to undo history.
-        pass
+        if self.movingSchematic is not None:
+            self.doMoveOffsetCommand(self.dragStartMovePosition, self.movePosition)
 
     def toolActive(self):
         self.editorSession.selectionTool.hideSelectionWalls = True
-        if self.currentCommand is None and self.movingSchematic is None:
+        if self.movingSchematic is None:
             # Need to cut out selection
             # xxxx for huge selections, don't cut, just do everything at the end?
             if self.editorSession.currentSelection is None:
                 return
             export = self.editorSession.currentDimension.exportSchematicIter(self.editorSession.currentSelection)
             self.movingSchematic = showProgress("Lifting...", export)
-            self.movePosition = self.editorSession.currentSelection.origin
 
-            self.currentCommand = SimpleRevisionCommand(self.editorSession, self.tr("Move"))
-            self.currentCommand.previousRevision = self.editorSession.currentRevision
-            self.editorSession.beginUndo()
-            fill = self.editorSession.currentDimension.fillBlocksIter(self.editorSession.currentSelection, "air")
-            showProgress("Lifting...", fill)
-            self.editorSession.commitUndo()
-            self.editorSession.setUndoBlock(self.completeMove)
+            moveCommand = MoveSelectionCommand(self, self.movingSchematic)
+
+            with moveCommand.begin():
+                fill = self.editorSession.currentDimension.fillBlocksIter(self.editorSession.currentSelection, "air")
+                showProgress("Lifting...", fill)
+
+            self.editorSession.pushCommand(moveCommand)
+            self.editorSession.setUndoBlock(self.moveUndoBlock)
+
+    def moveUndoBlock(self):
+        self.completeMove()
+        self.movingSchematic = None
 
     def toolInactive(self):
         self.editorSession.selectionTool.hideSelectionWalls = False
@@ -263,17 +333,16 @@ class MoveTool(EditorTool):
         if self.movingSchematic is None:
             return
 
-        if self.currentCommand is None:
-            self.currentCommand = SimpleRevisionCommand(self.editorSession, self.tr("Paste"))
-            self.currentCommand.previousRevision = self.editorSession.currentRevision
+        self.editorSession.removeUndoBlock(self.moveUndoBlock)
+        command = MoveFinishCommand(self, self.movingSchematic)
 
-        self.editorSession.removeUndoBlock(self.completeMove)
-        self.editorSession.beginUndo()
-        task = self.editorSession.currentDimension.importSchematicIter(self.movingSchematic, self.movePosition)
-        showProgress(self.tr("Pasting..."), task)
-        self.editorSession.commitUndo()
+        with command.begin():
+            task = self.editorSession.currentDimension.importSchematicIter(self.movingSchematic, self.movePosition)
+            showProgress(self.tr("Pasting..."), task)
 
-        self.currentCommand.currentRevision = self.editorSession.worldEditor.currentRevision
-        self.editorSession.pushCommand(self.currentCommand)
-        self.currentCommand = None
-        self.movingSchematic = None
+        self.editorSession.pushCommand(command)
+
+    def pasteSchematic(self, copiedSchematic, position):
+        command = MoveSelectionCommand(self, copiedSchematic, position, self.tr("Paste"))
+        self.editorSession.pushCommand(command)
+        self.editorSession.setUndoBlock(self.moveUndoBlock)
