@@ -452,7 +452,9 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
         if "Biomes" in self.rootTag:
             x = cx << 4
             z = cz << 4
-            chunk.Biomes = self.Biomes[x:x + 16, z:z + 16]
+            chunk.Biomes = numpy.zeros((16, 16), dtype=numpy.uint8)
+            srcBiomes = self.Biomes[x:x + 16, z:z + 16]
+            chunk.Biomes[0:srcBiomes.shape[0], 0:srcBiomes.shape[1]] = srcBiomes
         return chunk
 
 
