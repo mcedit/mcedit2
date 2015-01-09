@@ -209,6 +209,9 @@ class SelectionTool(EditorTool):
 
         self.newSelectionNode = None
 
+    def toolInactive(self):
+        self.faceHoverNode.visible = False
+
     @property
     def hideSelectionWalls(self):
         return not self.selectionNode.filled
