@@ -12,6 +12,7 @@ from mcedit2.panels.player import PlayerPanel
 from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.resources import resourcePath
 from mcedit2.util.showprogress import showProgress
+from mcedit2.util.undostack import MCEUndoStack
 from mcedit2.worldview.worldview import UseToolMouseAction, TrackingMouseAction
 from mceditlib import util
 from mcedit2.rendering import chunkloader, blockmeshes, scenegraph
@@ -39,7 +40,7 @@ log = logging.getLogger(__name__)
 class EditorSession(QtCore.QObject):
     def __init__(self, filename, versionInfo, readonly=False):
         QtCore.QObject.__init__(self)
-        self.undoStack = QtGui.QUndoStack()
+        self.undoStack = MCEUndoStack()
 
         self.filename = filename
         self.dockWidgets = []
@@ -85,10 +86,6 @@ class EditorSession(QtCore.QObject):
 
         self.menuEdit = QtGui.QMenu(self.tr("Edit"))
         self.menuEdit.setObjectName("menuEdit")
-        self.actionUndo = QtGui.QAction(self.tr("Undo"), self, triggered=self.undo, enabled=False)
-        self.actionUndo.setObjectName("actionUndo")
-        self.actionRedo = QtGui.QAction(self.tr("Redo"), self, triggered=self.redo, enabled=False)
-        self.actionRedo.setObjectName("actionRedo")
         self.actionCut = QtGui.QAction(self.tr("Cut"), self, triggered=self.cut, enabled=False)
         self.actionCut.setObjectName("actionCut")
         self.actionCopy = QtGui.QAction(self.tr("Copy"), self, triggered=self.copy, enabled=False)
@@ -101,8 +98,13 @@ class EditorSession(QtCore.QObject):
         self.actionPaste_Entities.setObjectName("actionPaste_Entities")
         self.actionClear = QtGui.QAction(self.tr("Clear"), self, triggered=self.clear, enabled=False)
         self.actionClear.setObjectName("actionClear")
-        self.menuEdit.addAction(self.actionUndo)
-        self.menuEdit.addAction(self.actionRedo)
+
+        undoAction = self.undoStack.createUndoAction(self.menuEdit)
+        undoAction.setShortcut(QtGui.QKeySequence.Undo)
+        redoAction = self.undoStack.createRedoAction(self.menuEdit)
+        redoAction.setShortcut(QtGui.QKeySequence.Redo)
+        self.menuEdit.addAction(undoAction)
+        self.menuEdit.addAction(redoAction)
         self.menuEdit.addSeparator()
         self.menuEdit.addAction(self.actionCut)
         self.menuEdit.addAction(self.actionCopy)
@@ -111,8 +113,6 @@ class EditorSession(QtCore.QObject):
         self.menuEdit.addAction(self.actionPaste_Entities)
         self.menuEdit.addAction(self.actionClear)
 
-        self.actionUndo.setShortcut(QtGui.QKeySequence.Undo)
-        self.actionRedo.setShortcut(QtGui.QKeySequence.Redo)
         self.actionCut.setShortcut(QtGui.QKeySequence.Cut)
         self.actionCopy.setShortcut(QtGui.QKeySequence.Copy)
         self.actionPaste.setShortcut(QtGui.QKeySequence.Paste)
@@ -223,12 +223,6 @@ class EditorSession(QtCore.QObject):
         self.worldEditor.saveChanges()
         self.dirty = False
 
-    def undo(self):
-        self.undoStack.undo()
-
-    def redo(self):
-        self.undoStack.redo()
-
     def cut(self):
         command = SimpleRevisionCommand(self, "Cut")
         with command.begin():
@@ -265,44 +259,19 @@ class EditorSession(QtCore.QObject):
     # --- Undo support ---
 
     def undoIndexChanged(self, index):
-        self.actionUndo.setEnabled(index != 0)
-        self.actionRedo.setEnabled(index != self.undoStack.count() - 1)
         self.editorTab.currentView().update()
 
     def pushCommand(self, command):
-        self.actionUndo.setEnabled(True)
-
         self.undoStack.push(command)
 
     def setUndoBlock(self, callback):
-        """
-        Set a function to be called before the next time beginUndo is called. Some tools may need to call beginUndo,
-        then interact with the user for a time before calling commitUndo, or they may need to use multiple undo
-        revisions for a single operation with freedom given to the user between revisions. This ensures that
-        the interactive operation will be completed or aborted before the next command begins its undo revision.
-
-        User actions that only change the editor state will not call beginUndo, and their QUndoCommand may end up
-        before the interrupted command in the history.
-
-        :param callback: Function to call
-        :type callback: callable
-        """
-        assert not self.undoBlock, "Cannot add multiple undo blocks (yet)"
-        self.undoBlock = callback
+        self.undoStack.setUndoBlock(callback)
 
     def removeUndoBlock(self, callback):
-        if self.undoBlock:
-            if callback != self.undoBlock:  # can't use 'is' for func ptrs, why?
-                raise ValueError("Trying to remove an undoBlock that is not set, had %r and asked to remove %r",
-                                 self.undoBlock, callback)
-            self.undoBlock = None
+        self.undoStack.removeUndoBlock(callback)
 
     def beginUndo(self):
-        if self.undoBlock:
-            callback = self.undoBlock
-            self.undoBlock = None
-            callback()
-
+        self.undoStack.clearUndoBlock(True)
         self.dirty = True
         self.worldEditor.beginUndo()
 
