@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 class MoveSelectionCommand(SimpleRevisionCommand):
     def __init__(self, moveTool, movingSchematic, movePosition=None, text=None, *args, **kwargs):
         if text is None:
-            text = moveTool.tr("Move Selected Blocks")
+            text = moveTool.tr("Move Selected Things")
         if movePosition is None:
             movePosition = moveTool.editorSession.currentSelection.origin
         super(MoveSelectionCommand, self).__init__(moveTool.editorSession, text, *args, **kwargs)
@@ -49,7 +49,7 @@ class MoveOffsetCommand(QtGui.QUndoCommand):
 
     def __init__(self, moveTool, oldPoint, newPoint):
         super(MoveOffsetCommand, self).__init__()
-        self.setText(moveTool.tr("Move Selection"))
+        self.setText(moveTool.tr("Move Things"))
         self.newPoint = newPoint
         self.oldPoint = oldPoint
         self.moveTool = moveTool
@@ -62,7 +62,7 @@ class MoveOffsetCommand(QtGui.QUndoCommand):
 
 class MoveFinishCommand(SimpleRevisionCommand):
     def __init__(self, moveTool, movingSchematic, *args, **kwargs):
-        super(MoveFinishCommand, self).__init__(moveTool.editorSession, moveTool.tr("Finish Move"), *args, **kwargs)
+        super(MoveFinishCommand, self).__init__(moveTool.editorSession, moveTool.tr("Finish Moving Things"), *args, **kwargs)
         self.movingSchematic = movingSchematic
         self.moveTool = moveTool
 
