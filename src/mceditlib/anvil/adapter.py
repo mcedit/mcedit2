@@ -316,7 +316,6 @@ class AnvilChunkData(object):
         # z, x order in save file
         return self.rootTag["Level"]["HeightMap"].value.reshape((16, 16))
 
-
     @property
     def TerrainPopulated(self):
         return self.rootTag["Level"]["TerrainPopulated"].value

@@ -15,9 +15,6 @@ log = logging.getLogger(__name__)
 
 
 class PlayerPanel(QtGui.QWidget):
-    name = "Edit Player"
-    iconName = "edit_player"
-
     def __init__(self, editorSession, *args, **kwargs):
         """
 
