@@ -6,7 +6,7 @@
 """
 from datetime import datetime
 import logging
-from mceditlib.geometry import SectionBox, BoundingBox
+from mceditlib.selection import BoundingBox, SectionBox
 
 log = logging.getLogger(__name__)
 

@@ -24,7 +24,8 @@ from mcedit2.widgets.layout import Column
 from mcedit2.widgets.shapewidget import ShapeWidget
 from mcedit2.worldview.worldview import boxFaceUnderCursor
 from mceditlib import faces
-from mceditlib.geometry import BoundingBox, Vector
+from mceditlib.geometry import Vector
+from mceditlib.selection import BoundingBox
 from mceditlib.operations import ComposeOperations
 from mceditlib.operations.entity import RemoveEntitiesOperation
 from mceditlib import selection

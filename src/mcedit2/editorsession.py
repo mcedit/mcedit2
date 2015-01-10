@@ -24,7 +24,8 @@ from mcedit2.worldview.camera import CameraWorldViewFrame
 from mcedit2.worldview.cutaway import CutawayWorldViewFrame
 from mcedit2.worldview.minimap import MinimapWorldView
 from mcedit2.worldview.overhead import OverheadWorldViewFrame
-from mceditlib.geometry import Vector, BoundingBox
+from mceditlib.geometry import Vector
+from mceditlib.selection import BoundingBox
 from mceditlib.exceptions import PlayerNotFound
 from mceditlib.revisionhistory import UndoFolderExists
 from mceditlib.worldeditor import WorldEditor

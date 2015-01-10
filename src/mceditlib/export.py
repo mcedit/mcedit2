@@ -10,7 +10,7 @@ import shutil
 import tempfile
 from mceditlib.block_copy import copyBlocksIter
 import mceditlib.schematic
-from mceditlib.geometry import BoundingBox
+from mceditlib.selection import BoundingBox
 from mceditlib.util import exhaust
 from mceditlib.worldeditor import WorldEditor
 

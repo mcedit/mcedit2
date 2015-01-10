@@ -14,7 +14,8 @@ from cpython cimport array
 from array import array
 
 from mceditlib import faces
-from mceditlib.geometry import Vector, FloatBox
+from mceditlib.geometry import Vector
+from mceditlib.selection import FloatBox
 
 from libc.stdlib cimport malloc, free
 from libc.string cimport memset

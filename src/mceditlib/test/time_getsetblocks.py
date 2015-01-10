@@ -1,6 +1,6 @@
 import numpy
 from templevel import TempLevel
-from mceditlib.geometry import BoundingBox
+from mceditlib.selection import BoundingBox
 
 level = TempLevel("AnvilWorld")
 box = BoundingBox(level.bounds.origin, (64, 32, 64))

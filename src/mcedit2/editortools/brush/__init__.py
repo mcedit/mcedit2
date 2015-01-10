@@ -15,8 +15,8 @@ from mcedit2.util.load_ui import load_ui, registerCustomWidget
 from mcedit2.util.settings import Settings
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
-from mceditlib.geometry import BoundingBox, Vector
-from mceditlib.selection import ShapedSelection
+from mceditlib.geometry import Vector
+from mceditlib.selection import ShapedSelection, BoundingBox
 from mceditlib.util import exhaust
 
 

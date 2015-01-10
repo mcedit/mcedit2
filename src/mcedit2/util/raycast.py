@@ -5,7 +5,8 @@ from __future__ import absolute_import, division, print_function
 import logging
 import math
 from mcedit2.util import profiler
-from mceditlib.geometry import Vector, Ray, rayIntersectsBox, SectionBox
+from mceditlib.geometry import Vector, Ray
+from mceditlib.selection import SectionBox, rayIntersectsBox
 from mceditlib import faces
 
 log = logging.getLogger(__name__)

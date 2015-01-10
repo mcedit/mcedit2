@@ -4,7 +4,7 @@ import unittest
 from mceditlib.worldeditor import WorldEditor
 from templevel import TempLevel, mktemp
 from mceditlib.schematic import SchematicFileAdapter, createSchematic
-from mceditlib.geometry import BoundingBox
+from mceditlib.selection import BoundingBox
 
 __author__ = 'Rio'
 

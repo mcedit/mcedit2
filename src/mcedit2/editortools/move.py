@@ -18,7 +18,8 @@ from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
 from mcedit2.widgets.layout import Column
 from mcedit2.worldview.worldview import boxFaceUnderCursor
-from mceditlib.geometry import BoundingBox, Vector
+from mceditlib.geometry import Vector
+from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
 

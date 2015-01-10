@@ -11,7 +11,7 @@ from logging import getLogger
 from numpy import zeros, zeros_like
 import numpy
 
-from mceditlib.geometry import BoundingBox
+from mceditlib.selection import BoundingBox
 from mceditlib import nbt
 from mceditlib.exceptions import ChunkNotPresent
 from mceditlib.nbtattr import NBTAttr, NBTVectorAttr

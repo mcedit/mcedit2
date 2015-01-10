@@ -25,7 +25,8 @@ from mcedit2.util import profiler, raycast
 from mcedit2.util.glutils import gl
 from mcedit2.widgets.infopanel import InfoPanel
 from mceditlib import faces, exceptions, blocktypes
-from mceditlib.geometry import Vector, Ray, rayIntersectsBox
+from mceditlib.geometry import Vector, Ray
+from mceditlib.selection import rayIntersectsBox
 from mceditlib.exceptions import LevelFormatError
 from mceditlib.util import displayName
 

@@ -9,7 +9,7 @@ from mceditlib.util import exhaust
 
 from mceditlib.worldeditor import WorldEditor
 from mceditlib import nbt
-from mceditlib.geometry import BoundingBox
+from mceditlib.selection import BoundingBox
 from mceditlib.pc.regionfile import RegionFile
 from templevel import mktemp, TempLevel, TempFile
 

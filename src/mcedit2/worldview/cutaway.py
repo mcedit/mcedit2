@@ -12,7 +12,8 @@ from mcedit2.util import profiler
 from mcedit2.widgets.layout import Column, Row
 from mcedit2.worldview.worldruler import WorldViewRulerGrid
 from mcedit2.worldview.worldview import WorldView, ViewMouseAction, MoveViewMouseAction, findBlockFace
-from mceditlib.geometry import BoundingBox, Vector
+from mceditlib.geometry import Vector
+from mceditlib.selection import BoundingBox
 
 
 log = logging.getLogger(__name__)

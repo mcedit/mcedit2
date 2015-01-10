@@ -17,7 +17,8 @@ from mceditlib import nbt
 from mceditlib.anvil.entities import PCEntityRef, PCTileEntityRef
 from mceditlib.anvil.worldfolder import AnvilWorldFolder
 from mceditlib.blocktypes import pc_blocktypes
-from mceditlib.geometry import Vector, BoundingBox
+from mceditlib.geometry import Vector
+from mceditlib.selection import BoundingBox
 from mceditlib import nbtattr
 from mceditlib.exceptions import PlayerNotFound
 from mceditlib.revisionhistory import RevisionHistory

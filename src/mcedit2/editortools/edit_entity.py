@@ -15,7 +15,7 @@ from mcedit2.rendering.cubes import drawBox
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.util.bresenham import bresenham
 from mcedit2.util.load_ui import load_ui
-from mceditlib.geometry import BoundingBox
+from mceditlib.selection import BoundingBox
 from mceditlib.exceptions import ChunkNotPresent
 
 

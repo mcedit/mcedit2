@@ -4,7 +4,7 @@ import pytest
 import logging
 
 from mceditlib.export import extractSchematicFrom
-from mceditlib.geometry import BoundingBox
+from mceditlib.selection import BoundingBox
 from mceditlib import block_copy
 from mceditlib.worldeditor import WorldEditor
 from templevel import TempLevel

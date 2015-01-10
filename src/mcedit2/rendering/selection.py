@@ -14,7 +14,7 @@ from mcedit2.rendering.scenegraph import VertexNode, RenderstateNode
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 from mcedit2.util.glutils import gl
 from mceditlib import faces
-from mceditlib.geometry import SectionBox
+from mceditlib.selection import SectionBox
 
 log = logging.getLogger(__name__)
 

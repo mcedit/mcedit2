@@ -16,7 +16,7 @@ from mcedit2.util import profiler
 from mcedit2.util.lazyprop import lazyprop
 from mceditlib import faces
 from mceditlib import exceptions
-from mceditlib.geometry import SectionBox, BoundingBox
+from mceditlib.selection import BoundingBox, SectionBox
 
 
 log = logging.getLogger(__name__)
