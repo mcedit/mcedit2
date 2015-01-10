@@ -260,11 +260,11 @@ class VertexRenderNode(RenderNode):
             GL.glVertexPointer(3, GL.GL_FLOAT, stride, buf)
             if textures:
                 GL.glClientActiveTexture(GL.GL_TEXTURE0)
-                GL.glTexCoordPointer(2, GL.GL_FLOAT, stride, (buf[3:]))
+                GL.glTexCoordPointer(2, GL.GL_FLOAT, stride, (buf[array.texOffset:]))
             if lights:
                 GL.glClientActiveTexture(GL.GL_TEXTURE1)
-                GL.glTexCoordPointer(2, GL.GL_FLOAT, stride, (buf[5:]))
-            GL.glColorPointer(4, GL.GL_UNSIGNED_BYTE, stride, (buf.view(dtype=numpy.uint8)[(stride - 4):]))
+                GL.glTexCoordPointer(2, GL.GL_FLOAT, stride, (buf[array.lightOffset:]))
+            GL.glColorPointer(4, GL.GL_UNSIGNED_BYTE, stride, (buf.view(dtype=numpy.uint8)[array.rgbaOffset*4:]))
 
             vertexCount = int(array.buffer.size / array.elements)
             GL.glDrawArrays(array.gl_type, 0, vertexCount)

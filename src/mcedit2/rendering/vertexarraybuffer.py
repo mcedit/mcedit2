@@ -5,13 +5,14 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 from OpenGL import GL
 import numpy
-from mcedit2.rendering.slices import _XYZ, _ST, _SLBL, _RGBA, _RGB, _A
+from mcedit2.rendering.blockmeshes import standardCubeTemplates
 
 log = logging.getLogger(__name__)
 
 
 class VertexArrayBuffer(object):
-
+    texOffset = None
+    lightOffset = None
     def __init__(self, count, textures=True, lights=True):
         """
         Vertex buffer, stores an array of `count` quad vertexes with a number of elements determined by textures and
@@ -26,9 +27,12 @@ class VertexArrayBuffer(object):
         """
         self.elements = 4
         if textures:
+            self.texOffset = self.elements - 1
             self.elements += 2
         if lights:
+            self.lightOffset = self.elements - 1
             self.elements += 2
+        self.rgbaOffset = self.elements - 1
 
         self.buffer = numpy.zeros((count, 4, self.elements), dtype='f4')
         self.gl_type = GL.GL_QUADS
@@ -37,11 +41,11 @@ class VertexArrayBuffer(object):
         self.rgba[:] = 0xff
 
     @classmethod
-    def fromIndices(cls, direction, blockIndices, textures=True, lights=True):
+    def fromIndices(cls, face, blockIndices, textures=True, lights=True):
         """
 
-        :param direction:
-        :type direction:
+        :param face:
+        :type face:
         :param blockIndices:
         :type blockIndices:
         :param textures:
@@ -59,9 +63,8 @@ class VertexArrayBuffer(object):
         vertexBuffer.vertex[..., 0] = x[..., None]
         vertexBuffer.vertex[..., 1] = y[..., None]
         vertexBuffer.vertex[..., 2] = z[..., None]
-        #vertexBuffer.vertex[:] += standardCubeTemplates[direction, ..., 0:3]
-        #if textures:
-        #    vertexBuffer.texcoord[:] = standardCubeTemplates[direction, ..., 3:5]
+        vertexBuffer.vertex[:] += standardCubeTemplates[face, ..., 0:3]
+
         if lights:
             vertexBuffer.lightcoord[:] = [[[0.5, 0.5]]]
 
@@ -84,27 +87,27 @@ class VertexArrayBuffer(object):
 
     @property
     def vertex(self):
-        return self.buffer[_XYZ]
+        return self.buffer[..., :3]
 
     @property
     def texcoord(self):
-        return self.buffer[_ST]
+        return self.buffer[..., self.texOffset:self.texOffset+2]
 
     @property
     def lightcoord(self):
-        return self.buffer[_SLBL]
+        return self.buffer[..., self.lightOffset:self.lightOffset+2]
 
     @property
     def rgba(self):
-        return self.buffer.view('uint8')[_RGBA]
+        return self.buffer.view('uint8')[..., self.rgbaOffset*4:self.rgbaOffset*4+4]
 
     @property
     def rgb(self):
-        return self.buffer.view('uint8')[_RGB]
+        return self.buffer.view('uint8')[..., self.rgbaOffset*4:self.rgbaOffset*4+3]
 
     @property
     def alpha(self):
-        return self.buffer.view('uint8')[_A]
+        return self.buffer.view('uint8')[..., self.rgbaOffset*4+3:self.rgbaOffset*4+4]
 
     def __len__(self):
         return len(self.buffer)
