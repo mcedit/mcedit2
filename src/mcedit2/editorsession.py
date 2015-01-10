@@ -32,10 +32,10 @@ from mceditlib.worldeditor import WorldEditor
 
 log = logging.getLogger(__name__)
 """
-    An EditorSession is a world currently opened for editing, the state of the editor including the current
-    selection box, the editor tab containing its viewports, its command history, a separate instance of each editor
-    tool (why?), and the ChunkLoader that coordinates loading chunks into its viewports.
-    """
+An EditorSession is a world currently opened for editing, the state of the editor including the current
+selection box, the editor tab containing its viewports, its command history, a separate instance of each editor
+tool (why?), and the ChunkLoader that coordinates loading chunks into its viewports.
+"""
 
 class EditorSession(QtCore.QObject):
     def __init__(self, filename, versionInfo, readonly=False):
@@ -198,6 +198,8 @@ class EditorSession(QtCore.QObject):
             self.worldEditor.close()
             self.worldEditor = None
 
+    # --- Selection ---
+
     selectionChanged = QtCore.Signal(BoundingBox)
     _currentSelection = None
 
@@ -211,8 +213,6 @@ class EditorSession(QtCore.QObject):
         self.enableSelectionCommands(box is not None and box.volume != 0)
         self.selectionChanged.emit(box)
 
-    # --- Menu commands ---
-
     def enableSelectionCommands(self, enable):
         self.actionCut.setEnabled(enable)
         self.actionCopy.setEnabled(enable)
@@ -221,7 +221,10 @@ class EditorSession(QtCore.QObject):
         self.actionPaste_Entities.setEnabled(enable)
         self.actionClear.setEnabled(enable)
 
+    # --- Menu commands ---
+
     def save(self):
+        self.undoStack.clearUndoBlock()
         self.worldEditor.saveChanges()
         self.dirty = False
 
