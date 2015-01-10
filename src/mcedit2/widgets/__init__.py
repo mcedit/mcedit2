@@ -10,3 +10,4 @@ import infopanel
 import log_view
 import nbttreeview
 import objectinspector
+import shapewidget

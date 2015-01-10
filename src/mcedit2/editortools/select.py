@@ -7,23 +7,27 @@ import logging
 from OpenGL import GL
 from PySide import QtGui, QtCore
 import numpy
+
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.editorcommands.fill import fillCommand
 from mcedit2.editorcommands.replace import replaceCommand
-
 from mcedit2.editortools import EditorTool
 from mcedit2.rendering import cubes
+from mcedit2.rendering.selection import SelectionScene, SelectionFaceNode
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.glutils import gl
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering import scenegraph, rendergraph
 from mcedit2.util.showprogress import showProgress
+from mcedit2.widgets import shapewidget
 from mcedit2.widgets.layout import Column
+from mcedit2.widgets.shapewidget import ShapeWidget
 from mcedit2.worldview.worldview import boxFaceUnderCursor
 from mceditlib import faces
 from mceditlib.geometry import BoundingBox, Vector
 from mceditlib.operations import ComposeOperations
 from mceditlib.operations.entity import RemoveEntitiesOperation
+from mceditlib import selection
 
 log = logging.getLogger(__name__)
 
@@ -148,7 +152,7 @@ class SelectionCoordinateWidget(QtGui.QWidget):
 class SelectCommand(QtGui.QUndoCommand):
     def __init__(self, selectionTool, box, *args, **kwargs):
         QtGui.QUndoCommand.__init__(self, *args, **kwargs)
-        self.setText("Box Selection")
+        self.setText("Box Select")
         self.box = box
         self.selectionTool = selectionTool
         self.previousBox = None
@@ -177,7 +181,8 @@ class SelectionTool(EditorTool):
 
         self.coordInput = SelectionCoordinateWidget()
         self.coordInput.boxChanged.connect(self.coordInputChanged)
-
+        self.shapeInput = ShapeWidget()
+        self.shapeInput.shapeChanged.connect(self.shapeDidChange)
         self.deselectButton = QtGui.QPushButton(self.tr("Deselect"))
         self.deselectButton.clicked.connect(self.deselect)
         self.deleteSelectionButton = QtGui.QPushButton(self.tr("Delete"))
@@ -192,6 +197,7 @@ class SelectionTool(EditorTool):
         self.replaceButton.clicked.connect(self.replace)
 
         self.toolWidget.setLayout(Column(self.coordInput,
+                                         self.shapeInput,
                                          self.deselectButton,
                                          self.deleteSelectionButton,
                                          self.deleteBlocksButton,
@@ -203,11 +209,14 @@ class SelectionTool(EditorTool):
         self.cursorNode = SelectionCursor()
         self.overlayNode = scenegraph.Node()
         self.faceHoverNode = SelectionFaceNode()
-        self.selectionNode = SelectionBoxNode()
+        self.selectionNode = SelectionScene()
         self.overlayNode.addChild(self.selectionNode)
         self.overlayNode.addChild(self.faceHoverNode)
 
         self.newSelectionNode = None
+
+    def shapeDidChange(self):
+        self.currentSelection = self.createShapedSelection(self.currentSelection)
 
     def toolInactive(self):
         self.faceHoverNode.visible = False
@@ -229,7 +238,7 @@ class SelectionTool(EditorTool):
         self.editorSession.currentSelection = value
 
     def coordInputChanged(self, box):
-        self.currentSelection = box
+        self.currentSelection = self.createShapedSelection(box)
 
     def selectionDidChange(self, value):
         self.coordInput.boundingBox = value
@@ -239,7 +248,7 @@ class SelectionTool(EditorTool):
         box = self.currentSelection
         if box:
             self.selectionNode.visible = True
-            self.selectionNode.selectionBox = box
+            self.selectionNode.selection = box
         else:
             self.selectionNode.visible = False
             self.faceHoverNode.visible = False
@@ -299,7 +308,7 @@ class SelectionTool(EditorTool):
             # Show new box being dragged out
             newBox = self.boxFromDragSelect(event.ray)
             self.selectionNode.visible = True
-            self.selectionNode.selectionBox = newBox
+            self.selectionNode.selection = newBox
         else:
             if self.dragResizeFace is not None:
                 # Hilite face being dragged
@@ -309,7 +318,7 @@ class SelectionTool(EditorTool):
 
                 # Update selection box to resized size in progress
                 newBox = self.boxFromDragResize(self.currentSelection, event.ray)
-                self.selectionNode.selectionBox = newBox
+                self.selectionNode.selection = newBox
             elif self.currentSelection is not None:
                 # Hilite face cursor is over
                 point, face = boxFaceUnderCursor(self.currentSelection, event.ray)
@@ -336,6 +345,7 @@ class SelectionTool(EditorTool):
                 newBox = self.boxFromDragResize(box, event.ray)
 
                 command = SelectCommand(self, newBox)
+                command.setText(self.tr("Resize Selection"))
                 editor.undoStack.push(command)
 
             self.dragResizeFace = None
@@ -345,6 +355,7 @@ class SelectionTool(EditorTool):
     def deselect(self):
         editor = self.editorSession
         command = SelectCommand(self, None)
+        command.setText(self.tr("Deselect"))
         editor.undoStack.push(command)
 
     selectionColor = (0.8, 0.8, 1.0)
@@ -389,7 +400,7 @@ class SelectionTool(EditorTool):
         o[dragdim] = int(numpy.floor(point[dragdim] + 0.5))
         thisSide = BoundingBox(o, s)
 
-        return thisSide.union(otherSide)
+        return self.createShapedSelection(thisSide.union(otherSide))
 
     def boxFromDragSelect(self, ray):
         """
@@ -414,123 +425,13 @@ class SelectionTool(EditorTool):
         endPoint = ray.intersectPlane(dim, point[dim])
         endBox = BoundingBox(endPoint.intfloor(), size)
 
-        return startBox.union(endBox)
+        return self.createShapedSelection(startBox.union(endBox))
 
-class SelectionBoxRenderNode(rendergraph.RenderNode):
-    def drawSelf(self):
-        box = self.sceneNode.selectionBox
-        if box is None:
-            return
-
-        alpha = 0.3
-        r, g, b = self.sceneNode.color
-        with gl.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT | GL.GL_ENABLE_BIT | GL.GL_POLYGON_BIT):
-            GL.glDepthMask(False)
-            GL.glEnable(GL.GL_BLEND)
-            GL.glPolygonOffset(self.sceneNode.depth, self.sceneNode.depth)
-
-            if self.sceneNode.filled:
-                # Filled box
-                GL.glColor(r, g, b, alpha)
-                cubes.drawBox(box)
-
-            if self.sceneNode.wire:
-                # Wire box, thinner behind terrain
-                GL.glColor(1., 1., 1., alpha)
-                GL.glLineWidth(2.0)
-                cubes.drawBox(box, cubeType=GL.GL_LINES)
-                GL.glDisable(GL.GL_DEPTH_TEST)
-                GL.glLineWidth(1.0)
-                cubes.drawBox(box, cubeType=GL.GL_LINES)
-
-
-class SelectionBoxNode(scenegraph.Node):
-    RenderNodeClass = SelectionBoxRenderNode
-    _selectionBox = None
-    depth = DepthOffset.Selection
-    wire = True
-
-    _filled = True
-    @property
-    def filled(self):
-        return self._filled
-
-    @filled.setter
-    def filled(self, value):
-        self._filled = value
-        self.dirty = True
-
-    @property
-    def selectionBox(self):
-        return self._selectionBox
-
-    @selectionBox.setter
-    def selectionBox(self, value):
-        self._selectionBox = value
-        self.dirty = True
-
-    _color = (1, .3, 1)
-    @property
-    def color(self):
-        return self._color
-
-    @color.setter
-    def color(self, value):
-        self._color = value
-        self.dirty = True
-
-class SelectionFaceRenderNode(rendergraph.RenderNode):
-    def drawSelf(self):
-        box = self.sceneNode.selectionBox
-        if box is None:
-            return
-
-        alpha = 0.3
-        r, g, b = self.sceneNode.color
-        with gl.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT | GL.GL_ENABLE_BIT):
-            GL.glDisable(GL.GL_DEPTH_TEST)
-            GL.glDepthMask(False)
-            GL.glEnable(GL.GL_BLEND)
-            GL.glPolygonOffset(self.sceneNode.depth, self.sceneNode.depth)
-
-            GL.glColor(r, g, b, alpha)
-            cubes.drawFace(box, self.sceneNode.face)
-
-
-class SelectionFaceNode(scenegraph.Node):
-    RenderNodeClass = SelectionFaceRenderNode
-    _selectionBox = None
-    _face = faces.FaceYIncreasing
-    depth = DepthOffset.Selection
-
-    @property
-    def selectionBox(self):
-        return self._selectionBox
-
-    @selectionBox.setter
-    def selectionBox(self, value):
-        self._selectionBox = value
-        self.dirty = True
-
-
-    @property
-    def face(self):
-        return self._face
-
-    @face.setter
-    def face(self, value):
-        self._face = value
-        self.dirty = True
-
-    _color = (1, .3, 1)
-    @property
-    def color(self):
-        return self._color
-
-    @color.setter
-    def color(self, value):
-        self._color = value
-        self.dirty = True
+    def createShapedSelection(self, box):
+        if self.shapeInput.currentShape is shapewidget.Square:
+            return box
+        else:
+            return selection.ShapedSelection(box, self.shapeInput.currentShape.shapeFunc)
 
 
 class SelectionCursorRenderNode(rendergraph.RenderNode):

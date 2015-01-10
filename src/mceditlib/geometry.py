@@ -266,7 +266,7 @@ class BoundingBox(SelectionBox):
                 self._size = Vector(*(self.type(a) for a in size))
 
     def __repr__(self):
-        return "%s(origin={0}, size={1})".format(self.__class__.__name__, self.origin, self.size)
+        return "%s(origin=%s, size=%s)" % (self.__class__.__name__, self.origin, self.size)
 
     def __iter__(self):
         return iter((self._origin, self._size))
@@ -425,7 +425,7 @@ class BoundingBox(SelectionBox):
         return True
 
     def __cmp__(self, b):
-        return cmp((self.origin, self.size), (b.origin, b.size))
+        return cmp((self.origin, self.size), None if b is None else (b.origin, b.size))
 
     def containsChunk(self, cx, cz):
         return self.mincx <= cx < self.maxcx and self.mincz <= cz < self.maxcz

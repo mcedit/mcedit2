@@ -8,7 +8,8 @@ from PySide import QtGui, QtCore
 
 from mcedit2.editortools import EditorTool
 from mcedit2.command import SimpleRevisionCommand
-from mcedit2.editortools.select import SelectionBoxNode, SelectionFaceNode
+from mcedit2.editortools.select import SelectionFaceNode
+from mcedit2.rendering.selection import SelectionBoxNode, SelectionFaceNode
 from mcedit2.rendering import scenegraph
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.worldscene import WorldScene

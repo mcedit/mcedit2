@@ -3,9 +3,8 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
-import os
 
-from PySide import QtGui, QtCore
+from PySide import QtGui
 import numpy
 
 from mcedit2.editortools import EditorTool
@@ -13,12 +12,11 @@ from mcedit2.command import SimplePerformCommand
 from mcedit2.rendering import worldscene, scenegraph
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.util.load_ui import load_ui, registerCustomWidget
-from mcedit2.util.resources import resourcePath
 from mcedit2.util.settings import Settings
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
-from mcedit2.widgets import flowlayout
 from mceditlib.geometry import BoundingBox, Vector
+from mceditlib.selection import ShapedSelection
 from mceditlib.util import exhaust
 
 
@@ -77,7 +75,7 @@ class BrushCommand(SimplePerformCommand):
         yield 0, len(self.points), "Applying {0} brush...".format(self.brushMode.name)
         try:
             #xxx combine selections
-            selections = [BrushSelection(self.brushBoxForPoint(point), self.brushStyle) for point in self.points]
+            selections = [ShapedSelection(self.brushBoxForPoint(point), self.brushStyle.shapeFunc) for point in self.points]
             self.brushMode.applyToSelections(self, selections)
         except NotImplementedError:
             for i, point in enumerate(self.points):
@@ -147,132 +145,16 @@ class Fill(BrushMode):
         fill = command.editorSession.currentDimension.fillBlocksIter(selections[0], command.blockInfo)
         showProgress("Applying brush...", fill)
 
+
 class BrushModes(object):
+    # load from plugins here
     allModes = (Fill(),)
 
 
-class BrushSelection(BoundingBox):
-    def __init__(self, box, style, chance=100, hollow=False):
-        """
-
-
-        :type style: Style
-        :type box: BoundingBox
-        """
-        super(BrushSelection, self).__init__(box.origin, box.size)
-        self.style = style
-        self.chance = chance
-        self.hollow = hollow
-
-    def box_mask(self, box):
-        return createBrushMask(self, self.style, box, self.chance, self.hollow)
-
-
-def createBrushMask(brushBox, style, requestedBox, chance=100, hollow=False):
-    """
-    Return a boolean array for a brush with the given shape and style.
-    If 'offset' and 'box' are given, then the brush is offset into the world
-    and only the part of the world contained in box is returned as an array
-    """
-
-    origin, shape = brushBox.origin, brushBox.size
-
-    if chance < 100 or hollow:
-        requestedBox = requestedBox.expand(1)
-
-    # we are returning indices for a Blocks array, so swap axes to YZX
-    outputShape = requestedBox.size
-    outputShape = (outputShape[1], outputShape[2], outputShape[0])
-
-    shape = shape[1], shape[2], shape[0]
-    origin = numpy.array(origin) - numpy.array(requestedBox.origin)
-    origin = origin[[1, 2, 0]]
-
-    inds = numpy.indices(outputShape, dtype=numpy.float32)
-    halfshape = numpy.array([(i >> 1) - ((i & 1 == 0) and 0.5 or 0) for i in shape])
-
-    blockCenters = inds - halfshape[:, None, None, None]
-    blockCenters -= origin[:, None, None, None]
-
-    # odd diameter means measure from the center of the block at 0,0,0 to each block center
-    # even diameter means measure from the 0,0,0 grid point to each block center
-
-    # if diameter & 1 == 0: blockCenters += 0.5
-    shape = numpy.array(shape, dtype='float32')
-
-    mask = style.maskFromCoords(blockCenters, shape)
-
-    if (chance < 100 or hollow) and max(shape) > 1:
-        threshold = chance / 100.0
-        exposedBlockMask = numpy.ones(shape=outputShape, dtype='bool')
-        exposedBlockMask[:] = mask
-        submask = mask[1:-1, 1:-1, 1:-1]
-        exposedBlockSubMask = exposedBlockMask[1:-1, 1:-1, 1:-1]
-        exposedBlockSubMask[:] = False
-
-        for dim in (0, 1, 2):
-            slices = [slice(1, -1), slice(1, -1), slice(1, -1)]
-            slices[dim] = slice(None, -2)
-            exposedBlockSubMask |= (submask & (mask[slices] != submask))
-            slices[dim] = slice(2, None)
-            exposedBlockSubMask |= (submask & (mask[slices] != submask))
-
-        if hollow:
-            mask[~exposedBlockMask] = False
-        if chance < 100:
-            rmask = numpy.random.random(mask.shape) < threshold
-
-            mask[exposedBlockMask] = rmask[exposedBlockMask]
-
-    if chance < 100 or hollow:
-        return mask[1:-1, 1:-1, 1:-1]
-    else:
-        return mask
-
-
 class Style(object):
-    pass
-
-
-class Round(Style):
-    ID = "Round"
-    icon = "brush_round.png"
-
-    def maskFromCoords(self, blockCenters, shape):
-        blockCenters *= blockCenters
-        shape /= 2
-        shape *= shape
-
-        blockCenters /= shape[:, None, None, None]
-        distances = sum(blockCenters, 0)
-        return distances < 1
-
-
-class Square(Style):
-    ID = "Square"
-    icon = "brush_square.png"
-
-    def maskFromCoords(self, blockCenters, shape):
-        blockCenters /= shape[:, None, None, None]  # XXXXXX USING DIVIDE FOR A RECTANGLE
-
-        distances = numpy.absolute(blockCenters).max(0)
-        return distances < .5
-
-
-class Diamond(Style):
-    ID = "Diamond"
-    icon = "brush_diamond.png"
-
-    def maskFromCoords(self, blockCenters, shape):
-        blockCenters = numpy.abs(blockCenters)
-        shape /= 2
-        blockCenters /= shape[:, None, None, None]
-        distances = numpy.sum(blockCenters, 0)
-        return distances < 1
-
-
-class BrushStyles(object):
-    allStyles = (Round(), Square(), Diamond())
+    ID = NotImplemented
+    icon = NotImplemented
+    shapeFunc = NotImplemented
 
 
 NULL_ID = 255  # xxx
@@ -283,7 +165,7 @@ class MaskLevel(object):
         """
         Level emulator to be used for rendering brushes and selections.
 
-        :type selection: BrushSelection
+        :type selection: mceditlib.selection.ShapedSelection
         :param selection:
         :param fillBlock:
         :param blocktypes:
@@ -473,7 +355,7 @@ class BrushTool(EditorTool):
         return self.brushMode.brushBoundingBox(point, self.options)
 
     def brushSelectionForCursor(self):
-        return BrushSelection(self.brushBoxForPoint((0, 0, 0)), self.brushStyle)
+        return ShapedSelection(self.brushBoxForPoint((0, 0, 0)), self.brushStyle.shapeFunc)
 
     def updateCursor(self):
         log.info("Updating brush cursor: %s %s", self.brushStyle, self.brushSelectionForCursor())
@@ -492,44 +374,6 @@ class BrushTool(EditorTool):
         self.brushLoader = WorldLoader(self.cursorWorldScene)
         self.brushLoader.timer.start()
 
-
-@registerCustomWidget
-class BrushShapeWidget(QtGui.QWidget):
-    def __init__(self, *args, **kwargs):
-        super(BrushShapeWidget, self).__init__(*args, **kwargs)
-        buttons = self.buttons = []
-        layout = flowlayout.FlowLayout()
-        buttonGroup = QtGui.QButtonGroup()
-
-        iconBase = resourcePath("mcedit2/ui/editortools/images")
-        for shape in BrushStyles.allStyles:
-            filename = os.path.join(iconBase, shape.icon)
-            assert os.path.exists(filename), "%r does not exist" % filename
-            icon = QtGui.QIcon(filename)
-            if icon is None:
-                raise ValueError("Failed to read shape icon file %s" % filename)
-            def _handler(shape):
-                def handler():
-                    self.currentShape = shape
-                    BrushShapeSetting.setValue(shape.ID)
-                    self.shapeChanged.emit()
-                return handler
-            action = QtGui.QAction(icon, shape.ID, self, triggered=_handler(shape))
-            button = QtGui.QToolButton()
-            button.setCheckable(True)
-            button.setDefaultAction(action)
-            button.setIconSize(QtCore.QSize(32, 32))
-            buttons.append(button)
-            layout.addWidget(button)
-            buttonGroup.addButton(button)
-
-        self.setLayout(layout)
-        currentID = BrushShapeSetting.value(BrushStyles.allStyles[0].ID)
-        shapesByID = {shape.ID:shape for shape in BrushStyles.allStyles}
-
-        self.currentShape = shapesByID.get(currentID, BrushStyles.allStyles[0])
-
-    shapeChanged = QtCore.Signal()
 
 @registerCustomWidget
 class BrushModeWidget(QtGui.QComboBox):

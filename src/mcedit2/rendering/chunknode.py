@@ -82,6 +82,9 @@ class ChunkGroupNode(NamedChildrenNode):
         az = cz >> 4
         self.removeChild((ax, az))
 
+    def containsChunkNode(self, (cx, cz)):
+        return (cx, cz) in self._children
+
     def getChunkNode(self, (cx, cz)):
         return self.getChunkArea(cx, cz).getChild((cx, cz))
 

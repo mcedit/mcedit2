@@ -207,7 +207,7 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="BrushShapeWidget" name="brushShapeInput" native="true">
+          <widget class="ShapeWidget" name="brushShapeInput" native="true">
            <property name="minimumSize">
             <size>
              <width>40</width>
@@ -242,9 +242,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>BrushShapeWidget</class>
+   <class>ShapeWidget</class>
    <extends>QWidget</extends>
-   <header>brushshapewidget.h</header>
+   <header>shapewidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

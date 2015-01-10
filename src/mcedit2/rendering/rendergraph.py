@@ -118,7 +118,6 @@ class RenderNode(object):
         self.displayList.destroy()
 
 
-
 class RenderstateRenderNode(RenderNode):
     def draw(self):
         self.enter()
@@ -130,7 +129,6 @@ class RenderstateRenderNode(RenderNode):
 
     def exit(self):
         raise NotImplementedError
-
 
 class TextureAtlasRenderNode(RenderstateRenderNode):
     def __init__(self, sceneNode):

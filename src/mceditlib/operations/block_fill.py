@@ -97,7 +97,6 @@ class FillBlocksOperation(Operation):
     def done(self):
         log.info(u"Fill/Replace: Skipped {0}/{1} sections".format(self.skipped, self.sections))
 
-
     def operateOnChunk(self, chunk):
 
         self.chunkCount += 1
