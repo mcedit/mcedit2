@@ -30,7 +30,7 @@ class CameraWorldViewFrame(QtGui.QWidget):
 
         self.viewControls = ViewControls(view)
 
-        viewDistanceInput = QtGui.QSpinBox(minimum=2, maximum=24, singleStep=2)
+        viewDistanceInput = QtGui.QSpinBox(minimum=2, maximum=64, singleStep=2)
         viewDistanceInput.setValue(self.worldView.viewDistance)
         viewDistanceInput.valueChanged.connect(view.setViewDistance)
 
@@ -54,7 +54,7 @@ class CameraWorldView(WorldView):
         self._yawPitch = -45., 25.
         WorldView.__init__(self, *a, **kw)
         self.compassNode.yawPitch = self._yawPitch
-        self.viewDistance = 16
+        self.viewDistance = 32
         self.mouseActions = [CameraMoveMouseAction(),
                              CameraPanMouseAction(),
                              CameraElevateMouseAction()]
@@ -66,6 +66,8 @@ class CameraWorldView(WorldView):
 
     def setViewDistance(self, val):
         self.viewDistance = val
+        self._chunkIter = None
+        self.discardChunksOutsideViewDistance()
 
     def centerOnPoint(self, pos, distance=20):
         awayVector = self.cameraVector * -distance
