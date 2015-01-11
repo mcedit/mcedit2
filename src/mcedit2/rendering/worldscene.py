@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import sys
 import collections
+import numpy
 
 from mcedit2.rendering.layers import Layer
 from mcedit2.rendering import chunkupdate, scenegraph
@@ -55,6 +56,10 @@ class SceneUpdateTask(object):
         self.alpha = 255
 
         self.textureAtlas = textureAtlas
+
+        self.renderType = numpy.zeros((256*256,), 'uint8')
+        for block in self.worldScene.dimension.blocktypes:
+            self.renderType[block.ID] = block.renderType
 
     overheadMode = False
 

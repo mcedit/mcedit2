@@ -198,10 +198,6 @@ class SectionUpdate(object):
         # 2: item?
         # 3: block model
 
-        self.renderType = numpy.zeros((256*256,), 'uint8')
-        for block in self.blocktypes:
-            self.renderType[block.ID] = block.renderType
-
 
 
     @property
@@ -284,10 +280,9 @@ class SectionUpdate(object):
     def blocktypes(self):
         return self.chunkUpdate.chunk.blocktypes
 
-    @lazyprop
-    def blockRenderTypes(self):
-        blockRenderTypes = self.renderType[self.Blocks]
-        return blockRenderTypes
+    @property
+    def renderType(self):
+        return self.chunkUpdate.updateTask.renderType
 
     @lazyprop
     def exposedBlockMasks(self):
