@@ -9,7 +9,7 @@ import numpy
 
 from mcedit2.rendering.layers import Layer
 from mcedit2.rendering import chunkupdate, scenegraph
-from mcedit2.rendering import chunkmeshes, renderstates
+from mcedit2.rendering import renderstates
 from mcedit2.rendering.chunknode import ChunkNode, ChunkRenderInfo, ChunkGroupNode
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.geometrycache import GeometryCache

@@ -243,6 +243,7 @@ class MCEditApp(QtGui.QApplication):
 
     # --- Startup code ---
 
+    @profiler.function
     def didFinishLaunching(self):
         # --- Open files from command line ---
 

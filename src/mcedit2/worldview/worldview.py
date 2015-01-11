@@ -373,6 +373,7 @@ class WorldView(QGLWidget):
 
     maxFPS = 30
 
+    @profiler.function
     def glDraw(self, *args, **kwargs):
         frameInterval = 1.0 / self.maxFPS
         if time.time() - self.frameSamples[-1] < frameInterval:

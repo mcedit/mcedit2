@@ -170,8 +170,6 @@ class ChunkLoader(QtCore.QObject):
                 return
             yield
 
-
-
     def _loadChunk(self, cPos):
 
         if not self.dimension.containsChunk(*cPos):

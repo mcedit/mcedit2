@@ -91,6 +91,7 @@ class ChunkUpdate(object):
         OverheadBlockMesh,
     ]
 
+    @profiler.iterator("ChunkUpdate")
     def __iter__(self):
 
         chunkInfo = self.chunkInfo
@@ -98,10 +99,30 @@ class ChunkUpdate(object):
             yield
             return
 
-        existingBlockVertexNodes = sum([list(node.children) for node in chunkInfo.getChunkVertexNodes()], [])
-        blockMeshes = self.blockMeshes
+        for _ in self.buildChunkMeshes():
+            yield _
 
-        # Recalculate the classes which render the entire chunk from top to bottom
+        highDetailBlocks = []
+
+        if chunkInfo.detailLevel == 0 and layers.Layer.Blocks in chunkInfo.invalidLayers:
+            for _ in self.buildSectionMeshes(highDetailBlocks):
+                yield
+
+        self.blockMeshes.extend(highDetailBlocks)
+
+        raise StopIteration
+
+    @profiler.iterator
+    def buildChunkMeshes(self):
+        """
+        Rebuild the meshes which render the entire chunk from top to bottom
+        :return:
+        :rtype:
+        """
+        chunkInfo = self.chunkInfo
+        blockMeshes = self.blockMeshes
+        existingBlockVertexNodes = sum([list(node.children) for node in chunkInfo.getChunkVertexNodes()], [])
+
         for cls in self.wholeChunkMeshClasses:
             if chunkInfo.detailLevel not in cls.detailLevels:
                 #log.info("%s (%s) not in detail levels (%s)", cls.__name__, self.chunkMeshGroup.detailLevel, cls.detailLevels)
@@ -126,34 +147,12 @@ class ChunkUpdate(object):
             blockMeshes.append(chunkMesh)
             chunkMesh.chunkUpdate = None
 
-        #log.info("Calculated %d full-chunk meshes for chunk %s", len(blockMeshes), chunkNode.chunkPosition)
-
-        highDetailBlocks = []
-
-        # Recalculate section block meshes if needed, otherwise retain them
-        if chunkInfo.detailLevel == 0 and layers.Layer.Blocks in chunkInfo.invalidLayers:
-            #log.info("Recalculating chunk %s (%s)", chunkNode.chunkPosition, chunkNode)
-            for _ in self.calcSectionFaces(highDetailBlocks):
-                yield
-
-        blockMeshes.extend(highDetailBlocks)
-
-        #log.info("Calculated %d meshes for chunk %s", len(highDetailBlocks), chunkNode.chunkPosition)
-        # else:
-        #     highDetailBlocks.extend(mesh
-        #                             for mesh in chunkNode.blockMeshes
-        #                             if type(mesh) not in self.chunkMeshClasses)
-
-        # Add the layer renderers
-
-        # time.sleep(0.5) #xxxxxxxxxxxxx
-        raise StopIteration
-
-
-    def calcSectionFaces(self, blockMeshes):  # ForChunk(self, chunkPosition = (0,0), level = None, alpha = 1.0):
+    @profiler.iterator
+    def buildSectionMeshes(self, blockMeshes):
         """
-        Creates a SectionUpdate instance for each section found in this ChunkUpdate's chunk and iterates it.
+        Rebuild the section meshes.
 
+        Creates a SectionUpdate instance for each section found in this ChunkUpdate's chunk and iterates it.
         Returns an iterator.
         """
         chunk = self.chunk
@@ -390,10 +389,8 @@ class SectionUpdate(object):
             sectionBounds = sectionBounds.intersect(bounds)
 
         modelMesh = BlockModelMesh(self)
-        worker = modelMesh.createVertexArrays()
-        if worker:
-            for _ in worker:
-                yield
+        with profiler.context("BlockModelMesh"):
+            modelMesh.createVertexArrays()
         self.blockMeshes.append(modelMesh)
         yield
 

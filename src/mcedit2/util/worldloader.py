@@ -51,6 +51,7 @@ class WorldLoader(object):
         except StopIteration:
             self.timer.stop()
 
+    @profiler.iterator
     def work(self):
         yield
         for cPos in self.scene.dimension.chunkPositions():
