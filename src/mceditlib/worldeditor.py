@@ -11,9 +11,7 @@ from mceditlib.block_copy import copyBlocksIter
 from mceditlib.operations.block_fill import FillBlocksOperation
 from mceditlib.blocktypes import pc_blocktypes
 from mceditlib.selection import BoundingBox
-from mceditlib import nbt
 from mceditlib.findadapter import findAdapter
-from mceditlib.levelbase import matchEntityTags
 from mceditlib.multi_block import getBlocks, setBlocks
 from mceditlib.schematic import SchematicFileAdapter
 from mceditlib.util import displayName, chunk_pos, exhaust, matchEntityTags

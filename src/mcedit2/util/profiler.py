@@ -54,7 +54,6 @@ class Profiler(object):
         finally:
             self.exit()
 
-        #@functools.wraps
     def function(self, name):
         def _decorate(func):
             log.debug("Decorating %s with %s", func, name)

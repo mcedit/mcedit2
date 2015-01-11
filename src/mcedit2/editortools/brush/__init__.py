@@ -116,10 +116,6 @@ class BrushMode(object):
         """
         raise NotImplementedError
 
-
-    def applyToChunkSlices(self, op, chunk, slices, brushBox, brushBoxThisChunk):
-        raise NotImplementedError
-
     def createOptionsPanel(self, tool):
         pass
 

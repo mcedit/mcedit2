@@ -128,37 +128,3 @@ class ChunkMeshBase(MeshBase):
         """
         self.chunkUpdate = chunkUpdate
         self.vertexArrays = []
-
-class BlockMeshBase(MeshBase):
-
-    def __init__(self, sectionUpdate):
-        """
-
-        :type sectionUpdate: SectionUpdate
-        """
-        self.sectionUpdate = sectionUpdate
-        self.vertexArrays = []
-
-    def getRenderTypeMask(self):
-        return self.sectionUpdate.blockRenderTypes == self.renderType
-
-    def facingBlockLights(self, direction):
-        return self.sectionUpdate.areaBlockLights[directionOffsets[direction]]
-
-    def facingSkyLights(self, direction):
-        return self.sectionUpdate.areaSkyLights[directionOffsets[direction]]
-
-    def makeVertices(self):
-        yield
-        arrays = []
-        renderTypeMask = self.getRenderTypeMask()
-        yield
-
-        for (direction, exposedFaceMask) in enumerate(self.sectionUpdate.exposedBlockMasks):
-            vertexBuffer = self.makeFaceVertices(direction, renderTypeMask, exposedFaceMask)
-            yield
-            if len(vertexBuffer):
-                arrays.append(vertexBuffer)
-        self.vertexArrays = arrays
-
-    makeFaceVertices = NotImplemented

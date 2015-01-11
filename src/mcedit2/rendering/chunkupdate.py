@@ -386,10 +386,8 @@ class SectionUpdate(object):
 
     @profiler.iterator("SectionUpdate")
     def __iter__(self):
-        renderTypeCounts = numpy.bincount(self.blockRenderTypes.ravel())
 
         cx, cz = self.chunkUpdate.chunk.chunkPosition
-        cache = self.chunkUpdate.chunkInfo.worldScene.geometryCache
 
         sectionBounds = SectionBox(cx, self.y, cz)
         bounds = self.chunkUpdate.chunkInfo.worldScene.bounds
