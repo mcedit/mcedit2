@@ -217,7 +217,8 @@ class SelectionTool(EditorTool):
         self.newSelectionNode = None
 
     def shapeDidChange(self):
-        self.currentSelection = self.createShapedSelection(self.currentSelection)
+        if self.currentSelection is not None:
+            self.currentSelection = self.createShapedSelection(self.currentSelection)
 
     def toolInactive(self):
         self.faceHoverNode.visible = False
