@@ -542,6 +542,7 @@ class BoundingBox(SelectionBox):
     def isChunkAligned(self):
         return (self.origin.x & 0xf == 0) and (self.origin.z & 0xf == 0)
 
+ZeroBox = BoundingBox((0, 0, 0), (0, 0, 0))
 
 class FloatBox(BoundingBox):
     type = float
