@@ -17,6 +17,7 @@ class ProfilerWidget(QtGui.QWidget):
         super(ProfilerWidget, self).__init__(*args, **kwargs)
 
         self.treeWidget = treeWidget = QtGui.QTreeWidget()
+        self.treeWidget.setAlternatingRowColors(True)
         columns = ("name", "time", "%", "%%", "#", "/")
         #table.setColumnCount(len(columns))
         treeWidget.setHeaderLabels(columns)
