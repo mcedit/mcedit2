@@ -215,8 +215,6 @@ class VertexRenderNode(RenderNode):
 
 
     def drawSelf(self):
-        if self.didDraw:
-            assert not self.didDraw
         self.didDraw = True
         bare = []
         withTex = []
@@ -229,17 +227,17 @@ class VertexRenderNode(RenderNode):
             else:
                 bare.append(array)
 
-        self.drawArrays(bare, False, False)
-        self.drawArrays(withTex, True, False)
-        self.drawArrays(withLights, True, True)
+        with gl.glPushAttrib(GL.GL_ENABLE_BIT):
+            GL.glDisable(GL.GL_TEXTURE_2D)
+            self.drawArrays(bare, False, False)
+            GL.glEnable(GL.GL_TEXTURE_2D)
+            self.drawArrays(withTex, True, False)
+            self.drawArrays(withLights, True, True)
 
     def drawArrays(self, vertexArrays, textures, lights):
         if textures:
             GL.glClientActiveTexture(GL.GL_TEXTURE0)
             GL.glEnableClientState(GL.GL_TEXTURE_COORD_ARRAY)
-        else:
-            GL.glActiveTexture(GL.GL_TEXTURE0)
-            GL.glDisable(GL.GL_TEXTURE_2D)
         if lights:
             GL.glClientActiveTexture(GL.GL_TEXTURE1)
             GL.glEnableClientState(GL.GL_TEXTURE_COORD_ARRAY)
@@ -275,9 +273,6 @@ class VertexRenderNode(RenderNode):
         if textures:
             GL.glClientActiveTexture(GL.GL_TEXTURE0)
             GL.glDisableClientState(GL.GL_TEXTURE_COORD_ARRAY)
-        else:
-            GL.glActiveTexture(GL.GL_TEXTURE0)
-            GL.glEnable(GL.GL_TEXTURE_2D)
 
 class OrthoRenderNode(RenderstateRenderNode):
     def enter(self):
