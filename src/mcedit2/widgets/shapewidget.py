@@ -20,9 +20,10 @@ class ShapeWidget(QtGui.QWidget):
         super(ShapeWidget, self).__init__(*args, **kwargs)
         buttons = self.buttons = []
         layout = flowlayout.FlowLayout()
-        buttonGroup = QtGui.QButtonGroup()
-
+        actionGroup = QtGui.QActionGroup(self)
+        actionGroup.setExclusive(True)
         iconBase = resourcePath("mcedit2/assets/mcedit2/icons")
+        actions = {}
         for shape in Shapes.allShapes:
             filename = os.path.join(iconBase, shape.icon)
             assert os.path.exists(filename), "%r does not exist" % filename
@@ -37,16 +38,18 @@ class ShapeWidget(QtGui.QWidget):
                 return handler
             action = QtGui.QAction(icon, shape.ID, self, triggered=_handler(shape))
             button = QtGui.QToolButton()
-            button.setCheckable(True)
+            action.setCheckable(True)
             button.setDefaultAction(action)
             button.setIconSize(QtCore.QSize(32, 32))
             buttons.append(button)
             layout.addWidget(button)
-            buttonGroup.addButton(button)
+            actionGroup.addAction(action)
+            actions[shape.ID] = action
 
         self.setLayout(layout)
         currentID = BrushShapeSetting.value(Shapes.allShapes[0].ID)
         shapesByID = {shape.ID:shape for shape in Shapes.allShapes}
+        actions[currentID].setChecked(True)
 
         self.currentShape = shapesByID.get(currentID, Shapes.allShapes[0])
 
@@ -73,4 +76,4 @@ class Diamond(Style):
 
 class Shapes(object):
     # load from plugins here, rename to selection shapes?
-    allShapes = (Round(), Square(), Diamond())
+    allShapes = (Square(), Round(), Diamond())
