@@ -100,7 +100,7 @@ class IsoWorldView(WorldView):
         h = abs(br[1] - tl[1])
 
         d = max(w, h) + 2
-        return iterateChunks(center[0], center[2], d)
+        return iterateChunks(center[0], center[2], d / 2)
 
     def rotateView(self, yrot, xrot):
         self.yrot = yrot

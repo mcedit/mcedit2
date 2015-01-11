@@ -453,7 +453,7 @@ class WorldView(QGLWidget):
 
     def makeChunkIter(self):
         x, y, z = self.viewCenter()
-        return iterateChunks(x, z, 1 + max(self.width() * self.scale, self.height() * self.scale) // 16)
+        return iterateChunks(x, z, 1 + max(self.width() * self.scale, self.height() * self.scale) // 32)
 
     def requestChunk(self):
         if self._chunkIter is None:
@@ -636,14 +636,14 @@ def findBlockFace(level, point):
     return Vector(*blockPosition), face
 
 
-def iterateChunks(x, z, diameter):
+def iterateChunks(x, z, radius):
     """
     Yields a list of chunk positions starting from the center and going outward in a square spiral pattern.
 
     :param x: center block position
     :param z: center block position
-    :param diameter: diameter, in chunks
-    :type diameter: int
+    :param radius: radius, in chunks
+    :type radius: int
     :return:
     :rtype:
     """
@@ -664,7 +664,7 @@ def iterateChunks(x, z, diameter):
             yield (cx, cz)
 
         step += 1
-        if step > diameter:
+        if step > radius * 2:
             raise StopIteration
 
         dir = -dir
