@@ -62,6 +62,10 @@ class SelectionScene(scenegraph.Node):
             self.boxNode.selectionBox = value
             self.groupNode.clear()
             self._loader = None
+            if value.chunkCount < 16:
+                for _ in self.loadSections():
+                    pass
+                self.loadTimer.setInterval(333)
 
     _loader = None
     def loadMore(self):
@@ -95,6 +99,7 @@ class SelectionScene(scenegraph.Node):
                 chunkNode.addChild(vertexNode)
                 self.groupNode.addChunkNode(chunkNode)
             yield
+        self.loadTimer.setInterval(333)
 
     def exposedBlockMasks(self, mask):
         """
