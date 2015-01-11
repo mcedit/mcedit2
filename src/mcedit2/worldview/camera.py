@@ -188,6 +188,15 @@ class CameraWorldView(WorldView):
         log.debug("Discarding %d chunks...", len(chunks))
         worldScene.discardChunks(chunks)
 
+    def recieveChunk(self, chunk):
+        cx, cz = chunk.chunkPosition
+        x, y, z = self.viewCenter().chunkPos()
+        dx = abs(cx - x)
+        dz = abs(cz - z)
+        if dx > self.viewDistance or dz > self.viewDistance:
+            return iter([])
+        return super(CameraWorldView, self).recieveChunk(chunk)
+
 
 class CameraElevateMouseAction(ViewMouseAction):
     labelText = "Wheel Controls Camera Elevation"
