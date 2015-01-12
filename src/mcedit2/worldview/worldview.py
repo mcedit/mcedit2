@@ -27,7 +27,7 @@ from mcedit2.widgets.infopanel import InfoPanel
 from mceditlib import faces, exceptions, blocktypes
 from mceditlib.geometry import Vector, Ray
 from mceditlib.selection import rayIntersectsBox
-from mceditlib.exceptions import LevelFormatError
+from mceditlib.exceptions import LevelFormatError, ChunkNotPresent
 from mceditlib.util import displayName
 
 
@@ -773,7 +773,8 @@ class WorldCursorInfo(InfoPanel):
 
             desc += "\tName: %s" % dim.blocktypes[result.Blocks[0], result.Data[0]].displayName
             return desc
-
+        except ChunkNotPresent:
+            return "Chunk not present."
         except (EnvironmentError, LevelFormatError) as e:
             return "Error describing block: %r" % e
         except Exception as e:
