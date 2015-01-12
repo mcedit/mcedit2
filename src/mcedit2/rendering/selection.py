@@ -15,7 +15,8 @@ from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 from mcedit2.util import profiler
 from mcedit2.util.glutils import gl
 from mceditlib import faces
-from mceditlib.selection import SectionBox
+from mceditlib.exceptions import ChunkNotPresent
+from mceditlib.selection import SectionBox, BoundingBox, SelectionBox
 
 log = logging.getLogger(__name__)
 
@@ -26,6 +27,69 @@ class CullFaceRenderNode(rendergraph.RenderstateRenderNode):
 
     def exit(self):
         GL.glDisable(GL.GL_CULL_FACE)
+
+class NonAirMaskSelection(SelectionBox):
+
+    def __init__(self, dimension, box):
+        """
+
+        :param dimension:
+        :type dimension: mceditlib.worldeditor.WorldEditorDimension
+        :return:
+        :rtype:
+        """
+        super(NonAirMaskSelection, self).__init__()
+        self.box = box
+        self.mincx = box.mincx
+        self.mincy = box.mincy
+        self.mincz = box.mincz
+        self.maxcx = box.maxcx
+        self.maxcy = box.maxcy
+        self.maxcz = box.maxcz
+
+        self.dimension = dimension
+
+    def box_mask(self, box):
+        """
+
+        :param box:
+        :type box: BoundingBox
+        :return:
+        :rtype:
+        """
+        #if self.volume > 40:
+        #    import pdb; pdb.set_trace()
+
+        mask = numpy.zeros(shape=box.size, dtype=bool)
+
+        for cx, cz in box.chunkPositions():
+            try:
+                chunk = self.dimension.getChunk(cx, cz)
+            except ChunkNotPresent:
+                continue
+            for cy in box.sectionPositions(cx, cz):
+                section = chunk.getSection(cy)
+                if section is None:
+                    continue
+                sectionBox = box.intersect(SectionBox(cx, cy, cz))
+                if sectionBox.volume == 0:
+                    continue
+                slices = numpy.s_[
+                    sectionBox.miny & 0xf:(sectionBox.miny & 0xf) + sectionBox.height,
+                    sectionBox.minz & 0xf:(sectionBox.minz & 0xf) + sectionBox.length,
+                    sectionBox.minx & 0xf:(sectionBox.minx & 0xf) + sectionBox.width,
+                ]
+                maskSlices = numpy.s_[
+                    sectionBox.miny - box.miny:sectionBox.maxy - box.miny,
+                    sectionBox.minz - box.minz:sectionBox.maxz - box.minz,
+                    sectionBox.minx - box.minx:sectionBox.maxx - box.minx,
+                ]
+                blocks = section.Blocks
+                mask[maskSlices] = blocks[slices] != 0
+
+        return mask
+
+
 
 class SelectionScene(scenegraph.Node):
     def __init__(self):
@@ -47,6 +111,7 @@ class SelectionScene(scenegraph.Node):
         self.loadTimer = QtCore.QTimer(timeout=self.loadMore)
         self.loadTimer.setInterval(0)
         self.loadTimer.start()
+        self.renderSelection = None
 
     def __del__(self):
         self.loadTimer.stop()
@@ -57,16 +122,36 @@ class SelectionScene(scenegraph.Node):
         return self._selection
 
     @selection.setter
-    def selection(self, value):
-        if value != self._selection:
-            self._selection = value
-            self.boxNode.selectionBox = value
-            self.groupNode.clear()
-            self._loader = None
-            if value.chunkCount < 16:
-                for _ in self.loadSections():
-                    pass
-                self.loadTimer.setInterval(333)
+    def selection(self, selection):
+        if selection != self._selection:
+            self._selection = selection
+            self.updateSelection()
+
+    _dimension = None
+    @property
+    def dimension(self):
+        return self._dimension
+
+    @dimension.setter
+    def dimension(self, value):
+        if value != self._dimension:
+            self._dimension = value
+            self.updateSelection()
+
+    def updateSelection(self):
+        if self.dimension is None or self.selection is None:
+            return
+
+        selection = self.selection
+        self.renderSelection = selection & NonAirMaskSelection(self.dimension, selection)
+        self.boxNode.selectionBox = selection
+        self.groupNode.clear()
+        self._loader = None
+        if selection.chunkCount < 16:
+            for _ in self.loadSections():
+                pass
+            self.loadTimer.setInterval(333)
+
 
     _loader = None
     def loadMore(self):
@@ -79,20 +164,21 @@ class SelectionScene(scenegraph.Node):
 
     @profiler.iterator("SelectionScene")
     def loadSections(self):
-        if self.selection is None:
+        selection = self.renderSelection
+        if selection is None:
             self.loadTimer.setInterval(333)
             return
         else:
             self.loadTimer.setInterval(0)
 
-        for cx, cz in self.selection.chunkPositions():
+        for cx, cz in selection.chunkPositions():
             if self.groupNode.containsChunkNode((cx, cz)):
                 continue
 
             vertexArrays = []
-            for cy in self.selection.sectionPositions(cx, cz):
+            for cy in selection.sectionPositions(cx, cz):
                 box = SectionBox(cx, cy, cz).expand(1)
-                mask = self.selection.box_mask(box)
+                mask = selection.box_mask(box)
                 if mask is not None:
                     vertexArrays.extend(self.buildSection(mask, cy))
             if len(vertexArrays):
@@ -144,7 +230,7 @@ class SelectionScene(scenegraph.Node):
                 continue
 
             vertexBuffer.rgb[:] = faceShades[face]
-            vertexBuffer.alpha[:] = 0xff
+            vertexBuffer.alpha[:] = 0x77
             vertexBuffer.vertex[..., 1] += cy << 4
             vertexArrays.append(vertexBuffer)
 
@@ -152,12 +238,12 @@ class SelectionScene(scenegraph.Node):
 
 
 faceShades = {
-    faces.FaceNorth: 0x99,
-    faces.FaceSouth: 0x99,
-    faces.FaceEast: 0xCC,
-    faces.FaceWest: 0xCC,
-    faces.FaceUp: 0xFF,
-    faces.FaceDown: 0x77,
+    faces.FaceNorth: (0x99, 0x33, 0x99),
+    faces.FaceSouth: (0x99, 0x33, 0x99),
+    faces.FaceEast:  (0xCC, 0x44, 0xCC),
+    faces.FaceWest:  (0xCC, 0x44, 0xCC),
+    faces.FaceUp:    (0xFF, 0x55, 0xFF),
+    faces.FaceDown:  (0x77, 0x22, 0x77),
 }
 
 class SelectionBoxRenderNode(rendergraph.RenderNode):

@@ -211,6 +211,7 @@ class SelectionTool(EditorTool):
         self.overlayNode = scenegraph.Node()
         self.faceHoverNode = SelectionFaceNode()
         self.selectionNode = SelectionScene()
+        self.selectionNode.dimension = editorSession.currentDimension  # xxx dimensionDidChange
         self.overlayNode.addChild(self.selectionNode)
         self.overlayNode.addChild(self.faceHoverNode)
 
