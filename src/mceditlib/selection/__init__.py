@@ -94,19 +94,77 @@ class SelectionBox(object):
     def __sub__(self, other):
         return DifferenceBox(self, other)
 
+    def __invert__(self):
+        return InvertedBox(self)
+
     def section_mask(self, cx, cy, cz):
         return self.box_mask(SectionBox(cx, cy, cz))
 
     def box_mask(self, box):
         raise NotImplementedError
 
+    mincx = NotImplemented
+    mincy = NotImplemented
+    mincz = NotImplemented
+    maxcx = NotImplemented
+    maxcy = NotImplemented
+    maxcz = NotImplemented
+
+
+    def chunkBox(self, level):
+        """Returns this box extended to the chunk boundaries of the given level"""
+        box = self
+        return BoundingBox((box.mincx << 4, level.bounds.miny, box.mincz << 4),
+                           (box.maxcx - box.mincx << 4, level.bounds.height, box.maxcz - box.mincz << 4))
+
+    def containsChunk(self, cx, cz):
+        return self.mincx <= cx < self.maxcx and self.mincz <= cz < self.maxcz
+
+    def chunkPositions(self):
+        #iterate through all of the chunk positions within this selection box
+        return itertools.product(xrange(self.mincx, self.maxcx), xrange(self.mincz, self.maxcz))
+
+    def sectionPositions(self, cx=0, cz=0):
+        #iterate through all of the section positions within this chunk
+        return range(self.mincy, self.maxcy)
+
+    @property
+    def chunkCount(self):
+        return (self.maxcx - self.mincx) * (self.maxcz - self.mincz)
+
+class InvertedBox(SelectionBox):
+
+    def __init__(self, base):
+        super(InvertedBox, self).__init__()
+        self.base = base
+        self.mincx = base.mincx
+        self.mincy = base.mincy
+        self.mincz = base.mincz
+        self.maxcx = base.maxcx
+        self.maxcy = base.maxcy
+        self.maxcz = base.maxcz
+
+
+    def contains_coords(self, x, y, z):
+        return not self.base.contains_coords(x, y, z)
+
+    def box_mask(self, box):
+        return ~self.base.box_mask(box)
 
 class CombinationBox(SelectionBox):
     oper = NotImplemented
+    boundsminoper = NotImplemented
+    boundsmaxoper = NotImplemented
 
     def __init__(self, left, right):
         self.left = left
         self.right = right
+        self.mincx = self.boundsminoper(left.mincx, right.mincx)
+        self.mincy = self.boundsminoper(left.mincy, right.mincy)
+        self.mincz = self.boundsminoper(left.mincz, right.mincz)
+        self.maxcx = self.boundsmaxoper(left.maxcx, right.maxcx)
+        self.maxcy = self.boundsmaxoper(left.maxcy, right.maxcy)
+        self.maxcz = self.boundsmaxoper(left.maxcz, right.maxcz)
 
     def __contains__(self, item):
         return self.left.contains(item) or self.right.contains(item)
@@ -140,14 +198,18 @@ class CombinationBox(SelectionBox):
 
 class UnionBox(CombinationBox):
     oper = operator.or_
-
+    boundsminoper = min
+    boundsmaxoper = max
 
 class IntersectionBox(CombinationBox):
     oper = operator.and_
-
+    boundsminoper = max
+    boundsmaxoper = min
 
 class DifferenceBox(CombinationBox):
     oper = lambda a, b: a & (~b)
+    boundsminoper = lambda *a: a[0]
+    boundsmaxoper = lambda *a: a[0]
 
 
 def SectionBox(cx, cy, cz, section=None):
@@ -300,7 +362,7 @@ class BoundingBox(SelectionBox):
     def __len__(self):
         return 2
 
-    def __getattr__(self, item):
+    def __getitem__(self, item):
         if item == 0:
             return self._origin
         elif item == 1:
@@ -453,8 +515,6 @@ class BoundingBox(SelectionBox):
     def __cmp__(self, b):
         return cmp((self.origin, self.size), None if b is None else (b.origin, b.size))
 
-    def containsChunk(self, cx, cz):
-        return self.mincx <= cx < self.maxcx and self.mincz <= cz < self.maxcz
     #
     #def containsSection(self, cx, cy, cz):
     #    return self.mincx <= cx < self.maxcx and self.mincy <= cy < self.maxcy and self.mincz <= cz < self.maxcz
@@ -520,23 +580,6 @@ class BoundingBox(SelectionBox):
         """The largest chunk position contained in this box"""
         return ((self.origin.z + self.size.z - 1) >> 4) + 1
 
-    def chunkBox(self, level):
-        """Returns this box extended to the chunk boundaries of the given level"""
-        box = self
-        return BoundingBox((box.mincx << 4, level.bounds.miny, box.mincz << 4),
-                           (box.maxcx - box.mincx << 4, level.bounds.height, box.maxcz - box.mincz << 4))
-
-    def chunkPositions(self):
-        #iterate through all of the chunk positions within this selection box
-        return itertools.product(xrange(self.mincx, self.maxcx), xrange(self.mincz, self.maxcz))
-
-    def sectionPositions(self, cx=0, cz=0):
-        #iterate through all of the section positions within this chunk
-        return range(self.mincy, self.maxcy)
-
-    @property
-    def chunkCount(self):
-        return (self.maxcx - self.mincx) * (self.maxcz - self.mincz)
 
     @property
     def isChunkAligned(self):
