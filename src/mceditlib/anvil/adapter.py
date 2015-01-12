@@ -20,7 +20,7 @@ from mceditlib.blocktypes import pc_blocktypes
 from mceditlib.geometry import Vector
 from mceditlib.selection import BoundingBox
 from mceditlib import nbtattr
-from mceditlib.exceptions import PlayerNotFound
+from mceditlib.exceptions import PlayerNotFound, ChunkNotPresent
 from mceditlib.revisionhistory import RevisionHistory
 
 
@@ -718,7 +718,8 @@ class AnvilWorldAdapter(object):
             chunkTag = nbt.load(buf=data)
             log.debug("_getChunkData: Chunk %s loaded (%s bytes)", (cx, cz), len(data))
             chunkData = AnvilChunkData(self, cx, cz, dimName, chunkTag)
-
+        except ChunkNotPresent:
+            raise
         except (KeyError, IndexError, zlib.error) as e:  # Missing nbt keys, lists too short, decompression failure
             raise AnvilChunkFormatError("Error loading chunk: %r" % e)
 
