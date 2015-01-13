@@ -12,7 +12,7 @@ from mcedit2.util.lazyprop import lazyprop
 
 log = logging.getLogger(__name__)
 
-ENABLE_PROFILER = False
+ENABLE_PROFILER = True
 
 class Profiler(object):
     sampleLimit = 100000
