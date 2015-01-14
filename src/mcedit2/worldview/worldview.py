@@ -105,6 +105,7 @@ class WorldView(QGLWidget):
         self.compassOrthoNode.addChild(self.compassNode)
 
         self.mouseActions = []
+        self.keyActions = []
 
         self.textureAtlas = textureAtlas
 
@@ -313,6 +314,16 @@ class WorldView(QGLWidget):
         return Vector(*map(nanzero, [dx, dy, dz]))
 
     dragStart = None
+
+    def keyPressEvent(self, event):
+        for action in self.keyActions:
+            if action.matchEvent(event):
+                action.keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        for action in self.keyActions:
+            if action.matchEvent(event):
+                action.keyReleaseEvent(event)
 
     @profiler.function
     def mousePressEvent(self, event):
@@ -781,20 +792,62 @@ class WorldCursorInfo(InfoPanel):
             log.exception("Error describing block: %r", e)
             return "Error describing block: %r" % e
 
+class ViewKeyAction(object):
+    modifiers = Qt.NoModifier
+    key = 0
+    labelText = "Unknown Action"
+    hidden = False  # Hide from configuration
+
+    def __init__(self, key=None):
+        """
+        An action that can be bound to a keypress, optionally with modifiers.
+
+        """
+        if key is not None:
+            self.key = key
+
+    def __repr__(self):
+        return "%s(key=%s, modifiers=%s)" % (self.__class__.__name__, self.key, self.modifiers)
+
+    def matchEvent(self, event):
+        key = event.key()
+        modifiers = event.modifiers()
+        if key in (Qt.Key_Shift, Qt.Key_Control, Qt.Key_Alt, Qt.Key_Meta):
+            modifiers = self.modifiers  # pressing modifier key by itself has modifiers set, but releasing modifiers does not
+
+        return self.key == key and (self.modifiers & modifiers or self.modifiers == modifiers)
+
+    def keyPressEvent(self, event):
+        """
+
+        :type event: QtGui.QKeyEvent
+        """
+
+    def keyReleaseEvent(self, event):
+        """
+
+        :type event: QtGui.QKeyEvent
+        """
+
+
 
 class ViewMouseAction(object):
     button = Qt.NoButton
     modifiers = Qt.NoModifier
+    key = 0
     labelText = "Unknown Action"
     hidden = False  # Hide from configuration
 
     def __init__(self, button=None):
         """
-        An action that can be bound to a mouse button click, drag, or movement in a WorldView.
+        An action that can be bound to a mouse button click, drag, or movement, optionally combined with a held key.
 
         """
         if button is not None:
             self.button = button
+
+    def __repr__(self):
+        return "%s(button=%s, key=%s, modifiers=%s)" % (self.__class__.__name__, self.button, self.key, self.modifiers)
 
     def mouseMoveEvent(self, event):
         """
