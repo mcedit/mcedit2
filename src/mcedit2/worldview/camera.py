@@ -16,8 +16,7 @@ from mcedit2.util import profiler
 from mcedit2.widgets.layout import Column, Row
 from mcedit2.util.lazyprop import lazyprop
 from mcedit2.worldview.viewcontrols import ViewControls
-from mcedit2.worldview.worldview import WorldView, iterateChunks, ViewMouseAction
-from mceditlib.geometry import Vector
+from mcedit2.worldview.worldview import WorldView, iterateChunks, ViewMouseAction, ViewKeyAction
 
 log = logging.getLogger(__name__)
 
@@ -48,6 +47,132 @@ class CameraWorldViewFrame(QtGui.QWidget):
 
 
 
+class CameraKeyControls(object):
+    def __init__(self, worldView):
+        """
+
+        :param worldView:
+        :type worldView: CameraWorldView
+        :return:
+        :rtype:
+        """
+        self.worldView = worldView
+        self.forwardAction = self.Forward(self)
+        self.backwardAction = self.Backward(self)
+        self.leftAction = self.Left(self)
+        self.rightAction = self.Right(self)
+        self.upAction = self.Up(self)
+        self.downAction = self.Down(self)
+        self.keyActions = [
+            self.forwardAction,
+            self.backwardAction,
+            self.leftAction,
+            self.rightAction,
+            self.upAction,
+            self.downAction,
+        ]
+        self.forward = 0
+        self.backward = 0
+        self.left = 0
+        self.right = 0
+        self.up = 0
+        self.down = 0
+        self.tickTimer = QtCore.QTimer(interval=33, timeout=self.tickCamera)
+        self.tickTimer.start()
+
+    def tickCamera(self):
+        vector = self.worldView.cameraVector
+        point = self.worldView.centerPoint
+        up = (0, 1, 0)
+        left = vector.cross(up)
+        if self.forward:
+            point = point + vector
+        if self.backward:
+            point = point - vector
+        if self.left:
+            point = point - left
+        if self.right:
+            point = point + left
+        if self.up:
+            point = point + up
+        if self.down:
+            point = point - up
+
+        self.worldView.centerPoint = point
+
+
+    class CameraAction(ViewKeyAction):
+        def __init__(self, controls):
+            super(CameraKeyControls.CameraAction, self).__init__()
+            self.controls = controls
+
+    class Forward(CameraAction):
+        key = Qt.Key_W
+        labelText = "Move Forward"
+
+        def keyPressEvent(self, event):
+            self.controls.forward = 1
+            self.controls.backward = 0
+
+        def keyReleaseEvent(self, event):
+            self.controls.forward = 0
+
+    class Backward(CameraAction):
+        key = Qt.Key_S
+        labelText = "Move Backward"
+
+        def keyPressEvent(self, event):
+            self.controls.backward = 1
+            self.controls.forward = 0
+
+        def keyReleaseEvent(self, event):
+            self.controls.backward = 0
+
+    class Left(CameraAction):
+        key = Qt.Key_A
+        labelText = "Move Left"
+
+        def keyPressEvent(self, event):
+            self.controls.left = 1
+            self.controls.right = 0
+
+        def keyReleaseEvent(self, event):
+            self.controls.left = 0
+
+    class Right(CameraAction):
+        key = Qt.Key_D
+        labelText = "Move Right"
+
+        def keyPressEvent(self, event):
+            self.controls.right = 1
+            self.controls.left = 0
+
+        def keyReleaseEvent(self, event):
+            self.controls.right = 0
+
+    class Up(CameraAction):
+        key = Qt.Key_Space
+        labelText = "Move Up"
+
+        def keyPressEvent(self, event):
+            self.controls.up = 1
+            self.controls.down = 0
+
+        def keyReleaseEvent(self, event):
+            self.controls.up = 0
+
+    class Down(CameraAction):
+        key = Qt.Key_C
+        labelText = "Move Down"
+
+        def keyPressEvent(self, event):
+            self.controls.down = 1
+            self.controls.up = 0
+
+        def keyReleaseEvent(self, event):
+            self.controls.down = 0
+
+
 class CameraWorldView(WorldView):
     def __init__(self, *a, **kw):
         self.fov = 70.0  # needed by updateMatrices called from WorldView.__init__
@@ -58,6 +183,9 @@ class CameraWorldView(WorldView):
         self.mouseActions = [CameraMoveMouseAction(),
                              CameraPanMouseAction(),
                              CameraElevateMouseAction()]
+
+        self.cameraControls = CameraKeyControls(self)
+        self.keyActions.extend(self.cameraControls.keyActions)
 
         self.discardTimer = QtCore.QTimer()
         self.discardTimer.timeout.connect(self.discardChunksOutsideViewDistance)
@@ -199,7 +327,7 @@ class CameraWorldView(WorldView):
 
 
 class CameraElevateMouseAction(ViewMouseAction):
-    labelText = "Wheel Controls Camera Elevation"
+    labelText = "Mousewheel moves vertically (xxx fixme)"
 
     def wheelEvent(self, event):
         d = event.delta()
