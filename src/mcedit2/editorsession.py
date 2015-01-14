@@ -160,7 +160,7 @@ class EditorSession(QtCore.QObject):
             action = QtGui.QAction(
                 self.tr(name),
                 self,
-                shortcut=self.toolShortcut(name),
+                #shortcut=self.toolShortcut(name),  # xxxx coordinate with view movement keys
                 triggered=_triggered,
                 checkable=True,
                 icon=icon,
