@@ -22,9 +22,8 @@ from mcedit2.rendering.textureatlas import TextureAtlas
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 from mcedit2.rendering import scenegraph, rendergraph
 from mcedit2.util import profiler, raycast
-from mcedit2.util.glutils import gl
 from mcedit2.widgets.infopanel import InfoPanel
-from mceditlib import faces, exceptions, blocktypes
+from mceditlib import faces, exceptions
 from mceditlib.geometry import Vector, Ray
 from mceditlib.selection import rayIntersectsBox
 from mceditlib.exceptions import LevelFormatError, ChunkNotPresent
@@ -261,12 +260,14 @@ class WorldView(QGLWidget):
 
     @centerPoint.setter
     def centerPoint(self, value):
-        self._centerPoint = Vector(*value)
-        self._updateMatrices()
-        log.debug("update(): centerPoint %s %s", self, value)
-        self.update()
-        self.resetLoadOrder()
-        self.viewportMoved.emit(self)
+        value = Vector(*value)
+        if value != self._centerPoint:
+            self._centerPoint = value
+            self._updateMatrices()
+            log.debug("update(): centerPoint %s %s", self, value)
+            self.update()
+            self.resetLoadOrder()
+            self.viewportMoved.emit(self)
 
     scaleChanged = QtCore.Signal(float)
 
