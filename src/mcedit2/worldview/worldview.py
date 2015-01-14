@@ -89,6 +89,7 @@ class WorldView(QGLWidget):
         """
         QGLWidget.__init__(self, shareWidget=sharedGLWidget)
         self.setSizePolicy(QtGui.QSizePolicy.Policy.Expanding, QtGui.QSizePolicy.Policy.Expanding)
+        self.setFocusPolicy(Qt.ClickFocus)
         self.dimension = dimension
         self.worldScene = None
         self.loadableChunksNode = None
