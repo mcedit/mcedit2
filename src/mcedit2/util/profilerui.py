@@ -77,14 +77,14 @@ class ProfilerWidget(QtGui.QWidget):
                     selfTime = leaf.totalTime - accountedTime
                 else:
                     selfTime = 0
-                selfPercent = selfTime / tree.totalTime * 100
+                selfPercent = 100 if tree.totalTime == 0 else (selfTime / tree.totalTime * 100)
 
                 leafItem = QtGui.QTreeWidgetItem([name,
                                                   "%.2f" % leaf.totalTime,
                                                   "%.1f%%" % selfPercent,
                                                   "%.1f%%" % percentOfTotal,
                                                   "%d" % leaf.ncalls,
-                                                  "%0.3f ms" % (1000 * leaf.totalTime / leaf.ncalls)])
+                                                  "%0.3f ms" % (0 if leaf.ncalls == 0 else (1000 * leaf.totalTime / leaf.ncalls))])
                 item.addChild(leafItem)
                 processNode(leaf, leafItem)
 
