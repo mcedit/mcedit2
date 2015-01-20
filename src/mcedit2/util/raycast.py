@@ -70,7 +70,7 @@ def rayCast(ray, dimension, maxDistance=100, hitAir=False):
 
         point = intersects[0][0]
 
-    point = advanceToChunk(Ray(point, vector), dimension)
+    point = advanceToChunk(Ray(point, vector), dimension, maxDistance * 4)
     currentCX, currentCY, currentCZ = point.intfloor()
     currentChunk = None
 
@@ -125,10 +125,9 @@ def _cast(origin, vector, maxDistance, stepSize):
         face[smallAxis] = -faceDirs[smallAxis]
 
 
-def advanceToChunk(ray, dimension):
+def advanceToChunk(ray, dimension, maxDistance):
     point, vector = ray
-    distance = 2000
-    for pos, face in _cast(point, vector, distance, 16):
+    for pos, face in _cast(point, vector, maxDistance, 16):
 
         x, y, z = pos
         x >>= 4
