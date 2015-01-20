@@ -323,7 +323,6 @@ class WorldView(QGLWidget):
         self.pressedKeys.add(event.key())
         for action in self.viewActions:
             if action.matchKeyEvent(event):
-                log.info("Action %s matched event %s", action, event)
                 action.keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
