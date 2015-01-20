@@ -48,16 +48,18 @@ class MCESettingsOption(QtCore.QObject):
 
 
 class MCESettings(QtCore.QSettings):
-    """
-    Subclass of QSettings. Adds a `getOption` method which returns an individual option as its own object. Adds
-    one signal for each setting, emitted when its value is changed. Also provides json encoded methods to work
-    around a bug in PySide.
 
-    QSettings, under PySide, does not reliably infer that a settings value should be read as a QStringList.
-    jsonValue and setJsonValue methods are provided that will automatically encode/decode the given value to or from json
-
-    """
     def __init__(self, *args, **kwargs):
+        """
+        Subclass of QSettings. Adds a `getOption` method which returns an individual option as its own object. Adds
+        one signal for each setting, emitted when its value is changed. Also provides json encoded methods to work
+        around a bug in PySide.
+
+        QSettings, under PySide, does not reliably infer that a settings value should be read as a QStringList.
+        jsonValue and setJsonValue methods are provided that will automatically encode/decode the given value to or from json
+
+        :rtype: MCESettings
+        """
         dataDir = directories.getUserFilesDirectory()
         super(MCESettings, self).__init__(os.path.join(dataDir, "mcedit2.ini"), QtCore.QSettings.IniFormat, *args,
                                            **kwargs)

@@ -16,7 +16,8 @@ from mcedit2.util import profiler
 from mcedit2.widgets.layout import Column, Row
 from mcedit2.util.lazyprop import lazyprop
 from mcedit2.worldview.viewcontrols import ViewControls
-from mcedit2.worldview.worldview import WorldView, iterateChunks, ViewMouseAction, ViewKeyAction
+from mcedit2.worldview.worldview import WorldView, iterateChunks
+from mcedit2.worldview.viewaction import ViewAction
 
 log = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ class CameraKeyControls(object):
         self.rightAction = self.Right(self)
         self.upAction = self.Up(self)
         self.downAction = self.Down(self)
-        self.keyActions = [
+        self.viewActions = [
             self.forwardAction,
             self.backwardAction,
             self.leftAction,
@@ -101,7 +102,7 @@ class CameraKeyControls(object):
         self.worldView.centerPoint = point
 
 
-    class CameraAction(ViewKeyAction):
+    class CameraAction(ViewAction):
         def __init__(self, controls):
             super(CameraKeyControls.CameraAction, self).__init__()
             self.controls = controls
@@ -109,6 +110,7 @@ class CameraKeyControls(object):
     class Forward(CameraAction):
         key = Qt.Key_W
         labelText = "Move Forward"
+        settingsKey = "worldview/camera/move/forward"
 
         def keyPressEvent(self, event):
             self.controls.forward = 1
@@ -120,6 +122,7 @@ class CameraKeyControls(object):
     class Backward(CameraAction):
         key = Qt.Key_S
         labelText = "Move Backward"
+        settingsKey = "worldview/camera/move/backward"
 
         def keyPressEvent(self, event):
             self.controls.backward = 1
@@ -131,6 +134,7 @@ class CameraKeyControls(object):
     class Left(CameraAction):
         key = Qt.Key_A
         labelText = "Move Left"
+        settingsKey = "worldview/camera/move/left"
 
         def keyPressEvent(self, event):
             self.controls.left = 1
@@ -142,6 +146,7 @@ class CameraKeyControls(object):
     class Right(CameraAction):
         key = Qt.Key_D
         labelText = "Move Right"
+        settingsKey = "worldview/camera/move/right"
 
         def keyPressEvent(self, event):
             self.controls.right = 1
@@ -153,6 +158,7 @@ class CameraKeyControls(object):
     class Up(CameraAction):
         key = Qt.Key_Space
         labelText = "Move Up"
+        settingsKey = "worldview/camera/move/up"
 
         def keyPressEvent(self, event):
             self.controls.up = 1
@@ -164,6 +170,7 @@ class CameraKeyControls(object):
     class Down(CameraAction):
         key = Qt.Key_C
         labelText = "Move Down"
+        settingsKey = "worldview/camera/move/down"
 
         def keyPressEvent(self, event):
             self.controls.down = 1
@@ -180,12 +187,11 @@ class CameraWorldView(WorldView):
         WorldView.__init__(self, *a, **kw)
         self.compassNode.yawPitch = self._yawPitch
         self.viewDistance = 32
-        self.mouseActions = [CameraMoveMouseAction(),
-                             CameraPanMouseAction(),
-                             CameraElevateMouseAction()]
+        self.viewActions = [CameraMoveMouseAction(),
+                             CameraPanMouseAction()]
 
         self.cameraControls = CameraKeyControls(self)
-        self.keyActions.extend(self.cameraControls.keyActions)
+        self.viewActions.extend(self.cameraControls.viewActions)
 
         self.discardTimer = QtCore.QTimer()
         self.discardTimer.timeout.connect(self.discardChunksOutsideViewDistance)
@@ -326,21 +332,14 @@ class CameraWorldView(WorldView):
         return super(CameraWorldView, self).recieveChunk(chunk)
 
 
-class CameraElevateMouseAction(ViewMouseAction):
-    labelText = "Mousewheel moves vertically (xxx fixme)"
-
-    def wheelEvent(self, event):
-        d = event.delta()
-        event.view.centerPoint += (0, d / 32, 0)
-
-
-class CameraPanMouseAction(ViewMouseAction):
+class CameraPanMouseAction(ViewAction):
     button = Qt.RightButton
     mouseDragStart = None
     modifiers = Qt.NoModifier
     labelText = "Turn Camera"
+    settingsKey = "worldview/camera/holdToTurn"
 
-    def mousePressEvent(self, event):
+    def buttonPressEvent(self, event):
         x = event.x()
         y = event.y()
         self.mouseDragStart = x, y
@@ -362,16 +361,17 @@ class CameraPanMouseAction(ViewMouseAction):
             self.mouseDragStart = (x, y)
 
 
-    def mouseReleaseEvent(self, event):
+    def buttonReleaseEvent(self, event):
         self.mouseDragStart = None
 
 
-class CameraMoveMouseAction(ViewMouseAction):
+class CameraMoveMouseAction(ViewAction):
     button = Qt.MiddleButton
     mouseDragStart = None
     labelText = "Move Camera"
+    settingsKey = "worldview/camera/holdToMove"
 
-    def mousePressEvent(self, event):
+    def buttonPressEvent(self, event):
         x = event.x()
         y = event.y()
         self.mouseDragStart = x, y
@@ -397,5 +397,5 @@ class CameraMoveMouseAction(ViewMouseAction):
             self.mouseDragStart = (x, y)
 
 
-    def mouseReleaseEvent(self, event):
+    def buttonReleaseEvent(self, event):
         self.mouseDragStart = None

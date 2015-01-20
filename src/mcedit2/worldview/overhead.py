@@ -4,7 +4,8 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from PySide import QtGui
 import logging
-from mcedit2.worldview.worldview import WorldView, ZoomWheelAction, MoveViewMouseAction
+from mcedit2.worldview.worldview import WorldView
+from mcedit2.worldview.viewaction import MoveViewMouseAction, ZoomWheelAction
 from mcedit2.worldview import worldruler
 
 log = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ class OverheadWorldView(WorldView):
         WorldView.__init__(self, *a, **kw)
         self.scale = 1.
         self.compassNode.yawPitch = 180, 0
-        self.mouseActions.extend((
+        self.viewActions.extend((
             MoveViewMouseAction(),
             ZoomWheelAction(),
         ))

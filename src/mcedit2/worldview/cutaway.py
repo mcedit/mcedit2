@@ -7,11 +7,12 @@ import logging
 
 from PySide import QtGui
 
-from mcedit2.rendering import worldscene, scenegraph, rendergraph
+from mcedit2.rendering import worldscene, scenegraph
 from mcedit2.util import profiler
 from mcedit2.widgets.layout import Column, Row
 from mcedit2.worldview.worldruler import WorldViewRulerGrid
-from mcedit2.worldview.worldview import WorldView, ViewMouseAction, MoveViewMouseAction, findBlockFace
+from mcedit2.worldview.worldview import WorldView, findBlockFace
+from mcedit2.worldview.viewaction import ViewAction, MoveViewMouseAction
 from mceditlib.geometry import Vector
 from mceditlib.selection import BoundingBox
 
@@ -160,7 +161,7 @@ class CutawayWorldView(WorldView):
         WorldView.__init__(self, *a, **kw)
         self.axis = axis
         self.viewportMoved.connect(self.updateMeshPos)
-        self.mouseActions.extend((
+        self.viewActions.extend((
             MoveViewMouseAction(),
             CutawaySliceWheelAction()
         ))
@@ -273,7 +274,9 @@ class CutawayWorldView(WorldView):
         event.view = self
 
 
-class CutawaySliceWheelAction(ViewMouseAction):
+class CutawaySliceWheelAction(ViewAction):
+    settingsKey = "worldview.cutaway.xxx_make_mousewheel_bindable"
+
     def wheelEvent(self, event):
         delta = event.delta()
         if delta == 0:

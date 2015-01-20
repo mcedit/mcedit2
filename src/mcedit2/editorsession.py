@@ -13,9 +13,9 @@ from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.resources import resourcePath
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.undostack import MCEUndoStack
-from mcedit2.worldview.worldview import UseToolMouseAction, TrackingMouseAction
+from mcedit2.worldview.viewaction import UseToolMouseAction, TrackingMouseAction
 from mceditlib import util
-from mcedit2.rendering import chunkloader, blockmeshes, scenegraph
+from mcedit2.rendering import chunkloader, scenegraph
 from mcedit2.rendering.geometrycache import GeometryCache
 from mcedit2.rendering.textureatlas import TextureAtlas
 from mcedit2.widgets.layout import Column, Row
@@ -547,7 +547,7 @@ class EditorTab(QtGui.QWidget):
         self.views.append(frame)
         frame.stackIndex = self.viewStack.addWidget(frame)
         frame.worldView.viewportMoved.connect(self.viewOffsetChanged(frame.worldView))
-        frame.worldView.mouseActions.extend([
+        frame.worldView.viewActions.extend([
             UseToolMouseAction(self.editorSession),
             TrackingMouseAction(self.editorSession)
         ])

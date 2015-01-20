@@ -104,8 +104,8 @@ class WorldView(QGLWidget):
         self.compassOrthoNode = scenegraph.OrthoNode((1, float(self.height()) / self.width()))
         self.compassOrthoNode.addChild(self.compassNode)
 
-        self.mouseActions = []
-        self.keyActions = []
+        self.viewActions = []
+        self.pressedKeys = set()
 
         self.textureAtlas = textureAtlas
 
@@ -318,51 +318,74 @@ class WorldView(QGLWidget):
     dragStart = None
 
     def keyPressEvent(self, event):
-        for action in self.keyActions:
-            if action.matchEvent(event):
+        self.augmentKeyEvent(event)
+        self.pressedKeys.add(event.key())
+        for action in self.viewActions:
+            if action.matchKeyEvent(event):
+                log.info("Action %s matched event %s", action, event)
                 action.keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
-        for action in self.keyActions:
-            if action.matchEvent(event):
+        self.augmentKeyEvent(event)
+        self.pressedKeys.discard(event.key())
+        for action in self.viewActions:
+            if action.matchKeyEvent(event):
                 action.keyReleaseEvent(event)
 
-    @profiler.function
     def mousePressEvent(self, event):
         self.augmentMouseEvent(event)
-        for action in self.mouseActions:
+        for action in self.viewActions:
             if action.button & event.button():
                 if action.modifiers & event.modifiers() or action.modifiers == event.modifiers():
-                    action.mousePressEvent(event)
+                    if not action.key or action.key in self.pressedKeys:
+                        action.mousePressEvent(event)
 
-    @profiler.function
     def mouseMoveEvent(self, event):
         self.cursorMoved.emit(event)
         self.update()
         self.augmentMouseEvent(event)
-        for action in self.mouseActions:
-            if action.button == event.buttons() or action.button & event.buttons():
+        for action in self.viewActions:
+            if not action.button or action.button == event.buttons() or action.button & event.buttons():
                 # Important! mouseMove checks event.buttons(), press and release check event.button()
                 if action.modifiers & event.modifiers() or action.modifiers == event.modifiers():
-                    action.mouseMoveEvent(event)
+                    if not action.key or action.key in self.pressedKeys:
+                        action.mouseMoveEvent(event)
 
-    @profiler.function
     def mouseReleaseEvent(self, event):
         self.augmentMouseEvent(event)
-        for action in self.mouseActions:
+        for action in self.viewActions:
             if action.button & event.button():
                 if action.modifiers & event.modifiers() or action.modifiers == event.modifiers():
-                    action.mouseReleaseEvent(event)
+                    if not action.key or action.key in self.pressedKeys:
+                        action.mouseReleaseEvent(event)
 
     def wheelEvent(self, event):
         self.augmentMouseEvent(event)
-        for action in self.mouseActions:
-            if action.modifiers & event.modifiers() or action.modifiers == event.modifiers():
-                action.wheelEvent(event)
+        for action in self.viewActions:
+            if action.acceptsMouseWheel and ((action.modifiers & event.modifiers()) or action.modifiers == event.modifiers()):
+                if action.key in("WHEEL_UP", "WHEEL_DOWN"):
+                    for i in range((abs(event.delta()) + 14) / 15):  # xxx 15 = wheel sensitivity?
+                        action.keyPressEvent(event)
+
 
     def augmentMouseEvent(self, event):
-        mousePos = event.x(), event.y()
-        ray = self.rayAtPosition(*mousePos)
+        x, y = event.x(), event.y()
+        return self.augmentEvent(x, y, event)
+
+    def augmentKeyEvent(self, event):
+        globalPos = QtGui.QCursor.pos()
+        mousePos = self.mapFromGlobal(globalPos)
+        x = mousePos.x()
+        y = mousePos.y()
+
+        # xxx fake position of mouse event -- need to use mcedit internal event object already
+        event.x = lambda: x
+        event.y = lambda: y
+
+        return self.augmentEvent(x, y, event)
+
+    def augmentEvent(self, x, y, event):
+        ray = self.rayAtPosition(x, y)
 
         event.ray = ray
         event.view = self
@@ -373,9 +396,9 @@ class WorldView(QGLWidget):
 
         except (raycast.MaxDistanceError, ValueError):
             GL.glReadBuffer(GL.GL_BACK)
-            pixel = GL.glReadPixels(mousePos[0], self.height() - mousePos[1], 1, 1, GL.GL_DEPTH_COMPONENT, GL.GL_FLOAT)
+            pixel = GL.glReadPixels(x, self.height() - y, 1, 1, GL.GL_DEPTH_COMPONENT, GL.GL_FLOAT)
             depth = -1 + 2 * pixel[0, 0]
-            p = self.pointsAtPositions((mousePos[0], mousePos[1], depth))[0]
+            p = self.pointsAtPositions((x, y, depth))[0]
 
             face = faces.FaceYIncreasing
             position = p.intfloor()
@@ -793,200 +816,3 @@ class WorldCursorInfo(InfoPanel):
         except Exception as e:
             log.exception("Error describing block: %r", e)
             return "Error describing block: %r" % e
-
-class ViewKeyAction(object):
-    modifiers = Qt.NoModifier
-    key = 0
-    labelText = "Unknown Action"
-    hidden = False  # Hide from configuration
-
-    def __init__(self, key=None):
-        """
-        An action that can be bound to a keypress, optionally with modifiers.
-
-        """
-        if key is not None:
-            self.key = key
-
-    def __repr__(self):
-        return "%s(key=%s, modifiers=%s)" % (self.__class__.__name__, self.key, self.modifiers)
-
-    def matchEvent(self, event):
-        key = event.key()
-        modifiers = event.modifiers()
-        if key in (Qt.Key_Shift, Qt.Key_Control, Qt.Key_Alt, Qt.Key_Meta):
-            modifiers = self.modifiers  # pressing modifier key by itself has modifiers set, but releasing modifiers does not
-
-        return self.key == key and (self.modifiers & modifiers or self.modifiers == modifiers)
-
-    def keyPressEvent(self, event):
-        """
-
-        :type event: QtGui.QKeyEvent
-        """
-
-    def keyReleaseEvent(self, event):
-        """
-
-        :type event: QtGui.QKeyEvent
-        """
-
-
-
-class ViewMouseAction(object):
-    button = Qt.NoButton
-    modifiers = Qt.NoModifier
-    key = 0
-    labelText = "Unknown Action"
-    hidden = False  # Hide from configuration
-
-    def __init__(self, button=None):
-        """
-        An action that can be bound to a mouse button click, drag, or movement, optionally combined with a held key.
-
-        """
-        if button is not None:
-            self.button = button
-
-    def __repr__(self):
-        return "%s(button=%s, key=%s, modifiers=%s)" % (self.__class__.__name__, self.button, self.key, self.modifiers)
-
-    def mouseMoveEvent(self, event):
-        """
-
-        :type event: QtGui.QMouseEvent
-        """
-
-    def mousePressEvent(self, event):
-        """
-
-        :type event: QtGui.QMouseEvent
-        """
-
-    def mouseReleaseEvent(self, event):
-        """
-
-        :type event: QtGui.QMouseEvent
-        """
-
-    def wheelEvent(self, event):
-        """
-
-        :type event: QtGui.QMouseEvent
-        """
-
-class UseToolMouseAction(ViewMouseAction):
-    button = Qt.LeftButton
-    labelText = "Use Tool (Don't change!)"
-    hidden = True
-
-    def __init__(self, editor, button=None):
-        super(UseToolMouseAction, self).__init__(button)
-        self.editor = editor
-
-    def mousePressEvent(self, event):
-        self.editor.viewMousePress(event)
-        event.view.update()
-
-    def mouseMoveEvent(self, event):
-        self.editor.viewMouseDrag(event)
-        event.view.update()
-
-    def mouseReleaseEvent(self, event):
-        self.editor.viewMouseRelease(event)
-        event.view.update()
-
-class TrackingMouseAction(ViewMouseAction):
-    button = Qt.NoButton
-    hidden = True
-
-    labelText = "Mouse Tracking (Don't change!)"
-
-    def __init__(self, editor, button=None):
-        super(TrackingMouseAction, self).__init__(button)
-        self.editor = editor
-
-    def mouseMoveEvent(self, event):
-        self.editor.viewMouseMove(event)
-
-class MoveViewMouseAction(ViewMouseAction):
-    button = Qt.RightButton
-    labelText = "Pan View"
-
-    def mousePressEvent(self, event):
-        x, y = event.x(), event.y()
-        self.dragStart = event.view.unprojectAtHeight(x, y, 0)
-        self.startOffset = event.view.centerPoint
-        log.debug("Drag start %s", self.dragStart)
-
-        event.view.update()
-
-    def mouseMoveEvent(self, event):
-        x = event.x()
-        y = event.y()
-        log.debug("mouseMoveEvent %s", (x, y))
-
-        if self.dragStart:
-            d = event.view.unprojectAtHeight(x, y, 0) - self.dragStart
-            event.view.centerPoint -= d
-            log.debug("Drag continue delta %s", d)
-
-            event.view.update()
-
-    def mouseReleaseEvent(self, event):
-        x, y = event.x(), event.y()
-        self.dragStart = None
-        log.debug("Drag end")
-
-        event.view.update()
-
-
-class ZoomWheelAction(ViewMouseAction):
-    _zooms = None
-    labelText = "Zoom View"
-    maxScale = 16.
-    minScale = 1. / 64
-
-    @property
-    def zooms(self):
-        if self._zooms:
-            return self._zooms
-        zooms = []
-        _i = self.minScale
-        while _i < self.maxScale:
-            zooms.append(_i)
-            _i *= 2.0
-
-        self._zooms = zooms
-        return zooms
-
-    def wheelEvent(self, event):
-        d = event.delta()
-        mousePos = (event.x(), event.y())
-
-        if d < 0:
-            i = self.zooms.index(event.view.scale)
-            if i < len(self.zooms) - 1:
-                self.zoom(event.view, self.zooms[i + 1], mousePos)
-        elif d > 0:
-            i = self.zooms.index(event.view.scale)
-            if i > 0:
-                self.zoom(event.view, self.zooms[i - 1], mousePos)
-
-    def zoom(self, view, scale, (mx, my)):
-
-        # Get mouse position in world coordinates
-        worldPos = view.unprojectAtHeight(mx, my, 0)
-
-        if scale != view.scale:
-            view.scale = scale
-
-            # Get the new position under the mouse, find its distance from the old position,
-            # and shift the centerPoint by that amount.
-
-            newWorldPos = view.unprojectAtHeight(mx, my, 0)
-            delta = newWorldPos - worldPos
-            view.centerPoint = view.centerPoint - delta
-
-            log.debug("zoom offset %s, pos %s, delta %s, scale %s", view.centerPoint, (mx, my), delta, view.scale)
-

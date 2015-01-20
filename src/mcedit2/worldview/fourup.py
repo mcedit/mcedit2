@@ -45,7 +45,7 @@ class FourUpWorldView(QtGui.QWidget):
         self.zView.viewportMoved.connect(self.subViewMoved(self.zView))
         self.isoView.viewportMoved.connect(self.subViewMoved(self.isoView))
 
-        self.mouseActions = []
+        self.viewActions = []
 
         for view in self.allViews:
             #view.viewportMoved.connect(lambda:self.centerOnView(view))
