@@ -291,6 +291,7 @@ class WorldView(QGLWidget):
         # delta = self.viewCenter() - self.centerPoint
         # self.centerPoint = pos - delta
         self.centerPoint = pos
+        self.update()
 
     def viewCenter(self):
         """Return the world position at the center of the view."""
