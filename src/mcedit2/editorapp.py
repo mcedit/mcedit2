@@ -415,6 +415,7 @@ class MCEditApp(QtGui.QApplication):
             self.textureAtlasView.resize(atlas.width * 2, atlas.height * 2)
 
         self.updateSessionDockWidgets(session)
+        session.focusWorldView()
 
     def updateSessionDockWidgets(self, session):
         self.removeSessionDockWidgets()

@@ -199,6 +199,9 @@ class EditorSession(QtCore.QObject):
             self.worldEditor.close()
             self.worldEditor = None
 
+    def focusWorldView(self):
+        self.editorTab.currentView().setFocus()
+
     # --- Selection ---
 
     selectionChanged = QtCore.Signal(BoundingBox)
@@ -531,6 +534,7 @@ class EditorTab(QtGui.QWidget):
 
         overlayNodes.insert(0, self.editorSession.editorOverlay)
         view.setToolOverlays(overlayNodes)
+        view.setFocus()
 
 
     def viewOffsetChanged(self, view):
