@@ -385,6 +385,7 @@ class WorldView(QGLWidget):
 
         return self.augmentEvent(x, y, event)
 
+    @profiler.function
     def augmentEvent(self, x, y, event):
         ray = self.rayAtPosition(x, y)
 
