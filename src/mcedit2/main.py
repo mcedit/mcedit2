@@ -44,26 +44,15 @@ def setup_logging():
     root_logger.setLevel(logging.DEBUG)
     log_debug("Logging level set")
 
-    logfilename = 'mcedit.log'
+    from mcedit2.util.directories import getUserFilesDirectory
+    mceditUserData = getUserFilesDirectory()
+    logfilename = os.path.join(mceditUserData, 'mcedit.log')
+
     abslogfile = os.path.abspath(logfilename)
     if hasattr(sys, 'frozen'):
         log_debug("sys.frozen is set")
 
-        if sys.platform == "win32":
-            if hasattr(sys, '_MEIPASS'):
-                logfile = os.path.join(os.path.dirname(sys.executable), logfilename)
-                log_debug("PyInstaller found.")
-            else:
-                try:
-                    import esky
-                    app = esky.Esky(sys.executable)
-
-                    logfile = os.path.join(app.appdir, logfilename)
-                    log_debug("esky found.")
-                except ImportError:
-                    logfile = abslogfile
-
-        elif sys.platform == "darwin":
+        if sys.platform == "darwin":
             log_debug("OS X found.")
             logfile = os.path.expanduser("~/Library/Logs/" + logfilename)
         else:
