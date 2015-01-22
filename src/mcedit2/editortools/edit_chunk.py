@@ -112,7 +112,7 @@ class ChunkTool(EditorTool):
         if self.selectionNode is None:
             self.selectionNode = SelectionBoxNode()
             self.selectionNode.filled = False
-            self.selectionNode.color = (0.3, 0.3, 1)
+            self.selectionNode.color = (0.3, 0.3, 1, .3)
             self.overlayNode.addChild(self.selectionNode)
 
         self.selectionNode.selectionBox = chunk.bounds

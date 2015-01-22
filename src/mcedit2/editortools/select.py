@@ -221,8 +221,12 @@ class SelectionTool(EditorTool):
         if self.currentSelection is not None:
             self.currentSelection = self.createShapedSelection(self.currentSelection)
 
+    def toolActive(self):
+        self.selectionNode.boxNode.wireColor = 1, 1, 1, .5
+
     def toolInactive(self):
         self.faceHoverNode.visible = False
+        self.selectionNode.boxNode.wireColor = 1, 1, 1, .33
 
     @property
     def hideSelectionWalls(self):

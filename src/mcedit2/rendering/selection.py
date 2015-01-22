@@ -138,6 +138,14 @@ class SelectionScene(scenegraph.Node):
             self._dimension = value
             self.updateSelection()
 
+    @property
+    def filled(self):
+        return self.cullNode.visible
+
+    @filled.setter
+    def filled(self, value):
+        self.cullNode.visible = value
+
     def updateSelection(self):
         if self.dimension is None or self.selection is None:
             return
@@ -252,8 +260,7 @@ class SelectionBoxRenderNode(rendergraph.RenderNode):
         if box is None:
             return
 
-        alpha = 0.3
-        r, g, b = self.sceneNode.color
+        r, g, b, alpha = self.sceneNode.color
         with gl.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT | GL.GL_ENABLE_BIT | GL.GL_POLYGON_BIT):
             GL.glDepthMask(False)
             GL.glEnable(GL.GL_BLEND)
@@ -266,7 +273,8 @@ class SelectionBoxRenderNode(rendergraph.RenderNode):
 
             if self.sceneNode.wire:
                 # Wire box, thinner behind terrain
-                GL.glColor(1., 1., 1., alpha)
+                r, g, b, alpha = self.sceneNode.wireColor
+                GL.glColor(r, g, b, alpha)
                 GL.glLineWidth(2.0)
                 cubes.drawBox(box, cubeType=GL.GL_LINES)
                 GL.glDisable(GL.GL_DEPTH_TEST)
@@ -298,7 +306,7 @@ class SelectionBoxNode(scenegraph.Node):
         self._selectionBox = value
         self.dirty = True
 
-    _color = (1, .3, 1)
+    _color = (1, .3, 1, .3)
     @property
     def color(self):
         return self._color
@@ -306,6 +314,16 @@ class SelectionBoxNode(scenegraph.Node):
     @color.setter
     def color(self, value):
         self._color = value
+        self.dirty = True
+
+    _wireColor = (1, 1, 1, .6)
+    @property
+    def wireColor(self):
+        return self._wireColor
+
+    @wireColor.setter
+    def wireColor(self, value):
+        self._wireColor = value
         self.dirty = True
 
 

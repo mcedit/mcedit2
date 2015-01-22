@@ -40,12 +40,27 @@ tool (why?), and the ChunkLoader that coordinates loading chunks into its viewpo
 """
 
 class PendingImport(object):
-    def __init__(self, schematic, pos):
+    def __init__(self, schematic, pos, text):
+        self.text = text
         self.pos = pos
         self.schematic = schematic
 
     def __repr__(self):
         return "%s(%r, %r)" % (self.__class__.__name__, self.schematic, self.pos)
+
+class PasteImportCommand(QtGui.QUndoCommand):
+    def __init__(self, editorSession, pendingImport, text, *args, **kwargs):
+        super(PasteImportCommand, self).__init__(*args, **kwargs)
+        self.setText(text)
+        self.editorSession = editorSession
+        self.pendingImport = pendingImport
+
+    def undo(self):
+        self.editorSession.moveTool.removePendingImport(self.pendingImport)
+
+    def redo(self):
+        self.editorSession.moveTool.addPendingImport(self.pendingImport)
+        self.editorSession.chooseTool("Move")
 
 class EditorSession(QtCore.QObject):
     def __init__(self, filename, versionInfo, readonly=False):
@@ -60,8 +75,6 @@ class EditorSession(QtCore.QObject):
 
         self.copiedSchematic = None
         """:type : WorldEditor"""
-
-        self.pendingImports = []
 
         self.versionInfo = versionInfo
 
@@ -190,6 +203,7 @@ class EditorSession(QtCore.QObject):
         self.tools = {cls.name: cls(self) for cls in self.toolClasses}
 
         self.selectionTool = self.tools["Select"]
+        self.moveTool = self.tools["Move"]
 
         # --- Editor stuff ---
         self.editorTab = EditorTab(self)
@@ -261,7 +275,9 @@ class EditorSession(QtCore.QObject):
         if self.copiedSchematic is None:
             return
 
-        self.beginImport(self.copiedSchematic, self.currentSelection.origin)
+        imp = PendingImport(self.copiedSchematic, self.currentSelection.origin, self.tr("<Pasted Object>"))
+        command = PasteImportCommand(self, imp, "Paste")
+        self.undoStack.push(command)
 
     def pasteBlocks(self):
         NotImplementedYet()
@@ -276,31 +292,15 @@ class EditorSession(QtCore.QObject):
 
     def importSchematic(self, filename):
         schematic = WorldEditor(filename, readonly=True)
-        self.beginImport(schematic)
-
-    # --- Import ---
-
-    def beginImport(self, schematic, pos=None):
-        moveTool = self.tools["Move"]
-
+        ray = self.editorTab.currentView().rayAtCenter()
+        pos, face = rayCastInBounds(ray, self.currentDimension)
         if pos is None:
-            ray = self.editorTab.currentView().rayAtCenter()
-            pos, face = rayCastInBounds(ray, self.currentDimension)
-            if pos is None:
-                pos = ray.point
+            pos = ray.point
 
-        imp = PendingImport(schematic, pos)
-
-        self.pendingImports.append(imp)
-        moveTool.currentImport = imp
-        self.chooseTool("Move")
-
-    def addPendingImport(self, pendingImport):
-        self.pendingImports.append(pendingImport)
-
-    def removePendingImport(self, pendingImport):
-        self.pendingImports.remove(pendingImport)
-
+        name = os.path.basename(filename)
+        imp = PendingImport(schematic, pos, name)
+        command = PasteImportCommand(self, imp, "Import %s" % name)
+        self.undoStack.push(command)
 
     # --- Undo support ---
 
@@ -546,9 +546,8 @@ class EditorTab(QtGui.QWidget):
             self.toolOptionsArea.takeWidget()  # setWidget gives ownership to the scroll area
             self.toolOptionsArea.setWidget(tool.toolWidget)
             self.toolOptionsDockWidget.setWindowTitle(self.tr(tool.name) + self.tr(" Tool Options"))
-        if tool.cursorNode:
-            log.info("Setting cursor %r for tool %r on view %r", tool.cursorNode, tool, self.currentView())
-            self.currentView().setToolCursor(tool.cursorNode)
+        log.info("Setting cursor %r for tool %r on view %r", tool.cursorNode, tool, self.currentView())
+        self.currentView().setToolCursor(tool.cursorNode)
 
     def saveState(self):
         pass
