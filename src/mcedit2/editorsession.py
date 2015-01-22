@@ -39,6 +39,14 @@ selection box, the editor tab containing its viewports, its command history, a s
 tool (why?), and the ChunkLoader that coordinates loading chunks into its viewports.
 """
 
+class PendingImport(object):
+    def __init__(self, schematic, pos):
+        self.pos = pos
+        self.schematic = schematic
+
+    def __repr__(self):
+        return "%s(%r, %r)" % (self.__class__.__name__, self.schematic, self.pos)
+
 class EditorSession(QtCore.QObject):
     def __init__(self, filename, versionInfo, readonly=False):
         QtCore.QObject.__init__(self)
@@ -52,6 +60,9 @@ class EditorSession(QtCore.QObject):
 
         self.copiedSchematic = None
         """:type : WorldEditor"""
+
+        self.pendingImports = []
+
         self.versionInfo = versionInfo
 
         # --- Open world editor ---
@@ -250,13 +261,7 @@ class EditorSession(QtCore.QObject):
         if self.copiedSchematic is None:
             return
 
-        moveTool = self.tools["Move"]
-
-        ray = self.editorTab.currentView().rayAtCenter()
-        point = ray.point + ray.vector * (self.copiedSchematic.getDimension().bounds.size.length() * 2)
-        point = Vector(*[int(i) for i in point])
-        moveTool.pasteSchematic(self.copiedSchematic, point)
-        self.chooseTool("Move")
+        self.beginImport(self.copiedSchematic, self.currentSelection.origin)
 
     def pasteBlocks(self):
         NotImplementedYet()
@@ -271,14 +276,31 @@ class EditorSession(QtCore.QObject):
 
     def importSchematic(self, filename):
         schematic = WorldEditor(filename, readonly=True)
+        self.beginImport(schematic)
+
+    # --- Import ---
+
+    def beginImport(self, schematic, pos=None):
         moveTool = self.tools["Move"]
 
-        ray = self.editorTab.currentView().rayAtCenter()
-        point, face = rayCastInBounds(ray, self.currentDimension)
-        if point is None:
-            point = ray.point
-        moveTool.pasteSchematic(schematic, point)
+        if pos is None:
+            ray = self.editorTab.currentView().rayAtCenter()
+            pos, face = rayCastInBounds(ray, self.currentDimension)
+            if pos is None:
+                pos = ray.point
+
+        imp = PendingImport(schematic, pos)
+
+        self.pendingImports.append(imp)
+        moveTool.currentImport = imp
         self.chooseTool("Move")
+
+    def addPendingImport(self, pendingImport):
+        self.pendingImports.append(pendingImport)
+
+    def removePendingImport(self, pendingImport):
+        self.pendingImports.remove(pendingImport)
+
 
     # --- Undo support ---
 
