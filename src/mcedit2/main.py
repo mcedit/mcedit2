@@ -120,9 +120,9 @@ def startup():
 def excepthook(exc_type, exc_value, exc_tb):
     # When an error is caught during a Qt signal call, PySide calls PyErr_Print to
     # display the error traceback. PyErr_Print calls sys.excepthook to actually print the
-    # exception, so we override it to send the error to the logging module.
+    # exception, so we override it to send the error to the logging module and exit with an error,
+    # since PySide foolishly tries to continue after catching the error.
     log.error("Unhandled Exception: \n\t%s", exc_value, exc_info=(exc_type, exc_value, exc_tb))
-    #def showError():
     text = "An error has occured.\n\nUnhandled exception: %s" % exc_value
     if getattr(sys, 'frozen', False):
         if editorApp:
@@ -132,21 +132,12 @@ def excepthook(exc_type, exc_value, exc_tb):
         msg.setIcon(QtGui.QMessageBox.Critical)
         msg.setText(text)
         msg.exec_()
-    QtCore.qFatal(text)
+    sys.exit(-1)
 
-    #QtCore.QTimer.singleShot(0, showError)
 
 def main():
-    try:
-        app = startup()
-        sys.exit(app.exec_())
-    except Exception as e:
-        if not getattr(sys, 'frozen', False) and '-debug' in sys.argv:
-            # Interactively inspect program state after a crash, if running from source and with the -debug flag set
-            traceback.print_exc()
-            import IPython; IPython.embed()
-        else:
-            raise
+    app = startup()
+    sys.exit(app.exec_())
 
 
 if __name__ == "__main__":
