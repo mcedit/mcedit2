@@ -10,6 +10,7 @@ from mcedit2.command import SimpleRevisionCommand
 from mcedit2.rendering.blockmodels import BlockModels
 from mcedit2.panels.player import PlayerPanel
 from mcedit2.util.dialogs import NotImplementedYet
+from mcedit2.util.raycast import rayCastInBounds
 from mcedit2.util.resources import resourcePath
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.undostack import MCEUndoStack
@@ -265,6 +266,19 @@ class EditorSession(QtCore.QObject):
 
     def clear(self):
         self.selectionTool.deleteSelection()
+
+    # --- Library support ---
+
+    def importSchematic(self, filename):
+        schematic = WorldEditor(filename, readonly=True)
+        moveTool = self.tools["Move"]
+
+        ray = self.editorTab.currentView().rayAtCenter()
+        point, face = rayCastInBounds(ray, self.currentDimension)
+        if point is None:
+            point = ray.point
+        moveTool.pasteSchematic(schematic, point)
+        self.chooseTool("Move")
 
     # --- Undo support ---
 

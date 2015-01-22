@@ -6,6 +6,7 @@ import logging
 from PySide import QtGui, QtCore, QtNetwork
 from PySide.QtCore import Qt
 import numpy
+from mcedit2.library import LibraryWidget
 
 from mcedit2.util import minecraftinstall
 from mcedit2.util.dialogs import NotImplementedYet
@@ -121,7 +122,17 @@ class MCEditApp(QtGui.QApplication):
         mainWindow.panelsToolBar.addAction(self.logViewDockWidget.toggleViewAction())
         self.logViewDockWidget.close()
 
-        self.globalPanels = [self.undoDockWidget, self.logViewDockWidget]
+        self.libraryView = LibraryWidget()
+        self.libraryDockWidget = QtGui.QDockWidget("Library", mainWindow, objectName="LibraryWidget")
+        self.libraryDockWidget.setWidget(self.libraryView)
+        mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.libraryDockWidget)
+        mainWindow.panelsToolBar.addAction(self.libraryDockWidget.toggleViewAction())
+        self.libraryDockWidget.close()
+
+        self.libraryView.doubleClicked.connect(self.libraryItemDoubleClicked)
+
+
+        self.globalPanels = [self.undoDockWidget, self.logViewDockWidget, self.libraryDockWidget]
 
         # --- Debug Widgets ---
 
@@ -536,6 +547,15 @@ class MCEditApp(QtGui.QApplication):
 
         # XXX trigger viewportMoved to update minimap after GL initialization
         # session.editorTab.currentView().viewportMoved.emit(session.editorTab.currentView())
+
+    # --- Library ---
+
+    def libraryItemDoubleClicked(self, filename):
+        session = self.currentSession()
+        if session is None:
+            return
+
+        session.importSchematic(filename)
 
     # --- World List actions ---
 
