@@ -48,6 +48,10 @@ class PendingImport(object):
     def __repr__(self):
         return "%s(%r, %r)" % (self.__class__.__name__, self.schematic, self.pos)
 
+    @property
+    def bounds(self):
+        return BoundingBox(self.pos, self.schematic.getDimension().bounds.size)
+
 class PasteImportCommand(QtGui.QUndoCommand):
     def __init__(self, editorSession, pendingImport, text, *args, **kwargs):
         super(PasteImportCommand, self).__init__(*args, **kwargs)

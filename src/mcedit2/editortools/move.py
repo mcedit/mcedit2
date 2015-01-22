@@ -253,7 +253,7 @@ class MoveTool(EditorTool):
     def listDoubleClicked(self, index):
         item = self.importsListModel.itemFromIndex(index)
         pendingImport = item.data(Qt.UserRole)
-        self.editorSession.editorTab.currentView().centerOnPoint(pendingImport.pos)
+        self.editorSession.editorTab.currentView().centerOnPoint(pendingImport.bounds.center)
 
     _currentImport = None
 

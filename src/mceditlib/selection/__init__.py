@@ -387,6 +387,10 @@ class BoundingBox(SelectionBox):
         return self._size
 
     @property
+    def center(self):
+        return self.origin + self.size * 0.5
+
+    @property
     def width(self):
         """The dimension along the X axis"""
         return self._size.x
