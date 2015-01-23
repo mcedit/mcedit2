@@ -4,7 +4,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 
-from PySide import QtGui
+from PySide import QtGui, QtCore
 import numpy
 
 from mcedit2.editortools import EditorTool
@@ -15,6 +15,7 @@ from mcedit2.util.load_ui import load_ui, registerCustomWidget
 from mcedit2.util.settings import Settings
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
+from mcedit2.widgets.layout import Row
 from mceditlib.geometry import Vector
 from mceditlib.selection import ShapedSelection, BoundingBox
 from mceditlib.util import exhaust
@@ -246,7 +247,6 @@ class FakeBrushChunk(object):
 
         return section
 
-
 class BrushTool(EditorTool):
     name = "Brush"
     iconName = "brush"
@@ -259,13 +259,13 @@ class BrushTool(EditorTool):
         self.cursorWorldScene = None
         self.cursorNode = scenegraph.TranslateNode()
 
-        self.toolWidget.xSpinBox.valueChanged.connect(self.setX)
-        self.toolWidget.ySpinBox.valueChanged.connect(self.setY)
-        self.toolWidget.zSpinBox.valueChanged.connect(self.setZ)
+        self.toolWidget.xSpinSlider.setMinimum(1)
+        self.toolWidget.ySpinSlider.setMinimum(1)
+        self.toolWidget.zSpinSlider.setMinimum(1)
 
-        self.toolWidget.xSlider.valueChanged.connect(self.setX)
-        self.toolWidget.ySlider.valueChanged.connect(self.setY)
-        self.toolWidget.zSlider.valueChanged.connect(self.setZ)
+        self.toolWidget.xSpinSlider.valueChanged.connect(self.setX)
+        self.toolWidget.ySpinSlider.valueChanged.connect(self.setY)
+        self.toolWidget.zSpinSlider.valueChanged.connect(self.setZ)
 
         self.toolWidget.blockTypeInput.editorSession = editorSession
         self.toolWidget.blockTypeInput.block = editorSession.worldEditor.blocktypes["minecraft:stone"]
@@ -277,9 +277,9 @@ class BrushTool(EditorTool):
 
         self.brushSize = BrushSizeSetting.value(QtGui.QVector3D(5, 5, 5)).toTuple()  # calls updateCursor
 
-        self.toolWidget.xSpinBox.setValue(self.brushSize[0])
-        self.toolWidget.ySpinBox.setValue(self.brushSize[1])
-        self.toolWidget.zSpinBox.setValue(self.brushSize[2])
+        self.toolWidget.xSpinSlider.setValue(self.brushSize[0])
+        self.toolWidget.ySpinSlider.setValue(self.brushSize[1])
+        self.toolWidget.zSpinSlider.setValue(self.brushSize[2])
 
     _brushSize = (0, 0, 0)
     @property
@@ -296,22 +296,16 @@ class BrushTool(EditorTool):
         x, y, z = self.brushSize
         x = float(val)
         self.brushSize = x, y, z
-        self.toolWidget.xSlider.setValue(val)
-        self.toolWidget.xSpinBox.setValue(val)
 
     def setY(self, val):
         x, y, z = self.brushSize
         y = float(val)
         self.brushSize = x, y, z
-        self.toolWidget.ySlider.setValue(val)
-        self.toolWidget.ySpinBox.setValue(val)
 
     def setZ(self, val):
         x, y, z = self.brushSize
         z = float(val)
         self.brushSize = x, y, z
-        self.toolWidget.zSlider.setValue(val)
-        self.toolWidget.zSpinBox.setValue(val)
 
     def setBlocktypes(self, types):
         if len(types) == 0:
