@@ -169,8 +169,8 @@ class WorldView(QGLWidget):
     def setToolCursor(self, cursorNode):
         if self.cursorNode:
             self.matrixNode.removeChild(self.cursorNode)
+        self.cursorNode = cursorNode
         if cursorNode:
-            self.cursorNode = cursorNode
             self.matrixNode.addChild(cursorNode)
 
     def setToolOverlays(self, overlayNodes):
