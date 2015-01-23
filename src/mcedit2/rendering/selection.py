@@ -102,12 +102,9 @@ class SelectionScene(scenegraph.Node):
         self.cullNode = RenderstateNode(CullFaceRenderNode)
         self.blendNode = RenderstateNode(_RenderstateAlphaBlendNode)
         self.groupNode = ChunkGroupNode()
-        self.boxNode = SelectionBoxNode()
-        self.boxNode.filled = False
         self.cullNode.addChild(self.blendNode)
         self.blendNode.addChild(self.groupNode)
         self.addChild(self.cullNode)
-        self.addChild(self.boxNode)
         self.loadTimer = QtCore.QTimer(timeout=self.loadMore)
         self.loadTimer.setInterval(0)
         self.loadTimer.start()
@@ -152,7 +149,6 @@ class SelectionScene(scenegraph.Node):
 
         selection = self.selection
         self.renderSelection = selection & NonAirMaskSelection(self.dimension, selection)
-        self.boxNode.selectionBox = selection
         self.groupNode.clear()
         self._loader = None
         if selection.chunkCount < 16:

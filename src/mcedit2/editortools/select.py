@@ -13,7 +13,7 @@ from mcedit2.editorcommands.fill import fillCommand
 from mcedit2.editorcommands.replace import replaceCommand
 from mcedit2.editortools import EditorTool
 from mcedit2.rendering import cubes
-from mcedit2.rendering.selection import SelectionScene, SelectionFaceNode
+from mcedit2.rendering.selection import SelectionScene, SelectionFaceNode, SelectionBoxNode
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.glutils import gl
 from mcedit2.rendering.depths import DepthOffset
@@ -215,6 +215,11 @@ class SelectionTool(EditorTool):
         self.overlayNode.addChild(self.selectionNode)
         self.overlayNode.addChild(self.faceHoverNode)
 
+        self.boxHandleNode = BoxHandle()
+        self.boxHandleNode.boundsChanged.connect(self.boxHandleResized)
+        self.boxHandleNode.boundsChangedDone.connect(self.boxHandleResizedDone)
+        self.overlayNode.addChild(self.boxHandleNode)
+
         self.newSelectionNode = None
 
     def shapeDidChange(self):
@@ -222,11 +227,11 @@ class SelectionTool(EditorTool):
             self.currentSelection = self.createShapedSelection(self.currentSelection)
 
     def toolActive(self):
-        self.selectionNode.boxNode.wireColor = 1, 1, 1, .5
+        self.boxHandleNode.boxNode.wireColor = 1, 1, 1, .5
 
     def toolInactive(self):
         self.faceHoverNode.visible = False
-        self.selectionNode.boxNode.wireColor = 1, 1, 1, .33
+        self.boxHandleNode.boxNode.wireColor = 1, 1, 1, .33
 
     @property
     def hideSelectionWalls(self):
@@ -243,6 +248,8 @@ class SelectionTool(EditorTool):
     @currentSelection.setter
     def currentSelection(self, value):
         self.editorSession.currentSelection = value
+
+        self.boxHandleNode.bounds = None if value is None else BoundingBox(value.origin, value.size)
 
     def coordInputChanged(self, box):
         self.currentSelection = self.createShapedSelection(box)
@@ -281,27 +288,21 @@ class SelectionTool(EditorTool):
     def replace(self):
         replaceCommand(self.editorSession)
 
-    dragStartPoint = None
-    dragStartFace = None
+    def boxHandleResized(self, box):
+        if box is not None:
+            self.selectionNode.selection = self.createShapedSelection(box)
+
+    def boxHandleResizedDone(self, box, newSelection):
+        if box is not None:
+            selection = self.createShapedSelection(box)
+            command = SelectCommand(self, selection)
+            if not newSelection:
+                command.setText(self.tr("Resize Selection"))
+            self.editorSession.undoStack.push(command)
+            self.updateNodes()
 
     def mousePress(self, event):
-        if self.currentSelection:
-            # Find side of existing selection to drag
-            # xxxx can't do this with disjoint selections?
-            point, face = boxFaceUnderCursor(self.currentSelection, event.ray)
-
-            if face is not None:
-                log.info("Beginning drag resize")
-                self.dragResizeFace = face
-                # Choose a dimension perpendicular to the dragged face
-                self.dragResizeDimension = ((face.dimension + 1) % 2)
-
-                self.dragResizePosition = point[self.dragResizeDimension]
-
-                return
-
-        self.dragStartPoint = event.blockPosition
-        self.dragStartFace = faces.FaceYIncreasing  # event.blockFace
+        self.boxHandleNode.mousePress(event)
 
     def mouseMove(self, event):
         self.mouseDrag(event)
@@ -311,53 +312,11 @@ class SelectionTool(EditorTool):
         self.cursorNode.point = event.blockPosition
         self.cursorNode.face = event.blockFace
 
-        if self.dragStartPoint:
-            # Show new box being dragged out
-            newBox = self.boxFromDragSelect(event.ray)
-            self.selectionNode.visible = True
-            self.selectionNode.selection = newBox
-        else:
-            if self.dragResizeFace is not None:
-                # Hilite face being dragged
-                newBox = self.boxFromDragResize(self.currentSelection, event.ray)
-                self.faceHoverNode.selectionBox = newBox
-                self.faceHoverNode.visible = True
-
-                # Update selection box to resized size in progress
-                newBox = self.boxFromDragResize(self.currentSelection, event.ray)
-                self.selectionNode.selection = newBox
-            elif self.currentSelection is not None:
-                # Hilite face cursor is over
-                point, face = boxFaceUnderCursor(self.currentSelection, event.ray)
-                if face is not None:
-                    self.faceHoverNode.visible = True
-
-                    self.faceHoverNode.face = face
-                    self.faceHoverNode.selectionBox = self.currentSelection
-                else:
-                    self.faceHoverNode.visible = False
+        self.boxHandleNode.mouseMove(event)
 
     def mouseRelease(self, event):
-        editor = self.editorSession
-        if self.dragStartPoint:
-            newBox = self.boxFromDragSelect(event.ray)
-            command = SelectCommand(self, newBox)
-            editor.undoStack.push(command)
-            self.dragStartPoint = None
-            return
+        self.boxHandleNode.mouseRelease(event)
 
-        if self.dragResizeFace is not None:
-            box = self.currentSelection
-            if box is not None:
-                newBox = self.boxFromDragResize(box, event.ray)
-
-                command = SelectCommand(self, newBox)
-                command.setText(self.tr("Resize Selection"))
-                editor.undoStack.push(command)
-
-            self.dragResizeFace = None
-            self.faceHoverNode.visible = False
-            return
 
     def deselect(self):
         editor = self.editorSession
@@ -369,9 +328,52 @@ class SelectionTool(EditorTool):
     alpha = 0.33
 
     showPreviousSelection = True
+
+    def createShapedSelection(self, box):
+        if self.shapeInput.currentShape is shapewidget.Square:
+            return box
+        else:
+            return selection.ShapedSelection(box, self.shapeInput.currentShape.shapeFunc)
+
+class BoxHandle(scenegraph.Node, QtCore.QObject):
     dragResizeFace = None
     dragResizeDimension = None
     dragResizePosition = None
+
+    dragStartPoint = None
+    dragStartFace = None
+
+    oldBounds = None
+
+    hiliteFace = True
+
+    def __init__(self):
+        """
+        A drawable, resizable box that can respond to mouse events. Emits boundsChanged whenever its bounding box
+        changes, and emits boundsChangedDone when the mouse button is released.
+        :return:
+        :rtype:
+        """
+        super(BoxHandle, self).__init__()
+        self.boxNode = SelectionBoxNode()
+        self.boxNode.filled = False
+        self.faceDragNode = SelectionFaceNode()
+        self.addChild(self.boxNode)
+        self.addChild(self.faceDragNode)
+
+    boundsChanged = QtCore.Signal(BoundingBox)
+    boundsChangedDone = QtCore.Signal(BoundingBox, bool)
+
+    @property
+    def bounds(self):
+        return self.boxNode.selectionBox
+
+    @bounds.setter
+    def bounds(self, box):
+        if box != self.boxNode.selectionBox:
+            self.boxNode.selectionBox = box
+            self.faceDragNode.selectionBox = box
+            self.boundsChanged.emit(box)
 
     def dragResizePoint(self, ray):
         # returns a point representing the intersection between the mouse ray
@@ -407,7 +409,7 @@ class SelectionTool(EditorTool):
         o[dragdim] = int(numpy.floor(point[dragdim] + 0.5))
         thisSide = BoundingBox(o, s)
 
-        return self.createShapedSelection(thisSide.union(otherSide))
+        return thisSide.union(otherSide)
 
     def boxFromDragSelect(self, ray):
         """
@@ -432,13 +434,79 @@ class SelectionTool(EditorTool):
         endPoint = ray.intersectPlane(dim, point[dim])
         endBox = BoundingBox(endPoint.intfloor(), size)
 
-        return self.createShapedSelection(startBox.union(endBox))
+        return startBox.union(endBox)
 
-    def createShapedSelection(self, box):
-        if self.shapeInput.currentShape is shapewidget.Square:
-            return box
-        else:
-            return selection.ShapedSelection(box, self.shapeInput.currentShape.shapeFunc)
+    def mousePress(self, event):
+
+        # Find side of existing selection to drag
+        # xxxx can't do this with disjoint selections?
+        if self.bounds is not None:
+            point, face = boxFaceUnderCursor(self.bounds, event.ray)
+
+            if face is not None:
+                log.info("Beginning drag resize")
+                self.dragResizeFace = face
+                # Choose a dimension perpendicular to the dragged face
+                # Try not to pick a dimension close to edge-on with the view vector
+                vector = event.view.cameraVector.abs()
+                dim = ((face.dimension + 1) % 2)
+                if dim == vector.index(min(vector)):
+                    dim = ((dim+1) % 2)
+
+                self.dragResizeDimension = dim
+                self.dragResizePosition = point[self.dragResizeDimension]
+                self.oldBounds = self.bounds
+                return True
+            else:
+                # Didn't hit - start new selection
+                self.bounds = None
+
+        # Get ready to start new selection
+        if self.bounds is None:
+            self.dragStartPoint = event.blockPosition
+            self.dragStartFace = faces.FaceYIncreasing  # event.blockFace
+            return
+
+    def mouseMove(self, event):
+        if self.dragStartPoint:
+            # Show new box being dragged out
+            newBox = self.boxFromDragSelect(event.ray)
+            self.bounds = newBox
+
+        if self.bounds is not None:
+            if self.dragResizeFace is not None:
+                # Hilite face being dragged
+                newBox = self.boxFromDragResize(self.oldBounds, event.ray)
+                self.faceDragNode.selectionBox = newBox
+                self.faceDragNode.visible = True
+
+                # Update selection box to resized size in progress
+                newBox = self.boxFromDragResize(self.oldBounds, event.ray)
+                self.bounds = newBox
+
+            elif self.hiliteFace:
+                # Hilite face cursor is over
+                point, face = boxFaceUnderCursor(self.bounds, event.ray)
+                if face is not None:
+                    self.faceDragNode.visible = True
+                    self.faceDragNode.face = face
+                    self.faceDragNode.selectionBox = self.bounds
+                else:
+                    self.faceDragNode.visible = False
+
+    def mouseRelease(self, event):
+        if self.dragStartPoint:
+            newBox = self.boxFromDragSelect(event.ray)
+            self.dragStartPoint = None
+            self.bounds = newBox
+            self.boundsChangedDone.emit(newBox, True)
+
+        elif self.dragResizeFace is not None:
+            self.bounds = self.boxFromDragResize(self.oldBounds, event.ray)
+            self.oldBounds = None
+            self.dragResizeFace = None
+            self.faceDragNode.visible = False
+            self.boundsChangedDone.emit(self.bounds, False)
 
 
 class SelectionCursorRenderNode(rendergraph.RenderNode):
@@ -463,6 +531,7 @@ class SelectionCursorRenderNode(rendergraph.RenderNode):
             # Highlighted face
             GL.glColor(r, g, b, alpha)
             cubes.drawFace(box, self.sceneNode.face)
+
 
 
 class SelectionCursor(scenegraph.Node):
