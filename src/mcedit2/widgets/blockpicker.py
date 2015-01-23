@@ -373,7 +373,7 @@ class BlockTypeButton(QtGui.QPushButton):
         self.picker = getBlockTypePicker()
         self.setLayout(QtGui.QStackedLayout())
         self._viewWidget = None
-        self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Minimum)
+        self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
 
     blocksChanged = QtCore.Signal(list)
 
