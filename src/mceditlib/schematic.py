@@ -29,7 +29,7 @@ log = getLogger(__name__)
 def createSchematic(shape, blocktypes='Alpha'):
     from mceditlib.worldeditor import WorldEditor
 
-    adapter = SchematicFileAdapter(shape, blocktypes)
+    adapter = SchematicFileAdapter(shape=shape, blocktypes=blocktypes)
     editor = WorldEditor(adapter=adapter)
     return editor
 

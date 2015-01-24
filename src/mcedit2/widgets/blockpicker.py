@@ -5,14 +5,12 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from PySide import QtGui, QtCore
 import logging
 from PySide.QtCore import Qt
-from PySide.QtGui import QPixmap
 from mcedit2.util.load_ui import registerCustomWidget, load_ui
 from mcedit2.widgets.blocktype_list import BlockTypePixmap
 from mcedit2.widgets.layout import Row, Column
 from mcedit2.worldview.iso import IsoWorldView
 from mceditlib.blocktypes import BlockType
-from mceditlib.schematic import SchematicFileAdapter
-from mceditlib.worldeditor import WorldEditor
+from mceditlib.schematic import createSchematic
 
 log = logging.getLogger(__name__)
 
@@ -46,8 +44,7 @@ class BlockThumbView(QtGui.QWidget):
         if None in (self.block, self.editorSession):
             return
 
-        blockworld = SchematicFileAdapter((1, 1, 1), blocktypes=self.editorSession.worldEditor.blocktypes)
-        editor = WorldEditor(adapter=blockworld)
+        editor = createSchematic((1, 1, 1), blocktypes=self.editorSession.worldEditor.blocktypes)
         dim = editor.getDimension()
         dim.setBlocks(0, 0, 0, self.block)
         self.worldView = IsoWorldView(dim, self.editorSession.textureAtlas, sharedGLWidget=self.editorSession.editorTab.miniMap)

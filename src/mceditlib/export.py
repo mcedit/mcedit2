@@ -9,7 +9,7 @@ import logging
 import shutil
 import tempfile
 from mceditlib.block_copy import copyBlocksIter
-import mceditlib.schematic
+from mceditlib.schematic import createSchematic
 from mceditlib.selection import BoundingBox
 from mceditlib.util import exhaust
 from mceditlib.worldeditor import WorldEditor
@@ -27,8 +27,7 @@ def extractSchematicFromIter(sourceDim, box, entities=True):
         return
     newbox, destPoint = p
 
-    tempSchematic = mceditlib.schematic.SchematicFileAdapter(shape=box.size, blocktypes=sourceDim.blocktypes)
-    editor = WorldEditor(adapter=tempSchematic)
+    editor = createSchematic(shape=box.size, blocktypes=sourceDim.blocktypes)
     dim = editor.getDimension()
     for i in copyBlocksIter(dim, sourceDim, newbox, destPoint, entities=entities, biomes=True):
         yield i

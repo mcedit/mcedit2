@@ -13,7 +13,7 @@ from mceditlib.blocktypes import pc_blocktypes
 from mceditlib.selection import BoundingBox
 from mceditlib.findadapter import findAdapter
 from mceditlib.multi_block import getBlocks, setBlocks
-from mceditlib.schematic import SchematicFileAdapter
+from mceditlib.schematic import createSchematic
 from mceditlib.util import displayName, chunk_pos, exhaust, matchEntityTags
 
 
@@ -129,7 +129,7 @@ class WorldEditor(object):
         :type filename: str or unknown or unicode
         :type create: bool
         :type readonly: bool
-        :type adapter: unknown or SchematicFileAdapter
+        :type adapter: unknown or mceditlib.anvil.adapter.AnvilWorldAdapter or mceditlib.schematic.SchematicFileAdapter
         :type adapterClass: class
         :type resume: None or bool
         :return:
@@ -630,8 +630,7 @@ class WorldEditorDimension(object):
                                            entities, create, biomes))
 
     def exportSchematicIter(self, selection):
-        schematicAdapter = SchematicFileAdapter(shape=selection.size, blocktypes=self.blocktypes)
-        schematic = WorldEditor(adapter=schematicAdapter)
+        schematic = createSchematic(shape=selection.size, blocktypes=self.blocktypes)
 
         return itertools.chain(copyBlocksIter(schematic.getDimension(), self, selection, (0, 0, 0)), [schematic])
 
