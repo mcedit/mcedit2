@@ -11,7 +11,7 @@ from mcedit2.editorsession import PendingImport
 from mcedit2.editortools import EditorTool
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.editortools.select import SelectionFaceNode
-from mcedit2.rendering.selection import SelectionBoxNode, SelectionFaceNode
+from mcedit2.rendering.selection import SelectionBoxNode, SelectionFaceNode, boxFaceUnderCursor
 from mcedit2.rendering import scenegraph
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.worldscene import WorldScene
@@ -19,7 +19,6 @@ from mcedit2.util.load_ui import load_ui
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
 from mcedit2.widgets.layout import Column
-from mcedit2.worldview.worldview import boxFaceUnderCursor
 from mceditlib.geometry import Vector
 from mceditlib.selection import BoundingBox
 

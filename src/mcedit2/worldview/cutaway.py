@@ -11,8 +11,9 @@ from mcedit2.rendering import worldscene, scenegraph
 from mcedit2.util import profiler
 from mcedit2.widgets.layout import Column, Row
 from mcedit2.worldview.worldruler import WorldViewRulerGrid
-from mcedit2.worldview.worldview import WorldView, findBlockFace
+from mcedit2.worldview.worldview import WorldView
 from mcedit2.worldview.viewaction import ViewAction, MoveViewMouseAction
+from mceditlib import faces
 from mceditlib.geometry import Vector
 from mceditlib.selection import BoundingBox
 
@@ -266,10 +267,12 @@ class CutawayWorldView(WorldView):
         ray = self.rayAtPosition(x, y)
 
         event.point = self.slicedPoint(x, y)
-        blockPos, face = findBlockFace(self.dimension, event.point)
+        blockPos = event.point.intfloor()
 
         self.mouseBlockPos = event.blockPosition = blockPos
-        self.mouseBlockFace = event.blockFace = face
+        vec = [0, 0, 0]
+        vec[self.dim] = 1
+        self.mouseBlockFace = event.blockFace = faces.Face.fromVector(vec)
         self.mouseRay = event.ray = ray
         event.view = self
 

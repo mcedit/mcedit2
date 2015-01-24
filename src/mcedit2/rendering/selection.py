@@ -16,7 +16,7 @@ from mcedit2.util import profiler
 from mcedit2.util.glutils import gl
 from mceditlib import faces
 from mceditlib.exceptions import ChunkNotPresent
-from mceditlib.selection import SectionBox, BoundingBox, SelectionBox
+from mceditlib.selection import SectionBox, BoundingBox, SelectionBox, rayIntersectsBox
 
 log = logging.getLogger(__name__)
 
@@ -375,3 +375,51 @@ class SelectionFaceNode(scenegraph.Node):
     def color(self, value):
         self._color = value
         self.dirty = True
+
+
+def boxFaceUnderCursor(box, mouseRay):
+    """
+    Find the nearest face of the given bounding box that intersects with the given mouse ray
+    and return (point, face)
+    """
+    nearPoint, mouseVector = mouseRay
+
+    intersections = rayIntersectsBox(box, mouseRay)
+    if intersections is None:
+        return None, None
+
+    point, face = intersections[0]
+
+    # if the point is near the edge of the face, and the edge is facing away,
+    # return the away-facing face
+
+    dim = face.dimension
+
+    dim1 = (dim + 1) % 3
+    dim2 = (dim + 2) % 3
+
+    # determine if a click was within self.edge_factor of the edge of a selection box side. if so, click through
+    # to the opposite side
+    edge_factor = 0.1
+
+    for d in dim1, dim2:
+        if not isinstance(d, int):
+            assert False
+        edge_width = box.size[d] * edge_factor
+        faceNormal = [0, 0, 0]
+        cameraBehind = False
+
+        if point[d] - box.origin[d] < edge_width:
+            faceNormal[d] = -1
+            cameraBehind = nearPoint[d] - box.origin[d] > 0
+        if point[d] - box.maximum[d] > -edge_width:
+            faceNormal[d] = 1
+            cameraBehind = nearPoint[d] - box.maximum[d] < 0
+
+        if numpy.dot(faceNormal, mouseVector) > 0 or cameraBehind:
+            # the face adjacent to the clicked edge faces away from the cam
+            # xxxx this is where to allow iso views in face-on angles to grab edges
+            # xxxx also change face highlight node to highlight this area
+            return intersections[1] if len(intersections) > 1 else intersections[0]
+
+    return point, face
