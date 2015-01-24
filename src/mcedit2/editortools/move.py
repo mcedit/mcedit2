@@ -225,7 +225,7 @@ class MoveTool(EditorTool):
         item.setText(pendingImport.text)
         item.setData(pendingImport, Qt.UserRole)
         self.importsListModel.appendRow(item)
-        self.importsListWidget.setCurrentIndex(self.importsListModel.rowCount()-1)
+        self.importsListWidget.setCurrentIndex(self.importsListModel.index(self.importsListModel.rowCount()-1, 0))
         node = self.pendingImportNodes[pendingImport] = PendingImportNode(pendingImport, self.editorSession.textureAtlas)
         self.overlayNode.addChild(node)
         self.currentImport = pendingImport
