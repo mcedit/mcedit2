@@ -433,11 +433,13 @@ class WorldEditor(object):
     def createChunk(self, cx, cz, dimName):
         if self.containsChunk(cx, cz, dimName):
             raise ValueError("%r:Chunk %s already present in %s!".format(self, (cx, cz), dimName))
-        if self._allChunks is not None:
-            self._allChunks[dimName].add((cx, cz))
 
-        chunk = self.adapter.createChunk(cx, cz, dimName)
-        self._storeLoadedChunkData(chunk)
+        if hasattr(self.adapter, 'createChunk'):
+            if self._allChunks is not None:
+                self._allChunks[dimName].add((cx, cz))
+
+            chunk = self.adapter.createChunk(cx, cz, dimName)
+            self._storeLoadedChunkData(chunk)
 
     def deleteChunk(self, cx, cz, dimName):
         self.adapter.deleteChunk(cx, cz, dimName)
