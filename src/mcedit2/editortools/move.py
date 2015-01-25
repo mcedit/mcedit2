@@ -171,7 +171,6 @@ class MoveTool(EditorTool):
         super(MoveTool, self).__init__(editorSession, *args, **kwargs)
         self.overlayNode = scenegraph.Node()
 
-        self.movingWorldScene = None
         self.loader = None
         self.dragStartFace = None
         self.dragStartPoint = None
