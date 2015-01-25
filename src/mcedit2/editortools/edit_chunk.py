@@ -40,10 +40,11 @@ class ChunkTool(EditorTool):
         self.updateChunkWidget()
 
     def toolInactive(self):
-        self.overlayNode.removeChild(self.selectionNode)
-        self.selectionNode = None
-        self.currentChunk = None
-        self.updateChunkWidget()
+        if self.selectionNode:
+            self.overlayNode.removeChild(self.selectionNode)
+            self.selectionNode = None
+            self.currentChunk = None
+            self.updateChunkWidget()
 
 
     def updateChunkWidget(self):
