@@ -747,4 +747,4 @@ class WorldEditorDimension(object):
                          BlockLight,
                          SkyLight,
                          Biomes,
-                         updateLights)
+                         updateLights and self.adapter.hasLights)

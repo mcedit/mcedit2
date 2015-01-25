@@ -56,6 +56,8 @@ class FakeChunkedLevelAdapter(object):
     Blocks = blocktypes = NotImplemented
     Width = Length = Height = NotImplemented
 
+    hasLights = False
+
     @property
     def size(self):
         return self.Width, self.Height, self.Length

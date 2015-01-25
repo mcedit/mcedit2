@@ -372,6 +372,7 @@ class AnvilWorldAdapter(object):
     minHeight = 0
     maxHeight = 256
     blocktypes = pc_blocktypes
+    hasLights = True
 
     EntityRef = PCEntityRef
     TileEntityRef = PCTileEntityRef
