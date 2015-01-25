@@ -1,6 +1,11 @@
 import numpy
 from mceditlib import relight
+from mceditlib.blocktypes import BlockType
 from mceditlib.levelbase import GetBlocksResult
+
+import logging
+
+log = logging.getLogger(__name__)
 
 
 def chunkPosArray(x, z):
@@ -56,6 +61,7 @@ def coords_by_chunk(x, y, z):
         cz = czs[index]
 
         localMask = inverse == index
+        localMask.shape = x.shape
         localX = x[localMask]
         localY = y[localMask]
         localZ = z[localMask]
@@ -141,9 +147,9 @@ def getChunkBlocks(chunk, x, y, z,
     High performance method for accessing multiple blocks and their lighting info.
 
     Parameters are identical to getBlocks
-    :type x: ndarray
-    :type y: ndarray
-    :type z: ndarray
+    :type x: numpy.ndarray
+    :type y: numpy.ndarray
+    :type z: numpy.ndarray
 
     """
     Blocks = Data = BlockLight = SkyLight = Biomes = None
@@ -237,27 +243,107 @@ def maskArray(array, mask):
     else:
         return array[mask]
 
-def setBlocks(world, x, y, z, Blocks = None,
-              Data=None,
+def atleast_3d(ary):
+    """
+    numpy.atleast_3d adds axes on either side of a 1d array's axis, but I want the new axes to come afterward.
+    :param ary:
+    :type ary:
+    :return:
+    :rtype:
+    """
+    ary = numpy.asanyarray(ary)
+    if len(ary.shape) == 0:
+        result = ary.reshape(1, 1, 1)
+    elif len(ary.shape) == 1:
+        result = ary[:, None, None]
+    elif len(ary.shape) == 2:
+        result = ary[:,:, None]
+    else:
+        result = ary
+
+    return result
+
+def setBlocks(dimension, x, y, z,
+              Blocks=None,
+              Data=None,  # Deprecate soon
               BlockLight=None,
               SkyLight=None,
               Biomes=None,
               updateLights=True):
     """
     Change the blocks at the given positions. All parameters must be arrays of the same shape, or single values.
+
+    :type dimension: mceditlib.worldeditor.WorldEditorDimension
     """
-    x = numpy.atleast_1d(x)
-    y = numpy.atleast_1d(y)
-    z = numpy.atleast_1d(z)
-    Blocks = numpy.atleast_1d(Blocks) if Blocks is not None else None
-    Data = numpy.atleast_1d(Data) if Data is not None else None
-    BlockLight = numpy.atleast_1d(BlockLight) if BlockLight is not None else None
-    SkyLight = numpy.atleast_1d(SkyLight) if SkyLight is not None else None
-    Biomes = numpy.atleast_1d(Biomes) if Biomes is not None else None
+    x = atleast_3d(x)
+    y = atleast_3d(y)
+    z = atleast_3d(z)
+    if Blocks is not None:
+        if isinstance(Blocks, (BlockType, basestring)):
+            Blocks = [Blocks]
+        _Blocks = []
+        _Data = []
+
+        for block in Blocks:
+            if isinstance(block, basestring):
+                block = dimension.blocktypes[block]
+            if isinstance(block, BlockType):
+                _Blocks.append(block.ID)
+                _Data.append(block.meta)
+            else:
+                _Blocks.append(block)
+        if len(_Blocks):
+            Blocks = _Blocks
+            Data = _Data
+
+
+    Blocks = numpy.atleast_3d(Blocks) if Blocks is not None else None
+    Data = numpy.atleast_3d(Data) if Data is not None else None
+    BlockLight = numpy.atleast_3d(BlockLight) if BlockLight is not None else None
+    SkyLight = numpy.atleast_3d(SkyLight) if SkyLight is not None else None
+    Biomes = numpy.atleast_3d(Biomes) if Biomes is not None else None
+
+    arrays_to_broadcast = [x, y, z]
+
+    if Blocks is not None:
+        arrays_to_broadcast.append(Blocks)
+    if Data is not None:
+        arrays_to_broadcast.append(Data)
+    if BlockLight is not None:
+        arrays_to_broadcast.append(BlockLight)
+    if SkyLight is not None:
+        arrays_to_broadcast.append(SkyLight)
+    if Biomes is not None:
+        arrays_to_broadcast.append(Biomes)
+
+    if any(a.size == 0 for a in (x, y, z)):
+        return
+
+    log.info("setBlocks: \nx = %s%s\ny = %s%s\nz = %s%s", x.shape, x, y.shape, y, z.shape, z)
+
+    broadcasted_arrays = numpy.broadcast_arrays(*arrays_to_broadcast)
+
+    x, y, z = broadcasted_arrays[:3]
+    broadcasted_arrays = broadcasted_arrays[3:]
+    log.info("broadcasted: \nx = %s%s\ny = %s%s\nz = %s%s", x.shape, x, y.shape, y, z.shape, z)
+
+    if Blocks is not None:
+        Blocks, broadcasted_arrays = broadcasted_arrays[0], broadcasted_arrays[1:]
+    if Data is not None:
+        Data, broadcasted_arrays = broadcasted_arrays[0], broadcasted_arrays[1:]
+    if BlockLight is not None:
+        BlockLight, broadcasted_arrays = broadcasted_arrays[0], broadcasted_arrays[1:]
+    if SkyLight is not None:
+        SkyLight, broadcasted_arrays = broadcasted_arrays[0], broadcasted_arrays[1:]
+    if Biomes is not None:
+        Biomes, broadcasted_arrays = broadcasted_arrays[0], broadcasted_arrays[1:]
+
 
 
     for cx, cz, sx, sy, sz, mask in coords_by_chunk(x, y, z):
-        chunk = world.getChunk(cx, cz, create=True)
+        chunk = dimension.getChunk(cx, cz, create=True)
+        if chunk is None:
+            continue
         setChunkBlocks(chunk, sx, sy, sz,
                        maskArray(Blocks, mask),
                        maskArray(Data, mask),
@@ -267,7 +353,7 @@ def setBlocks(world, x, y, z, Blocks = None,
         chunk.dirty = True
 
     if updateLights:
-        relight.updateLights(world, x, y, z)
+        relight.updateLights(dimension, x, y, z)
 
 
 def setChunkBlocks(chunk, x, y, z,
