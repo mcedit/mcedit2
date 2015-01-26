@@ -230,14 +230,11 @@ class BlockTypeSet(object):
             s = f.read()
             log.info(u"Loading block ID mapping from (%s) %s", len(s), f)
             entries = json.loads(s)
-            self.IDsByState.clear()
             for ID, meta, nameAndState in entries:
                 #internalName, blockState = self._splitInternalName(nameAndState)
 
                 self.IDsByState[nameAndState] = ID, meta
             self.statesByID = {v: k for (k, v) in self.IDsByState.iteritems()}
-            assert "minecraft:air" in self.IDsByState
-            assert (0,0) in self.statesByID
         except EnvironmentError as e:
             log.error(u"Exception while loading block ID mapping from %s: %s", f, e)
             traceback.print_exc()
@@ -335,6 +332,7 @@ class PCBlockTypeSet(BlockTypeSet):
     def __init__(self):
         super(PCBlockTypeSet, self).__init__()
         self.name = "Alpha"
+        self.addIDMappingFromFile("idmapping_raw.json")
         self.addIDMappingFromFile("idmapping.json")
         self.addJsonBlocksFromFile("minecraft_raw.json")
         self.addJsonBlocksFromFile("minecraft.json")
