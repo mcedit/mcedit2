@@ -127,6 +127,8 @@ class BlockTypeSet(object):
 
         nameAndState = self.statesByID.get((block.ID, block.meta))
         if nameAndState is None:
+            nameAndState = self.statesByID.get((block.ID, 0))
+        if nameAndState is None:
             return self.defaults[attr]
 
         if attr == "internalName":
