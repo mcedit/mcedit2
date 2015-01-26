@@ -9,7 +9,6 @@ import numpy
 
 from mceditlib.block_copy import copyBlocksIter
 from mceditlib.operations.block_fill import FillBlocksOperation
-from mceditlib.blocktypes import pc_blocktypes
 from mceditlib.selection import BoundingBox
 from mceditlib.findadapter import findAdapter
 from mceditlib.multi_block import getBlocks, setBlocks
@@ -288,10 +287,6 @@ class WorldEditor(object):
 
     loadedChunkLimit = 400
 
-    # --- Instance variables  ---
-
-    blocktypes = pc_blocktypes
-
     # --- World limits ---
 
     @property
@@ -303,6 +298,10 @@ class WorldEditor(object):
     @property
     def displayName(self):
         return displayName(self.filename)
+
+    @property
+    def blocktypes(self):
+        return self.adapter.blocktypes
 
     # --- Chunk I/O ---
 
