@@ -52,17 +52,17 @@ def BlockTypePixmap(block, textureAtlas):
     """
     models = textureAtlas.blockModels
     texname = models.firstTextures.get(block.internalName + block.blockState)
-    if texname:
-        io = textureAtlas._openImageStream(texname)
-        data = io.read()
-        array = QtCore.QByteArray(data)
-        buf = QtCore.QBuffer(array)
-        reader = QtGui.QImageReader(buf)
-        image = reader.read()
-        pixmap = QtGui.QPixmap.fromImage(image)
-    else:
+    if texname is None:
         log.info("No texture for %s!", block.internalName + block.blockState)
-        return QtGui.QPixmap(32, 32)
+        texname = "MCEDIT_UNKNOWN"
+
+    io = textureAtlas._openImageStream(texname)
+    data = io.read()
+    array = QtCore.QByteArray(data)
+    buf = QtCore.QBuffer(array)
+    reader = QtGui.QImageReader(buf)
+    image = reader.read()
+    pixmap = QtGui.QPixmap.fromImage(image)
 
     w = pixmap.width()
     h = pixmap.height()
