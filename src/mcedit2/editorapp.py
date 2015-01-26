@@ -228,7 +228,7 @@ class MCEditApp(QtGui.QApplication):
         # --- Status Bar ---
 
         self.positionLabel = QtGui.QLabel("xx, yy, zz", minimumWidth=100)
-        self.blocktypeLabel = QtGui.QLabel("minecraft:rocktonium", minimumWidth=200)
+        self.blocktypeLabel = QtGui.QLabel("(-1:-1)minecraft:rocktonium", minimumWidth=250)
         self.blockNameLabel = QtGui.QLabel("rocktonium", minimumWidth=150)
         self.cpsLabel = QtGui.QLabel("-1 cps", minimumWidth=65)
         self.fpsLabel = QtGui.QLabel("-1 fps", minimumWidth=65)
@@ -353,7 +353,7 @@ class MCEditApp(QtGui.QApplication):
             self.positionLabel.setText("%s" % (tuple(pos),))
         if blocktype is not None:
             self.blockNameLabel.setText("%s" % blocktype.displayName)
-            self.blocktypeLabel.setText("%s%s" % (blocktype.internalName, blocktype.blockState))
+            self.blocktypeLabel.setText("(%d:%d)%s%s" % (blocktype.ID, blocktype.meta, blocktype.internalName, blocktype.blockState))
         if cps is not None:
             self.cpsLabel.setText("%0.1f cps" % cps)
         if fps is not None:
