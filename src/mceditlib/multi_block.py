@@ -319,13 +319,10 @@ def setBlocks(dimension, x, y, z,
     if any(a.size == 0 for a in (x, y, z)):
         return
 
-    log.info("setBlocks: \nx = %s%s\ny = %s%s\nz = %s%s", x.shape, x, y.shape, y, z.shape, z)
-
     broadcasted_arrays = numpy.broadcast_arrays(*arrays_to_broadcast)
 
     x, y, z = broadcasted_arrays[:3]
     broadcasted_arrays = broadcasted_arrays[3:]
-    log.info("broadcasted: \nx = %s%s\ny = %s%s\nz = %s%s", x.shape, x, y.shape, y, z.shape, z)
 
     if Blocks is not None:
         Blocks, broadcasted_arrays = broadcasted_arrays[0], broadcasted_arrays[1:]
