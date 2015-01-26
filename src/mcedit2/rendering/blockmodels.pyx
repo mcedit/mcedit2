@@ -14,6 +14,7 @@ from cpython cimport array
 from array import array
 
 from mceditlib import faces
+from mceditlib.blocktypes import BlockType
 from mceditlib.geometry import Vector
 from mceditlib.selection import FloatBox
 
@@ -33,6 +34,13 @@ cdef struct ModelQuadList:
 cdef class BlockModels(object):
 
     def _getBlockModel(self, modelName):
+        if modelName == "block/MCEDIT_UNKNOWN":
+            return {
+                "parent": "block/cube_all",
+                "textures": {
+                    "all": "MCEDIT_UNKNOWN"
+                }
+            }
         model = self.modelBlockJsons.get(modelName)
         if model is None:
             model = json.load(self.resourceLoader.openStream("models/%s.json" % modelName))
@@ -40,6 +48,14 @@ cdef class BlockModels(object):
         return model
 
     def _getBlockState(self, stateName):
+        if stateName == "MCEDIT_UNKNOWN":
+            return {
+                "variants": {
+                    "MCEDIT_UNKNOWN": {
+                        "model": "MCEDIT_UNKNOWN",
+                    }
+                }
+            }
         state = self.modelStateJsons.get(stateName)
         if state is None:
             state = json.load(self.resourceLoader.openStream("blockstates/%s.json" % stateName))
@@ -69,7 +85,15 @@ cdef class BlockModels(object):
         memset(self.cookedModelsByID, 0, sizeof(self.cookedModelsByID))
         self.cooked = False
 
-        for i, block in enumerate(blocktypes):
+        missingnoProxy = BlockType(-1, -1, blocktypes)
+        missingnoProxy.internalName = "MCEDIT_UNKNOWN"
+        missingnoProxy.blockState = ""
+        missingnoProxy.renderType = 3
+        missingnoProxy.resourcePath = "MCEDIT_UNKNOWN"
+        missingnoProxy.resourceVariant = "MCEDIT_UNKNOWN"
+        missingnoProxy.color = 0xFFFFFF
+
+        for i, block in enumerate(list(blocktypes) + [missingnoProxy]):
             if i % 100 == 0:
                 log.info("Loading block models %s/%s", i, len(blocktypes))
 
@@ -196,6 +220,7 @@ cdef class BlockModels(object):
                           allElements, textureVars)
                 raise
 
+
     def buildBoxQuads(self, element, nameAndState, textureVars, variantXrot, variantYrot, variantZrot, blockColor):
         quads = []
         shade = element.get("shade", True)
@@ -253,6 +278,7 @@ cdef class BlockModels(object):
         cdef int u1, u2, v1, v2
         cdef int uw, vh
         cdef list cookedQuads
+
         for nameAndState, allQuads in self.modelQuads.iteritems():
             cookedQuads = []
             for (box, face, texture, uv, cullface, shade, rotation, textureRotation,
@@ -307,8 +333,18 @@ cdef class BlockModels(object):
                 cookedQuads.append((xyzuvc, cullface))
 
             cookedModels[nameAndState] = cookedQuads
-            ID, meta = self.blocktypes.IDsByState[nameAndState]
-            self.storeQuads(cookedQuads, ID, meta)
+            try:
+                ID, meta = self.blocktypes.IDsByState[nameAndState]
+            except KeyError:
+                pass
+            else:
+                self.storeQuads(cookedQuads, ID, meta)
+
+        stoneModels = cookedModels['MCEDIT_UNKNOWN']
+        for ID in range(4096):
+            for meta in range(16):
+                if self.cookedModelsByID[ID][meta].count == 0:
+                    self.storeQuads(stoneModels, ID, meta)
 
         self.cookedModels = cookedModels
         self.cooked = True

@@ -12,6 +12,7 @@ from mcedit2.util.load_png import loadPNGData
 from mcedit2.rendering.lightmap import generateLightmap
 from mcedit2.resourceloader import ResourceLoader
 from mcedit2.util import glutils
+from mcedit2.util.resources import resourcePath
 from mceditlib import util
 
 
@@ -87,22 +88,16 @@ class TextureAtlas(object):
         self._terrainTexture = None
         self._maxLOD = maxLOD
 
-        missingno = numpy.empty((16, 16, 4), 'uint8')
-        missingno[:] = [[[0xff, 0x00, 0xff, 0xff]]]
 
-        missingnoTexture = 16, 16, missingno
         names = set()
         self._rawTextures = rawTextures = []
-
+        assert "MCEDIT_UNKNOWN" in blockModels.getTextureNames()
         for filename in blockModels.getTextureNames():
             if filename in names:
                 continue
             try:
-                if filename == "missingno":
-                    rawTextures.append((filename,) + missingnoTexture)
-                else:
-                    f = self._openImageStream(filename)
-                    rawTextures.append((filename,) + loadPNGData(f.read()))
+                f = self._openImageStream(filename)
+                rawTextures.append((filename,) + loadPNGData(f.read()))
                 names.add(filename)
                 log.debug("Loaded texture %s", filename)
             except KeyError as e:
@@ -114,6 +109,7 @@ class TextureAtlas(object):
 
         log.info("Preloaded %d textures for world %s (%i kB)",
                  len(self._rawTextures), util.displayName(self._filename), rawSize/1024)
+
 
     def load(self):
         if self._terrainTexture:
@@ -211,8 +207,9 @@ class TextureAtlas(object):
         #raise SystemExit
 
     def _openImageStream(self, name):
-        if name == "missingno":
-            name = "stone"
+        if name == "MCEDIT_UNKNOWN":
+            block_unknown = resourcePath("mcedit2/assets/mcedit2/block_unknown.png")
+            return file(block_unknown, "rb")
         return self._resourceLoader.openStream("textures/" + name + ".png")
 
     def bindTerrain(self):
