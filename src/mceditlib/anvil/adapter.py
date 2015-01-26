@@ -16,7 +16,7 @@ import time
 from mceditlib import nbt
 from mceditlib.anvil.entities import PCEntityRef, PCTileEntityRef
 from mceditlib.anvil.worldfolder import AnvilWorldFolder
-from mceditlib.blocktypes import pc_blocktypes
+from mceditlib.blocktypes import pc_blocktypes, PCBlockTypeSet, BlockType
 from mceditlib.geometry import Vector
 from mceditlib.selection import BoundingBox
 from mceditlib import nbtattr
@@ -436,6 +436,7 @@ class AnvilWorldAdapter(object):
             try:
                 metadataTag = nbt.load(buf=self.selectedRevision.readFile("level.dat"))
                 self.metadata = AnvilWorldMetadata(metadataTag)
+                self.loadFMLMapping()
             except (EnvironmentError, zlib.error) as e:
                 log.info("Error loading level.dat, trying level.dat_old ({0})".format(e))
                 try:
@@ -454,6 +455,57 @@ class AnvilWorldAdapter(object):
         return "AnvilWorldAdapter(%r)" % self.filename
 
     # --- Create, save, close ---
+
+    def loadFMLMapping(self):
+        metadataTag = self.metadata.metadataTag
+        fml = metadataTag.get('FML')
+        if fml is None:
+            return
+
+        mid = fml.get('ModItemData')  # MC 1.6
+        if mid is not None:
+            log.info("Adding block IDs from FML for MC 1.6")
+            blocktypes = PCBlockTypeSet()
+            for entry in mid:
+                ID = entry['ItemId'].value
+                meta = entry['ordinal'].value
+                name = entry['ItemType'].value
+                if (ID, 0) not in blocktypes.statesByID:
+                    blocktypes.IDsByState[name] = ID, meta
+                    blocktypes.statesByID[ID, meta] = name
+                    blocktypes.blockJsons[name] = {
+                        'displayName':name,
+                        'internalName':name,
+                        'blockState':'',
+                    }
+                    blocktypes.allBlocks.append(BlockType(ID, meta, blocktypes))
+
+            blocktypes.allBlocks.sort()
+            self.blocktypes = blocktypes
+
+        itemdata = fml.get('ItemData')  # MC 1.7
+        if itemdata is not None:
+            count = 0
+            log.info("Adding block IDs from FML for MC 1.7")
+            blocktypes = PCBlockTypeSet()
+            for entry in itemdata:
+                ID = entry['V'].value
+                name = entry['K'].value
+                if (ID, 0) not in blocktypes.statesByID:
+                    count += 1
+                    blocktypes.IDsByState[name] = ID, 0
+                    blocktypes.statesByID[ID, 0] = name
+                    blocktypes.blockJsons[name] = {
+                        'displayName':name,
+                        'internalName':name,
+                        'blockState':'',
+                    }
+                    blocktypes.allBlocks.append(BlockType(ID, 0, blocktypes))
+
+            blocktypes.allBlocks.sort()
+            log.info("Added %d blocks.", count)
+            self.blocktypes = blocktypes
+
 
     def _createMetadataTag(self, random_seed=None):
         """
