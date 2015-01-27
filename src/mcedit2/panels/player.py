@@ -4,14 +4,17 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 import uuid
+
 from PySide import QtGui
 from PySide.QtCore import Qt
+
 from mcedit2.command import SimpleRevisionCommand
-from mcedit2.nbt_treemodel import NBTTreeModel, NBTFilterProxyModel
+from mcedit2.widgets.nbttree.nbttreemodel import NBTTreeModel
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.resources import resourcePath
 from mceditlib.exceptions import PlayerNotFound
 from mceditlib import nbt
+
 
 log = logging.getLogger(__name__)
 
@@ -85,11 +88,8 @@ class PlayerPanel(QtGui.QWidget):
             self.treeView.setModel(None)
         else:
             model = NBTTreeModel(player.rootTag)
-            proxyModel = NBTFilterProxyModel(self)
-            proxyModel.setSourceModel(model)
-            proxyModel.setDynamicSortFilter(True)
 
-            self.treeView.setModel(proxyModel)
+            self.treeView.setModel(model)
             self.treeView.sortByColumn(0, Qt.AscendingOrder)
             self.updatePlayerTab()
 

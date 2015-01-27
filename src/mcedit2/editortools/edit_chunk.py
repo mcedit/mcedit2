@@ -3,12 +3,13 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
-from PySide.QtCore import Qt
+
 from mcedit2.editortools import EditorTool
 from mcedit2.rendering.selection import SelectionBoxNode
-from mcedit2.nbt_treemodel import NBTTreeModel, NBTFilterProxyModel
+from mcedit2.widgets.nbttree.nbttreemodel import NBTTreeModel
 from mcedit2.rendering import scenegraph
 from mcedit2.util.load_ui import load_ui
+
 
 log = logging.getLogger(__name__)
 

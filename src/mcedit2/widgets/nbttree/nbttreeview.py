@@ -2,12 +2,15 @@
     nbttreewidget
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
-from PySide import QtGui
 import logging
+
+from PySide import QtGui
 from PySide.QtCore import Qt
-from mcedit2.nbt_treemodel import NBTFilterProxyModel
+
+from mcedit2.widgets.nbttree.nbttreemodel import NBTFilterProxyModel
 from mcedit2.util.load_ui import registerCustomWidget
 from mcedit2.widgets.layout import Row
+
 
 log = logging.getLogger(__name__)
 

@@ -5,18 +5,13 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import itertools
 import logging
 
-from OpenGL import GL
 from PySide import QtGui
 from PySide.QtCore import Qt
-from mcedit2.editortools import EditorTool
 
-from mcedit2.nbt_treemodel import NBTTreeModel, NBTFilterProxyModel
-from mcedit2.rendering.cubes import drawBox
-from mcedit2.rendering.depths import DepthOffset
+from mcedit2.editortools import EditorTool
+from mcedit2.widgets.nbttree.nbttreemodel import NBTTreeModel, NBTFilterProxyModel
 from mcedit2.util.bresenham import bresenham
 from mcedit2.util.load_ui import load_ui
-from mceditlib.selection import BoundingBox
-from mceditlib.exceptions import ChunkNotPresent
 
 
 log = logging.getLogger(__name__)
