@@ -6,6 +6,7 @@ from __future__ import absolute_import, print_function
 import json
 import logging
 import math
+import itertools
 
 import numpy
 cimport numpy
@@ -16,7 +17,7 @@ from array import array
 from mceditlib import faces
 from mceditlib.blocktypes import BlockType
 from mceditlib.geometry import Vector
-from mceditlib.selection import FloatBox
+from mceditlib.selection import FloatBox, BoundingBox
 
 from libc.stdlib cimport malloc, free
 from libc.string cimport memset
@@ -268,7 +269,7 @@ cdef class BlockModels(object):
         return quads
 
     def getTextureNames(self):
-        return iter(self._textureNames)
+        return itertools.chain(iter(self._textureNames), ['blocks/water_still', 'blocks/lava_still'])
 
     def cookQuads(self, textureAtlas):
         if self.cooked:
@@ -349,6 +350,36 @@ cdef class BlockModels(object):
 
         self.cookedModels = cookedModels
         self.cooked = True
+
+        self.cookFluidQuads()
+
+    def cookFluidQuads(self):
+        cdef ModelQuadList * modelQuads
+        cdef float[:] quadVerts, modelQuadVerts
+
+        for filled in range(9):
+            box = FloatBox((0, 0, 0), (1, ((8 - filled) / 9.0) if filled < 8 else 1.0, 1))
+
+            modelQuads = &self.fluidQuads[filled]
+            modelQuads.count = 6
+            modelQuads.quads = <ModelQuad *>malloc(6 * sizeof(ModelQuad))
+
+            for face in faces.allFaces:
+                modelQuads.quads[face].cullface[0] = 0
+
+                dx, dy, dz = face.vector
+                modelQuads.quads[face].quadface[0] = <int>face
+                modelQuads.quads[face].quadface[1] = dx
+                modelQuads.quads[face].quadface[2] = dy
+                modelQuads.quads[face].quadface[3] = dz
+
+                varray = getBlockFaceVertices(box, face, (0, 0, 16, 16), 0)
+                varray.view('uint8')[:, 28:] = faceShades[face]
+
+                varray.shape = 32
+                quadVerts = varray
+                modelQuadVerts = modelQuads.quads[face].xyzuvstc
+                modelQuadVerts[:] = quadVerts[:]
 
     def storeQuads(self, list cookedQuads, unsigned short ID, unsigned char meta):
         cdef ModelQuadList modelQuads

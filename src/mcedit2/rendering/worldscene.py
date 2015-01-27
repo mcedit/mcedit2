@@ -125,6 +125,7 @@ class WorldScene(scenegraph.Node):
         super(WorldScene, self).__init__()
 
         self.dimension = dimension
+        self.textureAtlas = textureAtlas
         self.depthOffsetNode = scenegraph.DepthOffsetNode(DepthOffset.Renderer)
         self.addChild(self.depthOffsetNode)
 

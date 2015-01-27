@@ -19,3 +19,5 @@ cdef class BlockModels:
     cdef object cookedModels
     cdef ModelQuadList cookedModelsByID[4096][16]
     cdef object cooked
+
+    cdef ModelQuadList fluidQuads[9]

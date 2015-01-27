@@ -209,6 +209,13 @@ class SectionUpdate(object):
 
     @lazyprop
     def areaBlocks(self):
+        return self.areaBlocksOrData("Blocks")
+
+    @lazyprop
+    def areaData(self):
+        return self.areaBlocksOrData("Data")
+
+    def areaBlocksOrData(self, arrayName):
         """
         Return the blocks in an 18-wide cube centered on this section. Only retrieves blocks from the
         6 sections neighboring this one along a major axis, so the corners are empty. That's fine since they
@@ -222,7 +229,7 @@ class SectionUpdate(object):
         chunkWidth, chunkLength, chunkHeight = self.chunkSection.Blocks.shape
         cy = self.chunkSection.Y
 
-        areaBlocks = numpy.empty((chunkWidth + 2, chunkLength + 2, chunkHeight + 2), numpy.uint16)
+        areaBlocks = numpy.empty((chunkWidth + 2, chunkLength + 2, chunkHeight + 2), numpy.uint16 if arrayName == "Blocks" else numpy.uint8)
         areaBlocks[(0, -1), :, :] = 0
         areaBlocks[:, (0, -1)] = 0
         areaBlocks[:, :, (0, -1)] = 0
@@ -238,36 +245,36 @@ class SectionUpdate(object):
             if mask is None:
                 return areaBlocks
 
-        areaBlocks[1:-1, 1:-1, 1:-1] = self.chunkSection.Blocks
+        areaBlocks[1:-1, 1:-1, 1:-1] = getattr(self.chunkSection, arrayName)
         neighboringChunks = self.chunkUpdate.neighboringChunks
 
         if faces.FaceXDecreasing in neighboringChunks:
             ncs = neighboringChunks[faces.FaceXDecreasing].getSection(cy)
             if ncs:
-                areaBlocks[1:-1, 1:-1, :1] = ncs.Blocks[:, :, -1:]
+                areaBlocks[1:-1, 1:-1, :1] = getattr(ncs, arrayName)[:, :, -1:]
 
         if faces.FaceXIncreasing in neighboringChunks:
             ncs = neighboringChunks[faces.FaceXIncreasing].getSection(cy)
             if ncs:
-                areaBlocks[1:-1, 1:-1, -1:] = ncs.Blocks[:, :, :1]
+                areaBlocks[1:-1, 1:-1, -1:] = getattr(ncs, arrayName)[:, :, :1]
 
         if faces.FaceZDecreasing in neighboringChunks:
             ncs = neighboringChunks[faces.FaceZDecreasing].getSection(cy)
             if ncs:
-                areaBlocks[1:-1, :1, 1:-1] = ncs.Blocks[:chunkWidth, -1:, :chunkHeight]
+                areaBlocks[1:-1, :1, 1:-1] = getattr(ncs, arrayName)[:chunkWidth, -1:, :chunkHeight]
 
         if faces.FaceZIncreasing in neighboringChunks:
             ncs = neighboringChunks[faces.FaceZIncreasing].getSection(cy)
             if ncs:
-                areaBlocks[1:-1, -1:, 1:-1] = ncs.Blocks[:chunkWidth, :1, :chunkHeight]
+                areaBlocks[1:-1, -1:, 1:-1] = getattr(ncs, arrayName)[:chunkWidth, :1, :chunkHeight]
 
         aboveSection = chunk.getSection(self.chunkSection.Y + 1)
         if aboveSection:
-            areaBlocks[-1:, 1:-1, 1:-1] = aboveSection.Blocks[:1, :, :]
+            areaBlocks[-1:, 1:-1, 1:-1] = getattr(aboveSection, arrayName)[:1, :, :]
 
         belowSection = chunk.getSection(self.chunkSection.Y - 1)
         if belowSection:
-            areaBlocks[:1, 1:-1, 1:-1] = belowSection.Blocks[-1:, :, :]
+            areaBlocks[:1, 1:-1, 1:-1] = getattr(belowSection, arrayName)[-1:, :, :]
 
 
         if mask is not None:

@@ -16,7 +16,7 @@ class ChunkRenderInfo(object):
         """
 
         :param worldScene:
-        :type worldScene: worldmesh.WorldScene
+        :type worldScene: mcedit2.rendering.worldscene.WorldScene
         :param chunkPosition:
         :type chunkPosition: (int, int)
         :return:
