@@ -554,8 +554,8 @@ class MCEditApp(QtGui.QApplication):
         session = self.currentSession()
         if session is None:
             return
-
-        session.importSchematic(filename)
+        if os.path.isfile(filename):
+            session.importSchematic(filename)
 
     # --- World List actions ---
 
