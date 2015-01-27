@@ -1,7 +1,8 @@
 
 cdef struct ModelQuad:
-    float[24] xyzuvc
+    float[32] xyzuvstc
     char[4] cullface  # isCulled, dx, dy, dz
+    char[4] quadface  # face, dx, dy, dz
 
 cdef struct ModelQuadList:
     int count

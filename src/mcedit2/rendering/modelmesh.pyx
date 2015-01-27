@@ -33,6 +33,8 @@ class BlockModelMesh(object):
 
     def createVertexArrays(self):
         cdef numpy.ndarray[numpy.uint16_t, ndim=3] areaBlocks
+        cdef numpy.ndarray[numpy.uint8_t, ndim=3] areaBlockLight
+        cdef numpy.ndarray[numpy.uint8_t, ndim=3] areaSkyLight
         cdef numpy.ndarray[numpy.uint8_t, ndim=3] data
         cdef numpy.ndarray[numpy.uint8_t, ndim=1] renderType
         cdef numpy.ndarray[numpy.uint8_t, ndim=1] opaqueCube
@@ -46,6 +48,8 @@ class BlockModelMesh(object):
 
         blocktypes = self.sectionUpdate.blocktypes
         areaBlocks = self.sectionUpdate.areaBlocks
+        areaBlockLight = self.sectionUpdate.areaLights("BlockLight")
+        areaSkyLight = self.sectionUpdate.areaLights("SkyLight")
         data = self.sectionUpdate.Data
         renderType = self.sectionUpdate.renderType
         opaqueCube = blocktypes.opaqueCube
@@ -59,11 +63,12 @@ class BlockModelMesh(object):
         cdef blockmodels.ModelQuad quad
 
         cdef unsigned short rx, ry, rz
+        cdef unsigned char bl, sl
 
         cdef size_t buffer_ptr = 0
         cdef size_t buffer_size = 256
-        cdef float * vertexBuffer = <float *>malloc(buffer_size * sizeof(float) * 24)
-        cdef float * xyzuvc
+        cdef float * vertexBuffer = <float *>malloc(buffer_size * sizeof(float) * 32)
+        cdef float * xyzuvstc
         cdef numpy.ndarray vabuffer
         if vertexBuffer == NULL:
             return
@@ -94,33 +99,51 @@ class BlockModelMesh(object):
                             if opaqueCube[nID]:
                                 continue
 
-                        xyzuvc = vertexBuffer + buffer_ptr * 24
-                        memcpy(xyzuvc, quad.xyzuvc, sizeof(float) * 24)
+                        nx = x + quad.quadface[1]
+                        ny = y + quad.quadface[2]
+                        nz = z + quad.quadface[3]
+                        bl = areaBlockLight[ny, nz, nx]
+                        sl = areaSkyLight[ny, nz, nx]
 
-                        #(<object>verts).shape = 1, 4, 6
-                        #verts[..., :3] += coords
-                        xyzuvc[0] += rx
-                        xyzuvc[1] += ry
-                        xyzuvc[2] += rz
-                        xyzuvc[6] += rx
-                        xyzuvc[7] += ry
-                        xyzuvc[8] += rz
-                        xyzuvc[12] += rx
-                        xyzuvc[13] += ry
-                        xyzuvc[14] += rz
-                        xyzuvc[18] += rx
-                        xyzuvc[19] += ry
-                        xyzuvc[20] += rz
+
+                        xyzuvstc = vertexBuffer + buffer_ptr * 32
+                        memcpy(xyzuvstc, quad.xyzuvstc, sizeof(float) * 32)
+
+                        xyzuvstc[0] += rx
+                        xyzuvstc[1] += ry
+                        xyzuvstc[2] += rz
+                        xyzuvstc[5] += bl
+                        xyzuvstc[6] += sl
+
+
+                        xyzuvstc[8] += rx
+                        xyzuvstc[9] += ry
+                        xyzuvstc[10] += rz
+                        xyzuvstc[13] += bl
+                        xyzuvstc[14] += sl
+
+
+                        xyzuvstc[16] += rx
+                        xyzuvstc[17] += ry
+                        xyzuvstc[18] += rz
+                        xyzuvstc[21] += bl
+                        xyzuvstc[22] += sl
+
+
+                        xyzuvstc[24] += rx
+                        xyzuvstc[25] += ry
+                        xyzuvstc[26] += rz
+                        xyzuvstc[29] += bl
+                        xyzuvstc[30] += sl
+
                         buffer_ptr += 1
                         if buffer_ptr >= buffer_size:
                             buffer_size *= 2
-                            vertexBuffer = <float *>realloc(vertexBuffer, buffer_size * sizeof(float) * 24)
-                            #buffer.resize((buffer_size, 24))
-                        #faceQuadVerts.append(verts)
+                            vertexBuffer = <float *>realloc(vertexBuffer, buffer_size * sizeof(float) * 32)
 
         if buffer_ptr:  # now buffer size
-            vertexArray = VertexArrayBuffer(buffer_ptr, lights=False)
+            vertexArray = VertexArrayBuffer(buffer_ptr)
             vabuffer = vertexArray.buffer
-            memcpy(vabuffer.data, vertexBuffer, buffer_ptr * sizeof(float) * 24)
+            memcpy(vabuffer.data, vertexBuffer, buffer_ptr * sizeof(float) * 32)
             self.vertexArrays = [vertexArray]
         free(vertexBuffer)

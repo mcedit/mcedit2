@@ -24,8 +24,9 @@ from libc.string cimport memset
 log = logging.getLogger(__name__)
 
 cdef struct ModelQuad:
-    float[24] xyzuvc
+    float[32] xyzuvstc
     char[4] cullface  # isCulled, dx, dy, dz
+    char[4] quadface  # face, dx, dy, dz
 
 cdef struct ModelQuadList:
     int count
@@ -80,8 +81,8 @@ cdef class BlockModels(object):
         self.modelQuads = {}
         self._textureNames = set()
         self.firstTextures = {}  # first texture found for each block - used for icons (xxx)
-        self.cookedModels = {}  # nameAndState -> list[(xyzuvc, cullface)]
-        #self.cookedModelsByID = numpy.zeros((256*16, 16), dtype=list)  # (id, meta) -> list[(xyzuvc, cullface)]
+        self.cookedModels = {}  # nameAndState -> list[(xyzuvstc, cullface)]
+        #self.cookedModelsByID = numpy.zeros((256*16, 16), dtype=list)  # (id, meta) -> list[(xyzuvstc, cullface)]
         memset(self.cookedModelsByID, 0, sizeof(self.cookedModelsByID))
         self.cooked = False
 
@@ -297,8 +298,8 @@ cdef class BlockModels(object):
 
                 uv = (u1, v1, u2, v2)
 
-                xyzuvc = getBlockFaceVertices(box, face, uv, textureRotation)
-                xyzuvc.shape = 4, 6
+                xyzuvstc = getBlockFaceVertices(box, face, uv, textureRotation)
+                xyzuvstc.shape = 4, 8
 
                 if variantZrot:
                     face = rotateFace(face, 2, variantZrot)
@@ -315,9 +316,9 @@ cdef class BlockModels(object):
                     if variantYrot:
                         cullface = rotateFace(cullface, 1, variantYrot)
 
-                self.rotateVertices(rotation, variantXrot, variantYrot, variantZrot, xyzuvc)
+                self.rotateVertices(rotation, variantXrot, variantYrot, variantZrot, xyzuvstc)
 
-                rgba = xyzuvc.view('uint8')[:, 20:]
+                rgba = xyzuvstc.view('uint8')[:, 28:]
                 if shade:
                     rgba[:] = faceShades[face]
                 else:
@@ -328,9 +329,9 @@ cdef class BlockModels(object):
                     rgba[..., 1] = (tintcolor[1] * int(rgba[0, 1])) >> 8
                     rgba[..., 2] = (tintcolor[2] * int(rgba[0, 2])) >> 8
 
-                xyzuvc.shape = 24  # flatten to store in ModelQuad.xyzuvc
+                xyzuvstc.shape = 32  # flatten to store in ModelQuad.xyzuvstc
 
-                cookedQuads.append((xyzuvc, cullface))
+                cookedQuads.append((xyzuvstc, cullface, face))
 
             cookedModels[nameAndState] = cookedQuads
             try:
@@ -354,12 +355,12 @@ cdef class BlockModels(object):
         modelQuads.count = len(cookedQuads)
         cdef void * quads = malloc(modelQuads.count * sizeof(ModelQuad))
         modelQuads.quads = <ModelQuad *>quads
-        cdef float[:] xyzuvc, quadxyzuvc
+        cdef float[:] xyzuvstc, quadxyzuvstc
         cdef int i
         for i in range(modelQuads.count):
-            xyzuvc, cullface = cookedQuads[i]
-            quadxyzuvc = modelQuads.quads[i].xyzuvc
-            quadxyzuvc[:] = xyzuvc[:]
+            xyzuvstc, cullface, quadface = cookedQuads[i]
+            quadxyzuvstc = modelQuads.quads[i].xyzuvstc
+            quadxyzuvstc[:] = xyzuvstc[:]
             if cullface is not None:
                 modelQuads.quads[i].cullface[0] = 1
                 dx, dy, dz = cullface.vector
@@ -373,10 +374,17 @@ cdef class BlockModels(object):
                 modelQuads.quads[i].cullface[3] = 0
 
 
+            dx, dy, dz = quadface.vector
+            modelQuads.quads[i].quadface[0] = int(quadface)
+            modelQuads.quads[i].quadface[1] = dx
+            modelQuads.quads[i].quadface[2] = dy
+            modelQuads.quads[i].quadface[3] = dz
+
+
 
         self.cookedModelsByID[ID][meta] = modelQuads
 
-    def rotateVertices(self, rotation, variantXrot, variantYrot, variantZrot, xyzuvc):
+    def rotateVertices(self, rotation, variantXrot, variantYrot, variantZrot, xyzuvstc):
         if rotation is not None:
             origin = rotation["origin"]
             axis = rotation["axis"]
@@ -386,10 +394,10 @@ cdef class BlockModels(object):
             ox, oy, oz = origin
             origin = ox / 16., oy / 16., oz / 16.
 
-            xyzuvc[:, :3] -= origin
-            xyz = xyzuvc[:, :3].transpose()
-            xyzuvc[:, :3] = (matrix[:3, :3] * xyz).transpose()
-            xyzuvc[:, :3] += origin
+            xyzuvstc[:, :3] -= origin
+            xyz = xyzuvstc[:, :3].transpose()
+            xyzuvstc[:, :3] = (matrix[:3, :3] * xyz).transpose()
+            xyzuvstc[:, :3] += origin
         rotate = variantXrot or variantYrot or variantZrot
         if rotate:
             matrix = numpy.matrix(numpy.identity(4))
@@ -399,10 +407,10 @@ cdef class BlockModels(object):
                 matrix *= npRotate("x", -variantXrot)
             if variantZrot:
                 matrix *= npRotate("z", -variantZrot)
-            xyzuvc[:, :3] -= 0.5, 0.5, 0.5
-            xyz = xyzuvc[:, :3].transpose()
-            xyzuvc[:, :3] = (matrix[:3, :3] * xyz).transpose()
-            xyzuvc[:, :3] += 0.5, 0.5, 0.5
+            xyzuvstc[:, :3] -= 0.5, 0.5, 0.5
+            xyz = xyzuvstc[:, :3].transpose()
+            xyzuvstc[:, :3] = (matrix[:3, :3] * xyz).transpose()
+            xyzuvstc[:, :3] += 0.5, 0.5, 0.5
 
 faceRotations = (
     (
@@ -509,55 +517,55 @@ cdef getBlockFaceVertices(box, face, tuple uv, textureRotation):
 
     if face == faces.FaceXDecreasing:
         faceVertices = numpy.array(
-            (x1, y2, z1, 0.0, 0.0, 0.0,
-             x1, y1, z1, 0.0, 0.0, 0.0,
-             x1, y1, z2, 0.0, 0.0, 0.0,
-             x1, y2, z2, 0.0, 0.0, 0.0,
+            (x1, y2, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x1, y1, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x1, y1, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x1, y2, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
              ), dtype='f4')
 
     elif face == faces.FaceXIncreasing:
         faceVertices = numpy.array(
-            (x2, y2, z2, 0.0, 0.0, 0.0,
-             x2, y1, z2, 0.0, 0.0, 0.0,
-             x2, y1, z1, 0.0, 0.0, 0.0,
-             x2, y2, z1, 0.0, 0.0, 0.0,
+            (x2, y2, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x2, y1, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x2, y1, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x2, y2, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
              ), dtype='f4')
 
     elif face == faces.FaceYDecreasing:
         faceVertices = numpy.array(
-            (x1, y1, z2, 0.0, 0.0, 0.0,
-             x1, y1, z1, 0.0, 0.0, 0.0,
-             x2, y1, z1, 0.0, 0.0, 0.0,
-             x2, y1, z2, 0.0, 0.0, 0.0,
+            (x1, y1, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x1, y1, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x2, y1, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x2, y1, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
              ), dtype='f4')
 
     elif face == faces.FaceYIncreasing:
         faceVertices = numpy.array(
-            (x1, y2, z1, 0.0, 0.0, 0.0,
-             x1, y2, z2, 0.0, 0.0, 0.0,
-             x2, y2, z2, 0.0, 0.0, 0.0,
-             x2, y2, z1, 0.0, 0.0, 0.0,
+            (x1, y2, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x1, y2, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x2, y2, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x2, y2, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
              ), dtype='f4')
 
     elif face == faces.FaceZDecreasing:
         faceVertices = numpy.array(
-            (x2, y2, z1, 0.0, 0.0, 0.0,
-             x2, y1, z1, 0.0, 0.0, 0.0,
-             x1, y1, z1, 0.0, 0.0, 0.0,
-             x1, y2, z1, 0.0, 0.0, 0.0,
+            (x2, y2, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x2, y1, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x1, y1, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x1, y2, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
              ), dtype='f4')
 
     elif face == faces.FaceZIncreasing:
         faceVertices = numpy.array(
-            (x1, y2, z2, 0.0, 0.0, 0.0,
-             x1, y1, z2, 0.0, 0.0, 0.0,
-             x2, y1, z2, 0.0, 0.0, 0.0,
-             x2, y2, z2, 0.0, 0.0, 0.0,
+            (x1, y2, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x1, y1, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x2, y1, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
+             x2, y2, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
              ), dtype='f4')
     else:
         raise ValueError("Unknown face %s" % face)
 
-    faceVertices.shape = 4, 6
+    faceVertices.shape = 4, 8
     faceVertices[:, 3:5] = tc
 
     return faceVertices
