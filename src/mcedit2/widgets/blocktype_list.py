@@ -53,7 +53,7 @@ def BlockTypePixmap(block, textureAtlas):
     models = textureAtlas.blockModels
     texname = models.firstTextures.get(block.internalName + block.blockState)
     if texname is None:
-        log.info("No texture for %s!", block.internalName + block.blockState)
+        log.debug("No texture for %s!", block.internalName + block.blockState)
         texname = "MCEDIT_UNKNOWN"
 
     io = textureAtlas._openImageStream(texname)
