@@ -308,6 +308,8 @@ class EditorSession(QtCore.QObject):
 
     # --- Undo support ---
 
+    revisionChanged = QtCore.Signal(int)
+
     def undoIndexChanged(self, index):
         self.editorTab.currentView().update()
 
@@ -327,15 +329,19 @@ class EditorSession(QtCore.QObject):
 
     def commitUndo(self):
         self.worldEditor.commitUndo()
+        self.revisionChanged.emit(self.worldEditor.currentRevision)
 
     def undoForward(self):
         self.worldEditor.redo()
+        self.revisionChanged.emit(self.worldEditor.currentRevision)
 
     def undoBackward(self):
         self.worldEditor.undo()
+        self.revisionChanged.emit(self.worldEditor.currentRevision)
 
     def gotoRevision(self, index):
         self.worldEditor.gotoRevision(index)
+        self.revisionChanged.emit(self.worldEditor.currentRevision)
 
     @property
     def currentRevision(self):
