@@ -10,6 +10,7 @@ from mcedit2.rendering.textureatlas import TextureAtlas
 from mcedit2.util import profiler, minecraftinstall
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.minecraftinstall import MinecraftInstallsDialog
+from mcedit2.util.screen import centerWidgetInScreen
 from mcedit2.util.worldloader import LoaderTimer
 
 from mcedit2.widgets.layout import Column, Row, setWidgetError
@@ -127,16 +128,7 @@ class WorldListWidget(QtGui.QDialog):
         self.backupButton.setEnabled(False)
         self.configureButton.clicked.connect(self.configureClicked)
 
-        screen = QtGui.QApplication.desktop().availableGeometry()
-        w = screen.width()
-        h = screen.height()
-        margin = 0.125
-        r = QtCore.QRect(screen.x() + margin * w,
-                         screen.y() + margin * h,
-                         w - w * 2 * margin,
-                         h - h * 2 * margin)
-
-        self.setGeometry(r)
+        centerWidgetInScreen(self)
 
         self.loadTimer = LoaderTimer(interval=0, timeout=self.loadTimerFired)
         self.loadTimer.start()
