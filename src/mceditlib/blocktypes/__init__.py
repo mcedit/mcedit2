@@ -92,7 +92,7 @@ class BlockTypeSet(object):
             'blockState': '[UNKNOWN_STATE]',
             'unlocalizedName': 'name.unknown',
             'opaqueCube': True,
-            'renderType': 3,  # Model block - defaults to stone(?)
+            'renderType': 3,  # Model block - defaults to question mark box
         }
 
         self.aka = defaultdict(lambda: "")

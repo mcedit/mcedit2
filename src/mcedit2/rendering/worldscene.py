@@ -58,6 +58,7 @@ class SceneUpdateTask(object):
         self.textureAtlas = textureAtlas
 
         self.renderType = numpy.zeros((256*256,), 'uint8')
+        self.renderType[:] = 3
         for block in self.worldScene.dimension.blocktypes:
             self.renderType[block.ID] = block.renderType
 
