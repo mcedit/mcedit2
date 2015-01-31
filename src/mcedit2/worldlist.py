@@ -128,7 +128,7 @@ class WorldListWidget(QtGui.QDialog):
         self.backupButton.setEnabled(False)
         self.configureButton.clicked.connect(self.configureClicked)
 
-        centerWidgetInScreen(self)
+        centerWidgetInScreen(self, 0.75)
 
         self.loadTimer = LoaderTimer(interval=0, timeout=self.loadTimerFired)
         self.loadTimer.start()
