@@ -199,6 +199,7 @@ class PropertyListModel(QtCore.QAbstractItemModel):
         if self.rootTag[entry.tagName].value != value:
             self.rootTag[entry.tagName].value = value
             self.propertyChanged.emit(entry.tagName, value)
+            self.dataChanged.emit(index, index)
 
 @registerCustomWidget
 class PropertyListWidget(QtGui.QTreeView):
