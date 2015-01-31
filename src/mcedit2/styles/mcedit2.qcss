@@ -7,3 +7,20 @@ WorldListItemWidget:pressed {
     background-color: palette(highlighted-text);
     border: none;
 }
+
+QTreeView::branch:!has-children {
+   border-bottom: 1px solid #d9d9d9;
+}
+
+QTreeView::item {
+   border-bottom: 1px solid #d9d9d9;
+   border-right: 1px solid #d9d9d9;
+}
+
+QTreeView::item:selected:active{
+   background: palette(highlight);
+}
+
+QTreeView::item:selected:!active {
+   background: palette(highlight);
+}
