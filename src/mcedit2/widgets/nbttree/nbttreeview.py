@@ -28,7 +28,7 @@ class NBTTreeView(QtGui.QWidget):
         proxyModel.setSourceModel(model)
         proxyModel.setDynamicSortFilter(True)
 
-        self.treeView.setModel(model)
+        self.treeView.setModel(proxyModel)
 
         self.treeView.sortByColumn(0, Qt.AscendingOrder)
         self.treeView.expandToDepth(0)
