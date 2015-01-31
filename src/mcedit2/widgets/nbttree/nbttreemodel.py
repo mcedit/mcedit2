@@ -249,9 +249,6 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
         if not index.isValid():
             return None
 
-        #if role != QtCore.Qt.DisplayRole and role != QtCore.Qt.EditRole:
-        #    return None
-
         item = self.getItem(index)
         column = index.column()
 
@@ -326,7 +323,7 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
 
         return success
 
-    def rowCount(self, parent, index=QtCore.QModelIndex()):
+    def rowCount(self, parent=QtCore.QModelIndex()):
         parentItem = self.getItem(parent)
 
         return parentItem.childCount()
