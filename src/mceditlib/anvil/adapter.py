@@ -433,28 +433,31 @@ class AnvilWorldAdapter(object):
             self.selectedRevision.writeFile("level.dat", self.metadata.metadataTag.save())
 
         else:
-            try:
-                metadataTag = nbt.load(buf=self.selectedRevision.readFile("level.dat"))
-                self.metadata = AnvilWorldMetadata(metadataTag)
-                self.loadFMLMapping()
-            except (EnvironmentError, zlib.error) as e:
-                log.info("Error loading level.dat, trying level.dat_old ({0})".format(e))
-                try:
-                    metadataTag = nbt.load(buf=self.selectedRevision.readFile("level.dat_old"))
-                    self.metadata = AnvilWorldMetadata(metadataTag)
-                    log.info("level.dat restored from backup.")
-                    self.saveChanges()
-                except Exception as e:
-                    traceback.print_exc()
-                    log.info("%r while loading level.dat_old. Initializing with defaults.", e)
-                    self._createMetadataTag()
-
-        assert self.metadata.version == VERSION_ANVIL, "Pre-Anvil world formats are not supported (for now)"
+            self.loadMetadata()
 
     def __repr__(self):
         return "AnvilWorldAdapter(%r)" % self.filename
 
     # --- Create, save, close ---
+
+    def loadMetadata(self):
+        try:
+            metadataTag = nbt.load(buf=self.selectedRevision.readFile("level.dat"))
+            self.metadata = AnvilWorldMetadata(metadataTag)
+            self.loadFMLMapping()
+        except (EnvironmentError, zlib.error) as e:
+            log.info("Error loading level.dat, trying level.dat_old ({0})".format(e))
+            try:
+                metadataTag = nbt.load(buf=self.selectedRevision.readFile("level.dat_old"))
+                self.metadata = AnvilWorldMetadata(metadataTag)
+                log.info("level.dat restored from backup.")
+                self.saveChanges()
+            except Exception as e:
+                traceback.print_exc()
+                log.info("%r while loading level.dat_old. Initializing with defaults.", e)
+                self._createMetadataTag()
+
+        assert self.metadata.version == VERSION_ANVIL, "Pre-Anvil world formats are not supported (for now)"
 
     def loadFMLMapping(self):
         metadataTag = self.metadata.metadataTag
@@ -635,6 +638,7 @@ class AnvilWorldAdapter(object):
         newRevision = self.revisionHistory.getRevision(index)
         changes = self.revisionHistory.getRevisionChanges(self.selectedRevision, newRevision)
         self.selectedRevision = newRevision
+        self.loadMetadata()
         return changes
 
     def listRevisions(self):

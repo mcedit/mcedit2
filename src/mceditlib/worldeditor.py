@@ -225,6 +225,7 @@ class WorldEditor(object):
         """
         assert index is not None, "None is not a revision index!"
         self.syncToDisk()
+        self.playerCache.clear()
 
         changes = self.adapter.selectRevision(index)
         self.currentRevision = index
@@ -239,7 +240,6 @@ class WorldEditor(object):
                 self._loadedChunks.pop((cx, cz, dimName), None)
 
         self.recentDirtyFiles.update(changes.files)
-        # xxx unload players, metadata!!
 
     # --- Save ---
 
