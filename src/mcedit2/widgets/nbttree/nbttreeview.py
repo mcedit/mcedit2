@@ -17,8 +17,6 @@ log = logging.getLogger(__name__)
 @registerCustomWidget
 class NBTTreeView(QtGui.QTreeView):
     def setModel(self, model):
-        self.model = model
-
         proxyModel = NBTFilterProxyModel(self)
         proxyModel.setSourceModel(model)
         proxyModel.setDynamicSortFilter(True)
