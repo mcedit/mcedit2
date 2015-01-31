@@ -70,12 +70,7 @@ class EntityTool(EditorTool):
     def setSelectedEntity(self, index):
         if len(self.selectedEntities):
             model = NBTTreeModel(self.selectedEntities[index].raw_tag())
-            proxyModel = NBTFilterProxyModel(self)
-            proxyModel.setSourceModel(model)
-            proxyModel.setDynamicSortFilter(True)
-
-            self.toolWidget.treeView.setModel(proxyModel)
-            self.toolWidget.treeView.sortByColumn(0, Qt.AscendingOrder)
+            self.toolWidget.treeView.setModel(model)
         else:
             self.toolWidget.treeView.setModel(None)
 

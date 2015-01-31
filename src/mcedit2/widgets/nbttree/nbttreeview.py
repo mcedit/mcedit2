@@ -15,12 +15,7 @@ from mcedit2.widgets.layout import Row
 log = logging.getLogger(__name__)
 
 @registerCustomWidget
-class NBTTreeView(QtGui.QWidget):
-    def __init__(self, *args, **kwargs):
-        super(NBTTreeView, self).__init__(*args, **kwargs)
-        self.treeView = QtGui.QTreeView()
-        self.setLayout(Row(self.treeView))
-
+class NBTTreeView(QtGui.QTreeView):
     def setModel(self, model):
         self.model = model
 
@@ -28,9 +23,8 @@ class NBTTreeView(QtGui.QWidget):
         proxyModel.setSourceModel(model)
         proxyModel.setDynamicSortFilter(True)
 
-        self.treeView.setModel(proxyModel)
+        super(NBTTreeView, self).setModel(proxyModel)
 
-        self.treeView.sortByColumn(0, Qt.AscendingOrder)
-        self.treeView.expandToDepth(0)
-        self.treeView.resizeColumnToContents(0)
-        self.treeView.resizeColumnToContents(1)
+        self.sortByColumn(0, Qt.AscendingOrder)
+        self.resizeColumnToContents(0)
+        self.resizeColumnToContents(1)

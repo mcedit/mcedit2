@@ -39,6 +39,7 @@ class ChunkTool(EditorTool):
         self.selectionNode = None
         self.overlayNode = scenegraph.Node()
         self.updateChunkWidget()
+        self.updateNBTView()
 
     def toolInactive(self):
         if self.selectionNode:
@@ -120,9 +121,20 @@ class ChunkTool(EditorTool):
         self.selectionNode.selectionBox = chunk.bounds
         self.currentChunk = chunk
         self.updateChunkWidget()
+        self.updateNBTView()
+
+    def updateNBTView(self):
+        chunk = self.currentChunk
+        if chunk is None:
+            self.toolWidget.nbtTreeView.setModel(None)
+            return
+
         model = NBTTreeModel(chunk.rootTag)
 
         self.toolWidget.nbtTreeView.setModel(model)
+        self.toolWidget.nbtTreeView.expandToDepth(0)
+        self.toolWidget.nbtTreeView.resizeColumnToContents(0)
+        self.toolWidget.nbtTreeView.resizeColumnToContents(1)
 
         self.toolWidget.cxSpinBox.setValue(chunk.cx)
         self.toolWidget.czSpinBox.setValue(chunk.cz)
