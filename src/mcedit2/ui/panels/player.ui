@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>659</width>
+    <width>356</width>
     <height>675</height>
    </rect>
   </property>
@@ -57,7 +57,7 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
-        <widget class="QTreeWidget" name="playerAttributesWidget">
+        <widget class="PropertyListWidget" name="playerPropertiesWidget">
          <property name="alternatingRowColors">
           <bool>true</bool>
          </property>
@@ -101,9 +101,14 @@
     </widget>
    </item>
   </layout>
-  <zorder>tabWidget</zorder>
-  <zorder>treeView</zorder>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PropertyListWidget</class>
+   <extends>QTreeWidget</extends>
+   <header>propertylistwidget.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

@@ -11,3 +11,5 @@ import log_view
 import objectinspector
 import shapewidget
 import nbttree
+
+from propertylist import PropertyListWidget

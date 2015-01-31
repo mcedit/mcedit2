@@ -9,15 +9,19 @@ from PySide import QtGui
 from PySide.QtCore import Qt
 
 from mcedit2.command import SimpleRevisionCommand
+from mcedit2.util.screen import centerWidgetInScreen
 from mcedit2.widgets.nbttree.nbttreemodel import NBTTreeModel
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.resources import resourcePath
+from mcedit2.widgets.propertylist import PropertyListModel
 from mceditlib.exceptions import PlayerNotFound
 from mceditlib import nbt
 
 
 log = logging.getLogger(__name__)
 
+class PlayerPropertyChangeCommand(SimpleRevisionCommand):
+    pass
 
 class PlayerPanel(QtGui.QWidget):
     def __init__(self, editorSession, *args, **kwargs):
@@ -26,10 +30,12 @@ class PlayerPanel(QtGui.QWidget):
         :type editorSession: mcedit2.editorsession.EditorSession
         :rtype: PlayerPanel
         """
-        super(PlayerPanel, self).__init__(*args, **kwargs)
+        super(PlayerPanel, self).__init__(QtGui.qApp.mainWindow, *args, f=Qt.Tool, **kwargs)
+
         self.editorSession = editorSession
+        self.selectedUUID = None
+
         load_ui("panels/player.ui", baseinstance=self)
-        self.treeWidgets = []
 
         self.movePlayerButton.clicked.connect(self.movePlayerToCamera)
         self.viewPlayerButton.clicked.connect(self.showPlayerView)
@@ -56,7 +62,7 @@ class PlayerPanel(QtGui.QWidget):
             self.setSelectedPlayerIndex(0)
 
         # for playerUUID in editorSession.worldEditor.listPlayers():
-        #     self.setSelectedPlayer(playerUUID)
+        #     self.setSelectedPlayerUUID(playerUUID)
         #     break
 
         icon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/edit_player.png"))
@@ -65,125 +71,14 @@ class PlayerPanel(QtGui.QWidget):
         action.triggered.connect(self.toggleView)
         self._toggleViewAction = action
 
-    def toggleView(self):
-        if self.isHidden():
-            self.show()
-            self._toggleViewAction.setChecked(True)
-        else:
-            self.hide()
-            self._toggleViewAction.setChecked(False)
+        self.editorSession.revisionChanged.connect(self.revisionDidChange)
+        self.initPropertiesWidget()
 
-    def toggleViewAction(self):
-        return self._toggleViewAction
+        centerWidgetInScreen(self)
 
-    def setSelectedPlayerIndex(self, index):
-        name = self.playerListBox.itemData(index)
-        self.setSelectedPlayer(name)
-
-    def setSelectedPlayer(self, name):
-        try:
-            self.selectedPlayer = player = self.editorSession.worldEditor.getPlayer(name)
-        except PlayerNotFound:
-            log.info("PlayerPanel: player %s not found!", name)
-            self.treeView.setModel(None)
-        else:
-            model = NBTTreeModel(player.rootTag)
-
-            self.treeView.setModel(model)
-            self.treeView.sortByColumn(0, Qt.AscendingOrder)
-            self.updatePlayerTab()
-
-    def updatePlayerTab(self):
-        treeWidget = self.playerAttributesWidget
-        treeWidget.clear()
-        self.treeWidgets[:] = []
-
-        player = self.selectedPlayer
-        rootTag = player.rootTag
-
-        def addWidget(tagName, valueType=None, min=None, max=None):
-            if valueType is None:
-                valueType = int
-            if tagName in rootTag:
-                tag = rootTag[tagName]
-                if tag.tagID == nbt.ID_BYTE:
-                    tagMin = -(1 << 7)
-                    tagMax = (1 << 7) - 1
-                elif tag.tagID == nbt.ID_SHORT:
-                    tagMin = -(1 << 15)
-                    tagMax = (1 << 15) - 1
-                elif tag.tagID == nbt.ID_INT:
-                    tagMin = -(1 << 31)
-                    tagMax = (1 << 31) - 1
-                else:  # tag.tagID == nbt.ID_LONG, ID_FLOAT, ID_DOUBLE
-                    # tagMin = -(1 << 63)  # xxxx 64-bit spinbox
-                    # tagMax = (1 << 63) - 1
-                    tagMin = -(1 << 31)
-                    tagMax = (1 << 31) - 1
-
-                if min is None:
-                    min = tagMin
-                if max is None:
-                    max = tagMax
-
-                item = QtGui.QTreeWidgetItem()
-                item.setText(0, self.tr(tagName))
-                treeWidget.addTopLevelItem(item)
-
-                if valueType is int:
-                    valueWidget = QtGui.QSpinBox()
-                    valueWidget.setMinimum(min)
-                    valueWidget.setMaximum(max)
-                    valueWidget.setValue(rootTag[tagName].value)
-                    valueWidget.changedHandler = self.treeWidgetChangedHandler(tagName)
-                    valueWidget.valueChanged.connect(valueWidget.changedHandler)
-
-                elif valueType is float:
-                    valueWidget = QtGui.QDoubleSpinBox()
-                    valueWidget.setMinimum(min)
-                    valueWidget.setMaximum(max)
-                    valueWidget.setValue(rootTag[tagName].value)
-                    valueWidget.changedHandler = self.treeWidgetChangedHandler(tagName)
-                    valueWidget.valueChanged.connect(valueWidget.changedHandler)
-
-                elif valueType is bool:
-                    valueWidget = QtGui.QCheckBox()
-                    valueWidget.setChecked(rootTag[tagName].value)
-                    valueWidget.changedHandler = self.treeWidgetChangedHandler(tagName)
-                    valueWidget.toggled.connect(valueWidget.changedHandler)
-
-                elif isinstance(valueType, list):  # Choice list
-                    valueWidget = QtGui.QComboBox()
-                    choiceValues = []
-                    for choice in valueType:
-                        value, name = choice
-                        choiceValues.append(value)
-                        valueWidget.addItem(name, value)
-
-                    currentValue = rootTag[tagName].value
-                    try:
-                        currentIndex = choiceValues.index(currentValue)
-                        valueWidget.setCurrentIndex(currentIndex)
-                    except IndexError:
-                        valueWidget.addItem("UNKNOWN VALUE %s" % currentValue, currentValue)
-
-                    valueWidget.changedHandler = self.treeWidgetChoiceChangedHandler(tagName, valueType)
-                    valueWidget.currentIndexChanged.connect(valueWidget.changedHandler)
-
-                elif valueType is unicode:
-                    valueWidget = QtGui.QPlainTextEdit()
-                    valueWidget.setPlainText(rootTag[tagName].value)
-                    valueWidget.changedHandler = self.treeWidgetChangedHandler(tagName)
-                    valueWidget.textChanged.connect(valueWidget.changedHandler)
-
-                else:
-                    raise TypeError("Can't create attribute widgets for %s yet" % valueType)
-
-                treeWidget.setItemWidget(item, 1, valueWidget)
-
-
-                self.treeWidgets.append(valueWidget)  # QTreeWidget crashes if its itemWidget isn't retained by Python
-                # treeWidget.setItemWidget(item, 0, QtGui.QLabel("BLAH"))
+    def initPropertiesWidget(self):
+        model = PropertyListModel(self.selectedPlayer.rootTag)
+        addWidget = model.addNBTProperty
 
         addWidget("AbsorptionAmount")
         addWidget("Air")
@@ -212,19 +107,54 @@ class PlayerPanel(QtGui.QWidget):
         addWidget("XpSeed")
         addWidget("XpTotal")
 
+        self.playerPropertiesWidget.setModel(model)
+        model.propertyChanged.connect(self.propertyDidChange)
 
+    def revisionDidChange(self):
+        self.initPropertiesWidget()
 
+    def propertyDidChange(self, name, value):
+        if self.selectedUUID != "":
+            text = "Change player %s property %s" % (self.selectedUUID, name)
+        else:
+            text = "Change single-player property %s" % name
 
+        command = PlayerPropertyChangeCommand(self.editorSession, text)
+        with command.begin():
+            self.selectedPlayer.dirty = True
+            self.editorSession.worldEditor.syncToDisk()
+        self.editorSession.pushCommand(command)
 
-    def treeWidgetChangedHandler(self, name):
-        def _changed(value):
-            self.selectedPlayer.rootTag[name].value = value
-        return _changed
+    def toggleView(self):
+        if self.isHidden():
+            self.show()
+            self._toggleViewAction.setChecked(True)
+        else:
+            self.hide()
+            self._toggleViewAction.setChecked(False)
 
-    def treeWidgetChoiceChangedHandler(self, name, choices):
-        def _changed(index):
-            self.selectedPlayer.rootTag[name].value = choices[index][0]
-        return _changed
+    def toggleViewAction(self):
+        return self._toggleViewAction
+
+    def setSelectedPlayerIndex(self, index):
+        UUID = self.playerListBox.itemData(index)
+        self.setSelectedPlayerUUID(UUID)
+
+    def setSelectedPlayerUUID(self, UUID):
+        try:
+            self.selectedUUID = UUID
+        except PlayerNotFound:
+            log.info("PlayerPanel: player %s not found!", UUID)
+            self.treeView.setModel(None)
+        else:
+            model = NBTTreeModel(self.selectedPlayer.rootTag)
+
+            self.treeView.setModel(model)
+            self.treeView.sortByColumn(0, Qt.AscendingOrder)
+
+    @property
+    def selectedPlayer(self):
+        return self.editorSession.worldEditor.getPlayer(self.selectedUUID)
 
     def movePlayerToCamera(self):
         view = self.editorSession.editorTab.currentView()
