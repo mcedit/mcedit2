@@ -126,15 +126,15 @@ class ChunkTool(EditorTool):
     def updateNBTView(self):
         chunk = self.currentChunk
         if chunk is None:
-            self.toolWidget.nbtTreeView.setModel(None)
+            self.toolWidget.nbtEditor.setModel(None)
             return
 
         model = NBTTreeModel(chunk.rootTag)
 
-        self.toolWidget.nbtTreeView.setModel(model)
-        self.toolWidget.nbtTreeView.expandToDepth(0)
-        self.toolWidget.nbtTreeView.resizeColumnToContents(0)
-        self.toolWidget.nbtTreeView.resizeColumnToContents(1)
+        self.toolWidget.nbtEditor.setModel(model)
+        # self.toolWidget.nbtEditor.expandToDepth(0)
+        # self.toolWidget.nbtEditor.resizeColumnToContents(0)
+        # self.toolWidget.nbtEditor.resizeColumnToContents(1)
 
         self.toolWidget.cxSpinBox.setValue(chunk.cx)
         self.toolWidget.czSpinBox.setValue(chunk.cz)

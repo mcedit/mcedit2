@@ -10,12 +10,11 @@ from PySide.QtCore import Qt
 
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.util.screen import centerWidgetInScreen
-from mcedit2.widgets.nbttree.nbttreemodel import NBTTreeModel, NBTTreeList
+from mcedit2.widgets.nbttree.nbttreemodel import NBTTreeModel
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.resources import resourcePath
 from mcedit2.widgets.propertylist import PropertyListModel
 from mceditlib.exceptions import PlayerNotFound
-from mceditlib import nbt
 
 
 log = logging.getLogger(__name__)
@@ -112,17 +111,17 @@ class PlayerPanel(QtGui.QWidget):
     def updateNBTTree(self):
         model = NBTTreeModel(self.selectedPlayer.rootTag)
         model.dataChanged.connect(self.nbtDataDidChange)
-        self.treeView.setModel(model)
+        self.nbtEditor.setModel(model)
 
     def revisionDidChange(self):
         self.initPropertiesWidget()
         self.updateNBTTree()
 
     def nbtDataDidChange(self, index):
-        model = self.treeView.model().sourceModel()  # xxx filter model this is confusing
+        model = self.nbtEditor.model
         parent = model.parent(index)
         item = model.getItem(index)
-        if parent is not None and isinstance(parent, NBTTreeList):
+        if parent is not None and parent.isList:
             name = str(parent.tag.index(item.tag))
         else:
             name = item.tag.name
@@ -170,7 +169,7 @@ class PlayerPanel(QtGui.QWidget):
             self.selectedUUID = UUID
         except PlayerNotFound:
             log.info("PlayerPanel: player %s not found!", UUID)
-            self.treeView.setModel(None)
+            self.nbtEditor.setModel(None)
         else:
             self.updateNBTTree()
 

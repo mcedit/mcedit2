@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>356</width>
+    <width>604</width>
     <height>675</height>
    </rect>
   </property>
@@ -49,7 +49,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -87,14 +87,7 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="NBTTreeView" name="treeView">
-         <property name="alternatingRowColors">
-          <bool>true</bool>
-         </property>
-         <property name="sortingEnabled">
-          <bool>true</bool>
-         </property>
-        </widget>
+        <widget class="NBTEditorWidget" name="nbtEditor" native="true"/>
        </item>
       </layout>
      </widget>
@@ -109,9 +102,10 @@
    <header>propertylistwidget.h</header>
   </customwidget>
   <customwidget>
-   <class>NBTTreeView</class>
-   <extends>QTreeView</extends>
-   <header>nbttreeview.h</header>
+   <class>NBTEditorWidget</class>
+   <extends>QWidget</extends>
+   <header>nbteditorwidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

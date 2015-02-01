@@ -52,6 +52,9 @@ def MakeNBTTreeItem(tag, parent):
 
 
 class NBTTreeCompound(object):
+    isCompound = True
+    isList = False
+
     def __init__(self, tag, parent=None):
         self.parentItem = parent
         self.tag = tag
@@ -67,9 +70,6 @@ class NBTTreeCompound(object):
         if self.parentItem is not None:
             return self.parentItem.childItems.index(self)
         return 0
-
-    def columnCount(self):
-        return 2
 
     def data(self, column):
         if column == 0:
@@ -98,16 +98,16 @@ class NBTTreeCompound(object):
             return "%s items" % len(tag)
         return summary
 
-    def insertChildren(self, position, count, columns):
+    def insertChildren(self, position, count):
         if position < 0 or position > len(self.childItems):
             return False
 
         for row in range(count):
             data = nbt.TAG_Byte()
-            self.tag.insert(position, data)
+            self.tag.insert(position + row, data)
 
             item = NBTTreeItem(data, self)
-            self.childItems.insert(position, item)
+            self.childItems.insert(position + row, item)
 
         return True
 
@@ -128,6 +128,9 @@ class NBTTreeCompound(object):
 
 
 class NBTTreeList(object):
+    isCompound = False
+    isList = True
+
     def __init__(self, tag, parent=None):
         self.parentItem = parent
         self.tag = tag
@@ -143,9 +146,6 @@ class NBTTreeList(object):
         if self.parentItem is not None:
             return self.parentItem.childItems.index(self)
         return 0
-
-    def columnCount(self):
-        return 2
 
     def data(self, column):
         if column == 0:
@@ -163,15 +163,15 @@ class NBTTreeList(object):
 
             return ", ".join((fmt % i.value) for i in self.tag)
 
-    def insertChildren(self, position, count, columns):
+    def insertChildren(self, position, count):
         if position < 0 or position > len(self.childItems):
             return False
 
         for row in range(count):
-            data = self.tag.list_type()
-            self.tag.insert(position, data)
+            data = nbt.tag_classes[self.tag.list_type or nbt.ID_BYTE]()
+            self.tag.insert(position + row, data)
             item = NBTTreeItem(data, self)
-            self.childItems.insert(position, item)
+            self.childItems.insert(position + row, item)
 
         return True
 
@@ -192,6 +192,9 @@ class NBTTreeList(object):
 
 
 class NBTTreeItem(object):
+    isCompound = False
+    isList = False
+
     def __init__(self, tag, parent=None):
         self.parentItem = parent
         self.tag = tag
@@ -213,9 +216,6 @@ class NBTTreeItem(object):
             return self.parentItem.childItems.index(self)
         return 0
 
-    def columnCount(self):
-        return 2
-
     def data(self, column):
         if column == 0:
             return self.tag.name or str(self.childNumber())
@@ -233,41 +233,39 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
     def __init__(self, rootTag, parent=None):
         super(NBTTreeModel, self).__init__(parent)
 
-        self.rootItem = MakeNBTTreeItem(rootTag, self)
+        self.rootItem = MakeNBTTreeItem(rootTag, None)
         self.rootTag = rootTag
         self.allowNameChanges = True
+        self.addIcon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/add.png"))
+        self.removeIcon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/remove.png"))
 
     def columnCount(self, parent=QtCore.QModelIndex()):
-        return self.rootItem.columnCount()
+        return 4
 
     def tagID(self, index):
-        if not index.isValid():
-            return None
         return self.getItem(index).tag.tagID
 
     def data(self, index, role=QtCore.Qt.DisplayRole):
-        if not index.isValid():
-            return None
-
         item = self.getItem(index)
         column = index.column()
 
-        if role == QtCore.Qt.DecorationRole and column == 0:
-            return NBTIcon(item.tag.tagID)
+        if role == QtCore.Qt.DecorationRole:
+            if column == 0:
+                return NBTIcon(item.tag.tagID)
+            if column == 2:
+                return self.addIcon if item.isList or item.isCompound else None
+            if column == 3:
+                return self.removeIcon
 
         if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
             return item.data(column)
 
     def flags(self, index):
-        if not index.isValid():
-            return 0
-
         flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
-        item = self.getItem(index)
         parent = self.parent(index)
         parentItem = self.getItem(parent) if parent else None
 
-        if index.column() == 1 or (self.allowNameChanges and isinstance(parentItem, NBTTreeCompound)):
+        if index.column() == 1 or (index.column() == 0 and self.allowNameChanges and parentItem and parentItem.isCompound):
             flags |= QtCore.Qt.ItemIsEditable
         return flags
 
@@ -277,18 +275,18 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
             item = index.internalPointer()
             if item:
                 return item
-
-        return self.rootItem
+        else:
+            return self.rootItem
 
     def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
-            return ("Name", "Value")[section]
+            return ("Name", "Value", "", "")[section]
 
         return None
 
     def index(self, row, column, parent=QtCore.QModelIndex()):
-        if parent.isValid() and parent.column() != 0:
-            return QtCore.QModelIndex()
+        if not parent.isValid():
+            return self.createIndex(row, column, self.rootItem)
 
         parentItem = self.getItem(parent)
         childItem = parentItem.child(row)
@@ -297,11 +295,13 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
         else:
             return QtCore.QModelIndex()
 
-    def insertRows(self, position, rows, parent=QtCore.QModelIndex()):
+    def insertRow(self, position, parent=QtCore.QModelIndex()):
+        return self.insertRows(position, 1, parent)
+
+    def insertRows(self, row, count, parent=QtCore.QModelIndex()):
         parentItem = self.getItem(parent)
-        self.beginInsertRows(parent, position, position + rows - 1)
-        success = parentItem.insertChildren(position, rows,
-                                            self.rootItem.columnCount())
+        self.beginInsertRows(parent, row, row + count - 1)
+        success = parentItem.insertChildren(row, count)
         self.endInsertRows()
 
         return success
@@ -313,10 +313,13 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
         childItem = self.getItem(index)
         parentItem = childItem.parent()
 
-        if parentItem == self.rootItem:
+        if parentItem is None:
             return QtCore.QModelIndex()
 
         return self.createIndex(parentItem.childNumber(), 0, parentItem)
+
+    def removeRow(self, position, parent=QtCore.QModelIndex()):
+        self.removeRows(position, 1, parent)
 
     def removeRows(self, position, rows, parent=QtCore.QModelIndex()):
         parentItem = self.getItem(parent)
@@ -328,6 +331,8 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
         return success
 
     def rowCount(self, parent=QtCore.QModelIndex()):
+        if not parent.isValid():
+            return 1
         parentItem = self.getItem(parent)
 
         return parentItem.childCount()
@@ -354,6 +359,7 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
             self.dataChanged.emit(index, index)
 
         return result
+
 
 
 _NBTTagTypeSortOrder = [
@@ -390,3 +396,8 @@ class NBTFilterProxyModel(QtGui.QSortFilterProxyModel):
             return leftIndex < rightIndex
 
         return super(NBTFilterProxyModel, self).lessThan(left, right)
+
+    def sort(self, column, order):
+        if column > 1:
+            return
+        super(NBTFilterProxyModel, self).sort(column, order)
