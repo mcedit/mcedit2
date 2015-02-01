@@ -123,7 +123,7 @@ class NBTTreeCompound(object):
 
         return True
 
-    def setData(self, value):
+    def setValue(self, value):
         return False
 
 
@@ -187,7 +187,7 @@ class NBTTreeList(object):
 
         return True
 
-    def setData(self, value):
+    def setValue(self, value):
         return False
 
 
@@ -225,7 +225,7 @@ class NBTTreeItem(object):
     def parent(self):
         return self.parentItem
 
-    def setData(self, value):
+    def setValue(self, value):
         self.tag.value = value
         return True
 
@@ -263,7 +263,11 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
             return 0
 
         flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
-        if self.allowNameChanges and index.column() == 0 and self.getItem(index).tag.name:
+        item = self.getItem(index)
+        parent = self.parent(index)
+        parentItem = self.getItem(parent) if parent else None
+
+        if index.column() == 1 or (self.allowNameChanges and isinstance(parentItem, NBTTreeCompound)):
             flags |= QtCore.Qt.ItemIsEditable
         return flags
 
@@ -342,7 +346,7 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
             else:
                 result = False
         elif column == 1:
-            result = item.setData(column, value)
+            result = item.setValue(value)
         else:
             return False
 

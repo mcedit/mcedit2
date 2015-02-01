@@ -10,7 +10,7 @@ from PySide.QtCore import Qt
 
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.util.screen import centerWidgetInScreen
-from mcedit2.widgets.nbttree.nbttreemodel import NBTTreeModel
+from mcedit2.widgets.nbttree.nbttreemodel import NBTTreeModel, NBTTreeList
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.resources import resourcePath
 from mcedit2.widgets.propertylist import PropertyListModel
@@ -21,6 +21,9 @@ from mceditlib import nbt
 log = logging.getLogger(__name__)
 
 class PlayerPropertyChangeCommand(SimpleRevisionCommand):
+    pass
+
+class NBTDataChangeCommand(SimpleRevisionCommand):
     pass
 
 class PlayerPanel(QtGui.QWidget):
@@ -60,10 +63,6 @@ class PlayerPanel(QtGui.QWidget):
         self.playerListBox.currentIndexChanged[int].connect(self.setSelectedPlayerIndex)
         if len(playerUUIDs):
             self.setSelectedPlayerIndex(0)
-
-        # for playerUUID in editorSession.worldEditor.listPlayers():
-        #     self.setSelectedPlayerUUID(playerUUID)
-        #     break
 
         icon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/edit_player.png"))
         action = QtGui.QAction(icon, "Edit Player", self)
@@ -110,8 +109,34 @@ class PlayerPanel(QtGui.QWidget):
         self.playerPropertiesWidget.setModel(model)
         model.propertyChanged.connect(self.propertyDidChange)
 
+    def updateNBTTree(self):
+        model = NBTTreeModel(self.selectedPlayer.rootTag)
+        model.dataChanged.connect(self.nbtDataDidChange)
+        self.treeView.setModel(model)
+
     def revisionDidChange(self):
         self.initPropertiesWidget()
+        self.updateNBTTree()
+
+    def nbtDataDidChange(self, index):
+        model = self.treeView.model().sourceModel()  # xxx filter model this is confusing
+        parent = model.parent(index)
+        item = model.getItem(index)
+        if parent is not None and isinstance(parent, NBTTreeList):
+            name = str(parent.tag.index(item.tag))
+        else:
+            name = item.tag.name
+
+        if self.selectedUUID != "":
+            text = "Change player %s NBT tag %s" % (self.selectedUUID, name)
+        else:
+            text = "Change single-player NBT tag %s" % name
+
+        command = NBTDataChangeCommand(self.editorSession, text)
+        with command.begin():
+            self.selectedPlayer.dirty = True
+            self.editorSession.worldEditor.syncToDisk()
+        self.editorSession.pushCommand(command)
 
     def propertyDidChange(self, name, value):
         if self.selectedUUID != "":
@@ -147,10 +172,7 @@ class PlayerPanel(QtGui.QWidget):
             log.info("PlayerPanel: player %s not found!", UUID)
             self.treeView.setModel(None)
         else:
-            model = NBTTreeModel(self.selectedPlayer.rootTag)
-
-            self.treeView.setModel(model)
-            self.treeView.sortByColumn(0, Qt.AscendingOrder)
+            self.updateNBTTree()
 
     @property
     def selectedPlayer(self):
@@ -177,6 +199,5 @@ class PlayerPanel(QtGui.QWidget):
         self.editorSession.editorTab.showCameraView()
         view = self.editorSession.editorTab.cameraView
         view.setPerspective(False)
-        view = self.editorSession.editorTab.currentView()
         view.centerPoint = self.selectedPlayer.Position
         view.yawPitch = self.selectedPlayer.Rotation
