@@ -62,6 +62,8 @@ class NBTTreeCompound(object):
         self.childItems = [MakeNBTTreeItem(self.tag[name], self) for name in self.tag]
 
     def child(self, row):
+        if row >= len(self.childItems):
+            return None
         return self.childItems[row]
 
     def childCount(self):
@@ -154,6 +156,8 @@ class NBTTreeList(object):
         self.childItems = [MakeNBTTreeItem(t, self) for t in self.tag]
 
     def child(self, row):
+        if row >= len(self.childItems):
+            return None
         return self.childItems[row]
 
     def childCount(self):
