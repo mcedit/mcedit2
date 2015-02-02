@@ -364,7 +364,11 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
 
     def insertRows(self, row, count, parent=QtCore.QModelIndex(), tagID=None):
         parentItem = self.getItem(parent)
-        self.beginInsertRows(parent, row, row + count - 1)
+
+        # the index passed to beginInsertRows should have .column() == 0. passing the index that was clicked in
+        # QTreeView.clicked causes the view to fail to update after the rows are added.
+        realParent = self.createIndex(parent.row(), 0, parentItem)
+        self.beginInsertRows(realParent, row, row + count - 1)
         success = parentItem.insertChildren(row, count, tagID)
         self.endInsertRows()
 
