@@ -340,8 +340,9 @@ class EditorSession(QtCore.QObject):
         self.revisionChanged.emit(self.worldEditor.currentRevision)
 
     def gotoRevision(self, index):
-        self.worldEditor.gotoRevision(index)
-        self.revisionChanged.emit(self.worldEditor.currentRevision)
+        if index != self.currentRevision:
+            self.worldEditor.gotoRevision(index)
+            self.revisionChanged.emit(self.worldEditor.currentRevision)
 
     @property
     def currentRevision(self):
