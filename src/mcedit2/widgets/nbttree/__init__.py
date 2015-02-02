@@ -2,4 +2,4 @@
     __init__.py
 """
 
-import nbttreeview
+import nbteditor
