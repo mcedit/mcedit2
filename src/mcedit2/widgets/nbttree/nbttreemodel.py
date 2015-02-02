@@ -265,7 +265,6 @@ class NBTTreeItem(object):
 class NBTTreeModel(QtCore.QAbstractItemModel):
     def __init__(self, rootTag, parent=None):
         super(NBTTreeModel, self).__init__(parent)
-        self._internalPointers = {}
 
         self.rootItem = MakeNBTTreeItem(rootTag, None)
         self.rootTag = rootTag
@@ -318,7 +317,7 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
 
     def getItem(self, index):
         if index.isValid():
-            item = self._internalPointers[index.internalId()]
+            item = index.internalPointer()
             if item:
                 return item
         else:
@@ -330,10 +329,6 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
         parentItem = self.getItem(parent)
 
         return parentItem.childCount()
-
-    def createIndex(self, row, column, item):
-        self._internalPointers[id(item)] = item
-        return super(NBTTreeModel, self).createIndex(row, column, id(item))
 
     def index(self, row, column, parent=QtCore.QModelIndex()):
         if not parent.isValid():
