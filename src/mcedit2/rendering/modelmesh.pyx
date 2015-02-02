@@ -10,7 +10,7 @@ cimport numpy
 
 from mcedit2.rendering import renderstates
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
-from mcedit2.rendering cimport blockmodels
+cimport mcedit2.rendering.blockmodels as blockmodels
 
 from libc.stdlib cimport malloc, realloc, free
 from libc.string cimport memcpy
