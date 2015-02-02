@@ -47,6 +47,7 @@ class EntityTool(EditorTool):
     def createToolWidget(self):
         self.toolWidget = load_ui("editortools/select_entity.ui")
         self.toolWidget.entityListBox.currentIndexChanged.connect(self.setSelectedEntity)
+        self.toolWidget.nbtEditor.editorSession = self.editorSession
 
     def mousePress(self, event):
         command = SelectEntityCommand(self, event.ray)
@@ -69,10 +70,9 @@ class EntityTool(EditorTool):
 
     def setSelectedEntity(self, index):
         if len(self.selectedEntities):
-            model = NBTTreeModel(self.selectedEntities[index].raw_tag())
-            self.toolWidget.treeView.setModel(model)
+            self.toolWidget.nbtEditor.setRootTag(self.selectedEntities[index].raw_tag())
         else:
-            self.toolWidget.treeView.setModel(None)
+            self.toolWidget.nbtEditor.setRootTag(None)
 
 
 def entitiesOnRay(dimension, ray, rayWidth=2.0, maxDistance = 1000):

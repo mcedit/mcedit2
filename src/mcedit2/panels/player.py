@@ -22,9 +22,6 @@ log = logging.getLogger(__name__)
 class PlayerPropertyChangeCommand(SimpleRevisionCommand):
     pass
 
-class NBTDataChangeCommand(SimpleRevisionCommand):
-    pass
-
 class PlayerPanel(QtGui.QWidget):
     def __init__(self, editorSession, *args, **kwargs):
         """
@@ -72,6 +69,9 @@ class PlayerPanel(QtGui.QWidget):
         self.editorSession.revisionChanged.connect(self.revisionDidChange)
         self.initPropertiesWidget()
 
+        self.nbtEditor.editorSession = self.editorSession
+        self.nbtEditor.editMade.connect(self.nbtEditWasMade)
+
         centerWidgetInScreen(self)
 
     def initPropertiesWidget(self):
@@ -109,33 +109,15 @@ class PlayerPanel(QtGui.QWidget):
         model.propertyChanged.connect(self.propertyDidChange)
 
     def updateNBTTree(self):
-        model = NBTTreeModel(self.selectedPlayer.rootTag)
-        model.dataChanged.connect(self.nbtDataDidChange)
-        self.nbtEditor.setModel(model)
+        self.nbtEditor.undoCommandPrefixText = ("Player %s: " % self.selectedUUID) if self.selectedUUID else "Single-player: "
+        self.nbtEditor.setRootTag(self.selectedPlayer.rootTag)
+
+    def nbtEditWasMade(self):
+        self.selectedPlayer.dirty = True
 
     def revisionDidChange(self):
         self.initPropertiesWidget()
         self.updateNBTTree()
-
-    def nbtDataDidChange(self, index):
-        model = self.nbtEditor.model
-        parent = model.parent(index)
-        item = model.getItem(index)
-        if parent is not None and parent.isList:
-            name = str(parent.tag.index(item.tag))
-        else:
-            name = item.tag.name
-
-        if self.selectedUUID != "":
-            text = "Change player %s NBT tag %s" % (self.selectedUUID, name)
-        else:
-            text = "Change single-player NBT tag %s" % name
-
-        command = NBTDataChangeCommand(self.editorSession, text)
-        with command.begin():
-            self.selectedPlayer.dirty = True
-            self.editorSession.worldEditor.syncToDisk()
-        self.editorSession.pushCommand(command)
 
     def propertyDidChange(self, name, value):
         if self.selectedUUID != "":
@@ -169,7 +151,7 @@ class PlayerPanel(QtGui.QWidget):
             self.selectedUUID = UUID
         except PlayerNotFound:
             log.info("PlayerPanel: player %s not found!", UUID)
-            self.nbtEditor.setModel(None)
+            self.nbtEditor.setRootTag(None)
         else:
             self.updateNBTTree()
 

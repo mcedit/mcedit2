@@ -28,6 +28,7 @@ _iconTypes = [
     "array.png", # 12 - shortarray
 ]
 
+NBTPathRole = QtCore.Qt.UserRole + 1
 
 def NBTIcon(type):
     icon = _nbtIcons.get(type)
@@ -98,15 +99,21 @@ class NBTTreeCompound(object):
             return "%s items" % len(tag)
         return summary
 
-    def insertChildren(self, position, count):
+    def insertChildren(self, position, count, tagID):
         if position < 0 or position > len(self.childItems):
             return False
 
         for row in range(count):
-            data = nbt.TAG_Byte()
-            self.tag.insert(position + row, data)
+            name = "Unnamed"
+            i = 0
+            while name in self.tag:
+                i += 1
+                name = "Unnamed %d" % i
 
-            item = NBTTreeItem(data, self)
+            tag = nbt.tag_classes[tagID]()
+            self.tag[name] = tag
+
+            item = NBTTreeItem(tag, self)
             self.childItems.insert(position + row, item)
 
         return True
@@ -119,12 +126,22 @@ class NBTTreeCompound(object):
             return False
 
         for row in range(count):
-            self.childItems.pop(position)
+            name = self.childItems.pop(position).tag.name
+            del self.tag[name]
 
         return True
 
     def setValue(self, value):
         return False
+
+    def nbtPath(self, child=None):
+        if self.parentItem is None:
+            path = []
+        else:
+            path = self.parentItem.nbtPath(self)
+        if child:
+            path.append(child.tag.name)
+        return path
 
 
 class NBTTreeList(object):
@@ -163,14 +180,14 @@ class NBTTreeList(object):
 
             return ", ".join((fmt % i.value) for i in self.tag)
 
-    def insertChildren(self, position, count):
+    def insertChildren(self, position, count, tagID):
         if position < 0 or position > len(self.childItems):
             return False
 
         for row in range(count):
-            data = nbt.tag_classes[self.tag.list_type or nbt.ID_BYTE]()
-            self.tag.insert(position + row, data)
-            item = NBTTreeItem(data, self)
+            tag = nbt.tag_classes[self.tag.list_type or tagID]()
+            self.tag.insert(position + row, tag)
+            item = NBTTreeItem(tag, self)
             self.childItems.insert(position + row, item)
 
         return True
@@ -184,12 +201,23 @@ class NBTTreeList(object):
 
         for row in range(count):
             self.childItems.pop(position)
+            self.tag.pop(position)
 
         return True
 
     def setValue(self, value):
         return False
 
+    def nbtPath(self, child=None):
+        if self.parentItem is None:
+            path = []
+        else:
+            path = self.parentItem.nbtPath(self)
+        if child:
+            row = self.childItems.index(child)
+            path.append(row)
+
+        return path
 
 class NBTTreeItem(object):
     isCompound = False
@@ -229,9 +257,15 @@ class NBTTreeItem(object):
         self.tag.value = value
         return True
 
+    def nbtPath(self):
+        if self.parentItem is None:
+            return []
+        return self.parentItem.nbtPath(self)
+
 class NBTTreeModel(QtCore.QAbstractItemModel):
     def __init__(self, rootTag, parent=None):
         super(NBTTreeModel, self).__init__(parent)
+        self._internalPointers = {}
 
         self.rootItem = MakeNBTTreeItem(rootTag, None)
         self.rootTag = rootTag
@@ -245,20 +279,13 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
     def tagID(self, index):
         return self.getItem(index).tag.tagID
 
-    def data(self, index, role=QtCore.Qt.DisplayRole):
-        item = self.getItem(index)
-        column = index.column()
+    # --- Data ---
 
-        if role == QtCore.Qt.DecorationRole:
-            if column == 0:
-                return NBTIcon(item.tag.tagID)
-            if column == 2:
-                return self.addIcon if item.isList or item.isCompound else None
-            if column == 3:
-                return self.removeIcon
+    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
+        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+            return ("Name", "Value", "", "")[section]
 
-        if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
-            return item.data(column)
+        return None
 
     def flags(self, index):
         flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
@@ -269,54 +296,84 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
             flags |= QtCore.Qt.ItemIsEditable
         return flags
 
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        item = self.getItem(index)
+        column = index.column()
+
+        if role == QtCore.Qt.DecorationRole:
+            if column == 0:
+                return NBTIcon(item.tag.tagID)
+            if column == 2:
+                return self.addIcon if item.isList or item.isCompound else None
+            if column == 3:
+                return self.removeIcon if item is not self.rootItem else None
+
+        if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
+            return item.data(column)
+
+        if role == NBTPathRole:
+            return item.nbtPath()
+
+    # --- Structure ---
 
     def getItem(self, index):
         if index.isValid():
-            item = index.internalPointer()
+            item = self._internalPointers[index.internalId()]
             if item:
                 return item
         else:
-            return self.rootItem
+            return None
 
-    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
-        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
-            return ("Name", "Value", "", "")[section]
+    def rowCount(self, parent=QtCore.QModelIndex()):
+        if not parent.isValid():
+            return 1
+        parentItem = self.getItem(parent)
 
-        return None
+        return parentItem.childCount()
+
+    def createIndex(self, row, column, item):
+        self._internalPointers[id(item)] = item
+        return super(NBTTreeModel, self).createIndex(row, column, id(item))
 
     def index(self, row, column, parent=QtCore.QModelIndex()):
         if not parent.isValid():
+            assert row == 0
             return self.createIndex(row, column, self.rootItem)
 
         parentItem = self.getItem(parent)
-        childItem = parentItem.child(row)
-        if childItem:
-            return self.createIndex(row, column, childItem)
-        else:
+        if parentItem is None:
             return QtCore.QModelIndex()
 
-    def insertRow(self, position, parent=QtCore.QModelIndex()):
-        return self.insertRows(position, 1, parent)
+        childItem = parentItem.child(row)
+        if childItem is None:
+            return QtCore.QModelIndex()
 
-    def insertRows(self, row, count, parent=QtCore.QModelIndex()):
-        parentItem = self.getItem(parent)
-        self.beginInsertRows(parent, row, row + count - 1)
-        success = parentItem.insertChildren(row, count)
-        self.endInsertRows()
-
-        return success
+        return self.createIndex(row, column, childItem)
 
     def parent(self, index):
         if not index.isValid():
             return QtCore.QModelIndex()
 
-        childItem = self.getItem(index)
-        parentItem = childItem.parent()
+        item = self.getItem(index)
+        parentItem = item.parent()
 
-        if parentItem is None:
+        if parentItem is None:  # item is self.rootItem
             return QtCore.QModelIndex()
 
         return self.createIndex(parentItem.childNumber(), 0, parentItem)
+
+    # --- Editing ---
+
+    def insertRow(self, position, parent=QtCore.QModelIndex(), tagID=None):
+        return self.insertRows(position, 1, parent, tagID)
+
+    def insertRows(self, row, count, parent=QtCore.QModelIndex(), tagID=None):
+        parentItem = self.getItem(parent)
+        self.beginInsertRows(parent, row, row + count - 1)
+        success = parentItem.insertChildren(row, count, tagID)
+        self.endInsertRows()
+
+        return success
 
     def removeRow(self, position, parent=QtCore.QModelIndex()):
         self.removeRows(position, 1, parent)
@@ -329,13 +386,6 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
         self.endRemoveRows()
 
         return success
-
-    def rowCount(self, parent=QtCore.QModelIndex()):
-        if not parent.isValid():
-            return 1
-        parentItem = self.getItem(parent)
-
-        return parentItem.childCount()
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         if role != QtCore.Qt.EditRole:
