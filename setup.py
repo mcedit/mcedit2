@@ -7,7 +7,8 @@ Cython.Compiler.Options.annotate = True
 
 import numpy
 
-version = '0.1'
+with file("version.txt") as f:
+    version = f.read().strip()
 
 install_requires = [
     # -*- Extra requirements: -*-
