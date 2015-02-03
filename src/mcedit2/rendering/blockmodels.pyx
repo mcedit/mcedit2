@@ -13,6 +13,7 @@ cimport numpy
 
 from cpython cimport array
 from array import array
+from mcedit2.resourceloader import ResourceNotFound
 
 from mceditlib import faces
 from mceditlib.blocktypes import BlockType
@@ -104,8 +105,8 @@ cdef class BlockModels(object):
             nameAndState = block.internalName + block.blockState
             try:
                 statesJson = self._getBlockState(block.resourcePath)
-            except KeyError:
-                log.warn("Could not get blockstates resource for %s, skipping...", block)
+            except ResourceNotFound as e:
+                log.warn("Could not get blockstates resource for %s, skipping... (%r)", block, e)
                 continue
             variants = statesJson['variants']
             # variants is a dict with each key a resourceVariant value (from the block's ModelResourceLocation)
@@ -139,6 +140,9 @@ cdef class BlockModels(object):
             modelName = variantDict['model']
             try:
                 modelDict = self._getBlockModel("block/" + modelName)
+            except ResourceNotFound as e:
+                log.exception("Could not get model resource %s for block %s, skipping... (%r)", modelName, block, e)
+                continue
             except ValueError as e:
                 log.exception("Error parsing json for block/%s: %s", modelName, e)
                 continue

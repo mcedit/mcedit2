@@ -10,7 +10,7 @@ import numpy
 
 from mcedit2.util.load_png import loadPNGData
 from mcedit2.rendering.lightmap import generateLightmap
-from mcedit2.resourceloader import ResourceLoader
+from mcedit2.resourceloader import ResourceLoader, ResourceNotFound
 from mcedit2.util import glutils
 from mcedit2.util.resources import resourcePath
 from mceditlib import util
@@ -100,8 +100,8 @@ class TextureAtlas(object):
                 rawTextures.append((filename,) + loadPNGData(f.read()))
                 names.add(filename)
                 log.debug("Loaded texture %s", filename)
-            except KeyError as e:
-                log.error("Could not load texture %s: %s", filename, e)
+            except ResourceNotFound as e:
+                log.error("Could not load texture %s: %r", filename, e)
             except Exception as e:
                 log.exception("%s while loading texture '%s', skipping...", e, filename)
 

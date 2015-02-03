@@ -2,6 +2,7 @@
     minecraftinstall
 """
 from __future__ import absolute_import, division, print_function
+import hashlib
 import re
 from PySide import QtGui
 import logging
@@ -29,12 +30,14 @@ class MCInstall(object):
         :return:
         :rtype:
         """
+        log.info("Checking install at %s", self.path)
         if not os.path.exists(self.path):
             raise MCInstallError("Minecraft folder does not exist.")
         if not os.path.exists(self.versionsDir):
             raise MCInstallError("Minecraft versions folder does not exist.")
         if not len(self.versions):
             raise MCInstallError("Minecraft folder has no minecraft versions")
+        log.info("Found versions:\n%s", self.versions)
         requiredVersions = [v for v in self.versions if v.startswith("1.8")]
         if not len(requiredVersions):
             raise MCInstallError("Minecraft version 1.8 and up is required. Use the Minecraft Launcher to download it.")
@@ -79,6 +82,13 @@ class MCInstall(object):
             v1_8 = self.findVersion1_8()
             loader.addZipFile(self.getVersionJarPath(v1_8))
 
+        def md5hash(filename):
+            md5 = hashlib.md5()
+            with file(filename, "rb") as f:
+                md5.update(f.read())
+                return md5.hexdigest()
+        info = ["%s (%s)" % (z.filename, md5hash(z.filename)) for z in loader.zipFiles]
+        log.info("Created ResourceLoader with search path:\n%s", ",\n".join(info))
         return loader
 
     def findVersion1_8(self):

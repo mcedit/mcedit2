@@ -7,6 +7,8 @@ import zipfile
 
 log = logging.getLogger(__name__)
 
+class ResourceNotFound(KeyError):
+    pass
 
 class ResourceLoader(object):
     def __init__(self):
@@ -26,6 +28,6 @@ class ResourceLoader(object):
             except KeyError:  # Not found in zip file
                 continue
         else:
-            raise KeyError("Resource %s not found in search path", path)
+            raise ResourceNotFound("Resource %s not found in search path" % path)
 
         return stream
