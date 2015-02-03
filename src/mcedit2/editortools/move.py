@@ -29,18 +29,18 @@ class MoveSelectionCommand(SimpleRevisionCommand):
         if text is None:
             text = moveTool.tr("Move Selected Object")
         super(MoveSelectionCommand, self).__init__(moveTool.editorSession, text, *args, **kwargs)
-        self.currentImport = pendingImport
+        self.pendingImport = pendingImport
         self.moveTool = moveTool
 
     def undo(self):
         super(MoveSelectionCommand, self).undo()
         self.moveTool.currentImport = None
-        self.moveTool.removePendingImport(self.currentImport)
+        self.moveTool.removePendingImport(self.pendingImport)
         self.moveTool.editorSession.chooseTool("Select")
 
     def redo(self):
-        self.moveTool.currentImport = self.currentImport
-        self.moveTool.addPendingImport(self.currentImport)
+        self.moveTool.currentImport = self.pendingImport
+        self.moveTool.addPendingImport(self.pendingImport)
         self.moveTool.editorSession.chooseTool("Move")
         super(MoveSelectionCommand, self).redo()
 
@@ -63,22 +63,20 @@ class MoveOffsetCommand(QtGui.QUndoCommand):
 class MoveFinishCommand(SimpleRevisionCommand):
     def __init__(self, moveTool, pendingImport, *args, **kwargs):
         super(MoveFinishCommand, self).__init__(moveTool.editorSession, moveTool.tr("Finish Move"), *args, **kwargs)
-        self.currentImport = pendingImport
+        self.pendingImport = pendingImport
         self.moveTool = moveTool
 
     def undo(self):
         super(MoveFinishCommand, self).undo()
-        self.moveTool.pendingImport = self.currentImport
+        self.moveTool.addPendingImport(self.pendingImport)
         self.editorSession.currentSelection = self.previousSelection
         self.editorSession.chooseTool("Move")
 
     def redo(self):
         super(MoveFinishCommand, self).redo()
         self.previousSelection = self.editorSession.currentSelection
-        self.currentImport = self.moveTool.currentImport
         self.editorSession.currentSelection = BoundingBox(self.pendingImport.pos, self.previousSelection.size)
-        self.moveTool.currentImport = None
-        self.editorSession.removePendingImport(self.currentImport)
+        self.moveTool.removePendingImport(self.pendingImport)
 
 
 class CoordinateWidget(QtGui.QWidget):
@@ -230,10 +228,10 @@ class MoveTool(EditorTool):
         self.currentImport = pendingImport
 
     def removePendingImport(self, pendingImport):
+        index = self.pendingImports.index(pendingImport)
         self.pendingImports.remove(pendingImport)
-        indexes = self.importsListModel.match(QtCore.QModelIndex(), Qt.UserRole, pendingImport, flags=Qt.MatchExactly)
-        self.importsListModel.removeRows(indexes)
-
+        self.importsListModel.removeRows(index, 1)
+        self.currentImport = self.pendingImports[-1] if len(self.pendingImports) else None
         node = self.pendingImportNodes.pop(pendingImport)
         if node:
             self.overlayNode.removeChild(node)
@@ -294,8 +292,9 @@ class MoveTool(EditorTool):
             return
 
         node = self.currentImportNode
-        point, face = boxFaceUnderCursor(self.schematicBox, event.ray)
-        node.hoverFace(face)
+        if node:
+            point, face = boxFaceUnderCursor(self.schematicBox, event.ray)
+            node.hoverFace(face)
 
         # Highlight face of box to move along, or else axis pointers to grab and drag?
         pass
