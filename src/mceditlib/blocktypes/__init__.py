@@ -41,7 +41,7 @@ class BlockType(namedtuple("_BlockType", "ID, meta, blocktypeSet")):
         return "<BlockType (%d:%d)%s>" % (self.ID, self.meta, names)
 
     def __str__(self):
-        return "%s (%s%s)" % (self.displayName, self.internalName, self.blockState)
+        return "%s (%s%s) [%s:%s]" % (self.displayName, self.internalName, self.blockState, self.ID, self.meta)
 
     def __cmp__(self, other):
         if not isinstance(other, BlockType):
