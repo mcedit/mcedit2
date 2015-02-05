@@ -599,6 +599,7 @@ class MCEditApp(QtGui.QApplication):
                 Settings().setValue("open_world_dialog/starting_dir", dirname)
                 self.addRecentFile(filename)
                 self.loadFile(filename)
+                self.worldList.close()
 
     def showWorldList(self):
         self.worldList.exec_()

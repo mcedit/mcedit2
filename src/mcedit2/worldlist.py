@@ -122,6 +122,8 @@ class WorldListWidget(QtGui.QDialog):
         self.viewButton.clicked.connect(self.viewClicked)
         self.viewButton.setEnabled(False)
 
+        self.openWorldButton.clicked.connect(self.openWorldClicked)
+
         self.repairButton.clicked.connect(self.repairClicked)
         self.repairButton.setEnabled(False)
         self.backupButton.clicked.connect(self.backupClicked)
@@ -208,6 +210,9 @@ class WorldListWidget(QtGui.QDialog):
 
         except EnvironmentError as e:
             setWidgetError(self, e)
+
+    def openWorldClicked(self):
+        QtGui.qApp.chooseOpenWorld()
 
     def worldListItemClicked(self, i):
         if self.selectedWorldIndex == i:
