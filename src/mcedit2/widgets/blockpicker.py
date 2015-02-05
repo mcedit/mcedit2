@@ -164,9 +164,12 @@ class BlockTypesItemWidget(QtGui.QWidget):
 
             parentTypeLabel = QtGui.QLabel("")
             if block.meta != 0:
-                parentBlock = block.blocktypeSet[block.internalName]
-                if parentBlock.displayName != block.displayName:
-                    parentTypeLabel.setText("<font color='blue'>%s</font>" % parentBlock.displayName)
+                try:
+                    parentBlock = block.blocktypeSet[block.internalName]
+                    if parentBlock.displayName != block.displayName:
+                        parentTypeLabel.setText("<font color='blue'>%s</font>" % parentBlock.displayName)
+                except KeyError:  # no parent block; parent block is not meta=0; block was ID:meta typed in
+                    pass
 
             labelsColumn = Column(Row(nameLabel, None, parentTypeLabel),
                                   internalNameLabel)
@@ -213,6 +216,7 @@ class BlockTypeListWidget(QtGui.QListWidget):
     def __init__(self, *args, **kwargs):
         super(BlockTypeListWidget, self).__init__(*args, **kwargs)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.specifiedItem = None
 
     _textureAtlas = None
 
@@ -246,6 +250,32 @@ class BlockTypeListWidget(QtGui.QListWidget):
         self._searchValue = val
         for item in self.findItems("", Qt.MatchContains):
             item.setHidden(val.lower() not in item.block.displayName.lower())
+        try:
+            if ":" in val:
+                ID, meta = val.split(":")
+            else:
+                ID = val
+                meta = 0
+
+            ID = int(ID)
+            meta = int(meta)
+            if self.specifiedItem:
+                self.removeItemWidget(self.specifiedItem)
+                self.takeItem(self.row(self.specifiedItem))
+
+            self.specifiedItem = QtGui.QListWidgetItem()
+            block = self.blocktypes[ID, meta]
+            itemWidget = BlockTypesItemWidget([block], self.textureAtlas)
+            self.specifiedItem.setSizeHint(itemWidget.sizeHint())
+            self.specifiedItem.block = block
+            self.specifiedItem.widget = itemWidget
+
+            self.addItem(self.specifiedItem)
+            self.setItemWidget(self.specifiedItem, itemWidget)
+
+        except ValueError:
+            pass
+
 
     def updateList(self):
         if self.textureAtlas is None:
@@ -254,6 +284,7 @@ class BlockTypeListWidget(QtGui.QListWidget):
             return
 
         self.clear()
+        self.specifiedItem = None
 
         for block in self.blocktypes:
             if self._searchValue:
@@ -331,6 +362,7 @@ class BlockTypePicker(QtGui.QDialog):
         if self.editorSession:
             self.listWidget.textureAtlas = self.editorSession.textureAtlas
             self.listWidget.blocktypes = self.editorSession.worldEditor.blocktypes
+            self.searchField.clearEditText()
 
     @property
     def selectedBlocks(self):
