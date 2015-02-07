@@ -17,12 +17,13 @@ for d in a.datas:
         break
 
 a.binaries = a.binaries - TOC([
-   ('sqlite3.dll', '', ''),
-   ('_sqlite3', '', ''),
-   ('tcl85.dll', '', ''),
-   ('tk85.dll', '', ''),
-   ('_tkinter', '', ''),
+    ('sqlite3.dll', '', ''),
+    ('_sqlite3', '', ''),
+    ('tcl85.dll', '', ''),
+    ('tk85.dll', '', ''),
+    ('_tkinter', '', ''),
 ])
+
 pyz = PYZ(a.pure)
 
 onefile = True
