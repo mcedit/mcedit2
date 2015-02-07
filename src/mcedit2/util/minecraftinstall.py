@@ -146,16 +146,19 @@ def getDefaultInstall():
     :return:
     :rtype: MCInstall
     """
-    if _installations is None:
-        listInstalls()
     minecraftDir = directories.minecraftDir
     defaultInstall = MCInstall(minecraftDir, "(Default)")
-    defaultInstall.checkUsable()
-    value = defaultInstall.getJsonSettingValue()
-    if value not in installationsOption.jsonValue([]):
-        _installations.append(defaultInstall)
-        _saveInstalls()
-    return defaultInstall
+    try:
+        defaultInstall.checkUsable()
+    except MCInstallError as e:
+        log.warn("Default install not usable: %s", e)
+        return None
+    else:
+        value = defaultInstall.getJsonSettingValue()
+        if value not in installationsOption.jsonValue([]):
+            _installations.append(defaultInstall)
+            _saveInstalls()
+        return defaultInstall
 
 _installations = None
 
@@ -195,19 +198,17 @@ def ensureInstallation():
     :return:
     :rtype:
     """
-    try:
-        listInstalls()
+    listInstalls()
 
-        #raise MCInstallError("Displaying Minecraft Install dialog! xxx remove me")
-    except MCInstallError as e:
-        if not len(_installations):
-            msgBox = QtGui.QMessageBox()
-            msgBox.setText("No usable Minecraft installs were found. MCEdit requires an installed Minecraft version to "
-                           "access block textures, models, and metadata. Minecraft 1.8 or greater is required.")
-            msgBox.setInformativeText(e.message)
-            msgBox.exec_()
-            installsWidget = MinecraftInstallsDialog()
-            installsWidget.exec_()
+    #raise MCInstallError("Displaying Minecraft Install dialog! xxx remove me")
+    if not len(_installations):
+        msgBox = QtGui.QMessageBox()
+        msgBox.setText("No usable Minecraft installs were found. MCEdit requires an installed Minecraft version to "
+                       "access block textures, models, and metadata. Minecraft 1.8 or greater is required.")
+        #msgBox.setInformativeText(e.message)
+        msgBox.exec_()
+        installsWidget = MinecraftInstallsDialog()
+        installsWidget.exec_()
 
 class NameItem(QtGui.QTableWidgetItem):
     def setData(self, data, role):
