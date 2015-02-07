@@ -95,11 +95,19 @@ class MCInstall(object):
         for v in self.versions:
             major, minor, rev = splitVersion(v)
             if (major, minor) >= (1, 8):
-                return v
+                if rev == "":
+                    return v
+                try:
+                    rev = int(rev)  # skip revs like ".2-pre1" and ".1-OptiFine_HD_U_C7", only accept full releases
+                    return v
+                except ValueError:
+                    pass
 
 def splitVersion(version):
     """
     Split a Minecraft version ID into major, minor, and revision. If the version could not be parsed, return (0, 0, "")
+    The revision is returned with the leading period. For example, if "1.8.1-pre3" is passed, (1, 8, ".1-pre3") will
+    be returned.
 
     :param version:
     :type version: unicode
