@@ -75,6 +75,10 @@ class PlayerPanel(QtGui.QWidget):
         centerWidgetInScreen(self)
 
     def initPropertiesWidget(self):
+        if self.selectedPlayer is None:
+            self.playerPropertiesWidget.setModel(None)
+            return
+
         model = PropertyListModel(self.selectedPlayer.rootTag)
         addWidget = model.addNBTProperty
 
@@ -110,7 +114,7 @@ class PlayerPanel(QtGui.QWidget):
 
     def updateNBTTree(self):
         self.nbtEditor.undoCommandPrefixText = ("Player %s: " % self.selectedUUID) if self.selectedUUID else "Single-player: "
-        self.nbtEditor.setRootTag(self.selectedPlayer.rootTag)
+        self.nbtEditor.setRootTag(self.selectedPlayer.rootTag if self.selectedPlayer else None)
 
     def nbtEditWasMade(self):
         self.selectedPlayer.dirty = True
@@ -147,17 +151,15 @@ class PlayerPanel(QtGui.QWidget):
         self.setSelectedPlayerUUID(UUID)
 
     def setSelectedPlayerUUID(self, UUID):
-        try:
-            self.selectedUUID = UUID
-        except PlayerNotFound:
-            log.info("PlayerPanel: player %s not found!", UUID)
-            self.nbtEditor.setRootTag(None)
-        else:
-            self.updateNBTTree()
+        self.selectedUUID = UUID
+        self.updateNBTTree()
 
     @property
     def selectedPlayer(self):
-        return self.editorSession.worldEditor.getPlayer(self.selectedUUID)
+        try:
+            return self.editorSession.worldEditor.getPlayer(self.selectedUUID)
+        except PlayerNotFound:
+            log.info("PlayerPanel: player %s not found!", self.selectedUUID)
 
     def movePlayerToCamera(self):
         view = self.editorSession.editorTab.currentView()
