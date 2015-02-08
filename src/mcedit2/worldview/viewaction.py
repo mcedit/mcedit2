@@ -3,12 +3,13 @@
 """
 from __future__ import absolute_import, division, print_function
 import logging
+from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
 from mcedit2.util.settings import Settings
 
 log = logging.getLogger(__name__)
 
-class ViewAction(object):
+class ViewAction(QtCore.QObject):
     button = Qt.NoButton
     modifiers = Qt.NoModifier
     key = 0
@@ -17,17 +18,30 @@ class ViewAction(object):
     settingsKey = NotImplemented
     acceptsMouseWheel = False
 
+    WHEEL_UP = 0x100
+    WHEEL_DOWN = 0x200
+
+    _buttonNames = None
     def __init__(self):
         """
         An action that can be bound to a keypress or mouse button click, drag, or movement with the bound key or button held.
 
         """
+        super(ViewAction, self).__init__()
+
         if self.settingsKey is not None:
             settings = Settings()
             prefix = "keybindings/"
-            self.modifiers = int(settings.value(prefix + self.settingsKey + "/modifiers", self.modifiers))
-            self.button = int(settings.value(prefix + self.settingsKey + "/button", self.button))
-            self.key = int(settings.value(prefix + self.settingsKey + "/key", self.key))
+            try:
+                modifiers = int(settings.value(prefix + self.settingsKey + "/modifiers", self.modifiers))
+                button = int(settings.value(prefix + self.settingsKey + "/button", self.button))
+                key = int(settings.value(prefix + self.settingsKey + "/key", self.key))
+            except Exception as e:
+                log.error("Error while reading key binding:")
+            else:
+                self.modifiers = modifiers
+                self.button = button
+                self.key = key
 
     def __repr__(self):
         return "%s(button=%s, key=%s, modifiers=%s)" % (self.__class__.__name__, self.button, self.key, self.modifiers)
@@ -110,6 +124,42 @@ class ViewAction(object):
         :type event: QtGui.QEvent
         """
 
+
+    def buttonName(self, buttons):
+        if ViewAction._buttonNames is None:
+            ViewAction._buttonNames = [
+                (Qt.LeftButton, self.tr("Left Button")),
+                (Qt.RightButton, self.tr("Right Button")),
+                (Qt.MiddleButton, self.tr("Middle Button")),
+                (ViewAction.WHEEL_UP, self.tr("Mousewheel Up")),
+                (ViewAction.WHEEL_DOWN, self.tr("Mousewheel Down")),
+            ]
+        parts = [name for mask, name in self._buttonNames if buttons & mask]
+        return "+".join(parts)
+
+    def describeKeys(self):
+        modifierKeyNames = {
+            Qt.Key_Shift: self.tr("Shift"),
+            Qt.Key_Control: self.tr("Control"),
+            Qt.Key_Alt: self.tr("Alt"),
+            Qt.Key_Meta: self.tr("Meta"),
+        }
+
+        s = modifierKeyNames.get(self.key)  # QKeySequence returns weird strings when only a modifier is pressed
+        if s is None:
+            try:
+                s = QtGui.QKeySequence(self.key | self.modifiers).toString()
+            except TypeError:
+                log.error("KEY: %r MOD: %r", self.key, self.modifiers)
+                raise
+        if self.key == 0:
+            s = s[:-2]
+
+        if self.button != Qt.NoButton:
+            if len(s):
+                s += "+"
+            s += self.buttonName(self.button)
+        return s
 
 class UseToolMouseAction(ViewAction):
     button = Qt.LeftButton

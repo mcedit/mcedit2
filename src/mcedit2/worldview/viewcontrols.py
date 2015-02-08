@@ -7,46 +7,10 @@ from PySide import QtGui
 from PySide.QtCore import Qt
 import time
 from mcedit2.widgets.layout import Column
+from mcedit2.worldview.viewaction import ViewAction
 
 log = logging.getLogger(__name__)
 
-_buttonNames = [
-    (Qt.LeftButton, "Left Button"),
-    (Qt.RightButton, "Right Button"),
-    (Qt.MiddleButton, "Middle Button"),
-]
-
-
-def buttonName(buttons):
-    parts = [name for mask, name in _buttonNames if buttons & mask]
-    return "+".join(parts)
-
-def describeKeys(viewAction):
-    modifierKeyNames = {
-        Qt.Key_Shift: QtGui.qApp.tr("Shift"),
-        Qt.Key_Control: QtGui.qApp.tr("Control"),
-        Qt.Key_Alt: QtGui.qApp.tr("Alt"),
-        Qt.Key_Meta: QtGui.qApp.tr("Meta"),
-        "WHEEL_UP": QtGui.qApp.tr("Mousewheel Up"),
-        "WHEEL_DOWN": QtGui.qApp.tr("Mousewheel Down"),
-
-    }
-
-    s = modifierKeyNames.get(viewAction.key)  # QKeySequence returns weird strings when only a modifier is pressed
-    if s is None:
-        try:
-            s = QtGui.QKeySequence(viewAction.key | viewAction.modifiers).toString()
-        except TypeError:
-            log.error("KEY: %r MOD: %r", viewAction.key, viewAction.modifiers)
-            raise
-    if viewAction.key == 0:
-        s = s[:-2]
-
-    if viewAction.button != Qt.NoButton:
-        if len(s):
-            s += "+"
-        s += buttonName(viewAction.button)
-    return s
 
 
 class ModifierInputWidget(QtGui.QWidget):
@@ -62,7 +26,7 @@ class ModifierInputWidget(QtGui.QWidget):
         frame = QtGui.QFrame()
         frame.setFrameStyle(QtGui.QFrame.Box)
 
-        self.inputLabel = QtGui.QLabel(describeKeys(inputButton))
+        self.inputLabel = QtGui.QLabel(inputButton.viewAction.describeKeys())
         self.inputLabel.setAlignment(Qt.AlignCenter)
         font = self.inputLabel.font()
         font.setPointSize(font.pointSize() * 1.5)
@@ -92,7 +56,7 @@ class ModifierInputWidget(QtGui.QWidget):
             return  # Forbid binding left button
 
         self.inputButton.setBinding(mouseEvent.button(), 0, mouseEvent.modifiers())
-        self.inputLabel.setText(describeKeys(self.inputButton.viewAction))
+        self.inputLabel.setText(self.inputButton.viewAction.describeKeys())
 
     def keyPressEvent(self, keyEvent):
         """
@@ -112,7 +76,7 @@ class ModifierInputWidget(QtGui.QWidget):
         log.info("Control change: key %s(%s) modifiers %s(%s)", key, hex(key), modifiers, hex(int(modifiers)))
 
         self.inputButton.setBinding(Qt.NoButton, key, modifiers)
-        self.inputLabel.setText(describeKeys(self.inputButton.viewAction))
+        self.inputLabel.setText(self.inputButton.viewAction.describeKeys())
 
     def wheelEvent(self, wheelEvent):
         if not self.inputButton.viewAction.acceptsMouseWheel:
@@ -122,16 +86,16 @@ class ModifierInputWidget(QtGui.QWidget):
         if delta == 0:
             return
         if delta > 0:
-            key = "WHEEL_UP"
+            button = ViewAction.WHEEL_UP
         else:
-            key = "WHEEL_DOWN"
+            button = ViewAction.WHEEL_DOWN
 
         modifiers = wheelEvent.modifiers()
 
-        log.info("Control change: key %s modifiers %s", key, hex(int(modifiers)))
+        log.info("Control change: button %s modifiers %s", button, hex(int(modifiers)))
 
-        self.inputButton.setBinding(Qt.NoButton, key, modifiers)
-        self.inputLabel.setText(describeKeys(self.inputButton))
+        self.inputButton.setBinding(button, 0, modifiers)
+        self.inputLabel.setText(self.inputButton.viewAction.describeKeys())
 
 
 class ButtonModifierInput(QtGui.QPushButton):
@@ -141,7 +105,7 @@ class ButtonModifierInput(QtGui.QPushButton):
 
         :type viewAction: mcedit2.worldview.viewaction.ViewAction
         """
-        super(ButtonModifierInput, self).__init__(text=describeKeys(viewAction), *a, **kw)
+        super(ButtonModifierInput, self).__init__(text=viewAction.describeKeys(), *a, **kw)
         self.setStyleSheet("""
         :disabled {
             color: #000000;
@@ -165,7 +129,7 @@ class ButtonModifierInput(QtGui.QPushButton):
         inputWidget.setGeometry(rect)
 
     def updateText(self):
-        self.setText(describeKeys(self.viewAction))
+        self.setText(self.viewAction.describeKeys())
 
     @property
     def key(self):

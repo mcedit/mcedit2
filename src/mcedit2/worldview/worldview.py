@@ -358,12 +358,30 @@ class WorldView(QGLWidget):
                     if not action.key or action.key in self.pressedKeys:
                         action.mouseReleaseEvent(event)
 
+    wheelPos = 0
+
     def wheelEvent(self, event):
         self.augmentMouseEvent(event)
         for action in self.viewActions:
             if action.acceptsMouseWheel and ((action.modifiers & event.modifiers()) or action.modifiers == event.modifiers()):
-                if action.key in("WHEEL_UP", "WHEEL_DOWN"):
-                    for i in range((abs(event.delta()) + 14) / 15):  # xxx 15 = wheel sensitivity?
+                self.wheelPos += event.delta()
+                # event.delta reports eighths of a degree. a standard wheel tick is 15 degrees, or 120 eighths.
+                # keep count of wheel position and emit an event for each 15 degrees turned.
+                # xxx will we ever need sub-click precision for wheel events?
+                clicks = 0
+                while self.wheelPos >= 120:
+                    self.wheelPos -= 120
+                    clicks += 1
+                while self.wheelPos <= -120:
+                    self.wheelPos += 120
+                    clicks -= 1
+
+                if action.button == action.WHEEL_UP and clicks < 0:
+                    for i in range(abs(clicks)):
+                        action.keyPressEvent(event)
+
+                if action.button == action.WHEEL_DOWN and clicks > 0:
+                    for i in range(clicks):
                         action.keyPressEvent(event)
 
 
