@@ -9,6 +9,7 @@ from mcedit2.util.worldloader import LoaderTimer
 
 log = logging.getLogger(__name__)
 
+itersBeforeDialog = 8
 
 def showProgress(text, iter, cancel=False):
     """
@@ -23,38 +24,43 @@ def showProgress(text, iter, cancel=False):
     :return:
     :rtype:
     """
-    from mcedit2 import editorapp
-
-    dialog = QtGui.QProgressDialog(editorapp.MCEditApp.app.mainWindow)
-    dialog.setWindowTitle(text)
-    dialog.setWindowModality(Qt.WindowModal)
-    dialog.show()
     progress = None
-    LoaderTimer.stopAll()
-
-    for progress in iter:
-        if isinstance(progress, basestring):
-            max = current = 0
-            status = progress
-        elif isinstance(progress, (tuple, list)):
-            if len(progress) > 2:
-                current, max, status = progress[:3]
-            else:
-                current, max = progress
-                status = ""
+    i = 0
+    with LoaderTimer.stopCtx():
+        for progress in iter:
+            i += 1
+            if i > itersBeforeDialog:
+                break
         else:
-            current = max = 1
-            status = ""
+            return progress
 
-        dialog.setValue(current)
-        dialog.setMaximum(max)
-        dialog.setLabelText(status)
-        QtGui.QApplication.processEvents()
-        if dialog.wasCanceled():
-            return False
+        dialog = QtGui.QProgressDialog(QtGui.qApp.mainWindow)
+        dialog.setWindowTitle(text)
+        dialog.setWindowModality(Qt.WindowModal)
+        dialog.show()
 
-    LoaderTimer.startAll()
 
-    dialog.close()
-    return progress
+        for progress in iter:
+            if isinstance(progress, basestring):
+                max = current = 0
+                status = progress
+            elif isinstance(progress, (tuple, list)):
+                if len(progress) > 2:
+                    current, max, status = progress[:3]
+                else:
+                    current, max = progress
+                    status = ""
+            else:
+                current = max = 1
+                status = ""
+
+            dialog.setValue(current)
+            dialog.setMaximum(max)
+            dialog.setLabelText(status)
+            QtGui.QApplication.processEvents()
+            if dialog.wasCanceled():
+                return False
+
+        dialog.close()
+        return progress
 

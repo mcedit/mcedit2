@@ -140,11 +140,7 @@ class Fill(BrushMode):
         :type command: BrushCommand
         """
         fill = command.editorSession.currentDimension.fillBlocksIter(selections[0], command.blockInfo)
-        if selections[0].chunkCount > 32:
-            showProgress("Applying brush...", fill)
-        else:
-            for _ in fill:
-                pass
+        showProgress("Applying brush...", fill)
 
 
 class BrushModes(object):

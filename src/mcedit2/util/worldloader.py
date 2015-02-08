@@ -2,6 +2,7 @@
     ${NAME}
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
+import contextlib
 import logging
 import weakref
 from PySide import QtCore
@@ -15,6 +16,13 @@ class LoaderTimer(QtCore.QTimer):
     def __init__(self, *args, **kwargs):
         super(LoaderTimer, self).__init__(*args, **kwargs)
         _loaderTimers.append(weakref.ref(self))
+
+    @classmethod
+    @contextlib.contextmanager
+    def stopCtx(cls):
+        cls.stopAll()
+        yield
+        cls.startAll()
 
     @staticmethod
     def stopAll():
