@@ -183,7 +183,7 @@ def _listInstalls():
             install.checkUsable()
             yield install
         except MCInstallError as e:
-            log.exception("Not using install %s: %s", install.path, e)
+            log.warn("Not using install %s: %s", install.path, e)
 
 
 def listInstalls():
