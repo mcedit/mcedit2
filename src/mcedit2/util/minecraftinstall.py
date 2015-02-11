@@ -98,7 +98,7 @@ class MCInstall(object):
                 if rev == "":
                     return v
                 try:
-                    rev = int(rev)  # skip revs like ".2-pre1" and ".1-OptiFine_HD_U_C7", only accept full releases
+                    rev = int(rev[1:])  # skip revs like ".2-pre1" and ".1-OptiFine_HD_U_C7", only accept full releases
                     return v
                 except ValueError:
                     pass
