@@ -103,8 +103,8 @@ if "-debug" in sys.argv:
 @profiler.function("startup")
 def startup():
     global editorApp
-    sys.excepthook = excepthook
     setup_logging()
+    sys.excepthook = excepthook
 
     import pygments.lexers
     if hasattr(pygments.lexers, 'newmod'):
