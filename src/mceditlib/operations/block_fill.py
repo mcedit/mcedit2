@@ -90,9 +90,7 @@ class FillBlocksOperation(Operation):
         self.chunkCount = 0
         self.skipped = 0
         self.sections = 0
-        log.info("Replacing %s (creating %s)".format(
-            self.blockReplacements,
-            self.createSections))
+        log.info("Replacing with mapping:\n %s\n (creating chunks/sections? %s)", self.blockReplacements, self.createSections)
 
     def done(self):
         log.info(u"Fill/Replace: Skipped {0}/{1} sections".format(self.skipped, self.sections))
