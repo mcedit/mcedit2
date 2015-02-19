@@ -28,6 +28,7 @@ from mcedit2.util.settings import Settings
 from mcedit2.worldlist import WorldListWidget
 from mcedit2.worldview.worldview import WorldCursorInfo, WorldViewInfo
 from mceditlib import util
+from mceditlib.anvil.adapter import SessionLockLost
 
 
 log = logging.getLogger(__name__)
@@ -607,7 +608,19 @@ class MCEditApp(QtGui.QApplication):
     def saveCurrentWorld(self):
         session = self.currentSession()
         if session:
-            session.save()
+            try:
+                session.save()
+            except SessionLockLost as e:
+                msgBox = QtGui.QMessageBox(QtGui.qApp.mainWindow)
+                msgBox.setWindowTitle("Session Lock Lost")
+                msgBox.setText("MCEdit has lost the session lock on this world.")
+                msgBox.setInformativeText("Minecraft or another program has taken the session lock for this world. "
+                                          "MCEdit cannot ensure the world will be in a consistent state after editing. "
+                                          "The world must be closed.\n\n(In the future, you may be able to reopen the "
+                                          "world and replay your editing history on top of the world's new state.)")
+                msgBox.exec_()
+                session.dirty = False  # Avoid invoking session.save() again.
+                self.closeCurrentTab()
 
     def saveCurrentWorldAs(self):
         pass
