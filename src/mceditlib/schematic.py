@@ -156,8 +156,8 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
 
         self.rootTag["Data"].value &= 0xF  # discard high bits
 
-        self.Entities = [self.EntityRef(tag) for tag in self.rootTag["Entities"]]
-        self.TileEntities = [self.EntityRef(tag) for tag in self.rootTag["TileEntities"]]
+        self.Entities = [self.EntityRef(tag, None) for tag in self.rootTag["Entities"]]
+        self.TileEntities = [self.EntityRef(tag, None) for tag in self.rootTag["TileEntities"]]
 
 
     def saveChanges(self):

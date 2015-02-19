@@ -212,10 +212,13 @@ class AnvilChunkData(object):
             levelTag["Biomes"] = nbt.TAG_Byte_Array(numpy.empty((16, 16), 'uint8'))
             levelTag["Biomes"].value[:] = -1
 
-        self.Entities = [PCEntityRef(tag) for tag in self.rootTag["Level"]["Entities"]]
-        del self.rootTag["Level"]["Entities"]
-        self.TileEntities = [PCTileEntityRef(tag) for tag in self.rootTag["Level"]["TileEntities"]]
-        del self.rootTag["Level"]["TileEntities"]
+        self.Entities = self.rootTag["Level"]["Entities"]
+        self.TileEntities = self.rootTag["Level"]["TileEntities"]
+
+        # self.Entities = [PCEntityRef(tag) for tag in self.rootTag["Level"]["Entities"]]
+        # del self.rootTag["Level"]["Entities"]
+        # self.TileEntities = [PCTileEntityRef(tag) for tag in self.rootTag["Level"]["TileEntities"]]
+        # del self.rootTag["Level"]["TileEntities"]
 
     def _create(self):
         chunkTag = nbt.TAG_Compound()
@@ -264,8 +267,6 @@ class AnvilChunkData(object):
             sections.append(section.buildNBTTag())
 
         tag["Level"]["Sections"] = sections
-        tag["Level"]["Entities"] = nbt.TAG_List([ref.rootTag for ref in self.Entities])
-        tag["Level"]["TileEntities"] = nbt.TAG_List([ref.rootTag for ref in self.TileEntities])
 
         log.debug(u"Saved chunk {0}".format(self))
         return tag

@@ -11,8 +11,9 @@ log = logging.getLogger(__name__)
 
 
 class PCEntityRef(object):
-    def __init__(self, rootTag):
+    def __init__(self, rootTag, chunk=None):
         self.rootTag = rootTag
+        self.chunk = chunk
 
     def raw_tag(self):
         return self.rootTag
@@ -32,12 +33,13 @@ class PCEntityRef(object):
         entity = newEntityClass(tag)
         entity.Position = self.Position + copyOffset
 
-        return PCEntityRef(tag)
+        return PCEntityRef(tag, None)
 
 
 class PCTileEntityRef(object):
-    def __init__(self, rootTag):
+    def __init__(self, rootTag, chunk=None):
         self.rootTag = rootTag
+        self.chunk = chunk
 
     def raw_tag(self):
         return self.rootTag

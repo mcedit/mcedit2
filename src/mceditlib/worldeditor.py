@@ -48,6 +48,8 @@ class WorldEditorChunk(object):
         self.cx, self.cz = chunkData.cx, chunkData.cz
         self.dimName = chunkData.dimName
         self.dimension = editor.getDimension(self.dimName)
+        self.Entities = [editor.adapter.EntityRef(tag, self) for tag in chunkData.Entities]
+        self.TileEntities = [editor.adapter.TileEntityRef(tag, self) for tag in chunkData.TileEntities]
 
     def buildNBTTag(self):
         return self.chunkData.buildNBTTag()
@@ -102,20 +104,34 @@ class WorldEditorChunk(object):
         return self.chunkData.HeightMap
 
     @property
-    def Entities(self):
-        return self.chunkData.Entities
-
-    @property
-    def TileEntities(self):
-        return self.chunkData.TileEntities
-
-    @property
     def TerrainPopulated(self):
         return self.chunkData.TerrainPopulated
 
     @TerrainPopulated.setter
     def TerrainPopulated(self, val):
         self.chunkData.TerrainPopulated = val
+
+    def addEntity(self, ref):
+        if ref.chunk is self:
+            return
+        self.chunkData.Entities.append(ref.rootTag)
+        self.Entities.append(ref)
+        ref.chunk = self
+
+    def addTileEntity(self, ref):
+        if ref.chunk is self:
+            return
+        self.chunkData.TileEntities.append(ref.rootTag)
+        self.TileEntities.append(ref)
+        ref.chunk = self
+
+    def removeTileEntity(self, ref):
+        if ref.chunk is not self:
+            return
+        self.chunkData.TileEntities.remove(ref.rootTag)
+        self.TileEntities.remove(ref)
+        ref.chunk = None
+        ref.rootTag = None
 
 
 class WorldEditor(object):
@@ -606,7 +622,7 @@ class WorldEditorDimension(object):
         x, y, z = ref.Position
         cx, cz = chunk_pos(x, z)
         chunk = self.getChunk(cx, cz, create=True)
-        chunk.Entities.append(ref.copy())
+        chunk.addEntity(ref.copy())
 
     def addTileEntity(self, ref):
         x, y, z = ref.Position
@@ -615,9 +631,9 @@ class WorldEditorDimension(object):
         existing = [old for old in chunk.TileEntities
                     if old.Position == (x, y, z)]
         for e in existing:
-            chunk.TileEntities.remove(e)
+            chunk.removeTileEntity(e)
 
-        chunk.TileEntities.append(ref.copy())
+        chunk.addTileEntity(ref.copy())
 
     # --- Import/Export ---
 
