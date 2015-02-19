@@ -27,7 +27,7 @@ class EntityMeshBase(ChunkMeshBase):
         if bounds:
             positions = [p for p in positions if p in bounds]
 
-        vertexBuffer = VertexArrayBuffer(len(positions) * 6, lights=False)
+        vertexBuffer = VertexArrayBuffer(len(positions) * 6, lights=False, textures=False)
         vertexBuffer.buffer.shape = (len(positions), 6) + vertexBuffer.buffer.shape[-2:]
         if len(positions):
             positions = numpy.array(positions, dtype=float)
