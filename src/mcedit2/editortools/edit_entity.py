@@ -36,7 +36,7 @@ class EntityTool(EditorTool):
     name = "Edit Entity"
     iconName = "edit_entity"
     selectionRay = None
-
+    currentEntity = None
     def __init__(self, editorSession, *args, **kwargs):
         """
         :type editorSession: EditorSession
@@ -48,6 +48,11 @@ class EntityTool(EditorTool):
         self.toolWidget = load_ui("editortools/select_entity.ui")
         self.toolWidget.entityListBox.currentIndexChanged.connect(self.setSelectedEntity)
         self.toolWidget.nbtEditor.editorSession = self.editorSession
+        self.toolWidget.nbtEditor.editMade.connect(self.editWasMade)
+
+    def editWasMade(self):
+        if self.currentEntity and self.currentEntity.chunk:
+            self.currentEntity.chunk.dirty = True
 
     def mousePress(self, event):
         command = SelectEntityCommand(self, event.ray)
@@ -70,12 +75,13 @@ class EntityTool(EditorTool):
 
     def setSelectedEntity(self, index):
         if len(self.selectedEntities):
-            self.toolWidget.nbtEditor.setRootTag(self.selectedEntities[index].raw_tag())
+            self.currentEntity = self.selectedEntities[index]
+            self.toolWidget.nbtEditor.setRootTag(self.currentEntity.raw_tag())
         else:
             self.toolWidget.nbtEditor.setRootTag(None)
 
 
-def entitiesOnRay(dimension, ray, rayWidth=2.0, maxDistance = 1000):
+def entitiesOnRay(dimension, ray, rayWidth=0.5, maxDistance = 1000):
     pos, vec = ray
 
     endpos = pos + vec.normalize() * maxDistance
