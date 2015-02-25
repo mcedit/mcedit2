@@ -73,8 +73,7 @@ class ReplaceDialog(QtGui.QDialog):
             frame.setLayout(layout)
             return frame
 
-        leftButton = BlockTypeButton(flat=True)
-        leftButton.multipleSelect = True
+        leftButton = BlockTypeButton(flat=True, multipleSelect=True)
         leftButton.editorSession = self.editorSession
         leftButton.blocks = oldBlocks
         leftFramedButton = frameButton(leftButton)
@@ -97,7 +96,6 @@ class ReplaceDialog(QtGui.QDialog):
 
     def removeRow(self, row):
         self.tableWidget.removeRow(row)
-        del self.replacements[row]
 
     def getReplacements(self):
         def _get():
@@ -115,6 +113,6 @@ def replaceCommand(editorSession):
         replacements = dialog.getReplacements()
         command = SimpleRevisionCommand(editorSession, "Replace")
         with command.begin():
-            task = editorSession.currentDimension.fillBlocksIter(editorSession.currentSelection, replacements)
+            task = editorSession.currentDimension.fillBlocksIter(editorSession.currentSelection, replacements, updateLights=False)
             showProgress("Replacing...", task)
         editorSession.pushCommand(command)
