@@ -56,8 +56,10 @@ def copyBlocksIter(destLevel, sourceLevel, sourceSelection, destinationPoint, bl
     destBox = BoundingBox(destinationPoint, sourceSelection.size)
     chunkCount = destBox.chunkCount
     i = 0
-    e = 0
-    t = 0
+    entitiesCopied = 0
+    tileEntitiesCopied = 0
+    entitiesSeen = 0
+    tileEntitiesSeen = 0
 
     makeSourceMask = sourceMaskFunc(blocksToCopy)
 
@@ -168,18 +170,22 @@ def copyBlocksIter(destLevel, sourceLevel, sourceSelection, destinationPoint, bl
 
         # Copy entities and tile entities
         if entities:
+            entitiesSeen += len(sourceChunk.Entities)
             for entity in sourceChunk.Entities:
                 if entity.Position in sourceSelection:
+                    entitiesCopied += 1
                     newEntity = entity.copyWithOffset(copyOffset)
                     destLevel.addEntity(newEntity)
 
+        tileEntitiesSeen += len(sourceChunk.TileEntities)
         for tileEntity in sourceChunk.TileEntities:
             if tileEntity.Position in sourceSelection:
+                tileEntitiesCopied += 1
                 newEntity = tileEntity.copyWithOffset(copyOffset)
                 destLevel.addTileEntity(newEntity)
 
     log.info("Duration: {0}".format(datetime.now() - startTime))
-    log.info("Copied {0} entities and {1} tile entities".format(e, t))
+    log.info("Copied %d/%d entities and %d/%d tile entities", entitiesCopied, entitiesSeen, tileEntitiesCopied, tileEntitiesSeen)
 
 
 
