@@ -8,6 +8,7 @@ from PySide.QtCore import Qt
 from mcedit2 import editortools
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.rendering.blockmodels import BlockModels
+from mcedit2.editortools.select import SelectCommand
 from mcedit2.panels.player import PlayerPanel
 from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.raycast import rayCastInBounds
@@ -154,6 +155,14 @@ class EditorSession(QtCore.QObject):
 
         self.menus.append(self.menuEdit)
 
+        self.menuSelect = QtGui.QMenu(self.tr("Select"))
+
+        self.actionSelectAll = QtGui.QAction(self.tr("Select All"), self, triggered=self.selectAll)
+        self.actionSelectAll.setShortcut(QtGui.QKeySequence.SelectAll)
+        self.menuSelect.addAction(self.actionSelectAll)
+
+        self.menus.append(self.menuSelect)
+
         # --- Resources ---
 
         i, v, p = self.versionInfo
@@ -257,10 +266,14 @@ class EditorSession(QtCore.QObject):
 
     # --- Menu commands ---
 
+    # - World -
+
     def save(self):
         self.undoStack.clearUndoBlock()
         self.worldEditor.saveChanges()
         self.dirty = False
+
+    # - Edit -
 
     def cut(self):
         command = SimpleRevisionCommand(self, "Cut")
@@ -291,6 +304,12 @@ class EditorSession(QtCore.QObject):
 
     def clear(self):
         self.selectionTool.deleteSelection()
+
+    # - Select -
+
+    def selectAll(self):
+        command = SelectCommand(self.selectionTool, self.currentDimension.bounds, self.tr("Select All"))
+        self.pushCommand(command)
 
     # --- Library support ---
 

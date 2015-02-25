@@ -148,11 +148,12 @@ class SelectionCoordinateWidget(QtGui.QWidget):
         self.boxChanged.emit(box)
 
 
-
 class SelectCommand(QtGui.QUndoCommand):
-    def __init__(self, selectionTool, box, *args, **kwargs):
+    def __init__(self, selectionTool, box, text=None, *args, **kwargs):
         QtGui.QUndoCommand.__init__(self, *args, **kwargs)
-        self.setText("Box Select")
+        if text is None:
+            text = QtGui.qApp.tr("Box Selection")
+        self.setText(text)
         self.box = box
         self.selectionTool = selectionTool
         self.previousBox = None
