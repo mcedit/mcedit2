@@ -283,12 +283,25 @@ cdef class BlockModels(object):
         cdef int l, t, w, h
         cdef int u1, u2, v1, v2
         cdef int uw, vh
-        cdef list cookedQuads
+        cdef ModelQuadList modelQuads
+        cdef ModelQuadList unknownBlockModel
+        UNKNOWN_BLOCK = 'MCEDIT_UNKNOWN'
+
+        cdef float[:] modelxyzuvstc, quadxyzuvstc
+        cdef size_t i;
 
         for nameAndState, allQuads in self.modelQuads.iteritems():
-            cookedQuads = []
-            for (box, face, texture, uv, cullface, shade, rotation, textureRotation,
-                 variantXrot, variantYrot, variantZrot, tintcolor) in allQuads:
+            if nameAndState != UNKNOWN_BLOCK:
+                try:
+                    ID, meta = self.blocktypes.IDsByState[nameAndState]
+                except KeyError:
+                    continue  # xxx stash models somewhere for user-configuration
+
+            modelQuads.count = len(allQuads)
+            modelQuads.quads = <ModelQuad *>malloc(modelQuads.count * sizeof(ModelQuad))
+
+            for i, (box, quadface, texture, uv, cullface, shade, rotation, textureRotation,
+                 variantXrot, variantYrot, variantZrot, tintcolor) in enumerate(allQuads):
 
                 l, t, w, h = textureAtlas.texCoordsByName[texture]
                 u1, v1, u2, v2 = uv
@@ -303,15 +316,15 @@ cdef class BlockModels(object):
 
                 uv = (u1, v1, u2, v2)
 
-                xyzuvstc = getBlockFaceVertices(box, face, uv, textureRotation)
+                xyzuvstc = getBlockFaceVertices(box, quadface, uv, textureRotation)
                 xyzuvstc.shape = 4, 8
 
                 if variantZrot:
-                    face = rotateFace(face, 2, variantZrot)
+                    quadface = rotateFace(quadface, 2, variantZrot)
                 if variantXrot:
-                    face = rotateFace(face, 0, variantXrot)
+                    quadface = rotateFace(quadface, 0, variantXrot)
                 if variantYrot:
-                    face = rotateFace(face, 1, variantYrot)
+                    quadface = rotateFace(quadface, 1, variantYrot)
                 if cullface:
                     cullface = facesByCardinal[cullface]
                     if variantZrot:
@@ -321,11 +334,11 @@ cdef class BlockModels(object):
                     if variantYrot:
                         cullface = rotateFace(cullface, 1, variantYrot)
 
-                self.rotateVertices(rotation, variantXrot, variantYrot, variantZrot, xyzuvstc)
+                rotateVertices(rotation, variantXrot, variantYrot, variantZrot, xyzuvstc)
 
                 rgba = xyzuvstc.view('uint8')[:, 28:]
                 if shade:
-                    rgba[:] = faceShades[face]
+                    rgba[:] = faceShades[quadface]
                 else:
                     rgba[:] = 0xff
 
@@ -336,21 +349,39 @@ cdef class BlockModels(object):
 
                 xyzuvstc.shape = 32  # flatten to store in ModelQuad.xyzuvstc
 
-                cookedQuads.append((xyzuvstc, cullface, face))
+                #cookedQuads.append((xyzuvstc, cullface, face))
+                quadxyzuvstc = modelQuads.quads[i].xyzuvstc
+                modelxyzuvstc = xyzuvstc
+                quadxyzuvstc[:] = modelxyzuvstc[:]
+                if cullface is not None:
+                    modelQuads.quads[i].cullface[0] = 1
+                    dx, dy, dz = cullface.vector
+                    modelQuads.quads[i].cullface[1] = dx
+                    modelQuads.quads[i].cullface[2] = dy
+                    modelQuads.quads[i].cullface[3] = dz
+                else:
+                    modelQuads.quads[i].cullface[0] = 0
+                    modelQuads.quads[i].cullface[1] = 0
+                    modelQuads.quads[i].cullface[2] = 0
+                    modelQuads.quads[i].cullface[3] = 0
 
-            cookedModels[nameAndState] = cookedQuads
-            try:
-                ID, meta = self.blocktypes.IDsByState[nameAndState]
-            except KeyError:
-                pass
+
+                dx, dy, dz = quadface.vector
+                modelQuads.quads[i].quadface[0] = int(quadface)
+                modelQuads.quads[i].quadface[1] = dx
+                modelQuads.quads[i].quadface[2] = dy
+                modelQuads.quads[i].quadface[3] = dz
+
+            # cookedModels[nameAndState] = cookedQuads
+            if nameAndState == UNKNOWN_BLOCK:
+                unknownBlockModel = modelQuads
             else:
-                self.storeQuads(cookedQuads, ID, meta)
+                self.cookedModelsByID[ID][meta] = modelQuads
 
-        stoneModels = cookedModels['MCEDIT_UNKNOWN']
         for ID in range(4096):
             for meta in range(16):
                 if self.cookedModelsByID[ID][meta].count == 0:
-                    self.storeQuads(stoneModels, ID, meta)
+                    self.cookedModelsByID[ID][meta] = unknownBlockModel
 
         self.cookedModels = cookedModels
         self.cooked = True
@@ -384,68 +415,17 @@ cdef class BlockModels(object):
                 quadVerts = varray
                 modelQuadVerts = modelQuads.quads[face].xyzuvstc
                 modelQuadVerts[:] = quadVerts[:]
-
-    def storeQuads(self, list cookedQuads, unsigned short ID, unsigned char meta):
-        cdef ModelQuadList modelQuads
-        modelQuads.count = len(cookedQuads)
-        cdef void * quads = malloc(modelQuads.count * sizeof(ModelQuad))
-        modelQuads.quads = <ModelQuad *>quads
-        cdef float[:] xyzuvstc, quadxyzuvstc
-        cdef int i
-        for i in range(modelQuads.count):
-            xyzuvstc, cullface, quadface = cookedQuads[i]
-            quadxyzuvstc = modelQuads.quads[i].xyzuvstc
-            quadxyzuvstc[:] = xyzuvstc[:]
-            if cullface is not None:
-                modelQuads.quads[i].cullface[0] = 1
-                dx, dy, dz = cullface.vector
-                modelQuads.quads[i].cullface[1] = dx
-                modelQuads.quads[i].cullface[2] = dy
-                modelQuads.quads[i].cullface[3] = dz
-            else:
-                modelQuads.quads[i].cullface[0] = 0
-                modelQuads.quads[i].cullface[1] = 0
-                modelQuads.quads[i].cullface[2] = 0
-                modelQuads.quads[i].cullface[3] = 0
-
-
-            dx, dy, dz = quadface.vector
-            modelQuads.quads[i].quadface[0] = int(quadface)
-            modelQuads.quads[i].quadface[1] = dx
-            modelQuads.quads[i].quadface[2] = dy
-            modelQuads.quads[i].quadface[3] = dz
-
-
-
-        self.cookedModelsByID[ID][meta] = modelQuads
-
-    def rotateVertices(self, rotation, variantXrot, variantYrot, variantZrot, xyzuvstc):
-        if rotation is not None:
-            origin = rotation["origin"]
-            axis = rotation["axis"]
-            angle = rotation["angle"]
-            rescale = rotation.get("rescale", False)
-            matrix = npRotate(axis, angle, rescale)
-            ox, oy, oz = origin
-            origin = ox / 16., oy / 16., oz / 16.
-
-            xyzuvstc[:, :3] -= origin
-            xyz = xyzuvstc[:, :3].transpose()
-            xyzuvstc[:, :3] = (matrix[:3, :3] * xyz).transpose()
-            xyzuvstc[:, :3] += origin
-        rotate = variantXrot or variantYrot or variantZrot
-        if rotate:
-            matrix = numpy.matrix(numpy.identity(4))
-            if variantYrot:
-                matrix *= npRotate("y", -variantYrot)
-            if variantXrot:
-                matrix *= npRotate("x", -variantXrot)
-            if variantZrot:
-                matrix *= npRotate("z", -variantZrot)
-            xyzuvstc[:, :3] -= 0.5, 0.5, 0.5
-            xyz = xyzuvstc[:, :3].transpose()
-            xyzuvstc[:, :3] = (matrix[:3, :3] * xyz).transpose()
-            xyzuvstc[:, :3] += 0.5, 0.5, 0.5
+    #
+    # def storeQuads(self, list cookedQuads, unsigned short ID, unsigned char meta):
+    #     cdef ModelQuadList modelQuads
+    #     modelQuads.count = len(cookedQuads)
+    #     cdef void * quads = malloc(modelQuads.count * sizeof(ModelQuad))
+    #     modelQuads.quads = <ModelQuad *>quads
+    #     cdef float[:] xyzuvstc, quadxyzuvstc
+    #     cdef int i
+    #     for i in range(modelQuads.count):
+    #         xyzuvstc, cullface, quadface = cookedQuads[i]
+    #
 
 faceRotations = (
     (
@@ -482,6 +462,35 @@ def rotateFace(face, axis, degrees):
     idx %= 4
     return rots[idx]
 
+
+def rotateVertices(rotation, variantXrot, variantYrot, variantZrot, xyzuvstc):
+    if rotation is not None:
+        origin = rotation["origin"]
+        axis = rotation["axis"]
+        angle = rotation["angle"]
+        rescale = rotation.get("rescale", False)
+        matrix = npRotate(axis, angle, rescale)
+        ox, oy, oz = origin
+        origin = ox / 16., oy / 16., oz / 16.
+
+        xyzuvstc[:, :3] -= origin
+        xyz = xyzuvstc[:, :3].transpose()
+        xyzuvstc[:, :3] = (matrix[:3, :3] * xyz).transpose()
+        xyzuvstc[:, :3] += origin
+
+    rotate = variantXrot or variantYrot or variantZrot
+    if rotate:
+        matrix = numpy.matrix(numpy.identity(4))
+        if variantYrot:
+            matrix *= npRotate("y", -variantYrot)
+        if variantXrot:
+            matrix *= npRotate("x", -variantXrot)
+        if variantZrot:
+            matrix *= npRotate("z", -variantZrot)
+        xyzuvstc[:, :3] -= 0.5, 0.5, 0.5
+        xyz = xyzuvstc[:, :3].transpose()
+        xyzuvstc[:, :3] = (matrix[:3, :3] * xyz).transpose()
+        xyzuvstc[:, :3] += 0.5, 0.5, 0.5
 
 def npRotate(axis, angle, rescale=False):
     # ( xx(1-c)+c	xy(1-c)-zs  xz(1-c)+ys	 0  )
