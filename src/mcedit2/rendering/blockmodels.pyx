@@ -281,17 +281,21 @@ cdef class BlockModels(object):
     def cookQuads(self, textureAtlas):
         if self.cooked:
             return
+
         log.info("Cooking quads for %d models...", len(self.modelQuads))
         cookedModels = {}
         cdef int l, t, w, h
         cdef int u1, u2, v1, v2
         cdef int uw, vh
+        cdef char dx, dy, dz
         cdef ModelQuadList modelQuads
         cdef ModelQuadList unknownBlockModel
         UNKNOWN_BLOCK = 'MCEDIT_UNKNOWN'
 
         cdef float[:] modelxyzuvstc, quadxyzuvstc
         cdef size_t i;
+
+        cdef dict texCoordsByName = textureAtlas.texCoordsByName
 
         for nameAndState, allQuads in self.modelQuads.iteritems():
             if nameAndState != UNKNOWN_BLOCK:
@@ -306,7 +310,7 @@ cdef class BlockModels(object):
             for i, (box, quadface, texture, uv, cullface, shade, rotation, textureRotation,
                  variantXrot, variantYrot, variantZrot, variantMatrix, tintcolor) in enumerate(allQuads):
 
-                l, t, w, h = textureAtlas.texCoordsByName[texture]
+                l, t, w, h = texCoordsByName[texture]
                 u1, v1, u2, v2 = uv
                 uw = (w * (u2 - u1)) / 16
                 vh = (w * (v2 - v1)) / 16  # w is assumed to be the height of a single frame in an animation xxxxx read .mcmeta
