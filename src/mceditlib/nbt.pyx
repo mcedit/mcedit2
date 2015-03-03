@@ -149,6 +149,13 @@ cdef class TAG_Value:
     def copy(self):
         return self.__class__(self.value, self.name)
 
+    def isList(self):
+        return False
+
+    def isCompound(self):
+        return False
+
+
 cdef class TAG_Byte(TAG_Value):
     cdef public char value
 
@@ -326,7 +333,7 @@ cdef class TAG_String(TAG_Value):
         save_string(self._value.encode('utf-8'), buf)
 
 
-cdef class _ID_List(TAG_Value):
+cdef class _TAG_List(TAG_Value):
     cdef public list value
     cdef public char list_type
 
@@ -398,12 +405,15 @@ cdef class _ID_List(TAG_Value):
                                                                                                    list_type))
             save_tag_value(subtag, buf)
 
+    def isList(self):
+        return True
 
-class TAG_List(_ID_List, collections.MutableSequence):
+
+class TAG_List(_TAG_List, collections.MutableSequence):
     pass
 
 
-cdef class _ID_Compound(TAG_Value):
+cdef class _TAG_Compound(TAG_Value):
     cdef public object value
 
     def __init__(self, value=None, name=None):
@@ -498,7 +508,10 @@ cdef class _ID_Compound(TAG_Value):
         else:
             filename_or_buf.write(data)
 
-class TAG_Compound(_ID_Compound, collections.MutableMapping):
+    def isCompound(self):
+        return True
+
+class TAG_Compound(_TAG_Compound, collections.MutableMapping):
     pass
 
 
@@ -633,7 +646,7 @@ cdef TAG_Double load_double(load_ctx ctx):
 
 cdef load_compound(load_ctx ctx):
     cdef char tagID
-    cdef _ID_Compound root_tag = TAG_Compound()
+    cdef _TAG_Compound root_tag = TAG_Compound()
     cdef TAG_Value tag
     while True:
         tagID = read(ctx, 1)[0]
@@ -658,7 +671,7 @@ cdef load_list(load_ctx ctx):
     cdef int length = ptr[0]
     swab(&length, 4)
 
-    cdef _ID_List tag = TAG_List(list_type=list_type)
+    cdef _TAG_List tag = TAG_List(list_type=list_type)
     cdef list val = tag.value
     cdef int i
     for i in range(length):
@@ -876,10 +889,10 @@ cdef void save_tag_value(TAG_Value tag, object buf):
         (<TAG_String> tag).save_value(buf)
 
     if tagID == _ID_LIST:
-        (<_ID_List> tag).save_value(buf)
+        (<_TAG_List> tag).save_value(buf)
 
     if tagID == _ID_COMPOUND:
-        (<_ID_Compound> tag).save_value(buf)
+        (<_TAG_Compound> tag).save_value(buf)
 
     if tagID == _ID_INT_ARRAY:
         (<TAG_Int_Array> tag).save_value(buf)
