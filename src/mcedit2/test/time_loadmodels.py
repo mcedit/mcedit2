@@ -18,12 +18,12 @@ class o(object):
 
 
 def main():
-    obj = o()
     filename =  "C:\Users\Rio\AppData\Roaming\.minecraft\saves\New World1_8"
     worldEditor = WorldEditor(filename, readonly=True)
     dim = worldEditor.getDimension()
     positions = list(dim.chunkPositions())
 
+    minecraftinstall.listInstalls()
     install = minecraftinstall.getDefaultInstall()
     loader = install.getResourceLoader(install.findVersion1_8(), None)
     def loadModels():
