@@ -213,8 +213,9 @@ cdef class BlockModels(object):
                     b = blockColor & 0xff
                     blockColor = r, g, b
 
+                variantMatrix = variantRotation(variantXrot, variantYrot, variantZrot)
                 for element in allElements:
-                    quads = self.buildBoxQuads(element, nameAndState, textureVars, variantXrot, variantYrot, variantZrot, blockColor)
+                    quads = self.buildBoxQuads(element, nameAndState, textureVars, variantXrot, variantYrot, variantZrot, variantMatrix, blockColor)
                     allQuads.extend(quads)
 
 
@@ -227,7 +228,7 @@ cdef class BlockModels(object):
                 raise
 
 
-    def buildBoxQuads(self, element, nameAndState, textureVars, variantXrot, variantYrot, variantZrot, blockColor):
+    def buildBoxQuads(self, element, nameAndState, textureVars, variantXrot, variantYrot, variantZrot, variantMatrix, blockColor):
         quads = []
         shade = element.get("shade", True)
         fromPoint = Vector(*element["from"])
@@ -235,6 +236,7 @@ cdef class BlockModels(object):
         fromPoint /= 16.
         toPoint /= 16.
         box = FloatBox(fromPoint, maximum=toPoint)
+
         for face, info in element["faces"].iteritems():
             face = facesByCardinal[face]
             texture = info["texture"]
@@ -268,7 +270,7 @@ cdef class BlockModels(object):
             quads.append((box, face,
                     texture, uv, cullface,
                     shade, element.get("rotation"), info.get("rotation"),
-                    variantXrot, variantYrot, variantZrot, tintcolor))
+                    variantXrot, variantYrot, variantZrot, variantMatrix, tintcolor))
 
         return quads
 
@@ -301,7 +303,7 @@ cdef class BlockModels(object):
             modelQuads.quads = <ModelQuad *>malloc(modelQuads.count * sizeof(ModelQuad))
 
             for i, (box, quadface, texture, uv, cullface, shade, rotation, textureRotation,
-                 variantXrot, variantYrot, variantZrot, tintcolor) in enumerate(allQuads):
+                 variantXrot, variantYrot, variantZrot, variantMatrix, tintcolor) in enumerate(allQuads):
 
                 l, t, w, h = textureAtlas.texCoordsByName[texture]
                 u1, v1, u2, v2 = uv
@@ -334,7 +336,7 @@ cdef class BlockModels(object):
                     if variantYrot:
                         cullface = rotateFace(cullface, 1, variantYrot)
 
-                rotateVertices(rotation, variantXrot, variantYrot, variantZrot, xyzuvstc)
+                rotateVertices(rotation, variantMatrix, xyzuvstc)
 
                 rgba = xyzuvstc.view('uint8')[:, 28:]
                 if shade:
@@ -463,7 +465,8 @@ def rotateFace(face, axis, degrees):
     return rots[idx]
 
 
-def rotateVertices(rotation, variantXrot, variantYrot, variantZrot, xyzuvstc):
+cdef rotateVertices(rotation, numpy.ndarray variantMatrix, numpy.ndarray[ndim=2,dtype=float] xyzuvstc):
+
     if rotation is not None:
         origin = rotation["origin"]
         axis = rotation["axis"]
@@ -478,8 +481,17 @@ def rotateVertices(rotation, variantXrot, variantYrot, variantZrot, xyzuvstc):
         xyzuvstc[:, :3] = (matrix[:3, :3] * xyz).transpose()
         xyzuvstc[:, :3] += origin
 
-    rotate = variantXrot or variantYrot or variantZrot
-    if rotate:
+    if variantMatrix is not None:
+        xyzuvstc[:, :3] -= 0.5
+
+        xyz = xyzuvstc[:, :3].transpose()
+        xyzuvstc[:, :3] = (variantMatrix[:3, :3] * xyz).transpose()
+
+        xyzuvstc[:, :3] += 0.5
+
+
+cdef variantRotation(variantXrot, variantYrot, variantZrot):
+    if variantXrot or variantYrot or variantZrot:
         matrix = numpy.matrix(numpy.identity(4))
         if variantYrot:
             matrix *= npRotate("y", -variantYrot)
@@ -487,10 +499,7 @@ def rotateVertices(rotation, variantXrot, variantYrot, variantZrot, xyzuvstc):
             matrix *= npRotate("x", -variantXrot)
         if variantZrot:
             matrix *= npRotate("z", -variantZrot)
-        xyzuvstc[:, :3] -= 0.5, 0.5, 0.5
-        xyz = xyzuvstc[:, :3].transpose()
-        xyzuvstc[:, :3] = (matrix[:3, :3] * xyz).transpose()
-        xyzuvstc[:, :3] += 0.5, 0.5, 0.5
+        return matrix
 
 def npRotate(axis, angle, rescale=False):
     # ( xx(1-c)+c	xy(1-c)-zs  xz(1-c)+ys	 0  )
