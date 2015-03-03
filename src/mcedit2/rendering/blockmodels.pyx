@@ -17,6 +17,7 @@ from mcedit2.resourceloader import ResourceNotFound
 
 from mceditlib import faces
 from mceditlib.blocktypes import BlockType
+from mceditlib.cachefunc import lru_cache
 from mceditlib.geometry import Vector
 from mceditlib.selection import FloatBox, BoundingBox
 
@@ -501,6 +502,7 @@ cdef variantRotation(variantXrot, variantYrot, variantZrot):
             matrix *= npRotate("z", -variantZrot)
         return matrix
 
+@lru_cache()
 def npRotate(axis, angle, rescale=False):
     # ( xx(1-c)+c	xy(1-c)-zs  xz(1-c)+ys	 0  )
     # | yx(1-c)+zs	yy(1-c)+c   yz(1-c)-xs	 0  |
