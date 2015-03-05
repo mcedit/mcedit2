@@ -8,18 +8,17 @@ import logging
 import math
 import itertools
 
-import numpy
-cimport numpy
+import numpy as np
+cimport numpy as cnp
 
-from cpython cimport array
-from array import array
+cnp.import_array()
+
 from mcedit2.resourceloader import ResourceNotFound
 
-from mceditlib import faces
 from mceditlib.blocktypes import BlockType
 from mceditlib.cachefunc import lru_cache
 from mceditlib.geometry import Vector
-from mceditlib.selection import FloatBox, BoundingBox
+from mceditlib.selection import FloatBox
 
 from libc.stdlib cimport malloc, free
 from libc.string cimport memset
@@ -34,6 +33,43 @@ cdef struct ModelQuad:
 cdef struct ModelQuadList:
     int count
     ModelQuad *quads
+
+cdef class FaceInfo(object):
+    cdef:
+        object box
+        object face
+        unicode texture
+        list uv
+        object cullface
+        char shade
+        float ox, oy, oz
+        cnp.ndarray elementMatrix, variantMatrix
+        int textureRotation
+        int variantXrot, variantYrot, variantZrot
+        object tintcolor
+
+    def __init__(self, box, face,
+                 texture, uv, cullface,
+                 shade, ox, oy, oz, elementMatrix, textureRotation,
+                 variantXrot, variantYrot, variantZrot, variantMatrix, tintcolor):
+        self.box = box
+        self.face = face
+        self.texture = texture
+        self.uv = uv
+        self.cullface = cullface
+        self.shade = shade
+        self.ox = ox
+        self.oy = oy
+        self.oz = oz
+        self.elementMatrix = elementMatrix
+        self.textureRotation = textureRotation
+        self.variantXrot = variantXrot
+        self.variantYrot = variantYrot
+        self.variantZrot = variantZrot
+        self.variantMatrix = variantMatrix
+        self.tintcolor = tintcolor
+
+
 
 cdef class BlockModels(object):
 
@@ -238,6 +274,7 @@ cdef class BlockModels(object):
         fromPoint /= 16.
         toPoint /= 16.
         box = FloatBox(fromPoint, maximum=toPoint)
+        ox, oy, oz, elementMatrix = elementRotation(element.get("rotation"))
 
         for face, info in element["faces"].iteritems():
             face = facesByCardinal[face]
@@ -269,9 +306,9 @@ cdef class BlockModels(object):
             self.firstTextures.setdefault(nameAndState, texture)
             self._textureNames.add(texture)
 
-            quads.append((box, face,
+            quads.append(FaceInfo(box, face,
                     texture, uv, cullface,
-                    shade, element.get("rotation"), info.get("rotation"),
+                    shade, ox, oy, oz, elementMatrix, info.get("rotation", 0),
                     variantXrot, variantYrot, variantZrot, variantMatrix, tintcolor))
 
         return quads
@@ -285,10 +322,10 @@ cdef class BlockModels(object):
 
         log.info("Cooking quads for %d models...", len(self.modelQuads))
         cookedModels = {}
+        cdef short ID, meta
         cdef int l, t, w, h
         cdef int u1, u2, v1, v2
         cdef int uw, vh
-        cdef char dx, dy, dz
         cdef ModelQuadList modelQuads
         cdef ModelQuadList unknownBlockModel
         UNKNOWN_BLOCK = u'MCEDIT_UNKNOWN'
@@ -297,6 +334,8 @@ cdef class BlockModels(object):
         cdef size_t i;
 
         cdef dict texCoordsByName = textureAtlas.texCoordsByName
+        cdef FaceInfo faceInfo
+        cdef short * vec
 
         for nameAndState, allQuads in self.modelQuads.iteritems():
             if nameAndState != UNKNOWN_BLOCK:
@@ -308,11 +347,10 @@ cdef class BlockModels(object):
             modelQuads.count = len(allQuads)
             modelQuads.quads = <ModelQuad *>malloc(modelQuads.count * sizeof(ModelQuad))
 
-            for i, (box, quadface, texture, uv, cullface, shade, rotation, textureRotation,
-                 variantXrot, variantYrot, variantZrot, variantMatrix, tintcolor) in enumerate(allQuads):
+            for i, faceInfo in enumerate(allQuads):
 
-                l, t, w, h = texCoordsByName[texture]
-                u1, v1, u2, v2 = uv
+                l, t, w, h = texCoordsByName[faceInfo.texture]
+                u1, v1, u2, v2 = faceInfo.uv
                 uw = (w * (u2 - u1)) / 16
                 vh = (w * (v2 - v1)) / 16  # w is assumed to be the height of a single frame in an animation xxxxx read .mcmeta
                 u1 += l
@@ -323,34 +361,36 @@ cdef class BlockModels(object):
                 v2 = v1 - vh
 
                 uv = (u1, v1, u2, v2)
-
-                xyzuvstc = getBlockFaceVertices(box, quadface, uv, textureRotation)
+                quadface = faceInfo.face
+                cullface = faceInfo.cullface
+                xyzuvstc = getBlockFaceVertices(faceInfo.box, quadface, uv, faceInfo.textureRotation)
                 xyzuvstc.shape = 4, 8
 
-                if variantZrot:
-                    quadface = rotateFace(quadface, 2, variantZrot)
-                if variantXrot:
-                    quadface = rotateFace(quadface, 0, variantXrot)
-                if variantYrot:
-                    quadface = rotateFace(quadface, 1, variantYrot)
+                if faceInfo.variantZrot:
+                    quadface = rotateFace(quadface, 2, faceInfo.variantZrot)
+                if faceInfo.variantXrot:
+                    quadface = rotateFace(quadface, 0, faceInfo.variantXrot)
+                if faceInfo.variantYrot:
+                    quadface = rotateFace(quadface, 1, faceInfo.variantYrot)
                 if cullface:
                     cullface = facesByCardinal[cullface]
-                    if variantZrot:
-                        cullface = rotateFace(cullface, 2, variantZrot)
-                    if variantXrot:
-                        cullface = rotateFace(cullface, 0, variantXrot)
-                    if variantYrot:
-                        cullface = rotateFace(cullface, 1, variantYrot)
+                    if faceInfo.variantZrot:
+                        cullface = rotateFace(cullface, 2, faceInfo.variantZrot)
+                    if faceInfo.variantXrot:
+                        cullface = rotateFace(cullface, 0, faceInfo.variantXrot)
+                    if faceInfo.variantYrot:
+                        cullface = rotateFace(cullface, 1, faceInfo.variantYrot)
 
-                rotateVertices(rotation, variantMatrix, xyzuvstc)
+                applyRotations(faceInfo.ox, faceInfo.oy, faceInfo.oz, faceInfo.elementMatrix, faceInfo.variantMatrix, xyzuvstc)
 
                 rgba = xyzuvstc.view('uint8')[:, 28:]
-                if shade:
+                if faceInfo.shade:
                     rgba[:] = faceShades[quadface]
                 else:
                     rgba[:] = 0xff
 
-                if tintcolor is not None:
+                if faceInfo.tintcolor is not None:
+                    tintcolor = faceInfo.tintcolor
                     rgba[..., 0] = (tintcolor[0] * int(rgba[0, 0])) >> 8
                     rgba[..., 1] = (tintcolor[1] * int(rgba[0, 1])) >> 8
                     rgba[..., 2] = (tintcolor[2] * int(rgba[0, 2])) >> 8
@@ -363,10 +403,10 @@ cdef class BlockModels(object):
                 quadxyzuvstc[:] = modelxyzuvstc[:]
                 if cullface is not None:
                     modelQuads.quads[i].cullface[0] = 1
-                    dx, dy, dz = cullface.vector
-                    modelQuads.quads[i].cullface[1] = dx
-                    modelQuads.quads[i].cullface[2] = dy
-                    modelQuads.quads[i].cullface[3] = dz
+                    vec = _faceVector(cullface)
+                    modelQuads.quads[i].cullface[1] = vec[0]
+                    modelQuads.quads[i].cullface[2] = vec[1]
+                    modelQuads.quads[i].cullface[3] = vec[2]
                 else:
                     modelQuads.quads[i].cullface[0] = 0
                     modelQuads.quads[i].cullface[1] = 0
@@ -374,11 +414,11 @@ cdef class BlockModels(object):
                     modelQuads.quads[i].cullface[3] = 0
 
 
-                dx, dy, dz = quadface.vector
+                vec = _faceVector(quadface)
                 modelQuads.quads[i].quadface[0] = int(quadface)
-                modelQuads.quads[i].quadface[1] = dx
-                modelQuads.quads[i].quadface[2] = dy
-                modelQuads.quads[i].quadface[3] = dz
+                modelQuads.quads[i].quadface[1] = vec[0]
+                modelQuads.quads[i].quadface[2] = vec[1]
+                modelQuads.quads[i].quadface[3] = vec[2]
 
             # cookedModels[nameAndState] = cookedQuads
             if nameAndState == UNKNOWN_BLOCK:
@@ -399,7 +439,8 @@ cdef class BlockModels(object):
     def cookFluidQuads(self):
         cdef ModelQuadList * modelQuads
         cdef float[:] quadVerts, modelQuadVerts
-
+        cdef short * fv
+        cdef short dx, dy, dz
         for filled in range(9):
             box = FloatBox((0, 0, 0), (1, ((8 - filled) / 9.0) if filled < 8 else 1.0, 1))
 
@@ -407,16 +448,21 @@ cdef class BlockModels(object):
             modelQuads.count = 6
             modelQuads.quads = <ModelQuad *>malloc(6 * sizeof(ModelQuad))
 
-            for face in faces.allFaces:
+            for face in range(6):
                 modelQuads.quads[face].cullface[0] = 0
 
-                dx, dy, dz = face.vector
+                fv = _faceVector(face)
+                dx = fv[0]
+                dy = fv[1]
+                dz = fv[2]
+
                 modelQuads.quads[face].quadface[0] = <int>face
                 modelQuads.quads[face].quadface[1] = dx
                 modelQuads.quads[face].quadface[2] = dy
                 modelQuads.quads[face].quadface[3] = dz
 
                 varray = getBlockFaceVertices(box, face, (0, 0, 16, 16), 0)
+                varray.shape = 4, 8
                 varray.view('uint8')[:, 28:] = faceShades[face]
 
                 varray.shape = 32
@@ -435,29 +481,71 @@ cdef class BlockModels(object):
     #         xyzuvstc, cullface, quadface = cookedQuads[i]
     #
 
+FaceXIncreasing = FaceEast = 0
+FaceXDecreasing = FaceWest = 1
+FaceYIncreasing = FaceUp = 2
+FaceYDecreasing = FaceDown = 3
+FaceZIncreasing = FaceSouth = 4
+FaceZDecreasing = FaceNorth = 5
+MaxDirections = 6
+
+cdef short[18] faceDirections  # cython doesn't work right if the following initializer if this is a 'char'
+
+faceDirections[:] = [
+    1,  0,  0,
+    -1, 0,  0,
+    0,  1,  0,
+    0, -1,  0,
+    0,  0,  1,
+    0,  0, -1,
+]
+
+cdef short * _faceVector(char face):
+    return faceDirections + face * 3
+
 faceRotations = (
     (
-        faces.FaceYIncreasing,
-        faces.FaceZIncreasing,
-        faces.FaceYDecreasing,
-        faces.FaceZDecreasing,
+        FaceYIncreasing,
+        FaceZIncreasing,
+        FaceYDecreasing,
+        FaceZDecreasing,
     ),
     (
-        faces.FaceXIncreasing,
-        faces.FaceZDecreasing,
-        faces.FaceXDecreasing,
-        faces.FaceZIncreasing,
+        FaceXIncreasing,
+        FaceZDecreasing,
+        FaceXDecreasing,
+        FaceZIncreasing,
     ),
     (
-        faces.FaceXIncreasing,
-        faces.FaceYIncreasing,
-        faces.FaceXDecreasing,
-        faces.FaceYDecreasing,
+        FaceXIncreasing,
+        FaceYIncreasing,
+        FaceXDecreasing,
+        FaceYDecreasing,
     ),
 
 )
 
-def rotateFace(face, axis, degrees):
+facesByCardinal = dict(
+    north=FaceNorth,
+    south=FaceSouth,
+    east=FaceEast,
+    west=FaceWest,
+    up=FaceUp,
+    down=FaceDown,
+)
+
+faceShades = {
+    FaceNorth: 0x99,
+    FaceSouth: 0x99,
+    FaceEast: 0xCC,
+    FaceWest: 0xCC,
+    FaceUp: 0xFF,
+    FaceDown: 0x77,
+}
+
+
+
+cdef rotateFace(face, int axis, int degrees):
     rots = faceRotations[axis]
     try:
         idx = rots.index(face)
@@ -470,42 +558,59 @@ def rotateFace(face, axis, degrees):
     idx %= 4
     return rots[idx]
 
-
-cdef rotateVertices(rotation, numpy.ndarray variantMatrix, numpy.ndarray[ndim=2,dtype=float] xyzuvstc):
-
-    if rotation is not None:
-        origin = rotation["origin"]
-        axis = rotation["axis"]
-        angle = rotation["angle"]
-        rescale = rotation.get("rescale", False)
-        matrix = npRotate(axis, angle, rescale)
-        ox, oy, oz = origin
-        origin = ox / 16., oy / 16., oz / 16.
-
-        xyzuvstc[:, :3] -= origin
-        xyz = xyzuvstc[:, :3].transpose()
-        xyzuvstc[:, :3] = (matrix[:3, :3] * xyz).transpose()
-        xyzuvstc[:, :3] += origin
+cdef applyRotations(float ox, float oy, float oz,
+                    cnp.ndarray[ndim=2,dtype=double] elementMatrix,
+                    cnp.ndarray[ndim=2,dtype=double] variantMatrix,
+                    cnp.ndarray[ndim=2,dtype=float] xyzuvstc):
+    cdef int i
+    cdef float x, y, z, nx, ny, nz
+    if elementMatrix is not None:
+        for i in range(4):
+            x = xyzuvstc[i, 0] - ox
+            y = xyzuvstc[i, 1] - oy
+            z = xyzuvstc[i, 2] - oz
+            nx = x * elementMatrix[0, 0] + y * elementMatrix[1, 0] + z * elementMatrix[2, 0]
+            ny = x * elementMatrix[0, 1] + y * elementMatrix[1, 1] + z * elementMatrix[2, 1]
+            nz = x * elementMatrix[0, 2] + y * elementMatrix[1, 2] + z * elementMatrix[2, 2]
+            xyzuvstc[i, 0] = nx + ox
+            xyzuvstc[i, 1] = ny + oy
+            xyzuvstc[i, 2] = nz + oz
 
     if variantMatrix is not None:
-        xyzuvstc[:, :3] -= 0.5
+        for i in range(4):
+            x = xyzuvstc[i, 0] - 0.5
+            y = xyzuvstc[i, 1] - 0.5
+            z = xyzuvstc[i, 2] - 0.5
+            nx = x * variantMatrix[0, 0] + y * variantMatrix[1, 0] + z * variantMatrix[2, 0]
+            ny = x * variantMatrix[0, 1] + y * variantMatrix[1, 1] + z * variantMatrix[2, 1]
+            nz = x * variantMatrix[0, 2] + y * variantMatrix[1, 2] + z * variantMatrix[2, 2]
+            xyzuvstc[i, 0] = nx + 0.5
+            xyzuvstc[i, 1] = ny + 0.5
+            xyzuvstc[i, 2] = nz + 0.5
 
-        xyz = xyzuvstc[:, :3].transpose()
-        xyzuvstc[:, :3] = (variantMatrix[:3, :3] * xyz).transpose()
+cdef elementRotation(dict rotation):
+    if rotation is None:
+        return 0, 0, 0, None
 
-        xyzuvstc[:, :3] += 0.5
+    origin = rotation["origin"]
+    axis = rotation["axis"]
+    angle = rotation["angle"]
+    rescale = rotation.get("rescale", False)
 
+    matrix = npRotate(axis, angle, rescale)
+    ox, oy, oz = origin
+    return ox / 16., oy / 16., oz / 16., matrix[:3, :3]
 
 cdef variantRotation(variantXrot, variantYrot, variantZrot):
     if variantXrot or variantYrot or variantZrot:
-        matrix = numpy.matrix(numpy.identity(4))
+        matrix = np.matrix(np.identity(4))
         if variantYrot:
             matrix *= npRotate("y", -variantYrot)
         if variantXrot:
             matrix *= npRotate("x", -variantXrot)
         if variantZrot:
             matrix *= npRotate("z", -variantZrot)
-        return matrix
+        return matrix[:3, :3]
 
 @lru_cache()
 def npRotate(axis, angle, rescale=False):
@@ -529,7 +634,7 @@ def npRotate(axis, angle, rescale=False):
 
     s = math.sin(math.radians(angle))
     c = math.cos(math.radians(angle))
-    rotate = numpy.matrix([[x*x*(1-c)+c,    x*y*(1-c)-z*s,  x*z*(1-c)+y*s,  0],
+    rotate = np.matrix([[x*x*(1-c)+c,    x*y*(1-c)-z*s,  x*z*(1-c)+y*s,  0],
                            [y*x*(1-c)+z*s,  y*y*(1-c)+c,    y*z*(1-c)-x*s,  0],
                            [x*z*(1-c)-y*s,  y*z*(1-c)+x*s,  z*z*(1-c)+c,    0],
                            [0,              0,              0,              1]])
@@ -537,33 +642,18 @@ def npRotate(axis, angle, rescale=False):
     return rotate
 
 
-facesByCardinal = dict(
-    north=faces.FaceNorth,
-    south=faces.FaceSouth,
-    east=faces.FaceEast,
-    west=faces.FaceWest,
-    up=faces.FaceUp,
-    down=faces.FaceDown,
-
-)
-
-faceShades = {
-    faces.FaceNorth: 0x99,
-    faces.FaceSouth: 0x99,
-    faces.FaceEast: 0xCC,
-    faces.FaceWest: 0xCC,
-    faces.FaceUp: 0xFF,
-    faces.FaceDown: 0x77,
-}
-
 
 cdef getBlockFaceVertices(box, face, tuple uv, textureRotation):
     cdef float x1, y1, z1, x2, y2, z2,
     cdef int u1, v1, u2, v2
+    cdef int roll
+    cdef cnp.ndarray[ndim=1,dtype=float] tc
+    cdef float[32] xyzuvstc
+
     x1, y1, z1 = box.origin
     x2, y2, z2 = box.maximum
     u1, v1, u2, v2 = uv
-    tc = [
+    texCoords = [
         (u1, v1),
         (u1, v2),
         (u2, v2),
@@ -572,60 +662,55 @@ cdef getBlockFaceVertices(box, face, tuple uv, textureRotation):
     if textureRotation:
         roll = textureRotation / 90
         roll %= 4
-        tc = tc[roll:] + tc[:roll]
-    tc = numpy.array(tc)
+        texCoords = texCoords[roll:] + texCoords[:roll]
+    tc = np.array(texCoords, dtype='f4').ravel()
 
-    if face == faces.FaceXDecreasing:
-        faceVertices = numpy.array(
-            (x1, y2, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x1, y1, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x1, y1, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x1, y2, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
-             ), dtype='f4')
+    if face == FaceXDecreasing:
+        xyzuvstc[:] = [x1, y2, z1, tc[0], tc[1], 0.5, 0.5, 0.0,
+                       x1, y1, z1, tc[2], tc[3], 0.5, 0.5, 0.0,
+                       x1, y1, z2, tc[4], tc[5], 0.5, 0.5, 0.0,
+                       x1, y2, z2, tc[6], tc[7], 0.5, 0.5, 0.0,
+        ]
 
-    elif face == faces.FaceXIncreasing:
-        faceVertices = numpy.array(
-            (x2, y2, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x2, y1, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x2, y1, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x2, y2, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
-             ), dtype='f4')
+    elif face == FaceXIncreasing:
+        xyzuvstc[:] = [x2, y2, z2, tc[0], tc[1], 0.5, 0.5, 0.0,
+                       x2, y1, z2, tc[2], tc[3], 0.5, 0.5, 0.0,
+                       x2, y1, z1, tc[4], tc[5], 0.5, 0.5, 0.0,
+                       x2, y2, z1, tc[6], tc[7], 0.5, 0.5, 0.0,
+        ]
 
-    elif face == faces.FaceYDecreasing:
-        faceVertices = numpy.array(
-            (x1, y1, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x1, y1, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x2, y1, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x2, y1, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
-             ), dtype='f4')
+    elif face == FaceYDecreasing:
+        xyzuvstc[:] = [x1, y1, z2, tc[0], tc[1], 0.5, 0.5, 0.0,
+                       x1, y1, z1, tc[2], tc[3], 0.5, 0.5, 0.0,
+                       x2, y1, z1, tc[4], tc[5], 0.5, 0.5, 0.0,
+                       x2, y1, z2, tc[6], tc[7], 0.5, 0.5, 0.0,
+        ]
 
-    elif face == faces.FaceYIncreasing:
-        faceVertices = numpy.array(
-            (x1, y2, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x1, y2, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x2, y2, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x2, y2, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
-             ), dtype='f4')
+    elif face == FaceYIncreasing:
+        xyzuvstc[:] = [x1, y2, z1, tc[0], tc[1], 0.5, 0.5, 0.0,
+                       x1, y2, z2, tc[2], tc[3], 0.5, 0.5, 0.0,
+                       x2, y2, z2, tc[4], tc[5], 0.5, 0.5, 0.0,
+                       x2, y2, z1, tc[6], tc[7], 0.5, 0.5, 0.0,
+        ]
 
-    elif face == faces.FaceZDecreasing:
-        faceVertices = numpy.array(
-            (x2, y2, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x2, y1, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x1, y1, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x1, y2, z1, 0.0, 0.0, 0.5, 0.5, 0.0,
-             ), dtype='f4')
+    elif face == FaceZDecreasing:
+        xyzuvstc[:] = [x2, y2, z1, tc[0], tc[1], 0.5, 0.5, 0.0,
+                       x2, y1, z1, tc[2], tc[3], 0.5, 0.5, 0.0,
+                       x1, y1, z1, tc[4], tc[5], 0.5, 0.5, 0.0,
+                       x1, y2, z1, tc[6], tc[7], 0.5, 0.5, 0.0,
+        ]
 
-    elif face == faces.FaceZIncreasing:
-        faceVertices = numpy.array(
-            (x1, y2, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x1, y1, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x2, y1, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
-             x2, y2, z2, 0.0, 0.0, 0.5, 0.5, 0.0,
-             ), dtype='f4')
+    elif face == FaceZIncreasing:
+        xyzuvstc[:] = [x1, y2, z2, tc[0], tc[1], 0.5, 0.5, 0.0,
+                       x1, y1, z2, tc[2], tc[3], 0.5, 0.5, 0.0,
+                       x2, y1, z2, tc[4], tc[5], 0.5, 0.5, 0.0,
+                       x2, y2, z2, tc[6], tc[7], 0.5, 0.5, 0.0,
+        ]
     else:
         raise ValueError("Unknown face %s" % face)
 
-    faceVertices.shape = 4, 8
-    faceVertices[:, 3:5] = tc
+    cdef cnp.npy_intp shape = 32
 
+    faceVertices = cnp.PyArray_EMPTY(1, &shape, cnp.NPY_FLOAT, 0)
+    faceVertices[:] = <float[:]>xyzuvstc
     return faceVertices
