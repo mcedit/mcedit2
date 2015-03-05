@@ -266,20 +266,29 @@ cdef class BlockModels(object):
                 raise
 
 
-    def buildBoxQuads(self, element, nameAndState, textureVars, variantXrot, variantYrot, variantZrot, variantMatrix, blockColor):
+    def buildBoxQuads(self, dict element, unicode nameAndState, dict textureVars,
+                       short variantXrot, short variantYrot, short variantZrot,
+                       cnp.ndarray variantMatrix, tuple blockColor):
         quads = []
         shade = element.get("shade", True)
-        fromPoint = Vector(*element["from"])
-        toPoint = Vector(*element["to"])
-        fromPoint /= 16.
-        toPoint /= 16.
-        box = FloatBox(fromPoint, maximum=toPoint)
+
+        cdef float ox, oy, oz
         ox, oy, oz, elementMatrix = elementRotation(element.get("rotation"))
-        cdef float x1, y1, z1
-        x1, y1, z1 = box.origin
-        cdef float x2, y2, z2
-        x2, y2, z2 = box.maximum
+        cdef float x1, y1, z1, x2, y2, z2
+        x1, y1, z1 = element["from"]
+        x2, y2, z2 = element["to"]
+
+        x1 /= 16.
+        y1 /= 16.
+        z1 /= 16.
+        x2 /= 16.
+        y2 /= 16.
+        z2 /= 16.
+
         cdef short u1, v1, u2, v2
+        cdef unicode texture, lasttexvar
+        cdef short i
+
 
         for face, info in element["faces"].iteritems():
             face = facesByCardinal[face]
@@ -288,7 +297,7 @@ cdef class BlockModels(object):
 
             u1, v1, u2, v2 = info.get("uv", [0, 0, 16, 16])
 
-            lastvar = texture
+            lasttexvar = texture
 
             tintindex = info.get("tintindex")
             if tintindex is not None:
@@ -299,9 +308,9 @@ cdef class BlockModels(object):
             # resolve texture variables
             for i in range(30):
                 if texture is None:
-                    raise ValueError("Texture variable %s is not assigned." % lastvar)
-                elif texture[0] == "#":
-                    lastvar = texture
+                    raise ValueError("Texture variable %s is not assigned." % lasttexvar)
+                elif texture[0] == u"#":
+                    lasttexvar = texture
                     texture = textureVars[texture[1:]]
                 else:
                     break
