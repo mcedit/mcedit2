@@ -134,15 +134,26 @@ cdef class BlockModels(object):
         missingnoProxy.color = 0xFFFFFF
         log.info("Loading block models...")
 
+        cdef dict modelDict, textures, textureVars
+        cdef list elements
+        cdef int i
+        cdef short variantXrot, variantYrot, variantZrot
+
+
         for i, block in enumerate(list(blocktypes) + [missingnoProxy]):
             if i % 100 == 0:
                 log.info("Loading block models %s/%s", i, len(blocktypes))
 
             if block.renderType != 3:  # only rendertype 3 uses block models
                 continue
-            nameAndState = block.internalName + block.blockState
+
+            internalName = block.internalName
+            blockState = block.blockState
+            resourcePath = block.resourcePath
+
+            nameAndState = internalName + blockState
             try:
-                statesJson = self._getBlockState(block.resourcePath)
+                statesJson = self._getBlockState(resourcePath)
             except ResourceNotFound as e:
                 log.warn("Could not get blockstates resource for %s, skipping... (%r)", block, e)
                 continue
@@ -170,9 +181,9 @@ cdef class BlockModels(object):
             #     "shape=north_east": { "model": "normal_rail_curved", "y": 270 }
             # }
 
-            variantBlockState = block.resourceVariant
-            log.debug("Loading %s#%s for %s", block.resourcePath, block.resourceVariant, block)
-            variantDict = variants[variantBlockState]
+            resourceVariant = block.resourceVariant
+            log.debug("Loading %s#%s for %s", resourcePath, resourceVariant, block)
+            variantDict = variants[resourceVariant]
             if isinstance(variantDict, list):
                 variantDict = variantDict[0]  # do the random pick thing later, if at all
             modelName = variantDict['model']
@@ -242,7 +253,7 @@ cdef class BlockModels(object):
                 # quads.
                 allQuads = []
 
-                if block.internalName == "minecraft:redstone_wire":
+                if internalName == "minecraft:redstone_wire":
                     blockColor = (0xff, 0x33, 0x00)
                 else:
                     blockColor = block.color
@@ -258,7 +269,7 @@ cdef class BlockModels(object):
 
 
 
-                self.modelQuads[block.internalName + block.blockState] = allQuads
+                self.modelQuads[internalName + blockState] = allQuads
 
             except Exception as e:
                 log.error("Failed to parse variant of block %s\nelements:\n%s\ntextures:\n%s", nameAndState,
