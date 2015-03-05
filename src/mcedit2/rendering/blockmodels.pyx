@@ -299,14 +299,20 @@ cdef class BlockModels(object):
         cdef short u1, v1, u2, v2
         cdef unicode texture, lasttexvar
         cdef short i
-
+        cdef dict info
 
         for face, info in element["faces"].iteritems():
+            assert info is not None
+
             face = facesByCardinal[face]
             texture = info["texture"]
             cullface = info.get("cullface")
-
-            u1, v1, u2, v2 = info.get("uv", [0, 0, 16, 16])
+            cullface = facesByCardinal[cullface] if cullface is not None else -1
+            uv = info.get("uv")
+            if uv is not None:
+                u1, v1, u2, v2 = uv
+            else:
+                u1, v1, u2, v2 = 0, 0, 16, 16
 
             lasttexvar = texture
 
@@ -332,7 +338,7 @@ cdef class BlockModels(object):
             self._textureNames.add(texture)
 
             quads.append(FaceInfo(x1, y1, z1, x2, y2, z2, face,
-                    texture, u1, v1, u2, v2, facesByCardinal[cullface] if cullface is not None else -1,
+                    texture, u1, v1, u2, v2, cullface,
                     shade, ox, oy, oz, elementMatrix, info.get("rotation", 0),
                     variantXrot, variantYrot, variantZrot, variantMatrix, tintcolor))
 
