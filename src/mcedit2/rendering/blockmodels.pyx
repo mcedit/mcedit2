@@ -379,19 +379,19 @@ cdef class BlockModels(object):
                                      faceInfo.x2, faceInfo.y2, faceInfo.z2,
                                      quadface, u1, v1, u2, v2, faceInfo.textureRotation)
 
+                if faceInfo.variantYrot:
+                    quadface = rotateFace(quadface, 1, faceInfo.variantYrot)
                 if faceInfo.variantZrot:
                     quadface = rotateFace(quadface, 2, faceInfo.variantZrot)
                 if faceInfo.variantXrot:
                     quadface = rotateFace(quadface, 0, faceInfo.variantXrot)
-                if faceInfo.variantYrot:
-                    quadface = rotateFace(quadface, 1, faceInfo.variantYrot)
                 if cullface != -1:
+                    if faceInfo.variantYrot:
+                        cullface = rotateFace(cullface, 1, faceInfo.variantYrot)
                     if faceInfo.variantZrot:
                         cullface = rotateFace(cullface, 2, faceInfo.variantZrot)
                     if faceInfo.variantXrot:
                         cullface = rotateFace(cullface, 0, faceInfo.variantXrot)
-                    if faceInfo.variantYrot:
-                        cullface = rotateFace(cullface, 1, faceInfo.variantYrot)
 
                 applyRotations(faceInfo.ox, faceInfo.oy, faceInfo.oz, faceInfo.elementMatrix, faceInfo.variantMatrix, xyzuvstc)
 
@@ -525,9 +525,9 @@ faceRotations = (
     ),
     (
         FaceXIncreasing,
-        FaceZDecreasing,
-        FaceXDecreasing,
         FaceZIncreasing,
+        FaceXDecreasing,
+        FaceZDecreasing,
     ),
     (
         FaceXIncreasing,
@@ -539,12 +539,12 @@ faceRotations = (
 )
 
 facesByCardinal = dict(
-    north=FaceNorth,
-    south=FaceSouth,
     east=FaceEast,
     west=FaceWest,
     up=FaceUp,
     down=FaceDown,
+    south=FaceSouth,
+    north=FaceNorth,
 )
 
 cdef short[6] faceShades
