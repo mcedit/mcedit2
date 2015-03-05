@@ -38,11 +38,11 @@ cdef struct ModelQuadList:
 cdef class BlockModels(object):
 
     def _getBlockModel(self, modelName):
-        if modelName == "block/MCEDIT_UNKNOWN":
+        if modelName == u"block/MCEDIT_UNKNOWN":
             return {
-                "parent": "block/cube_all",
-                "textures": {
-                    "all": "MCEDIT_UNKNOWN"
+                u"parent": u"block/cube_all",
+                u"textures": {
+                    u"all": u"MCEDIT_UNKNOWN"
                 }
             }
         model = self.modelBlockJsons.get(modelName)
@@ -52,11 +52,11 @@ cdef class BlockModels(object):
         return model
 
     def _getBlockState(self, stateName):
-        if stateName == "MCEDIT_UNKNOWN":
+        if stateName == u"MCEDIT_UNKNOWN":
             return {
-                "variants": {
-                    "MCEDIT_UNKNOWN": {
-                        "model": "MCEDIT_UNKNOWN",
+                u"variants": {
+                    u"MCEDIT_UNKNOWN": {
+                        u"model": u"MCEDIT_UNKNOWN",
                     }
                 }
             }
@@ -90,12 +90,13 @@ cdef class BlockModels(object):
         self.cooked = False
 
         missingnoProxy = BlockType(-1, -1, blocktypes)
-        missingnoProxy.internalName = "MCEDIT_UNKNOWN"
+        missingnoProxy.internalName = u"MCEDIT_UNKNOWN"
         missingnoProxy.blockState = ""
         missingnoProxy.renderType = 3
-        missingnoProxy.resourcePath = "MCEDIT_UNKNOWN"
-        missingnoProxy.resourceVariant = "MCEDIT_UNKNOWN"
+        missingnoProxy.resourcePath = u"MCEDIT_UNKNOWN"
+        missingnoProxy.resourceVariant = u"MCEDIT_UNKNOWN"
         missingnoProxy.color = 0xFFFFFF
+        log.info("Loading block models...")
 
         for i, block in enumerate(list(blocktypes) + [missingnoProxy]):
             if i % 100 == 0:
@@ -290,7 +291,7 @@ cdef class BlockModels(object):
         cdef char dx, dy, dz
         cdef ModelQuadList modelQuads
         cdef ModelQuadList unknownBlockModel
-        UNKNOWN_BLOCK = 'MCEDIT_UNKNOWN'
+        UNKNOWN_BLOCK = u'MCEDIT_UNKNOWN'
 
         cdef float[:] modelxyzuvstc, quadxyzuvstc
         cdef size_t i;
