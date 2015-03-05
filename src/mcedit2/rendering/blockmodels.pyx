@@ -343,6 +343,8 @@ cdef class BlockModels(object):
         cdef FaceInfo faceInfo
         cdef short * vec
 
+        cdef cnp.ndarray xyzuvstc = np.empty(shape=(4, 8), dtype='f4')
+
         for nameAndState, allQuads in self.modelQuads.iteritems():
             if nameAndState != UNKNOWN_BLOCK:
                 try:
@@ -372,10 +374,10 @@ cdef class BlockModels(object):
 
                 quadface = faceInfo.face
                 cullface = faceInfo.cullface
-                xyzuvstc = getBlockFaceVertices(faceInfo.x1, faceInfo.y1, faceInfo.z1,
+                getBlockFaceVertices(<float *>xyzuvstc.data,
+                                     faceInfo.x1, faceInfo.y1, faceInfo.z1,
                                      faceInfo.x2, faceInfo.y2, faceInfo.z2,
                                      quadface, u1, v1, u2, v2, faceInfo.textureRotation)
-                xyzuvstc.shape = 4, 8
 
                 if faceInfo.variantZrot:
                     quadface = rotateFace(quadface, 2, faceInfo.variantZrot)
@@ -405,11 +407,10 @@ cdef class BlockModels(object):
                     rgba[..., 1] = (tintcolor[1] * int(rgba[0, 1])) >> 8
                     rgba[..., 2] = (tintcolor[2] * int(rgba[0, 2])) >> 8
 
-                xyzuvstc.shape = 32  # flatten to store in ModelQuad.xyzuvstc
 
                 #cookedQuads.append((xyzuvstc, cullface, face))
                 quadxyzuvstc = modelQuads.quads[i].xyzuvstc
-                modelxyzuvstc = xyzuvstc
+                modelxyzuvstc = xyzuvstc.ravel()
                 quadxyzuvstc[:] = modelxyzuvstc[:]
                 if cullface != -1:
                     modelQuads.quads[i].cullface[0] = 1
@@ -451,6 +452,8 @@ cdef class BlockModels(object):
         cdef float[:] quadVerts, modelQuadVerts
         cdef short * fv
         cdef short dx, dy, dz
+        cdef cnp.ndarray varray = np.empty(shape=(4, 8), dtype='f4')
+
         for filled in range(9):
             box = FloatBox((0, 0, 0), (1, ((8 - filled) / 9.0) if filled < 8 else 1.0, 1))
 
@@ -471,15 +474,14 @@ cdef class BlockModels(object):
                 modelQuads.quads[face].quadface[2] = dy
                 modelQuads.quads[face].quadface[3] = dz
 
-                varray = getBlockFaceVertices(box.minx, box.miny, box.minz,
+                getBlockFaceVertices(<float *>varray.data,
+                                     box.minx, box.miny, box.minz,
                                      box.maxx, box.maxy, box.maxz,
                                      face, 0, 0, 16, 16, 0)
 
-                varray.shape = 4, 8
                 varray.view('uint8')[:, 28:] = faceShades[face]
 
-                varray.shape = 32
-                quadVerts = varray
+                quadVerts = varray.ravel()
                 modelQuadVerts = modelQuads.quads[face].xyzuvstc
                 modelQuadVerts[:] = quadVerts[:]
 
@@ -655,12 +657,12 @@ def npRotate(axis, angle, rescale=False):
 
 
 
-cdef getBlockFaceVertices(float x1, float y1, float z1,
-                                      float x2, float y2, float z2,
-                                      short face,
-                                      short u1, short v1, short u2, short v2, int textureRotation):
+cdef getBlockFaceVertices(float[] xyzuvstc,
+                          float x1, float y1, float z1,
+                          float x2, float y2, float z2,
+                          short face,
+                          short u1, short v1, short u2, short v2, int textureRotation):
     cdef int roll = 0
-    cdef float[32] xyzuvstc
 
     cdef float[8] tc
     if textureRotation:
@@ -722,8 +724,3 @@ cdef getBlockFaceVertices(float x1, float y1, float z1,
     else:
         raise ValueError("Unknown face %s" % face)
 
-    cdef cnp.npy_intp shape = 32
-
-    faceVertices = cnp.PyArray_EMPTY(1, &shape, cnp.NPY_FLOAT, 0)
-    faceVertices[:] = <float[:]>xyzuvstc
-    return faceVertices
