@@ -355,21 +355,21 @@ cdef class BlockModels(object):
         cookedModels = {}
         cdef short ID, meta
         cdef int l, t, w, h
-        cdef short u1, u2, v1, v2
+        cdef short u1, u2, v1, v2, tr, tg, tb
         cdef int uw, vh
-        cdef short quadface, cullface, shade
+        cdef short quadface, cullface,
+        cdef unsigned char shade
         cdef ModelQuadList modelQuads
         cdef ModelQuadList unknownBlockModel
+        cdef list allQuads
         UNKNOWN_BLOCK = u'MCEDIT_UNKNOWN'
 
-        cdef float[:] modelxyzuvstc, quadxyzuvstc
-        cdef size_t i;
+        cdef size_t i, j;
 
         cdef dict texCoordsByName = textureAtlas.texCoordsByName
         cdef FaceInfo faceInfo
         cdef short * vec
-
-        cdef cnp.ndarray xyzuvstc = np.empty(shape=(4, 8), dtype='f4')
+        cdef unsigned char * rgba
 
         for nameAndState, allQuads in self.modelQuads.iteritems():
             if nameAndState != UNKNOWN_BLOCK:
@@ -400,7 +400,7 @@ cdef class BlockModels(object):
 
                 quadface = faceInfo.face
                 cullface = faceInfo.cullface
-                getBlockFaceVertices(<float *>xyzuvstc.data,
+                getBlockFaceVertices(modelQuads.quads[i].xyzuvstc,
                                      faceInfo.x1, faceInfo.y1, faceInfo.z1,
                                      faceInfo.x2, faceInfo.y2, faceInfo.z2,
                                      quadface, u1, v1, u2, v2, faceInfo.textureRotation)
@@ -419,25 +419,36 @@ cdef class BlockModels(object):
                     if faceInfo.variantXrot:
                         cullface = rotateFace(cullface, 0, faceInfo.variantXrot)
 
-                applyRotations(faceInfo.ox, faceInfo.oy, faceInfo.oz, faceInfo.elementMatrix, faceInfo.variantMatrix, xyzuvstc)
+                applyRotations(faceInfo.ox, faceInfo.oy, faceInfo.oz,
+                               faceInfo.elementMatrix, faceInfo.variantMatrix,
+                               modelQuads.quads[i].xyzuvstc)
 
-                rgba = xyzuvstc.view('uint8')[:, 28:]
+                rgba = <unsigned char *>modelQuads.quads[i].xyzuvstc
                 if faceInfo.shade:
-                    rgba[:] = faceShades[quadface]
+                    shade = faceShades[quadface]
+                    for j in range(4):
+                        rgba[28 + 32*j + 0] = shade
+                        rgba[28 + 32*j + 1] = shade
+                        rgba[28 + 32*j + 2] = shade
+                        rgba[28 + 32*j + 3] = 0xff
+
                 else:
-                    rgba[:] = 0xff
+                    for j in range(4):
+                        rgba[28 + 32*j + 0] = 0xff
+                        rgba[28 + 32*j + 1] = 0xff
+                        rgba[28 + 32*j + 2] = 0xff
+                        rgba[28 + 32*j + 3] = 0xff
+
 
                 if faceInfo.tintcolor is not None:
-                    tintcolor = faceInfo.tintcolor
-                    rgba[..., 0] = (tintcolor[0] * int(rgba[0, 0])) >> 8
-                    rgba[..., 1] = (tintcolor[1] * int(rgba[0, 1])) >> 8
-                    rgba[..., 2] = (tintcolor[2] * int(rgba[0, 2])) >> 8
+                    tr, tg, tb = faceInfo.tintcolor
+                    for j in range(4):
+                        rgba[28 + 32*j + 0] = (tr * rgba[28 + 32*j + 0]) >> 8
+                        rgba[28 + 32*j + 1] = (tg * rgba[28 + 32*j + 1]) >> 8
+                        rgba[28 + 32*j + 2] = (tb * rgba[28 + 32*j + 2]) >> 8
 
 
                 #cookedQuads.append((xyzuvstc, cullface, face))
-                quadxyzuvstc = modelQuads.quads[i].xyzuvstc
-                modelxyzuvstc = xyzuvstc.ravel()
-                quadxyzuvstc[:] = modelxyzuvstc[:]
                 if cullface != -1:
                     modelQuads.quads[i].cullface[0] = 1
                     vec = _faceVector(cullface)
@@ -598,35 +609,35 @@ cdef short rotateFace(short face, short axis, int degrees):
     idx %= 4
     return rots[idx]
 
-cdef applyRotations(float ox, float oy, float oz,
-                    cnp.ndarray[ndim=2,dtype=double] elementMatrix,
-                    cnp.ndarray[ndim=2,dtype=double] variantMatrix,
-                    cnp.ndarray[ndim=2,dtype=float] xyzuvstc):
+cdef void applyRotations(float ox, float oy, float oz,
+                         cnp.ndarray[ndim=2, dtype=double] elementMatrix,
+                         cnp.ndarray[ndim=2, dtype=double] variantMatrix,
+                         float * xyzuvstc):
     cdef int i
     cdef float x, y, z, nx, ny, nz
     if elementMatrix is not None:
         for i in range(4):
-            x = xyzuvstc[i, 0] - ox
-            y = xyzuvstc[i, 1] - oy
-            z = xyzuvstc[i, 2] - oz
+            x = xyzuvstc[i*8 + 0] - ox
+            y = xyzuvstc[i*8 + 1] - oy
+            z = xyzuvstc[i*8 + 2] - oz
             nx = x * elementMatrix[0, 0] + y * elementMatrix[1, 0] + z * elementMatrix[2, 0]
             ny = x * elementMatrix[0, 1] + y * elementMatrix[1, 1] + z * elementMatrix[2, 1]
             nz = x * elementMatrix[0, 2] + y * elementMatrix[1, 2] + z * elementMatrix[2, 2]
-            xyzuvstc[i, 0] = nx + ox
-            xyzuvstc[i, 1] = ny + oy
-            xyzuvstc[i, 2] = nz + oz
+            xyzuvstc[i*8 + 0] = nx + ox
+            xyzuvstc[i*8 + 1] = ny + oy
+            xyzuvstc[i*8 + 2] = nz + oz
 
     if variantMatrix is not None:
         for i in range(4):
-            x = xyzuvstc[i, 0] - 0.5
-            y = xyzuvstc[i, 1] - 0.5
-            z = xyzuvstc[i, 2] - 0.5
+            x = xyzuvstc[i*8 + 0] - 0.5
+            y = xyzuvstc[i*8 + 1] - 0.5
+            z = xyzuvstc[i*8 + 2] - 0.5
             nx = x * variantMatrix[0, 0] + y * variantMatrix[1, 0] + z * variantMatrix[2, 0]
             ny = x * variantMatrix[0, 1] + y * variantMatrix[1, 1] + z * variantMatrix[2, 1]
             nz = x * variantMatrix[0, 2] + y * variantMatrix[1, 2] + z * variantMatrix[2, 2]
-            xyzuvstc[i, 0] = nx + 0.5
-            xyzuvstc[i, 1] = ny + 0.5
-            xyzuvstc[i, 2] = nz + 0.5
+            xyzuvstc[i*8 + 0] = nx + 0.5
+            xyzuvstc[i*8 + 1] = ny + 0.5
+            xyzuvstc[i*8 + 2] = nz + 0.5
 
 cdef elementRotation(dict rotation):
     if rotation is None:
@@ -683,11 +694,11 @@ def npRotate(axis, angle, rescale=False):
 
 
 
-cdef getBlockFaceVertices(float[] xyzuvstc,
-                          float x1, float y1, float z1,
-                          float x2, float y2, float z2,
-                          short face,
-                          short u1, short v1, short u2, short v2, int textureRotation):
+cdef void getBlockFaceVertices(float[] xyzuvstc,
+                               float x1, float y1, float z1,
+                               float x2, float y2, float z2,
+                               short face,
+                               short u1, short v1, short u2, short v2, int textureRotation):
     cdef int roll = 0
 
     cdef float[8] tc
