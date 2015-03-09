@@ -9,7 +9,6 @@ from PySide import QtGui, QtCore
 
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.editorcommands.fill import fillCommand
-from mcedit2.editorcommands.replace import replaceCommand
 from mcedit2.editortools import EditorTool
 from mcedit2.handles.boxhandle import BoxHandle
 from mcedit2.rendering import cubes
@@ -194,9 +193,6 @@ class SelectionTool(EditorTool):
         self.deleteEntitiesButton.clicked.connect(self.deleteEntities)
         self.fillButton = QtGui.QPushButton(self.tr("Fill"))
         self.fillButton.clicked.connect(self.fill)
-        self.replaceButton = QtGui.QPushButton(self.tr("Replace"))
-        self.replaceButton.clicked.connect(self.replace)
-
         self.toolWidget.setLayout(Column(self.coordInput,
                                          self.shapeInput,
                                          self.deselectButton,
@@ -204,7 +200,6 @@ class SelectionTool(EditorTool):
                                          self.deleteBlocksButton,
                                          self.deleteEntitiesButton,
                                          self.fillButton,
-                                         self.replaceButton,
                                          None))
 
         self.cursorNode = SelectionCursor()

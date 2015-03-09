@@ -8,6 +8,7 @@ from PySide.QtCore import Qt
 from mcedit2 import editortools
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.rendering.blockmodels import BlockModels
+from mcedit2.editorcommands.find_replace import FindReplaceDialog
 from mcedit2.editortools.select import SelectCommand
 from mcedit2.panels.player import PlayerPanel
 from mcedit2.util.dialogs import NotImplementedYet
@@ -132,6 +133,10 @@ class EditorSession(QtCore.QObject):
         self.actionClear = QtGui.QAction(self.tr("Clear"), self, triggered=self.clear, enabled=False)
         self.actionClear.setObjectName("actionClear")
 
+        self.actionFindReplace = QtGui.QAction(self.tr("Find/Replace"), self, triggered=self.findReplace, enabled=True)
+        self.actionFindReplace.setShortcut(QtGui.QKeySequence.Find)
+        self.actionFindReplace.setObjectName("actionFindReplace")
+
         undoAction = self.undoStack.createUndoAction(self.menuEdit)
         undoAction.setShortcut(QtGui.QKeySequence.Undo)
         redoAction = self.undoStack.createRedoAction(self.menuEdit)
@@ -152,6 +157,8 @@ class EditorSession(QtCore.QObject):
         self.actionPaste_Blocks.setShortcut(QtGui.QKeySequence("Ctrl+Shift+V"))
         self.actionPaste_Entities.setShortcut(QtGui.QKeySequence("Ctrl+Alt+V"))
         self.actionClear.setShortcut(QtGui.QKeySequence.Quit)
+        self.menuEdit.addSeparator()
+        self.menuEdit.addAction(self.actionFindReplace)
 
         self.menus.append(self.menuEdit)
 
@@ -305,6 +312,9 @@ class EditorSession(QtCore.QObject):
     def clear(self):
         self.selectionTool.deleteSelection()
 
+    def findReplace(self):
+        dialog = FindReplaceDialog(self)
+        dialog.exec_()
     # - Select -
 
     def selectAll(self):
