@@ -120,17 +120,29 @@ class EditorSession(QtCore.QObject):
 
         self.menuEdit = QtGui.QMenu(self.tr("Edit"))
         self.menuEdit.setObjectName("menuEdit")
+
         self.actionCut = QtGui.QAction(self.tr("Cut"), self, triggered=self.cut, enabled=False)
+        self.actionCut.setShortcut(QtGui.QKeySequence.Cut)
         self.actionCut.setObjectName("actionCut")
+
         self.actionCopy = QtGui.QAction(self.tr("Copy"), self, triggered=self.copy, enabled=False)
+        self.actionCopy.setShortcut(QtGui.QKeySequence.Copy)
         self.actionCopy.setObjectName("actionCopy")
+
         self.actionPaste = QtGui.QAction(self.tr("Paste"), self, triggered=self.paste, enabled=False)
+        self.actionPaste.setShortcut(QtGui.QKeySequence.Paste)
         self.actionPaste.setObjectName("actionPaste")
+
         self.actionPaste_Blocks = QtGui.QAction(self.tr("Paste Blocks"), self, triggered=self.pasteBlocks, enabled=False)
+        self.actionPaste_Blocks.setShortcut(QtGui.QKeySequence("Ctrl+Shift+V"))
         self.actionPaste_Blocks.setObjectName("actionPaste_Blocks")
+
         self.actionPaste_Entities = QtGui.QAction(self.tr("Paste Entities"), self, triggered=self.pasteEntities, enabled=False)
+        self.actionPaste_Entities.setShortcut(QtGui.QKeySequence("Ctrl+Alt+V"))
         self.actionPaste_Entities.setObjectName("actionPaste_Entities")
+
         self.actionClear = QtGui.QAction(self.tr("Clear"), self, triggered=self.clear, enabled=False)
+        self.actionClear.setShortcut(QtGui.QKeySequence.Delete)
         self.actionClear.setObjectName("actionClear")
 
         self.actionFindReplace = QtGui.QAction(self.tr("Find/Replace"), self, triggered=self.findReplace, enabled=True)
@@ -141,6 +153,7 @@ class EditorSession(QtCore.QObject):
         undoAction.setShortcut(QtGui.QKeySequence.Undo)
         redoAction = self.undoStack.createRedoAction(self.menuEdit)
         redoAction.setShortcut(QtGui.QKeySequence.Redo)
+
         self.menuEdit.addAction(undoAction)
         self.menuEdit.addAction(redoAction)
         self.menuEdit.addSeparator()
@@ -150,13 +163,6 @@ class EditorSession(QtCore.QObject):
         self.menuEdit.addAction(self.actionPaste_Blocks)
         self.menuEdit.addAction(self.actionPaste_Entities)
         self.menuEdit.addAction(self.actionClear)
-
-        self.actionCut.setShortcut(QtGui.QKeySequence.Cut)
-        self.actionCopy.setShortcut(QtGui.QKeySequence.Copy)
-        self.actionPaste.setShortcut(QtGui.QKeySequence.Paste)
-        self.actionPaste_Blocks.setShortcut(QtGui.QKeySequence("Ctrl+Shift+V"))
-        self.actionPaste_Entities.setShortcut(QtGui.QKeySequence("Ctrl+Alt+V"))
-        self.actionClear.setShortcut(QtGui.QKeySequence.Quit)
         self.menuEdit.addSeparator()
         self.menuEdit.addAction(self.actionFindReplace)
 
@@ -315,6 +321,7 @@ class EditorSession(QtCore.QObject):
     def findReplace(self):
         dialog = FindReplaceDialog(self)
         dialog.exec_()
+
     # - Select -
 
     def selectAll(self):
