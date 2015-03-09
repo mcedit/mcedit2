@@ -415,22 +415,6 @@ class BlockTypePicker(QtGui.QDialog):
         self.filterModel.setSearchString(val)
 
 
-_sharedPicker = None
-_sharedMultiPicker = None
-
-
-def getBlockTypePicker(multipleSelect):
-    global _sharedPicker, _sharedMultiPicker
-    if multipleSelect:
-        if _sharedMultiPicker is None:
-            _sharedMultiPicker = BlockTypePicker(multipleSelect=True)
-        return _sharedMultiPicker
-
-    else:
-        if _sharedPicker is None:
-            _sharedPicker = BlockTypePicker()
-        return _sharedPicker
-
 @registerCustomWidget
 class BlockTypeButton(QtGui.QPushButton):
     def __init__(self, *args, **kwargs):
@@ -439,7 +423,7 @@ class BlockTypeButton(QtGui.QPushButton):
 
         self._blocks = []
         self.clicked.connect(self.showPicker)
-        self.picker = getBlockTypePicker(self.multipleSelect)
+        self.picker = BlockTypePicker(self.multipleSelect)
         self.setLayout(QtGui.QStackedLayout())
         self._viewWidget = None
         self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
