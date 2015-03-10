@@ -200,7 +200,7 @@ class BlockTypeSet(object):
         if isinstance(nameAndState, tuple):
             internalName, blockState = nameAndState
             if isinstance(internalName, basestring):
-                if not internalName.startswith(self.namePrefix):
+                if ":" not in internalName:
                     internalName = self.namePrefix + internalName
                 ID, meta = self.IDsByState[internalName + blockState]
             else:  # (ID, meta)
