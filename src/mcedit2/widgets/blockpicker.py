@@ -446,12 +446,12 @@ class BlockTypePicker(QtGui.QDialog):
         # restoring the selection after changing the settings.
 
         self.listWidget.blockSelectionChanged.disconnect(self.selectionDidChange)
+        selectedBlocks = self.selectedBlocks
 
         match = re.match(r'([0-9]+)(?::([0-9]+))?', val)
         if match:
             ID = int(match.group(1))
             meta = int(match.group(2) or 0)
-            self.listModel.removeCustomBlocks()
 
             block = self.blocktypes[ID, meta]
             if block not in self.blocktypes:
@@ -463,7 +463,7 @@ class BlockTypePicker(QtGui.QDialog):
             self.filterModel.setSearchString(val)
 
         self.listWidget.blockSelectionChanged.connect(self.selectionDidChange)
-        self.listWidget.setSelectedBlocks(self.selectedBlocks)
+        self.selectedBlocks = selectedBlocks
 
 @registerCustomWidget
 class BlockTypeButton(QtGui.QPushButton):
