@@ -281,11 +281,10 @@ class BlockTypeListWidget(QtGui.QListView):
 
 
 class BlockTypePicker(QtGui.QDialog):
-    def __init__(self, *args, **kwargs):
-        self.multipleSelect = kwargs.pop('multipleSelect', False)
-        super(BlockTypePicker, self).__init__(*args, **kwargs)
+    def __init__(self, multipleSelect=False):
+        super(BlockTypePicker, self).__init__()
         self._editorSession = None
-
+        self.multipleSelect = multipleSelect
         if self.multipleSelect:
             load_ui("block_picker_multiple.ui", baseinstance=self)
         else:
