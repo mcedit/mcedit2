@@ -81,7 +81,7 @@ class EntityTool(EditorTool):
             self.toolWidget.nbtEditor.setRootTag(None)
 
 
-def entitiesOnRay(dimension, ray, rayWidth=0.5, maxDistance = 1000):
+def entitiesOnRay(dimension, ray, rayWidth=0.75, maxDistance = 1000):
     pos, vec = ray
 
     endpos = pos + vec.normalize() * maxDistance
@@ -103,7 +103,7 @@ def entitiesOnRay(dimension, ray, rayWidth=0.5, maxDistance = 1000):
             return self.positions
 
         def __contains__(self, position):
-            evec = position - pos
+            evec = (position + (0.5, 0.5, 0.5)) - pos
             dist = ray_dir.cross(evec).length()
             return dist < rayWidth
 
