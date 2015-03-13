@@ -242,12 +242,12 @@ class SelectionScene(scenegraph.Node):
 
 
 faceShades = {
-    faces.FaceNorth: (0x99, 0x33, 0x99),
-    faces.FaceSouth: (0x99, 0x33, 0x99),
-    faces.FaceEast:  (0xCC, 0x44, 0xCC),
-    faces.FaceWest:  (0xCC, 0x44, 0xCC),
-    faces.FaceUp:    (0xFF, 0x55, 0xFF),
-    faces.FaceDown:  (0x77, 0x22, 0x77),
+    faces.FaceNorth: (0x33, 0x33, 0x99),
+    faces.FaceSouth: (0x33, 0x33, 0x99),
+    faces.FaceEast:  (0x44, 0x44, 0xCC),
+    faces.FaceWest:  (0x44, 0x44, 0xCC),
+    faces.FaceUp:    (0x55, 0x55, 0xFF),
+    faces.FaceDown:  (0x22, 0x22, 0x77),
 }
 
 class SelectionBoxRenderNode(rendergraph.RenderNode):
@@ -302,7 +302,7 @@ class SelectionBoxNode(scenegraph.Node):
         self._selectionBox = value
         self.dirty = True
 
-    _color = (1, .3, 1, .3)
+    _color = (.3, .3, 1, .3)
     @property
     def color(self):
         return self._color
@@ -329,15 +329,19 @@ class SelectionFaceRenderNode(rendergraph.RenderNode):
         if box is None:
             return
 
-        alpha = 0.3
+        alpha = 0.16
         r, g, b = self.sceneNode.color
-        with gl.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT | GL.GL_ENABLE_BIT):
+        with gl.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT | GL.GL_ENABLE_BIT | GL.GL_LINE_BIT):
             GL.glDisable(GL.GL_DEPTH_TEST)
             GL.glDepthMask(False)
             GL.glEnable(GL.GL_BLEND)
             GL.glPolygonOffset(self.sceneNode.depth, self.sceneNode.depth)
 
+            GL.glColor(1.0, 1.0, 1.0, 1.0)
+            GL.glLineWidth(2.0)
+            cubes.drawFace(box, self.sceneNode.face, GL.GL_LINE_STRIP)
             GL.glColor(r, g, b, alpha)
+            GL.glEnable(GL.GL_DEPTH_TEST)
             cubes.drawFace(box, self.sceneNode.face)
 
 
@@ -366,7 +370,7 @@ class SelectionFaceNode(scenegraph.Node):
         self._face = value
         self.dirty = True
 
-    _color = (1, .3, 1)
+    _color = (.3, .3, 1)
     @property
     def color(self):
         return self._color

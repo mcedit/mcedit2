@@ -280,9 +280,6 @@ class SelectionTool(EditorTool):
     def fill(self):
         fillCommand(self.editorSession)
 
-    def replace(self):
-        replaceCommand(self.editorSession)
-
     def boxHandleResized(self, box):
         if box is not None:
             self.selectionNode.selection = self.createShapedSelection(box)
@@ -358,7 +355,7 @@ class SelectionCursorRenderNode(rendergraph.RenderNode):
 
 class SelectionCursor(scenegraph.Node):
     RenderNodeClass = SelectionCursorRenderNode
-    def __init__(self, point=Vector(0, 0, 0), face=faces.FaceXDecreasing, color=(1, .3, 1)):
+    def __init__(self, point=Vector(0, 0, 0), face=faces.FaceXDecreasing, color=(.3, .3, 1)):
         super(SelectionCursor, self).__init__()
         self._point = point
         self._face = face
