@@ -159,6 +159,11 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
         self.Entities = [self.EntityRef(tag, None) for tag in self.rootTag["Entities"]]
         self.TileEntities = [self.EntityRef(tag, None) for tag in self.rootTag["TileEntities"]]
 
+    def syncToDisk(self):
+        """
+        Ugh... reimplement this class in a way that uses a RevisionHistory?
+        """
+        pass
 
     def saveChanges(self):
         return self.saveToFile(self.filename)
