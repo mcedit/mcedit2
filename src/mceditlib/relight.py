@@ -149,6 +149,8 @@ def updateLights(dimension, x, y, z):
     :return:
     :rtype:
     """
+    log.warn("Lighting disabled (for now!)")
+    return
     updateHeightmap(dimension, x, y, z)
     brightness = numpy.array(dimension.blocktypes.brightness)
     brightness.dtype = 'int8'
