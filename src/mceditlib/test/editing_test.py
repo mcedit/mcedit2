@@ -82,7 +82,7 @@ def testFill(world):
     box = BoundingBox(bounds.origin + (bounds.size / 2), (64, bounds.height / 2, 64))
     x, y, z = numpy.array(list(box.positions)).transpose()
 
-    dim.fillBlocks(box, world.blocktypes.OakWoodPlanks)
+    dim.fillBlocks(box, world.blocktypes["planks"])
 
     def checkEqual(a, b):
         """
@@ -99,28 +99,28 @@ def testFill(world):
             for cy in chunk.bounds.sectionPositions(*cp):
                 assert chunk.getSection(cy) is not None, "Section %s not found" % cy
 
-    checkEqual(dim.getBlocks(x, y, z).Blocks, world.blocktypes.OakWoodPlanks.ID)
+    checkEqual(dim.getBlocks(x, y, z).Blocks, world.blocktypes["planks"].ID)
 
-    dim.fillBlocks(box, world.blocktypes.Stone, [world.blocktypes.OakWoodPlanks])
+    dim.fillBlocks(box, world.blocktypes["stone"], [world.blocktypes["planks"]])
     world.saveChanges()
     world.close()
 
     filename = world.filename
     world = WorldEditor(filename)
-    checkEqual(world.getDimension().getBlocks(x, y, z).Blocks, world.blocktypes.Stone.ID)
+    checkEqual(world.getDimension().getBlocks(x, y, z).Blocks, world.blocktypes["stone"].ID)
 
 
 def testOldReplace(world):
     dim = world.getDimension()
-    dim.fillBlocks(BoundingBox((-11, 0, -7), (38, dim.bounds.height, 25)), world.blocktypes.OakWoodPlanks,
-                   [world.blocktypes.Dirt, world.blocktypes.Grass])
+    dim.fillBlocks(BoundingBox((-11, 0, -7), (38, dim.bounds.height, 25)), world.blocktypes["planks"],
+                   [world.blocktypes["dirt"], world.blocktypes["grass"]])
 
 
 def testMultiReplace(world):
     dim = world.getDimension()
     dim.fillBlocks(BoundingBox((-11, 0, -7), (38, dim.bounds.height, 25)),
-                   [(world.blocktypes.OakWoodPlanks, world.blocktypes.Dirt),
-                    (world.blocktypes.Grass, world.blocktypes.IronOre)])
+                   [(world.blocktypes["planks"], world.blocktypes["dirt"]),
+                    (world.blocktypes["grass"], world.blocktypes["iron_ore"])])
 
 
 def testImport(world, sourceLevel):
