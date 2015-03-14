@@ -106,15 +106,13 @@ class FillBlocksOperation(Operation):
             if section is None:
                 continue
             self.sections += 1
-            # Clip to section's actual size, for edge sections xxxxxxxxxx
-            slices = [slice(0, s) for s in section.Blocks.shape]
 
             sectionMask = self.selection.section_mask(cx, cy, cz)
             if sectionMask is None:
                 self.skipped += 1
                 continue
 
-            mask = sectionMask[slices]
+            mask = sectionMask
             blockCount = mask.sum()
 
             # don't waste time relighting and copying if the mask is empty
@@ -122,8 +120,8 @@ class FillBlocksOperation(Operation):
                 self.skipped += 1
                 continue
 
-            Blocks = section.Blocks[slices]
-            Data = section.Data[slices]
+            Blocks = section.Blocks
+            Data = section.Data
 
             if self.replaceTable is not None:
                 newBlocks = self.replaceTable[Blocks[mask], Data[mask]]
