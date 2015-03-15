@@ -14,130 +14,215 @@ class Counter(dict):
 
 
 def lru_cache(maxsize=100):
-    '''Least-recently-used cache decorator.
+    def decorator(user_function):
+        return lru_cache_object(user_function, maxsize)
+    return decorator
+
+class lru_cache_object(object):
+    """
+    Least-recently-used cache.
 
     Arguments to the cached function must be hashable.
     Cache performance statistics stored in f.hits and f.misses.
     Clear the cache with f.clear().
     http://en.wikipedia.org/wiki/Cache_algorithms#Least_Recently_Used
 
-    '''
-    maxqueue = maxsize * 10
+    Amended to accept two callbacks: should_decache and will_decache.
 
-    def decorating_function(user_function,
-            len=len, iter=iter, tuple=tuple, sorted=sorted, KeyError=KeyError):
-        cache = {}                   # mapping of args to results
-        queue = collections.deque()  # order that keys have been used
-        refcount = Counter()         # times each key is in the queue
-        sentinel = object()          # marker for looping around the queue
-        kwd_mark = object()          # separate positional and keyword args
+    should_decache is called with the result that is about to decache and should return True or False.
+    will_decache is called with the result that is about to decache.
 
-        # lookup optimizations (ugly but fast)
-        queue_append, queue_popleft = queue.append, queue.popleft
-        queue_appendleft, queue_pop = queue.appendleft, queue.pop
+    Also provides an explicit decache function. Call it to decache a result with the given key.
+    Calling decache will not call either callback.
 
-        @functools.wraps(user_function)
-        def wrapper(*args, **kwds):
-            # cache key records both positional and keyword args
-            key = args
-            if kwds:
-                key += (kwd_mark,) + tuple(sorted(kwds.items()))
+    Also acts as an iterator over cached results, and can be checked if a key is in the cache with `key in cache`
 
-            # record recent use of this key
-            queue_append(key)
-            refcount[key] += 1
+    """
 
-            # get cache entry or compute if not found
-            try:
-                result = cache[key]
-                wrapper.hits += 1
-            except KeyError:
-                result = user_function(*args, **kwds)
-                cache[key] = result
-                wrapper.misses += 1
+    def __init__(self, user_function, maxsize=100):
 
-                # purge least recently used cache entry
-                if len(cache) > maxsize:
-                    key = queue_popleft()
-                    refcount[key] -= 1
-                    while refcount[key]:
-                        key = queue_popleft()
-                        refcount[key] -= 1
-                    del cache[key], refcount[key]
+        self.maxqueue = maxsize * 10
+        self.maxsize = maxsize
+        self.cache = {}                   # mapping of args to results
+        self.queue = collections.deque()  # order that keys have been used
+        self.refcount = Counter()         # times each key is in the queue
+        self.sentinel = object()          # marker for looping around the queue
+        self.kwd_mark = object()          # separate positional and keyword args
+        self.user_function = user_function
 
-            # periodically compact the queue by eliminating duplicate keys
-            # while preserving order of most recent access
-            if len(queue) > maxqueue:
-                refcount.clear()
-                queue_appendleft(sentinel)
-                for key in ifilterfalse(refcount.__contains__,
-                                        iter(queue_pop, sentinel)):
-                    queue_appendleft(key)
-                    refcount[key] = 1
+        self.hits = self.misses = 0
 
-            return result
+    def setCacheLimit(self, size):
+        self.maxsize = size
+        self.maxqueue = size * 10
 
-        def clear():
-            cache.clear()
-            queue.clear()
-            refcount.clear()
-            wrapper.hits = wrapper.misses = 0
+    def __call__(self, *args, **kwds):
+        # cache key records both positional and keyword args
+        key = args
+        if kwds:
+            key += (self.kwd_mark,) + tuple(sorted(kwds.items()))
 
-        wrapper.hits = wrapper.misses = 0
-        wrapper.clear = clear
-        return wrapper
-    return decorating_function
+        # record recent use of this key
+        self.queue.append(key)
+        self.refcount[key] += 1
 
+        # get cache entry or compute if not found
+        try:
+            result = self.cache[key]
+            self.hits += 1
+        except KeyError:
+            result = self.user_function(*args, **kwds)
+            self.cache[key] = result
+            self.misses += 1
+
+            # purge least recently used cache entry
+            if len(self.cache) > self.maxsize:
+                stale_key = self.queue.popleft()
+                self.refcount[stale_key] -= 1
+                cannot_decache = []
+                while len(self.queue):
+                    while self.refcount[stale_key]:
+                        stale_key = self.queue.popleft()
+                        self.refcount[stale_key] -= 1
+
+                    if self.should_decache is None or self.should_decache(self.cache[stale_key]) is True:
+                        if self.will_decache is not None:
+                            self.will_decache(self.cache[stale_key])
+
+                        del self.cache[stale_key], self.refcount[stale_key]
+                        break
+                    else:
+                        self.refcount[stale_key] += 1
+                        cannot_decache.append(stale_key)
+
+                self.queue.extendleft(cannot_decache)
+
+        # periodically compact the queue by eliminating duplicate keys
+        # while preserving order of most recent access
+        if len(self.queue) > self.maxqueue:
+            self.refcount.clear()
+            self.queue.appendleft(self.sentinel)
+            for key in ifilterfalse(self.refcount.__contains__,
+                                    iter(self.queue.pop, self.sentinel)):
+                self.queue.appendleft(key)
+                self.refcount[key] = 1
+
+        return result
+
+    def clear(self):
+        self.cache.clear()
+        self.queue.clear()
+        self.refcount.clear()
+        self.hits = self.misses = 0
+
+    def decache(self, *args, **kwds):
+        key = args
+        if kwds:
+            key += (self.kwd_mark,) + tuple(sorted(kwds.items()))
+        del self.cache[key], self.refcount[key]
+
+    def store(self, result, *args, **kwds):
+        key = args
+        if kwds:
+            key += (self.kwd_mark,) + tuple(sorted(kwds.items()))
+        self.cache[key] = result
+        self.refcount[key] += 1
+        self.queue.append(key)
+
+    def __contains__(self, key, **kwds):
+        if kwds:
+            key += (self.kwd_mark,) + tuple(sorted(kwds.items()))
+        return key in self.cache
+
+    def __iter__(self):
+        return self.cache.itervalues()
+
+    should_decache = None
+    will_decache = None
 
 def lfu_cache(maxsize=100):
-    '''Least-frequenty-used cache decorator.
+    def decorator(user_function):
+        return lfu_cache_object(user_function, maxsize)
+    return decorator
+
+class lfu_cache_object(object):
+    """Least-frequenty-used cache.
 
     Arguments to the cached function must be hashable.
     Cache performance statistics stored in f.hits and f.misses.
     Clear the cache with f.clear().
     http://en.wikipedia.org/wiki/Least_Frequently_Used
 
-    '''
+    Accepts two callbacks: should_decache and will_decache
 
-    def decorating_function(user_function):
-        cache = {}                      # mapping of args to results
-        use_count = Counter()           # times each key has been accessed
-        kwd_mark = object()             # separate positional and keyword args
+    should_decache is called with the result that is about to decache and should return True or False
+    will_decache is called with the result that is about to decache.
 
-        @functools.wraps(user_function)
-        def wrapper(*args, **kwds):
-            key = args
-            if kwds:
-                key += (kwd_mark,) + tuple(sorted(kwds.items()))
-            use_count[key] += 1
+    Also provides an explicit decache function. Call it to decache a result with the given key.
+    Calling decache will not call either callback.
 
-            # get cache entry or compute if not found
-            try:
-                result = cache[key]
-                wrapper.hits += 1
-            except KeyError:
-                result = user_function(*args, **kwds)
-                cache[key] = result
-                wrapper.misses += 1
+    Also acts as an iterator over cached results, and can be checked if a key is in the cache with `key in cache`
 
-                # purge least frequently used cache entry
-                if len(cache) > maxsize:
-                    for key, _ in nsmallest(maxsize // 10,
-                                            use_count.iteritems(),
-                                            key=itemgetter(1)):
-                        del cache[key], use_count[key]
+    """
 
-            return result
+    def __init__(self, user_function, maxsize):
+        self.cache = {}                      # mapping of args to results
+        self.use_count = Counter()           # times each key has been accessed
+        self.kwd_mark = object()             # separate positional and keyword args
+        self.hits = self.misses = 0
+        self.user_function = user_function
+        self.maxsize = maxsize
 
-        def clear():
-            cache.clear()
-            use_count.clear()
-            wrapper.hits = wrapper.misses = 0
+    def __call__(self, *args, **kwds):
+        key = args
+        if kwds:
+            key += (self.kwd_mark,) + tuple(sorted(kwds.items()))
+        self.use_count[key] += 1
 
-        wrapper.hits = wrapper.misses = 0
-        wrapper.clear = clear
-        return wrapper
-    return decorating_function
+        # get cache entry or compute if not found
+        try:
+            result = self.cache[key]
+            self.hits += 1
+        except KeyError:
+            result = self.user_function(*args, **kwds)
+            self.cache[key] = result
+            self.misses += 1
+
+            # purge bottom 10% of least frequently used cache entries
+            if len(self.cache) > self.maxsize:
+                for key, _ in nsmallest(self.maxsize // 10,
+                                        self.use_count.iteritems(),
+                                        key=itemgetter(1)):
+                    if self.should_decache is None or self.should_decache(self.cache[key]) is True:
+                        if self.will_decache is not None:
+                            self.will_decache(self.cache[key])
+                        del self.cache[key], self.use_count[key]
+
+        return result
+
+    def clear(self):
+        self.cache.clear()
+        self.use_count.clear()
+        self.hits = self.misses = 0
+
+    def decache(self, *args, **kwds):
+        key = args
+        if kwds:
+            key += (self.kwd_mark,) + tuple(sorted(kwds.items()))
+        del self.cache[key], self.use_count[key]
+
+    def __contains__(self, *args, **kwds):
+        key = args
+        if kwds:
+            key += (self.kwd_mark,) + tuple(sorted(kwds.items()))
+        return key in self.cache
+
+    def __iter__(self):
+        return self.cache.itervalues()
+
+    should_decache = None
+    will_decache = None
+
 
 if __name__ == '__main__':
 
