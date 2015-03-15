@@ -165,7 +165,7 @@ class lfu_cache_object(object):
 
     """
 
-    def __init__(self, user_function, maxsize):
+    def __init__(self, user_function, maxsize=100):
         self.cache = {}                      # mapping of args to results
         self.use_count = Counter()           # times each key has been accessed
         self.kwd_mark = object()             # separate positional and keyword args
