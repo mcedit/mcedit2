@@ -283,6 +283,10 @@ def setBlocks(dimension, x, y, z,
             Blocks = [Blocks]
         _Blocks = []
         _Data = []
+        if isinstance(Blocks, int):
+            Blocks = [Blocks]
+        if isinstance(Data, int):
+            Data = [Data]
 
         for block in Blocks:
             if isinstance(block, basestring):
