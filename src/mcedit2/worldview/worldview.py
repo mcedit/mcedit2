@@ -409,17 +409,20 @@ class WorldView(QGLWidget):
         event.view = self
 
         try:
-            result = raycast.rayCastInBounds(ray, self.dimension)
+            result = raycast.rayCastInBounds(ray, self.dimension, maxDistance=2000)
             position, face = result
 
         except (raycast.MaxDistanceError, ValueError):
-            GL.glReadBuffer(GL.GL_BACK)
-            pixel = GL.glReadPixels(x, self.height() - y, 1, 1, GL.GL_DEPTH_COMPONENT, GL.GL_FLOAT)
-            depth = -1 + 2 * pixel[0, 0]
-            p = self.pointsAtPositions((x, y, depth))[0]
-
-            face = faces.FaceYIncreasing
-            position = p.intfloor()
+            # GL.glReadBuffer(GL.GL_BACK)
+            # pixel = GL.glReadPixels(x, self.height() - y, 1, 1, GL.GL_DEPTH_COMPONENT, GL.GL_FLOAT)
+            # depth = -1 + 2 * pixel[0, 0]
+            # p = self.pointsAtPositions((x, y, depth))[0]
+            #
+            # face = faces.FaceYIncreasing
+            # position = p.intfloor()
+            defaultDistance = 20
+            position = (ray.point + ray.vector * defaultDistance).intfloor()
+            face = faces.FaceUp
 
         self.mouseBlockPos = event.blockPosition = position
         self.mouseBlockFace = event.blockFace = face
