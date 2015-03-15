@@ -127,14 +127,18 @@ def _cast(origin, vector, maxDistance, stepSize):
 
 def advanceToChunk(ray, dimension, maxDistance):
     point, vector = ray
+    inBounds = point in dimension.bounds
+
     for pos, face in _cast(point, vector, maxDistance, 16):
 
         x, y, z = pos
         x >>= 4
         y >>= 4
         z >>= 4
-        if pos not in dimension.bounds:
+        if inBounds and pos not in dimension.bounds:
             raise RayBoundsError("Ray exited dimension bounds.")
+        inBounds = pos in dimension.bounds
+
         if dimension.containsChunk(x, z):
             chunk = dimension.getChunk(x, z)
             section = chunk.getSection(y)
