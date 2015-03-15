@@ -172,7 +172,9 @@ class WorldEditor(object):
         self._chunkDataCache = cachefunc.lru_cache_object(self._getChunkDataRaw, 1000)
         self._chunkDataCache.should_decache = self._shouldUnloadChunkData
         self._chunkDataCache.will_decache = self._willUnloadChunkData
-        
+
+        # caches recently used WorldEditorChunks
+        self.recentChunks = collections.deque(maxlen=100)
 
         self._allChunks = None
 
@@ -258,6 +260,7 @@ class WorldEditor(object):
             return
         log.info("Going to revision %d", index)
         log.debug("Changes: %s", changes)
+        self.recentChunks.clear()
         for dimName, chunkPositions in changes.chunks.iteritems():
             self.recentDirtyChunks[dimName].update(chunkPositions)
             for cx, cz in chunkPositions:
@@ -303,6 +306,7 @@ class WorldEditor(object):
         Unload all chunks and close all open filehandles.
         """
         self.adapter.close()
+        self.recentChunks.clear()
 
         self._allChunks = None
         self._loadedChunks.clear()
@@ -393,6 +397,8 @@ class WorldEditor(object):
                      len(chunk.rootTag.get("TileTicks", ())))
 
         self._loadedChunks[cx, cz, dimName] = chunk
+
+        self.recentChunks.append(chunk)
         return chunk
 
     # --- Chunk dirty bit ---
