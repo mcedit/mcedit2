@@ -6,6 +6,7 @@ import weakref
 import itertools
 
 import numpy
+from mceditlib import cachefunc
 
 from mceditlib.block_copy import copyBlocksIter
 from mceditlib.operations.block_fill import FillBlocksOperation
@@ -167,8 +168,11 @@ class WorldEditor(object):
         # maps (cx, cz, dimName) tuples to WorldEditorChunk
         self._loadedChunks = weakref.WeakValueDictionary()
 
-        # maps (cx, cz, dimName) tuples to WorldEditorChunkData
-        self._loadedChunkData = {}
+        # caches ChunkData from adapter
+        self._chunkDataCache = cachefunc.lru_cache_object(self._getChunkDataRaw, 1000)
+        self._chunkDataCache.should_decache = self._shouldUnloadChunkData
+        self._chunkDataCache.will_decache = self._willUnloadChunkData
+        
 
         self._allChunks = None
 
@@ -183,6 +187,11 @@ class WorldEditor(object):
 
     def __repr__(self):
         return "WorldEditor(adapter=%r)" % self.adapter
+
+    # --- Debug ---
+
+    def setCacheLimit(self, size):
+        self._chunkDataCache.setCacheLimit(size)
 
     # --- Undo/redo ---
     def requireRevisions(self):
@@ -252,7 +261,7 @@ class WorldEditor(object):
         for dimName, chunkPositions in changes.chunks.iteritems():
             self.recentDirtyChunks[dimName].update(chunkPositions)
             for cx, cz in chunkPositions:
-                self._loadedChunkData.pop((cx, cz, dimName), None)
+                self._chunkDataCache.decache(cx, cz, dimName)
                 self._loadedChunks.pop((cx, cz, dimName), None)
 
         self.recentDirtyFiles.update(changes.files)
@@ -273,11 +282,11 @@ class WorldEditor(object):
                 player.save()
 
         dirtyChunkCount = 0
-        for chunk in self._loadedChunkData.itervalues():
-            if chunk.dirty:
+        for chunkData in self._chunkDataCache:
+            if chunkData.dirty:
                 dirtyChunkCount += 1
-                self.adapter.writeChunk(chunk)
-                chunk.dirty = False
+                self.adapter.writeChunk(chunkData)
+                chunkData.dirty = False
         self.adapter.syncToDisk()
         log.info(u"Saved %d chunks and %d players", dirtyChunkCount, dirtyPlayers)
 
@@ -297,11 +306,7 @@ class WorldEditor(object):
 
         self._allChunks = None
         self._loadedChunks.clear()
-        self._loadedChunkData.clear()
-
-    # --- Resource limits ---
-
-    loadedChunkLimit = 400
+        self._chunkDataCache.clear()
 
     # --- World limits ---
 
@@ -327,7 +332,7 @@ class WorldEditor(object):
         for dimName in self.adapter.listDimensions():
             start = time.time()
             chunkPositions = set(self.adapter.chunkPositions(dimName))
-            chunkPositions.update((cx, cz) for (cx, cz, d) in self._loadedChunkData if d == dimName)
+            chunkPositions.update((chunkData.cx, chunkData.cz) for chunkData in self._chunkDataCache if chunkData.dimName == dimName)
             log.info("Dim %s: Found %d chunks in %0.2f seconds.",
                      dimName,
                      len(chunkPositions),
@@ -352,31 +357,18 @@ class WorldEditor(object):
             self.preloadChunkPositions()
         return self._allChunks[dimName].__iter__()
 
-    def _getChunkData(self, cx, cz, dimName):
-        chunkData = self._loadedChunkData.get((cx, cz, dimName))
-        if chunkData is not None:
-            log.debug("_getChunkData: Chunk %s is in _loadedChunkData", (cx, cz))
-            return chunkData
+    def _getChunkDataRaw(self, cx, cz, dimName):
+        """
+        Wrapped by cachefunc.lru_cache in __init__
+        """
+        return self.adapter.readChunk(cx, cz, dimName)
 
-        chunkData = self.adapter.readChunk(cx, cz, dimName)
-        self._storeLoadedChunkData(chunkData)
+    def _shouldUnloadChunkData(self, chunkData):
+        return (chunkData.cx, chunkData.cz, chunkData.dimName) not in self._loadedChunks
 
-        return chunkData
-
-    def _storeLoadedChunkData(self, chunkData):
-        if len(self._loadedChunkData) > self.loadedChunkLimit:
-            # Try to find a chunk to unload. The chunk must not be in _loadedChunks, which contains only chunks that
-            # are in use by another object. If the chunk is dirty, save it to the temporary folder.
-
-            for (ocx, ocz, dimName), oldChunkData in self._loadedChunkData.items():
-                if (ocx, ocz, dimName) not in self._loadedChunks:  # and (ocx, ocz) not in self._recentLoadedChunks:
-                    if oldChunkData.dirty and not self.readonly:
-                        self.adapter.writeChunk(oldChunkData)
-
-                    del self._loadedChunkData[ocx, ocz, dimName]
-                    break
-
-        self._loadedChunkData[chunkData.cx, chunkData.cz, chunkData.dimName] = chunkData
+    def _willUnloadChunkData(self, chunkData):
+        if chunkData.dirty and not self.readonly:
+            self.adapter.writeChunk(chunkData)
 
     def getChunk(self, cx, cz, dimName, create=False):
         """
@@ -391,7 +383,7 @@ class WorldEditor(object):
             return chunk
 
         startTime = time.time()
-        chunkData = self._getChunkData(cx, cz, dimName)
+        chunkData = self._chunkDataCache(cx, cz, dimName)
         chunk = WorldEditorChunk(chunkData, self)
 
         duration = time.time() - startTime
@@ -406,9 +398,9 @@ class WorldEditor(object):
     # --- Chunk dirty bit ---
 
     def listDirtyChunks(self):
-        for cPos, chunkData in self._loadedChunkData.iteritems():
+        for chunkData in self._chunkDataCache:
             if chunkData.dirty:
-                yield cPos
+                yield chunkData.cx, chunkData.cz
 
     def chunkBecameDirty(self, chunk):
         self.recentDirtyChunks[chunk.dimName].add((chunk.cx, chunk.cz))
@@ -435,7 +427,7 @@ class WorldEditor(object):
     def containsChunk(self, cx, cz, dimName):
         if self._allChunks is not None:
             return (cx, cz) in self._allChunks[dimName]
-        if (cx, cz, dimName) in self._loadedChunkData:
+        if (cx, cz, dimName) in self._chunkDataCache:
             return True
 
         return self.adapter.containsChunk(cx, cz, dimName)
@@ -454,7 +446,7 @@ class WorldEditor(object):
                 self._allChunks[dimName].add((cx, cz))
 
             chunk = self.adapter.createChunk(cx, cz, dimName)
-            self._storeLoadedChunkData(chunk)
+            self._chunkDataCache.store(chunk, cx, cz, dimName)
 
     def deleteChunk(self, cx, cz, dimName):
         self.adapter.deleteChunk(cx, cz, dimName)

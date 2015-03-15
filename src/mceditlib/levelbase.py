@@ -82,6 +82,7 @@ class FakeChunkedLevelAdapter(object):
         chunk.dimension = self
         chunk.cx = cx
         chunk.cz = cz
+        chunk.dimName = dimName
 
         chunk.Blocks = self.fakeBlocksForChunk(cx, cz)
 
