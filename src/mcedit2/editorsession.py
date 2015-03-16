@@ -304,8 +304,8 @@ class EditorSession(QtCore.QObject):
     def paste(self):
         if self.copiedSchematic is None:
             return
-
-        imp = PendingImport(self.copiedSchematic, self.currentSelection.origin, self.tr("<Pasted Object>"))
+        view = self.editorTab.currentView()
+        imp = PendingImport(self.copiedSchematic, view.mouseBlockPos, self.tr("<Pasted Object>"))
         command = PasteImportCommand(self, imp, "Paste")
         self.undoStack.push(command)
 
