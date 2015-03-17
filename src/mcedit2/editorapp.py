@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import argparse
+import collections
 import os
 import logging
 
@@ -445,38 +446,46 @@ class MCEditApp(QtGui.QApplication):
     # --- Recent files ---
 
     def updateRecentFilesMenu(self):
-        recentFiles = RecentFilesSetting.value()
+        recentFiles = RecentFilesSetting.jsonValue([])
+        recentWorldsMenu = self.mainWindow.menuRecent_Worlds
+        for i, child in enumerate(recentWorldsMenu.children()):
+            if i < 2:
+                continue  # Skip "clear" and separator
+            child.setParent(None)
+
+        log.info("Updating recent files menu: (%d) %s", len(recentFiles), recentFiles)
+        filenames = []
+        displayNames = collections.Counter()
         for filename in recentFiles:
             text = util.displayName(filename)
-            action = self.recentFilesMenu.addAction(text)
+            filenames.append((text, filename))
+            displayNames[text] += 1
+
+        displayFilenames = []
+        for text, path in filenames:
+            if displayNames[text] > 1:
+                text = text + " (%s)" % path
+            displayFilenames.append((text, path))
+
+        for text, path in displayFilenames:
+            log.info("Adding %s", text)
+            action = recentWorldsMenu.addAction(text)
             def _triggered():
                 self.loadFile(filename)
 
             action.triggered.connect(_triggered)
             action.__triggered = _triggered
 
-        # RecentFilesSetting.valueChanged.connect(self.updateRecentFilesMenu)
-        #
-        # self.recentFilesActions = []
-        # for i in range(self.recentFileLimit):
-        #     def _triggered(idx):
-        #         def _f():
-        #             self.loadFile(RecentFilesSetting.value()[idx])
-        #
-        #     act = MCEAction(str(i), self,
-        #                     visible=False,
-        #                     triggered=_triggered(i))
-        #
-        #     self.mceditMenu.addAction(act)
-        #     self.recentFilesActions.append(act)
-
     def addRecentFile(self, filename):
         recentFiles = RecentFilesSetting.jsonValue([])
-        recentFiles.append(filename)
+        if filename in recentFiles:
+            return
+        recentFiles.insert(0, filename)
         if len(recentFiles) > self.recentFileLimit:
             recentFiles = recentFiles[1:]
 
         RecentFilesSetting.setJsonValue(recentFiles)
+        self.updateRecentFilesMenu()
 
     # --- Tabs and sessions ---
 
@@ -538,6 +547,7 @@ class MCEditApp(QtGui.QApplication):
             self.tabWidget.addTab(session.editorTab, session.tabCaption())
             self.tabWidget.setCurrentWidget(session.editorTab)
             self.sessions.append(session)
+            self.addRecentFile(filename)
             session.loadDone()
 
         except EnvironmentError as e:
@@ -598,7 +608,6 @@ class MCEditApp(QtGui.QApplication):
                     dirname, basename = os.path.split(filename)
 
                 Settings().setValue("open_world_dialog/starting_dir", dirname)
-                self.addRecentFile(filename)
                 self.loadFile(filename)
                 self.worldList.close()
 

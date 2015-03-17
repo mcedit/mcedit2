@@ -43,8 +43,16 @@
     <property name="title">
      <string>MCEdit</string>
     </property>
+    <widget class="QMenu" name="menuRecent_Worlds">
+     <property name="title">
+      <string>Recent Worlds</string>
+     </property>
+     <addaction name="actionClearRecent"/>
+     <addaction name="separator"/>
+    </widget>
     <addaction name="actionNew_World"/>
     <addaction name="actionOpen_World"/>
+    <addaction name="menuRecent_Worlds"/>
     <addaction name="actionShow_World_List"/>
     <addaction name="separator"/>
     <addaction name="actionClose_World"/>
@@ -135,6 +143,11 @@
   <action name="actionAbout_MCEdit">
    <property name="text">
     <string>About MCEdit 2...</string>
+   </property>
+  </action>
+  <action name="actionClearRecent">
+   <property name="text">
+    <string>Clear</string>
    </property>
   </action>
  </widget>
