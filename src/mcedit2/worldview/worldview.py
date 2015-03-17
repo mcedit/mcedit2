@@ -128,7 +128,8 @@ class WorldView(QGLWidget):
         self.cursorNode = None
 
     def destroy(self):
-        self.worldScene.discardAllChunks()
+        self.makeCurrent()
+        self.renderGraph.destroy()
         super(WorldView, self).destroy()
 
     def __str__(self):
