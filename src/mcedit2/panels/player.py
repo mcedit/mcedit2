@@ -23,13 +23,13 @@ class PlayerPropertyChangeCommand(SimpleRevisionCommand):
     pass
 
 class PlayerPanel(QtGui.QWidget):
-    def __init__(self, editorSession, *args, **kwargs):
+    def __init__(self, editorSession):
         """
 
         :type editorSession: mcedit2.editorsession.EditorSession
         :rtype: PlayerPanel
         """
-        super(PlayerPanel, self).__init__(QtGui.qApp.mainWindow, *args, f=Qt.Tool, **kwargs)
+        super(PlayerPanel, self).__init__(f=Qt.Tool)
 
         self.editorSession = editorSession
         self.selectedUUID = None
