@@ -3,8 +3,11 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+import os
 
-from PySide import QtCore
+from PySide import QtCore, QtGui
+from mcedit2.util.lazyprop import weakrefprop
+from mcedit2.util.resources import resourcePath
 
 
 log = logging.getLogger(__name__)
@@ -65,7 +68,7 @@ class EditorTool(QtCore.QObject):
     toolWidget = None
     cursorNode = None
     overlayNode = None
-
+    editorSession = weakrefprop()
 
     def __init__(self, editorSession, *args, **kwargs):
         """
@@ -119,4 +122,33 @@ class EditorTool(QtCore.QObject):
         :rtype:
         """
 
+    toolPicked = QtCore.Signal(object)
+
+    def pick(self):
+        self.toolPicked.emit(self.name)
+
+    def pickToolAction(self):
+        name = self.name
+        iconName = self.iconName
+        if iconName:
+            iconPath = resourcePath("mcedit2/assets/mcedit2/toolicons/%s.png" % iconName)
+            if not os.path.exists(iconPath):
+                log.error("Tool icon %s not found", iconPath)
+                icon = None
+            else:
+                icon = QtGui.QIcon(iconPath)
+        else:
+            icon = None
+
+        action = QtGui.QAction(
+            self.tr(name),
+            self,
+            #shortcut=self.toolShortcut(name),  # xxxx coordinate with view movement keys
+            triggered=self.pick,
+            checkable=True,
+            icon=icon,
+            )
+        action.toolName = name
+
+        return action
 

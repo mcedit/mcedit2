@@ -112,7 +112,7 @@ class EditorSession(QtCore.QObject):
         self.loader = chunkloader.ChunkLoader(self.currentDimension)
 
         self.loader.chunkCompleted.connect(self.chunkDidComplete)
-        self.loader.allChunksDone.connect(lambda: self.editorTab.currentView().update())
+        self.loader.allChunksDone.connect(self.updateView)
 
         # --- Menus ---
 
@@ -192,48 +192,23 @@ class EditorSession(QtCore.QObject):
         self.panels = [self.playerPanel]
 
         # --- Tools ---
-        def PickToolAction(tool):
-            name = tool.name
-            iconName = tool.iconName
-            if iconName:
-                iconPath = resourcePath("mcedit2/assets/mcedit2/toolicons/%s.png" % iconName)
-                if not os.path.exists(iconPath):
-                    log.error("Tool icon %s not found", iconPath)
-                    icon = None
-                else:
-                    icon = QtGui.QIcon(iconPath)
-            else:
-                icon = None
-
-            def _triggered():
-                self.chooseTool(name)
-
-            action = QtGui.QAction(
-                self.tr(name),
-                self,
-                #shortcut=self.toolShortcut(name),  # xxxx coordinate with view movement keys
-                triggered=_triggered,
-                checkable=True,
-                icon=icon,
-                )
-            action.toolName = name
-            action._triggered = _triggered  # Needed because connecting _triggered doesn't increase its refcount
-
-            self.toolActionGroup.addAction(action)
-            return action
 
         self.toolClasses = list(editortools.ToolClasses())
         self.toolActionGroup = QtGui.QActionGroup(self)
-        self.toolActions = [PickToolAction(cls) for cls in self.toolClasses]
+        self.tools = [cls(self) for cls in self.toolClasses]
+        self.toolActions = [tool.pickToolAction() for tool in self.tools]
         self.actionsByName = {action.toolName: action for action in self.toolActions}
-        self.tools = {cls.name: cls(self) for cls in self.toolClasses}
+        for tool in self.tools:
+            tool.toolPicked.connect(self.chooseTool)
+        for action in self.toolActions:
+            self.toolActionGroup.addAction(action)
 
-        self.selectionTool = self.tools["Select"]
-        self.moveTool = self.tools["Move"]
+        self.selectionTool = self.getTool("Select")
+        self.moveTool = self.getTool("Move")
 
         # --- Editor stuff ---
         self.editorTab = EditorTab(self)
-        self.toolChanged.connect(self.editorTab.toolDidChange)
+        self.toolChanged.connect(self.toolDidChange)
 
         self.undoStack.indexChanged.connect(self.undoIndexChanged)
 
@@ -250,9 +225,17 @@ class EditorSession(QtCore.QObject):
         if self.worldEditor:
             self.worldEditor.close()
             self.worldEditor = None
+    # Connecting these signals to the EditorTab creates a circular reference through
+    # the Qt objects, preventing the EditorSession from being destroyed
 
     def focusWorldView(self):
         self.editorTab.currentView().setFocus()
+
+    def updateView(self):
+        self.editorTab.currentView().update()
+
+    def toolDidChange(self, tool):
+        self.editorTab.toolDidChange(tool)
 
     # --- Selection ---
 
@@ -418,9 +401,15 @@ class EditorSession(QtCore.QObject):
         }
         return toolShortcuts.get(name, "")
 
+    def getTool(self, name):
+        for t in self.tools:
+            if t.name == name:
+                return t
+
+
     def chooseTool(self, name):
         oldTool = self.currentTool
-        self.currentTool = self.tools[name]
+        self.currentTool = self.getTool(name)
         if oldTool is not self.currentTool:
             if oldTool:
                 oldTool.toolInactive()
@@ -611,7 +600,7 @@ class EditorTab(QtGui.QWidget):
             view.setToolCursor(self.editorSession.currentTool.cursorNode)
 
         overlayNodes = [tool.overlayNode
-                        for tool in self.editorSession.tools.itervalues()
+                        for tool in self.editorSession.tools
                         if tool.overlayNode is not None]
 
         overlayNodes.insert(0, self.editorSession.editorOverlay)
