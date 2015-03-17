@@ -65,7 +65,7 @@ class WorldView(QGLWidget):
     and one isometric view.
 
     """
-    viewportMoved = QtCore.Signal(tuple)
+    viewportMoved = QtCore.Signal(QtGui.QWidget)
     cursorMoved = QtCore.Signal(QtGui.QMouseEvent)
 
     mouseBlockPos = Vector(0, 0, 0)

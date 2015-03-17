@@ -620,15 +620,13 @@ class EditorTab(QtGui.QWidget):
 
 
     def viewOffsetChanged(self, view):
-        def _offsetChanged(offset):
-            self.miniMap.centerOnPoint(view.viewCenter())
-            self.miniMap.currentViewMatrixChanged(view)
-        return _offsetChanged
+        self.miniMap.centerOnPoint(view.viewCenter())
+        self.miniMap.currentViewMatrixChanged(view)
 
     def _addView(self, frame):
         self.views.append(frame)
         frame.stackIndex = self.viewStack.addWidget(frame)
-        frame.worldView.viewportMoved.connect(self.viewOffsetChanged(frame.worldView))
+        frame.worldView.viewportMoved.connect(self.viewOffsetChanged)
         frame.worldView.viewActions.extend([
             UseToolMouseAction(self.editorSession),
             TrackingMouseAction(self.editorSession)
