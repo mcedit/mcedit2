@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from collections import deque
 import logging
 import time
+import weakref
 
 from PySide import QtCore
 from mcedit2.util import profiler
@@ -108,7 +109,7 @@ class ChunkLoader(QtCore.QObject):
         """
         :type client: IChunkLoaderClient
         """
-        self.clients.insert(index, client)
+        self.clients.insert(index, weakref.ref(client))
         log.info("Added: client %s",  client)
 
     def removeClient(self, client):
@@ -116,7 +117,7 @@ class ChunkLoader(QtCore.QObject):
         :type client: IChunkLoaderClient
         """
         try:
-            self.clients.remove(client)
+            self.clients[:] = [c for c in self.clients if c() == client]
             log.info("Removed: client %s",  client)
         except ValueError:
             pass
@@ -152,10 +153,15 @@ class ChunkLoader(QtCore.QObject):
 
             invalidChunks = self.dimension.getRecentDirtyChunks()
             for c in invalidChunks:
-                for client in self.clients:
-                    client.chunkInvalid(c)
+                for ref in self.clients:
+                    client = ref()
+                    if client:
+                        client.chunkInvalid(c)
 
-            for client in self.clients:
+            for ref in self.clients:
+                client = ref()
+                if client is None:
+                    continue
                 c = client.requestChunk()
                 if c is not None:
                     log.debug("Client %s: %s", client, c)
@@ -176,8 +182,9 @@ class ChunkLoader(QtCore.QObject):
             log.debug("Chunk %s is missing!", cPos)
             return
 
-        if not any([client.wantsChunk(cPos)
-                    for client in self.clients]):
+        if not any([ref().wantsChunk(cPos)
+                    for ref in self.clients
+                    if ref() is not None]):
             log.debug("Chunk %s is unwanted.", cPos)
             return
 
@@ -188,13 +195,19 @@ class ChunkLoader(QtCore.QObject):
         except (EnvironmentError, LevelFormatError) as e:
             #log.exception(e)
             log.debug("Chunk %s had an error: %r!", cPos, e)
-            for c in self.clients:
-                if hasattr(c, 'chunkNotLoaded'):
-                    c.chunkNotLoaded(cPos, e)
+            for ref in self.clients:
+                client = ref()
+                if client is None:
+                    continue
+                if hasattr(client, 'chunkNotLoaded'):
+                    client.chunkNotLoaded(cPos, e)
         else:
-            for c in self.clients:
-                log.debug("Chunk %s -> %s", cPos, c)
-                iterator = profiler.iterate(c.recieveChunk(chunk), "Client %s" % type(c).__name__)
+            for ref in self.clients:
+                client = ref()
+                if client is None:
+                    continue
+                log.debug("Chunk %s -> %s", cPos, client)
+                iterator = profiler.iterate(client.recieveChunk(chunk), "Client %s" % type(client).__name__)
 
                 if iterator:
                     for _ in iterator:
@@ -208,7 +221,9 @@ class ChunkLoader(QtCore.QObject):
             self.discardChunk(cx, cz)
 
     def discardChunk(self, cx, cz):
-        for wm in self.clients:
-            wm.discardChunk(cx, cz)
+        for ref in self.clients:
+            client = ref()
+            if client is not None:
+                client.discardChunk(cx, cz)
 
 
