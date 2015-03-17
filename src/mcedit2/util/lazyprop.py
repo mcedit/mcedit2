@@ -3,6 +3,8 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+import weakref
+
 log = logging.getLogger(__name__)
 
 def lazyprop(fn):
@@ -44,3 +46,16 @@ def lazyprop(fn):
 
 
     return _lazyprop
+
+class weakrefprop(object):
+    def __init__(self, name):
+        self.name = "__weakprop__" + name
+
+    def __get__(self, instance, owner):
+        ref = getattr(instance, self.name, None)
+        if ref is None:
+            return None
+        return ref()
+
+    def __set__(self, instance, value):
+        setattr(instance, self.name, weakref.ref(value))
