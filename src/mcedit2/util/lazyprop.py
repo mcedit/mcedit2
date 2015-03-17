@@ -48,7 +48,11 @@ def lazyprop(fn):
     return _lazyprop
 
 class weakrefprop(object):
-    def __init__(self, name):
+    _nameID = 0
+    def __init__(self, name=None):
+        if name is None:
+            name = "name_%d" % weakrefprop._nameID
+            weakrefprop._nameID += 1
         self.name = "__weakprop__" + name
 
     def __get__(self, instance, owner):
