@@ -11,48 +11,49 @@ from PySide.QtCore import Qt
 from mcedit2.util.load_ui import registerCustomWidget, load_ui
 from mcedit2.widgets.blocktype_list import BlockTypePixmap
 from mcedit2.widgets.layout import Row, Column
-from mcedit2.worldview.iso import IsoWorldView
+#from mcedit2.worldview.iso import IsoWorldView
 from mceditlib.blocktypes import BlockType
-from mceditlib.schematic import createSchematic
+#from mceditlib.schematic import createSchematic
 
 log = logging.getLogger(__name__)
+#
+# @registerCustomWidget
+# class BlockThumbView(QtGui.QWidget):
+#     def __init__(self, *a, **kw):
+#         super(BlockThumbView, self).__init__(minimumWidth=48, minimumHeight=48, *a, **kw)
+#         self.worldView = None
+#
+#     _textureAtlas = None
+#     @property
+#     def textureAtlas(self):
+#         return self._textureAtlas
+#
+#     @textureAtlas.setter
+#     def textureAtlas(self, textureAtlas):
+#         self._textureAtlas = textureAtlas
+#         self.updateView()
+#
+#     _block = None
+#     @property
+#     def block(self):
+#         return self._block
+#
+#     @block.setter
+#     def block(self, value):
+#         self._block = value
+#         self.updateView()
+#
+#     def updateView(self):
+#         if None in (self.block, self.textureAtlas):
+#             return
+#
+#         editor = createSchematic((1, 1, 1), blocktypes=self.textureAtlas.blocktypes)
+#         dim = editor.getDimension()
+#         dim.setBlocks(0, 0, 0, self.block)
+#         self.worldView = IsoWorldView(dim, self.textureAtlas, sharedGLWidget=self.editorSession.editorTab.miniMap)
+#
+#         self.setLayout(Row(self.worldView))
 
-@registerCustomWidget
-class BlockThumbView(QtGui.QWidget):
-    def __init__(self, *a, **kw):
-        super(BlockThumbView, self).__init__(minimumWidth=48, minimumHeight=48, *a, **kw)
-        self.worldView = None
-
-    _editorSession = None
-    @property
-    def editorSession(self):
-        return self._editorSession
-
-    @editorSession.setter
-    def editorSession(self, editorSession):
-        self._editorSession = editorSession
-        self.updateView()
-
-    _block = None
-    @property
-    def block(self):
-        return self._block
-
-    @block.setter
-    def block(self, value):
-        self._block = value
-        self.updateView()
-
-    def updateView(self):
-        if None in (self.block, self.editorSession):
-            return
-
-        editor = createSchematic((1, 1, 1), blocktypes=self.editorSession.worldEditor.blocktypes)
-        dim = editor.getDimension()
-        dim.setBlocks(0, 0, 0, self.block)
-        self.worldView = IsoWorldView(dim, self.editorSession.textureAtlas, sharedGLWidget=self.editorSession.editorTab.miniMap)
-
-        self.setLayout(Row(self.worldView))
 
 class BlockTypeIcon(QtGui.QLabel):
     def __init__(self, block, textureAtlas, *args, **kwargs):
@@ -60,6 +61,7 @@ class BlockTypeIcon(QtGui.QLabel):
         pixmap = BlockTypePixmap(block, textureAtlas)
         self.setMinimumSize(32, 32)
         self.setPixmap(pixmap)
+
 
 @registerCustomWidget
 class BlockTypesItemWidget(QtGui.QWidget):
@@ -87,7 +89,7 @@ class BlockTypesItemWidget(QtGui.QWidget):
             return
 
         for child in self.childWidgets:
-           child.setParent(None)
+            child.setParent(None)
         self.childWidgets = []
         if self.mainLayout:
             self.layout().takeAt(0)
@@ -170,6 +172,7 @@ class BlockTypesItemWidget(QtGui.QWidget):
 
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
 
+
 class BlockTypeListFilterModel(QtGui.QSortFilterProxyModel):
     def __init__(self, sourceModel):
         super(BlockTypeListFilterModel, self).__init__()
@@ -244,12 +247,15 @@ class SelectedBlockTypesProxyModel(QtGui.QSortFilterProxyModel):
 
 
 class BlockTypeListModel(QtCore.QAbstractListModel):
-    def __init__(self, blocktypes, textureAtlas):
+    def __init__(self, textureAtlas):
         super(BlockTypeListModel, self).__init__()
-        self.blocktypes = blocktypes
-        self.blocktypesList = list(blocktypes)
         self.textureAtlas = textureAtlas
+        self.blocktypesList = list(self.blocktypes)
         self.customBlocks = []
+
+    @property
+    def blocktypes(self):
+        return self.textureAtlas.blocktypes
 
     def rowCount(self, index):
         return len(self.blocktypes) + len(self.customBlocks)
@@ -275,9 +281,12 @@ class BlockTypeListModel(QtCore.QAbstractListModel):
         self.endInsertRows()
 
     def removeCustomBlocks(self):
-        self.beginRemoveRows(QtCore.QModelIndex(), len(self.blocktypes), len(self.blocktypes) + len(self.customBlocks) - 1)
+        self.beginRemoveRows(QtCore.QModelIndex(),
+                             len(self.blocktypes),
+                             len(self.blocktypes) + len(self.customBlocks) - 1)
         self.customBlocks = []
         self.endRemoveRows()
+
 
 class BlockTypeListItemDelegate(QtGui.QAbstractItemDelegate):
     def __init__(self):
@@ -305,7 +314,7 @@ class BlockTypeListItemDelegate(QtGui.QAbstractItemDelegate):
         self.itemWidget.setBlocks([block])
         self.itemWidget.setTextureAtlas(model.textureAtlas)
         self.itemWidget.render(painter,
-                               painter.deviceTransform().map(option.rect.topLeft()), # QTBUG-26694
+                               painter.deviceTransform().map(option.rect.topLeft()),  # QTBUG-26694
                                renderFlags=QtGui.QWidget.DrawChildren)
 
     def sizeHint(self, option, index):
@@ -365,10 +374,11 @@ class BlockTypeListWidget(QtGui.QListView):
     def clearSelection(self):
         self.selectionModel().clear()
 
+
 class BlockTypePicker(QtGui.QDialog):
     def __init__(self, multipleSelect=False):
         super(BlockTypePicker, self).__init__()
-        self._editorSession = None
+
         self.multipleSelect = multipleSelect
         if self.multipleSelect:
             load_ui("block_picker_multiple.ui", baseinstance=self)
@@ -401,23 +411,33 @@ class BlockTypePicker(QtGui.QDialog):
 
         self.selectedBlockTypesWidget.setBlocks(blocks)
 
+    _textureAtlas = None
+
     @property
-    def editorSession(self):
-        return self._editorSession
+    def textureAtlas(self):
+        return self._textureAtlas
 
-    @editorSession.setter
-    def editorSession(self, editorSession):
+    @textureAtlas.setter
+    def textureAtlas(self, textureAtlas):
         """
 
-        :type editorSession: EditorSession
+        :type textureAtlas: mcedit2.rendering.textureatlas.TextureAtlas
         """
-        self._editorSession = editorSession
-        if self.editorSession:
-            log.info("Updating blocktype list widget (multiple=%s) for %s", self.listWidget.multipleSelect, editorSession.worldEditor.blocktypes)
+        self._textureAtlas = textureAtlas
+        self.updatePicker()
 
-            self.selectedBlockTypesWidget.setTextureAtlas(editorSession.textureAtlas)
+    @property
+    def blocktypes(self):
+        return self.textureAtlas.blocktypes
 
-            self.listModel = BlockTypeListModel(editorSession.worldEditor.blocktypes, editorSession.textureAtlas)
+    def updatePicker(self):
+        if self.textureAtlas is not None:
+            log.info("Updating blocktype list widget (multiple=%s) for %s",
+                     self.listWidget.multipleSelect, self.blocktypes)
+
+            self.selectedBlockTypesWidget.setTextureAtlas(self.textureAtlas)
+
+            self.listModel = BlockTypeListModel(self.textureAtlas)
             self.filterModel = BlockTypeListFilterModel(self.listModel)
             self.listWidget.setModel(self.filterModel)
             self.selectedTypesModel = SelectedBlockTypesProxyModel(self.listModel)
@@ -427,10 +447,6 @@ class BlockTypePicker(QtGui.QDialog):
             self.searchField.clearEditText()
 
     @property
-    def blocktypes(self):
-        return self.editorSession.worldEditor.blocktypes
-
-    @property
     def selectedBlocks(self):
         return self.selectedTypesModel.selectedBlocks()
 
@@ -438,7 +454,6 @@ class BlockTypePicker(QtGui.QDialog):
     def selectedBlocks(self, val):
         self.listWidget.setSelectedBlocks(val)
         self.selectedTypesModel.setSelectedBlocks(val)
-
 
     def setSearchString(self, val):
         # Changing the filterModel's search settings clears listWidget's selection
@@ -465,6 +480,7 @@ class BlockTypePicker(QtGui.QDialog):
         self.listWidget.blockSelectionChanged.connect(self.selectionDidChange)
         self.selectedBlocks = selectedBlocks
 
+
 @registerCustomWidget
 class BlockTypeButton(QtGui.QPushButton):
     def __init__(self, *args, **kwargs):
@@ -480,30 +496,30 @@ class BlockTypeButton(QtGui.QPushButton):
 
     blocksChanged = QtCore.Signal(list)
 
-    _editor = None
+    _textureAtlas = None
 
     @property
-    def editorSession(self):
-        return self._editor
+    def textureAtlas(self):
+        return self._textureAtlas
 
-    @editorSession.setter
-    def editorSession(self, editorSession):
+    @textureAtlas.setter
+    def textureAtlas(self, textureAtlas):
         """
 
-        :type editorSession: EditorSession
+        :type textureAtlas: mcedit2.rendering.textureatlas.TextureAtlas
         """
-        self._editor = editorSession
-        self.picker.editorSession = editorSession
+        self._textureAtlas = textureAtlas
+        self.picker.textureAtlas = textureAtlas
         self.updateView()
 
     def updateView(self):
-        if self.editorSession and self.blocks:
+        if self.textureAtlas and self.blocks:
             log.info("Updating button with %s", self.blocks)
 
             layout = self.layout()
             if self._viewWidget:
                 layout.removeWidget(self._viewWidget)
-            self._viewWidget = BlockTypesItemWidget(self, self.blocks, self.editorSession.textureAtlas)
+            self._viewWidget = BlockTypesItemWidget(self, self.blocks, self.textureAtlas)
             layout.addWidget(self._viewWidget)
 
             assert isinstance(layout, QtGui.QLayout)
@@ -523,7 +539,7 @@ class BlockTypeButton(QtGui.QPushButton):
 
     @blocks.setter
     def blocks(self, value):
-        value = [self.editorSession.worldEditor.blocktypes[block]
+        value = [self.blocktypes[block]
                  if not isinstance(block, BlockType)
                  else block
                  for block in value]

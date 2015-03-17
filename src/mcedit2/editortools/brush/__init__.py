@@ -267,7 +267,7 @@ class BrushTool(EditorTool):
         self.toolWidget.ySpinSlider.valueChanged.connect(self.setY)
         self.toolWidget.zSpinSlider.valueChanged.connect(self.setZ)
 
-        self.toolWidget.blockTypeInput.editorSession = editorSession
+        self.toolWidget.blockTypeInput.textureAtlas = editorSession.textureAtlas
         self.toolWidget.blockTypeInput.block = editorSession.worldEditor.blocktypes["minecraft:stone"]
         self.toolWidget.blockTypeInput.blocksChanged.connect(self.setBlocktypes)
 

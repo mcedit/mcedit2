@@ -160,14 +160,14 @@ class FindReplaceBlocks(QtCore.QObject):
             return frame
 
         leftButton = BlockTypeButton(flat=True, multipleSelect=True)
-        leftButton.editorSession = self.editorSession
+        leftButton.textureAtlas = self.editorSession.textureAtlas
         leftButton.blocks = oldBlocks
         leftFramedButton = frameButton(leftButton)
         left.setSizeHint(leftFramedButton.sizeHint())
         log.info("Left button")
 
         rightButton = BlockTypeButton(flat=True)
-        rightButton.editorSession = self.editorSession
+        rightButton.textureAtlas = self.editorSession.textureAtlas
         rightButton.block = newBlock
         rightFramedButton = frameButton(rightButton, True)
         right.setSizeHint(rightFramedButton.sizeHint())

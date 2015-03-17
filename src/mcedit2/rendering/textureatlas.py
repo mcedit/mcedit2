@@ -81,7 +81,7 @@ class TextureAtlas(object):
         """
         self.overrideMaxSize = overrideMaxSize
         self.blockModels = blockModels
-        self._blocktypes = world.blocktypes
+        self.blocktypes = world.blocktypes
         self._filename = world.filename
         self._resourceLoader = resourceLoader
         self._lightTexture = None

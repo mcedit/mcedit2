@@ -15,10 +15,11 @@ class FillCommandWidget(QtGui.QDialog):
         super(FillCommandWidget, self).__init__()
         load_ui("fill.ui", baseinstance=self)
         self.adjustSize()
-        self.blockTypeInput.editorSession = editorSession
+        self.blockTypeInput.textureAtlas = editorSession.textureAtlas
         self.blockTypeInput.block = "minecraft:stone"
 
 _fillWidget = None
+
 def getFillWidget(editorSession):
     global _fillWidget
     if _fillWidget is None:

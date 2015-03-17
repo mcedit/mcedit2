@@ -31,7 +31,7 @@ class FloodFillTool(EditorTool):
 
         self.blockTypeWidget = BlockTypeButton()
         self.blockTypeWidget.block = self.editorSession.worldEditor.blocktypes["stone"]
-        self.blockTypeWidget.editorSession = self.editorSession
+        self.blockTypeWidget.textureAtlas = self.editorSession.textureAtlas
 
         toolWidget.setLayout(Column(Row(QtGui.QLabel("Block:"),
                                         self.blockTypeWidget),
