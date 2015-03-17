@@ -6,7 +6,7 @@ import contextlib
 import inspect
 import os
 import tempfile
-from PySide import QtGui
+from PySide import QtGui, QtCore
 import logging
 from PySide.QtCore import Qt
 import gc
@@ -83,9 +83,13 @@ class ObjGraphWidget(QtGui.QWidget):
             icon = QtGui.QIcon.fromTheme("dialog-error")
             self.imageView.setPixmap(icon.pixmap(64, 64))
 
+    def filterPrimitives(self, obj):
+        return not isinstance(obj, (str, unicode, int, float, QtCore.Signal)) and obj is not None
+
     def showGarbage(self):
         with self.showTempImage() as fn:
             objgraph.show_refs(gc.garbage,
+                               filter=self.filterPrimitives,
                                max_depth=self.depthLimitBox.value(),
                                too_many=self.widthLimitBox.value(), filename=fn)
 
@@ -93,6 +97,7 @@ class ObjGraphWidget(QtGui.QWidget):
         objType = str(self.inputWidget.text())
         with self.showTempImage() as fn:
             objgraph.show_refs(objgraph.by_type(objType),
+                               filter=self.filterPrimitives,
                                max_depth=self.depthLimitBox.value(),
                                too_many=self.widthLimitBox.value(), filename=fn)
 
@@ -102,11 +107,10 @@ class ObjGraphWidget(QtGui.QWidget):
             objects = objgraph.by_type(objType)
             if len(objects) == 0:
                 return
-            objgraph.show_chain(objgraph.find_backref_chain(objects[0],
-                                                            objgraph.is_proper_module,
-                                                            max_depth=self.depthLimitBox.value(),
-                                                            extra_ignore=(id(gc.garbage),)),
-                                too_many=self.widthLimitBox.value(), filename=fn)
+            objgraph.show_backrefs(objects[0],
+                                   max_depth=self.depthLimitBox.value(),
+                                   extra_ignore=(id(gc.garbage),id(objects)),
+                                   too_many=self.widthLimitBox.value(), filename=fn)
 
     def showGraph(self):
         from mcedit2 import editorapp
