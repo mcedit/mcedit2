@@ -82,6 +82,11 @@ class BlockTypeSet(object):
         self.blockJsons = {}
         self.IDsByState = {}  # internalName[blockstates] -> (id, meta)
         self.statesByID = {}  # (id, meta) -> internalName[blockstates]
+
+        self.IDsByName = {}  # internalName -> id
+        self.namesByID = {}  # id -> internalName
+
+
         self.defaultBlockstates = {}  # internalName -> [blockstates]
 
         self.defaults = {
@@ -231,10 +236,11 @@ class BlockTypeSet(object):
             log.info(u"Loading block ID mapping from (%s) %s", len(s), f)
             entries = json.loads(s)
             for ID, meta, nameAndState in entries:
-                #internalName, blockState = self._splitInternalName(nameAndState)
-
+                internalName, blockState = self._splitInternalName(nameAndState)
                 self.IDsByState[nameAndState] = ID, meta
+                self.IDsByName[internalName] = ID
             self.statesByID = {v: k for (k, v) in self.IDsByState.iteritems()}
+            self.namesByID = {v: k for (k, v) in self.IDsByName.iteritems()}
         except EnvironmentError as e:
             log.error(u"Exception while loading block ID mapping from %s: %s", f, e)
             traceback.print_exc()

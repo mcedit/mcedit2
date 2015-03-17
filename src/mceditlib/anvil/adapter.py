@@ -495,14 +495,20 @@ class AnvilWorldAdapter(object):
             for entry in itemdata:
                 ID = entry['V'].value
                 name = entry['K'].value
-                if (ID, 0) not in blocktypes.statesByID:
+                if name[0] != u'\x01':
+                    continue
+                name = name[1:]
+                if ID not in blocktypes.namesByID:
                     count += 1
+                    log.debug("FML1.7: Adding %s = %d", name, ID)
                     blocktypes.IDsByState[name] = ID, 0
                     blocktypes.statesByID[ID, 0] = name
+                    blocktypes.IDsByName[name] = ID
+                    blocktypes.namesByID[ID] = name
                     blocktypes.blockJsons[name] = {
-                        'displayName':name,
-                        'internalName':name,
-                        'blockState':'',
+                        'displayName': name,
+                        'internalName': name,
+                        'blockState': '',
                     }
                     blocktypes.allBlocks.append(BlockType(ID, 0, blocktypes))
 
