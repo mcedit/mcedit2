@@ -28,15 +28,15 @@ class Node(object):
     _parent = None
     @property
     def parent(self):
-        if self._parent:
+        if self._parent is not None:
             return self._parent()
 
     @parent.setter
     def parent(self, value):
-        if value:
+        if value is not None:
             self._parent = weakref.ref(value)
         else:
-            self._parent = value
+            self._parent = None
 
     def touchChildren(self):
         node = self

@@ -37,10 +37,10 @@ class RenderNode(object):
 
     @parent.setter
     def parent(self, value):
-        if value:
+        if value is not None:
             self._parent = weakref.ref(value)
         else:
-            self._parent = value
+            self._parent = None
 
     def addChild(self, node):
         self.children.append(node)
@@ -112,11 +112,10 @@ class RenderNode(object):
     def drawSelf(self):
         pass
 
-    def destroyLists(self):
+    def destroy(self):
         for child in self.children:
-            child.destroyLists()
+            child.destroy()
         self.displayList.destroy()
-
 
 class RenderstateRenderNode(RenderNode):
     def draw(self):
@@ -374,7 +373,7 @@ def updateChildren(renderNode):
 
     for dc in deadChildren:
         renderNode.removeChild(dc)
-        dc.destroyLists()
+        dc.destroy()
 
     for index, sceneChild in enumerate(sceneNode.children):
         renderChild = renderNode.childrenBySceneNode.get(sceneChild)
