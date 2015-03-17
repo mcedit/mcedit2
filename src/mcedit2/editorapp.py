@@ -384,58 +384,60 @@ class MCEditApp(QtGui.QApplication):
         """
         :type session: EditorSession
         """
-        view = session.editorTab.currentView()
+        self.mainWindow.panelsToolBar.clear()
+        self.mainWindow.toolsToolBar.clear()
+        self.removeSessionDockWidgets()
 
         menuBar = self.mainWindow.menuBar()
         if previousSession:
             for menu in previousSession.menus:
                 menuBar.removeAction(menu.menuAction())
-        log.info("Adding session menus: %s", session.menus)
-        for menu in session.menus:
-            menuBar.insertMenu(self.mainWindow.menuWindow.menuAction(), menu)
 
-        self.mainWindow.panelsToolBar.clear()
-        for panel in self.globalPanels:
-            self.mainWindow.panelsToolBar.addAction(panel.toggleViewAction())
-        for panel in session.panels:
-            self.mainWindow.panelsToolBar.addAction(panel.toggleViewAction())
+        if session is not None:
+            self.undoGroup.setActiveStack(session.undoStack)
 
-        self.mainWindow.toolsToolBar.clear()
-        for action in session.toolActions:
-            self.mainWindow.toolsToolBar.addAction(action)
+            log.info("Adding session menus: %s", session.menus)
+            for menu in session.menus:
+                menuBar.insertMenu(self.mainWindow.menuWindow.menuAction(), menu)
 
-        if self.DEBUG:
-            self.loaderInfo.object = session.loader
-            self.cursorInfo.object = view
-            session.editorTab.viewChanged.connect(self.cursorInfo.setObject)
-            self.viewInfo.object = view
-            session.editorTab.viewChanged.connect(self.viewInfo.setObject)
+            for panel in self.globalPanels:
+                self.mainWindow.panelsToolBar.addAction(panel.toggleViewAction())
+            for panel in session.panels:
+                self.mainWindow.panelsToolBar.addAction(panel.toggleViewAction())
 
-            atlas = session.textureAtlas
-            atlas.load()
-            argbData = numpy.dstack((atlas.textureData[..., 3:], atlas.textureData[..., :3]))
-            argbData = argbData[::-1, :, ::-1]
-            buf = argbData.tostring()
-            textureAtlasImg = QtGui.QImage(buf,
-                                           atlas.width, atlas.height,
-                                           QtGui.QImage.Format_RGB32)
+            for action in session.toolActions:
+                self.mainWindow.toolsToolBar.addAction(action)
 
-            textureAtlasImg.textureImageData = buf  # QImage does not retain backing data
+            if self.DEBUG:
+                self.loaderInfo.object = session.loader
+                view = session.editorTab.currentView()
+                self.cursorInfo.object = view
+                session.editorTab.viewChanged.connect(self.cursorInfo.setObject)
+                self.viewInfo.object = view
+                session.editorTab.viewChanged.connect(self.viewInfo.setObject)
 
-            pixmap = QtGui.QPixmap.fromImage(textureAtlasImg)
-            pixmap = pixmap.scaled(atlas.width * 2, atlas.height * 2)
-            self.textureAtlasView.setPixmap(pixmap)
-            self.textureAtlasView.resize(atlas.width * 2, atlas.height * 2)
+                atlas = session.textureAtlas
+                atlas.load()
+                argbData = numpy.dstack((atlas.textureData[..., 3:], atlas.textureData[..., :3]))
+                argbData = argbData[::-1, :, ::-1]
+                buf = argbData.tostring()
+                textureAtlasImg = QtGui.QImage(buf,
+                                               atlas.width, atlas.height,
+                                               QtGui.QImage.Format_RGB32)
 
-        self.updateSessionDockWidgets(session)
-        session.focusWorldView()
+                textureAtlasImg.textureImageData = buf  # QImage does not retain backing data
 
-    def updateSessionDockWidgets(self, session):
-        self.removeSessionDockWidgets()
+                pixmap = QtGui.QPixmap.fromImage(textureAtlasImg)
+                pixmap = pixmap.scaled(atlas.width * 2, atlas.height * 2)
+                self.textureAtlasView.setPixmap(pixmap)
+                self.textureAtlasView.resize(atlas.width * 2, atlas.height * 2)
 
-        for pos, dw in session.dockWidgets:
-            self.mainWindow.addDockWidget(pos, dw)
-            self.sessionDockWidgets.append(dw)
+            for pos, dw in session.dockWidgets:
+                self.mainWindow.addDockWidget(pos, dw)
+                self.sessionDockWidgets.append(dw)
+
+            session.focusWorldView()
+
 
     def removeSessionDockWidgets(self):
         for dw in self.sessionDockWidgets:
@@ -516,11 +518,8 @@ class MCEditApp(QtGui.QApplication):
 
     def tabChanged(self):
         session = self.currentSession()
-        if session:
-            if hasattr(session, 'undoStack'):
-                self.undoGroup.setActiveStack(session.undoStack)
-            self.sessionChanged.emit(session, self._currentSession)
-            self._currentSession = session
+        self.sessionChanged.emit(session, self._currentSession)
+        self._currentSession = session
 
     def currentTab(self):
         """
