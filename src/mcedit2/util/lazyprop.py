@@ -62,4 +62,6 @@ class weakrefprop(object):
         return ref()
 
     def __set__(self, instance, value):
-        setattr(instance, self.name, weakref.ref(value))
+        if value is not None:
+            value = weakref.ref(value)
+        setattr(instance, self.name, value)
