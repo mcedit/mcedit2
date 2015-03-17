@@ -70,26 +70,38 @@ class ObjGraphWidget(QtGui.QWidget):
         fn = tempfile.mktemp('chain.png')
         #fn = "graph.png"
         yield fn
-        image = QtGui.QImage(fn)
-        self.imageView.setPixmap(QtGui.QPixmap(image))
-        self.imageView.setFixedSize(image.size())
-        os.unlink(fn)
+        if os.path.exists(fn):
+            image = QtGui.QImage(fn)
+            self.imageView.setPixmap(QtGui.QPixmap(image))
+            self.imageView.setFixedSize(image.size())
+            os.unlink(fn)
+        else:
+            icon = QtGui.QIcon.fromTheme("dialog-error")
+            self.imageView.setPixmap(icon.pixmap(64, 64))
 
     def showGarbage(self):
         with self.showTempImage() as fn:
-            objgraph.show_refs(gc.garbage, filename=fn)
+            objgraph.show_refs(gc.garbage,
+                               max_depth=self.depthLimitBox.value(),
+                               too_many=self.widthLimitBox.value(), filename=fn)
 
     def showRefs(self):
         objType = str(self.inputWidget.text())
         with self.showTempImage() as fn:
-            objgraph.show_refs(objgraph.by_type(objType), filename=fn)
+            objgraph.show_refs(objgraph.by_type(objType),
+                               max_depth=self.depthLimitBox.value(),
+                               too_many=self.widthLimitBox.value(), filename=fn)
 
     def showBackrefs(self):
         objType = str(self.inputWidget.text())
         with self.showTempImage() as fn:
-            objgraph.show_chain(objgraph.find_backref_chain(objgraph.by_type(objType)[0],
+            objects = objgraph.by_type(objType)
+            if len(objects) == 0:
+                return
+            objgraph.show_chain(objgraph.find_backref_chain(objects[0],
                                                             objgraph.is_proper_module),
-                                filename=fn)
+                                max_depth=self.depthLimitBox.value(),
+                                too_many=self.widthLimitBox.value(), filename=fn)
 
     def showGraph(self):
         from mcedit2 import editorapp
