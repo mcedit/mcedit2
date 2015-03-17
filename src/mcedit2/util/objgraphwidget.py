@@ -11,6 +11,7 @@ import logging
 from PySide.QtCore import Qt
 import gc
 from mcedit2.rendering import rendergraph
+from mcedit2.util import settings
 from mcedit2.widgets.layout import Column, Row
 
 log = logging.getLogger(__name__)
@@ -19,6 +20,8 @@ try:
     import objgraph
 except ImportError:
     objgraph = None
+
+inputSetting = settings.Settings().getOption("objgraph/input", unicode)
 
 class ObjGraphWidget(QtGui.QWidget):
     def __init__(self, *a, **kw):
@@ -30,7 +33,8 @@ class ObjGraphWidget(QtGui.QWidget):
             return
 
         self.inputWidget = QtGui.QLineEdit()
-
+        self.inputWidget.setText(inputSetting.value(""))
+        self.inputWidget.textChanged.connect(inputSetting.setValue)
         self.listWidget = QtGui.QListWidget()
         self.scrollArea = QtGui.QScrollArea()
         self.imageView = QtGui.QLabel()
@@ -99,8 +103,9 @@ class ObjGraphWidget(QtGui.QWidget):
             if len(objects) == 0:
                 return
             objgraph.show_chain(objgraph.find_backref_chain(objects[0],
-                                                            objgraph.is_proper_module),
-                                max_depth=self.depthLimitBox.value(),
+                                                            objgraph.is_proper_module,
+                                                            max_depth=self.depthLimitBox.value(),
+                                                            extra_ignore=(id(gc.garbage),)),
                                 too_many=self.widthLimitBox.value(), filename=fn)
 
     def showGraph(self):
