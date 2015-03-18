@@ -40,9 +40,10 @@ def ToolClasses():
     from . import move
     from . import generate
     from . import edit_chunk
-    from . import edit_entity
+    from . import select_entity
     from . import select
     from . import flood_fill
+    from . import select_block
 
     return (select.SelectionTool,
             move.MoveTool,
@@ -50,7 +51,9 @@ def ToolClasses():
             flood_fill.FloodFillTool,
             generate.GenerateTool,
             edit_chunk.ChunkTool,
-            edit_entity.EntityTool,
+            select_entity.SelectEntityTool,
+            select_block.SelectBlockTool,
+
     )
 
 #     global _scanned_modules

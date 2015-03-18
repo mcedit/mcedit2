@@ -544,6 +544,14 @@ class EditorSession(QtCore.QObject):
         self.worldEditor = None
         return True
 
+    # --- Inspector ---
+
+    def inspectBlock(self, pos):
+        pass
+
+    def inspectEntity(self, entity):
+        pass
+
 
 class EditorTab(QtGui.QWidget):
     """

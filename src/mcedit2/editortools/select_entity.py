@@ -2,14 +2,11 @@
     select
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
-import itertools
 import logging
 
 from PySide import QtGui
-from PySide.QtCore import Qt
 
 from mcedit2.editortools import EditorTool
-from mcedit2.widgets.nbttree.nbttreemodel import NBTTreeModel, NBTFilterProxyModel
 from mcedit2.util.bresenham import bresenham
 from mcedit2.util.load_ui import load_ui
 
@@ -32,8 +29,8 @@ class SelectEntityCommand(QtGui.QUndoCommand):
         self.tool.setSelectionRay(self.ray)
 
 
-class EntityTool(EditorTool):
-    name = "Edit Entity"
+class SelectEntityTool(EditorTool):
+    name = "Select Entity"
     iconName = "edit_entity"
     selectionRay = None
     currentEntity = None
@@ -41,18 +38,13 @@ class EntityTool(EditorTool):
         """
         :type editorSession: EditorSession
         """
-        super(EntityTool, self).__init__(editorSession, *args, **kwargs)
-        self.createToolWidget()
+        super(SelectEntityTool, self).__init__(editorSession, *args, **kwargs)
 
-    def createToolWidget(self):
         self.toolWidget = load_ui("editortools/select_entity.ui")
-        self.toolWidget.entityListBox.currentIndexChanged.connect(self.setSelectedEntity)
-        self.toolWidget.nbtEditor.editorSession = self.editorSession
-        self.toolWidget.nbtEditor.editMade.connect(self.editWasMade)
-
-    def editWasMade(self):
-        if self.currentEntity and self.currentEntity.chunk:
-            self.currentEntity.chunk.dirty = True
+        self.toolWidget.tableWidget.cellClicked.connect(self.cellWasClicked)
+        self.toolWidget.tableWidget.setColumnCount(2)
+        self.toolWidget.tableWidget.setHorizontalHeaderLabels(["ID", "Position"])
+        self.selectedEntities = []
 
     def mousePress(self, event):
         command = SelectEntityCommand(self, event.ray)
@@ -63,23 +55,24 @@ class EntityTool(EditorTool):
         editorSession = self.editorSession
         entities = entitiesOnRay(editorSession.currentDimension, ray)
 
-        entityListBox = self.toolWidget.entityListBox
-        entityListBox.clear()
+        tableWidget = self.toolWidget.tableWidget
+        tableWidget.clear()
         self.selectedEntities = list(entities)
         if len(self.selectedEntities):
-            for e in self.selectedEntities:
+            tableWidget.setRowCount(len(self.selectedEntities))
+            for row, e in enumerate(self.selectedEntities):
                 pos = e.Position
-                entityListBox.addItem("%s at %0.2f, %0.2f, %0.2f" % (e.id, pos[0], pos[1], pos[2]), None)
+                tableWidget.setItem(row, 0, QtGui.QTableWidgetItem(e.id))
+                tableWidget.setItem(row, 1, QtGui.QTableWidgetItem("%0.2f, %0.2f, %0.2f" % (pos[0], pos[1], pos[2])))
 
-            self.setSelectedEntity(0)
+            self.cellWasClicked(0, 0)
 
-    def setSelectedEntity(self, index):
+    def cellWasClicked(self, row, column):
         if len(self.selectedEntities):
-            self.currentEntity = self.selectedEntities[index]
-            self.toolWidget.nbtEditor.setRootTag(self.currentEntity.raw_tag())
+            self.currentEntity = self.selectedEntities[row]
+            self.editorSession.inspectEntity(self.currentEntity)
         else:
-            self.toolWidget.nbtEditor.setRootTag(None)
-
+            self.editorSession.inspectEntity(None)
 
 def entitiesOnRay(dimension, ray, rayWidth=0.75, maxDistance = 1000):
     pos, vec = ray
@@ -107,10 +100,9 @@ def entitiesOnRay(dimension, ray, rayWidth=0.75, maxDistance = 1000):
             dist = ray_dir.cross(evec).length()
             return dist < rayWidth
 
-
     sr = RaySelection()
 
-    return itertools.chain(dimension.getEntities(sr), dimension.getTileEntities(sr))
+    return dimension.getEntities(sr)
 
 
 
