@@ -8,6 +8,7 @@ from PySide.QtCore import Qt
 from mcedit2 import editortools
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.rendering.blockmodels import BlockModels
+from mcedit2.editorcommands.fill import fillCommand
 from mcedit2.editorcommands.find_replace import FindReplaceDialog
 from mcedit2.editortools.select import SelectCommand
 from mcedit2.panels.player import PlayerPanel
@@ -29,6 +30,8 @@ from mcedit2.worldview.cutaway import CutawayWorldViewFrame
 from mcedit2.worldview.minimap import MinimapWorldView
 from mcedit2.worldview.overhead import OverheadWorldViewFrame
 from mceditlib.geometry import Vector
+from mceditlib.operations import ComposeOperations
+from mceditlib.operations.entity import RemoveEntitiesOperation
 from mceditlib.selection import BoundingBox
 from mceditlib.exceptions import PlayerNotFound
 from mceditlib.revisionhistory import UndoFolderExists
@@ -142,9 +145,21 @@ class EditorSession(QtCore.QObject):
         self.actionPaste_Entities.setShortcut(QtGui.QKeySequence("Ctrl+Alt+V"))
         self.actionPaste_Entities.setObjectName("actionPaste_Entities")
 
-        self.actionClear = QtGui.QAction(self.tr("Clear"), self, triggered=self.clear, enabled=False)
+        self.actionClear = QtGui.QAction(self.tr("Delete"), self, triggered=self.deleteSelection, enabled=False)
         self.actionClear.setShortcut(QtGui.QKeySequence.Delete)
         self.actionClear.setObjectName("actionClear")
+
+        self.actionDeleteBlocks = QtGui.QAction(self.tr("Delete Blocks"), self, triggered=self.deleteBlocks, enabled=False)
+        self.actionDeleteBlocks.setShortcut(QtGui.QKeySequence("Shift+Del"))
+        self.actionDeleteBlocks.setObjectName("actionDeleteBlocks")
+
+        self.actionDeleteEntities = QtGui.QAction(self.tr("Delete Entities"), self, triggered=self.deleteEntities, enabled=False)
+        self.actionDeleteEntities.setShortcut(QtGui.QKeySequence("Shift+Alt+Del"))
+        self.actionDeleteEntities.setObjectName("actionDeleteEntities")
+
+        self.actionFill = QtGui.QAction(self.tr("Fill"), self, triggered=self.fill, enabled=False)
+        self.actionFill.setShortcut(QtGui.QKeySequence("Shift+Ctrl+F"))
+        self.actionFill.setObjectName("actionFill")
 
         self.actionFindReplace = QtGui.QAction(self.tr("Find/Replace"), self, triggered=self.findReplace, enabled=True)
         self.actionFindReplace.setShortcut(QtGui.QKeySequence.Find)
@@ -163,7 +178,12 @@ class EditorSession(QtCore.QObject):
         self.menuEdit.addAction(self.actionPaste)
         self.menuEdit.addAction(self.actionPaste_Blocks)
         self.menuEdit.addAction(self.actionPaste_Entities)
+        self.menuEdit.addSeparator()
         self.menuEdit.addAction(self.actionClear)
+        self.menuEdit.addAction(self.actionDeleteBlocks)
+        self.menuEdit.addAction(self.actionDeleteEntities)
+        self.menuEdit.addSeparator()
+        self.menuEdit.addAction(self.actionFill)
         self.menuEdit.addSeparator()
         self.menuEdit.addAction(self.actionFindReplace)
 
@@ -174,6 +194,10 @@ class EditorSession(QtCore.QObject):
         self.actionSelectAll = QtGui.QAction(self.tr("Select All"), self, triggered=self.selectAll)
         self.actionSelectAll.setShortcut(QtGui.QKeySequence.SelectAll)
         self.menuSelect.addAction(self.actionSelectAll)
+
+        self.actionDeselect = QtGui.QAction(self.tr("Deselect"), self, triggered=self.deselect)
+        self.actionDeselect.setShortcut(QtGui.QKeySequence("Ctrl+D"))
+        self.menuSelect.addAction(self.actionDeselect)
 
         self.menus.append(self.menuSelect)
 
@@ -260,6 +284,9 @@ class EditorSession(QtCore.QObject):
         self.actionPaste_Blocks.setEnabled(enable)
         self.actionPaste_Entities.setEnabled(enable)
         self.actionClear.setEnabled(enable)
+        self.actionDeleteBlocks.setEnabled(enable)
+        self.actionDeleteEntities.setEnabled(enable)
+        self.actionFill.setEnabled(enable)
 
     # --- Menu commands ---
 
@@ -299,17 +326,45 @@ class EditorSession(QtCore.QObject):
     def pasteEntities(self):
         NotImplementedYet()
 
-    def clear(self):
-        self.selectionTool.deleteSelection()
-
     def findReplace(self):
         dialog = FindReplaceDialog(self)
         dialog.exec_()
 
+    def deleteSelection(self):
+        command = SimpleRevisionCommand(self, "Delete")
+        with command.begin():
+            fillTask = self.currentDimension.fillBlocksIter(self.currentSelection, "air")
+            entitiesTask = RemoveEntitiesOperation(self.currentDimension, self.currentSelection)
+            task = ComposeOperations(fillTask, entitiesTask)
+            showProgress("Deleting...", task)
+        self.pushCommand(command)
+
+    def deleteBlocks(self):
+        command = SimpleRevisionCommand(self, "Delete Blocks")
+        with command.begin():
+            fillTask = self.currentDimension.fillBlocksIter(self.currentSelection, "air")
+            showProgress("Deleting...", fillTask)
+        self.pushCommand(command)
+
+    def deleteEntities(self):
+        command = SimpleRevisionCommand(self, "Delete Entities")
+        with command.begin():
+            entitiesTask = RemoveEntitiesOperation(self.currentDimension, self.currentSelection)
+            showProgress("Deleting...", entitiesTask)
+        self.pushCommand(command)
+
+    def fill(self):
+        fillCommand(self)
+
     # - Select -
 
     def selectAll(self):
-        command = SelectCommand(self.selectionTool, self.currentDimension.bounds, self.tr("Select All"))
+        command = SelectCommand(self, self.currentDimension.bounds, self.tr("Select All"))
+        self.pushCommand(command)
+
+    def deselect(self):
+        command = SelectCommand(self, None)
+        command.setText(self.tr("Deselect"))
         self.pushCommand(command)
 
     # --- Library support ---

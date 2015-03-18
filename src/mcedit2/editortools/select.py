@@ -7,8 +7,6 @@ import logging
 from OpenGL import GL
 from PySide import QtGui, QtCore
 
-from mcedit2.command import SimpleRevisionCommand
-from mcedit2.editorcommands.fill import fillCommand
 from mcedit2.editortools import EditorTool
 from mcedit2.handles.boxhandle import BoxHandle
 from mcedit2.rendering import cubes
@@ -17,15 +15,12 @@ from mcedit2.util.load_ui import load_ui
 from mcedit2.util.glutils import gl
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering import scenegraph, rendergraph
-from mcedit2.util.showprogress import showProgress
 from mcedit2.widgets import shapewidget
 from mcedit2.widgets.layout import Column
 from mcedit2.widgets.shapewidget import ShapeWidget
 from mceditlib import faces
 from mceditlib.geometry import Vector
 from mceditlib.selection import BoundingBox
-from mceditlib.operations import ComposeOperations
-from mceditlib.operations.entity import RemoveEntitiesOperation
 from mceditlib import selection
 
 log = logging.getLogger(__name__)
@@ -148,21 +143,21 @@ class SelectionCoordinateWidget(QtGui.QWidget):
 
 
 class SelectCommand(QtGui.QUndoCommand):
-    def __init__(self, selectionTool, box, text=None, *args, **kwargs):
+    def __init__(self, editorSession, box, text=None, *args, **kwargs):
         QtGui.QUndoCommand.__init__(self, *args, **kwargs)
         if text is None:
             text = QtGui.qApp.tr("Box Selection")
         self.setText(text)
         self.box = box
-        self.selectionTool = selectionTool
+        self.editorSession = editorSession
         self.previousBox = None
 
     def undo(self):
-        self.selectionTool.currentSelection = self.previousBox
+        self.editorSession.currentSelection = self.previousBox
 
     def redo(self):
-        self.previousBox = self.selectionTool.currentSelection
-        self.selectionTool.currentSelection = self.box
+        self.previousBox = self.editorSession.currentSelection
+        self.editorSession.currentSelection = self.box
 
 class SelectionTool(EditorTool):
     name = "Select"
@@ -183,23 +178,8 @@ class SelectionTool(EditorTool):
         self.coordInput.boxChanged.connect(self.coordInputChanged)
         self.shapeInput = ShapeWidget()
         self.shapeInput.shapeChanged.connect(self.shapeDidChange)
-        self.deselectButton = QtGui.QPushButton(self.tr("Deselect"))
-        self.deselectButton.clicked.connect(self.deselect)
-        self.deleteSelectionButton = QtGui.QPushButton(self.tr("Delete"))
-        self.deleteSelectionButton.clicked.connect(self.deleteSelection)
-        self.deleteBlocksButton = QtGui.QPushButton(self.tr("Delete Blocks"))
-        self.deleteBlocksButton.clicked.connect(self.deleteBlocks)
-        self.deleteEntitiesButton = QtGui.QPushButton(self.tr("Delete Entities"))
-        self.deleteEntitiesButton.clicked.connect(self.deleteEntities)
-        self.fillButton = QtGui.QPushButton(self.tr("Fill"))
-        self.fillButton.clicked.connect(self.fill)
         self.toolWidget.setLayout(Column(self.coordInput,
                                          self.shapeInput,
-                                         self.deselectButton,
-                                         self.deleteSelectionButton,
-                                         self.deleteBlocksButton,
-                                         self.deleteEntitiesButton,
-                                         self.fillButton,
                                          None))
 
         self.cursorNode = SelectionCursor()
@@ -244,8 +224,6 @@ class SelectionTool(EditorTool):
     def currentSelection(self, value):
         self.editorSession.currentSelection = value
 
-        self.boxHandleNode.bounds = None if value is None else BoundingBox(value.origin, value.size)
-
     def coordInputChanged(self, box):
         self.currentSelection = self.createShapedSelection(box)
 
@@ -256,29 +234,13 @@ class SelectionTool(EditorTool):
     def updateNodes(self):
         box = self.currentSelection
         if box:
+            self.boxHandleNode.bounds = BoundingBox(box.origin, box.size)
             self.selectionNode.visible = True
             self.selectionNode.selection = box
         else:
+            self.boxHandleNode.bounds = None
             self.selectionNode.visible = False
             self.faceHoverNode.visible = False
-
-    def deleteSelection(self):
-        command = SimpleRevisionCommand(self.editorSession, "Delete")
-        with command.begin():
-            fillTask = self.editorSession.currentDimension.fillBlocksIter(self.editorSession.currentSelection, "air")
-            entitiesTask = RemoveEntitiesOperation(self.editorSession.currentDimension, self.editorSession.currentSelection)
-            task = ComposeOperations(fillTask, entitiesTask)
-            showProgress("Deleting...", task)
-        self.editorSession.pushCommand(command)
-
-    def deleteBlocks(self):
-        pass
-
-    def deleteEntities(self):
-        pass
-
-    def fill(self):
-        fillCommand(self.editorSession)
 
     def boxHandleResized(self, box):
         if box is not None:
@@ -287,7 +249,7 @@ class SelectionTool(EditorTool):
     def boxHandleResizedDone(self, box, newSelection):
         if box is not None:
             selection = self.createShapedSelection(box)
-            command = SelectCommand(self, selection)
+            command = SelectCommand(self.editorSession, selection)
             if not newSelection:
                 command.setText(self.tr("Resize Selection"))
             self.editorSession.undoStack.push(command)
@@ -309,12 +271,6 @@ class SelectionTool(EditorTool):
     def mouseRelease(self, event):
         self.boxHandleNode.mouseRelease(event)
 
-
-    def deselect(self):
-        editor = self.editorSession
-        command = SelectCommand(self, None)
-        command.setText(self.tr("Deselect"))
-        editor.undoStack.push(command)
 
     selectionColor = (0.8, 0.8, 1.0)
     alpha = 0.33
