@@ -45,6 +45,16 @@ class MCESettingsOption(QtCore.QObject):
     def setJsonValue(self, value):
         return self.settings.setJsonValue(self.key, value)
 
+class MCESettingsNamespace(object):
+    def __init__(self, rootSettings, prefix):
+        self.rootSettings = rootSettings
+        if not prefix.endswith("/"):
+            prefix = prefix + "/"
+
+        self.prefix = prefix
+
+    def getOption(self, key, type=None):
+        return self.rootSettings.getOption(self.prefix + key, type)
 
 
 class MCESettings(QtCore.QSettings):
@@ -65,6 +75,18 @@ class MCESettings(QtCore.QSettings):
                                            **kwargs)
         self.options = {}
         #= defaultdict(lambda: QtCore.Signal(object))
+
+    def getNamespace(self, prefix):
+        """
+        Return an MCESettingsNamespace object which can be used to access settings whose keys are all prefixed by
+        the given prefix
+
+        :param prefix:
+        :type prefix:
+        :return:
+        :rtype:
+        """
+        return MCESettingsNamespace(self, prefix)
 
     def getSignal(self, key):
         """
