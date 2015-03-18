@@ -617,8 +617,8 @@ class EditorTab(QtGui.QWidget):
         frame.stackIndex = self.viewStack.addWidget(frame)
         frame.worldView.viewportMoved.connect(self.viewOffsetChanged)
         frame.worldView.viewActions.extend([
-            UseToolMouseAction(self.editorSession),
-            TrackingMouseAction(self.editorSession)
+            UseToolMouseAction(self),
+            TrackingMouseAction(self)
         ])
 
     def currentView(self):

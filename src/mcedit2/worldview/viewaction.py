@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function
 import logging
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
+from mcedit2.util.lazyprop import weakrefprop
 from mcedit2.util.settings import Settings
 
 log = logging.getLogger(__name__)
@@ -22,6 +23,7 @@ class ViewAction(QtCore.QObject):
     WHEEL_DOWN = 0x200
 
     _buttonNames = None
+
     def __init__(self):
         """
         An action that can be bound to a keypress or mouse button click, drag, or movement with the bound key or button held.
@@ -167,20 +169,22 @@ class UseToolMouseAction(ViewAction):
     hidden = True
     settingsKey = None
 
-    def __init__(self, editor):
+    editorTab = weakrefprop()
+
+    def __init__(self, editorTab):
         super(UseToolMouseAction, self).__init__()
-        self.editor = editor
+        self.editorTab = editorTab
 
     def mousePressEvent(self, event):
-        self.editor.viewMousePress(event)
+        self.editorTab.editorSession.viewMousePress(event)
         event.view.update()
 
     def mouseMoveEvent(self, event):
-        self.editor.viewMouseDrag(event)
+        self.editorTab.editorSession.viewMouseDrag(event)
         event.view.update()
 
     def mouseReleaseEvent(self, event):
-        self.editor.viewMouseRelease(event)
+        self.editorTab.editorSession.viewMouseRelease(event)
         event.view.update()
 
 
@@ -191,12 +195,14 @@ class TrackingMouseAction(ViewAction):
     labelText = "Mouse Tracking (Don't change!)"
     settingsKey = None
 
-    def __init__(self, editor):
+    editorTab = weakrefprop()
+
+    def __init__(self, editorTab):
         super(TrackingMouseAction, self).__init__()
-        self.editor = editor
+        self.editorTab = editorTab
 
     def mouseMoveEvent(self, event):
-        self.editor.viewMouseMove(event)
+        self.editorTab.editorSession.viewMouseMove(event)
 
 
 class MoveViewMouseAction(ViewAction):
