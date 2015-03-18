@@ -466,28 +466,6 @@ class AnvilWorldAdapter(object):
         if fml is None:
             return
 
-        mid = fml.get('ModItemData')  # MC 1.6
-        if mid is not None:
-            log.info("Adding block IDs from FML for MC 1.6")
-            blocktypes = PCBlockTypeSet()
-            for entry in mid:
-                ID = entry['ItemId'].value
-                name = entry['ItemType'].value
-                if (ID, 0) not in blocktypes.statesByID:
-                    blocktypes.IDsByState[name] = ID, 0
-                    blocktypes.statesByID[ID, 0] = name
-                    blocktypes.IDsByName[name] = ID
-                    blocktypes.namesByID[ID] = name
-                    blocktypes.blockJsons[name] = {
-                        'displayName':name,
-                        'internalName':name,
-                        'blockState':'',
-                    }
-                    blocktypes.allBlocks.append(BlockType(ID, 0, blocktypes))
-
-            blocktypes.allBlocks.sort()
-            self.blocktypes = blocktypes
-
         itemdata = fml.get('ItemData')  # MC 1.7
         if itemdata is not None:
             count = 0
