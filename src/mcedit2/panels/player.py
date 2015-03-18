@@ -39,12 +39,15 @@ class PlayerPanel(QtGui.QWidget):
 
         self.movePlayerButton.clicked.connect(self.movePlayerToCamera)
         self.viewPlayerButton.clicked.connect(self.showPlayerView)
-
         playerUUIDs = list(editorSession.worldEditor.listPlayers())
         try:
             sp = editorSession.worldEditor.getPlayer("")
             singlePlayerUUID = sp.UUID
         except PlayerNotFound:
+            log.info("No single-player.")
+            singlePlayerUUID = None
+        except KeyError:
+            log.info("Failed to get single-player UUID.")
             singlePlayerUUID = None
 
         for UUID in playerUUIDs:  # xxx live update?
