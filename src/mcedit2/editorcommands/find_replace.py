@@ -7,6 +7,7 @@ from PySide import QtGui, QtCore
 import logging
 from PySide.QtCore import Qt
 from mcedit2.command import SimpleRevisionCommand
+from mcedit2.util import settings
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.resources import resourcePath
 from mcedit2.util.showprogress import showProgress
@@ -15,7 +16,14 @@ from mcedit2.widgets.layout import Row, Column
 
 log = logging.getLogger(__name__)
 
-NBTResultsEntry = namedtuple("NBTResultsEntry", "displayName path value")
+class NBTResultsEntry(namedtuple("NBTResultsEntry", "displayName location value resultType")):
+    EntityResult = "ENTITY"
+    TileEntityResult = "TILE_ENTITY"
+    ItemResult = "ITEM"
+    PlayerResult = "PLAYER"
+    ChunkResult = "CHUNK"
+    FileResult = "FILE"
+
 
 class NBTResultsModel(QtCore.QAbstractItemModel):
     def __init__(self):
@@ -71,7 +79,10 @@ class NBTResultsModel(QtCore.QAbstractItemModel):
             elif column == 1:
                 return entry.value
             elif column == 2:
-                return entry.path
+                if entry.resultType == entry.EntityResult:
+                    return "%s@%s/%s (%s)" % entry.location
+                elif entry.resultType == entry.TileEntityResult:
+                    return "%s@%s/%s" % entry.location[:3]
             else:
                 return ""
                 # value = entry.value
@@ -202,26 +213,86 @@ class FindReplaceBlocks(QtCore.QObject):
             showProgress("Replacing...", task)
         self.editorSession.pushCommand(command)
 
+nbtReplaceSettings = settings.Settings().getNamespace("findreplace/nbt")
+nbtReplaceSettings.nameField = nbtReplaceSettings.getOption("nameField", unicode)
+nbtReplaceSettings.valueField = nbtReplaceSettings.getOption("valueField", unicode)
+
+nbtReplaceSettings.entityIDField = nbtReplaceSettings.getOption("entityIDField", unicode)
+nbtReplaceSettings.searchEntitiesChecked = nbtReplaceSettings.getOption("searchEntitiesChecked", bool)
+
+nbtReplaceSettings.tileEntityIDField = nbtReplaceSettings.getOption("tileEntityIDField", unicode)
+nbtReplaceSettings.searchTileEntitiesChecked = nbtReplaceSettings.getOption("searchTileEntitiesChecked", bool)
+
 
 class FindReplaceNBT(QtCore.QObject):
-    def __init__(self, editorSession):
+    def __init__(self, editorSession, dialog):
         super(FindReplaceNBT, self).__init__()
         self.editorSession = editorSession
         self.widget = load_ui("find_replace_nbt.ui")
+        self.dialog = dialog
+
+        self.resultsWidgetContents = load_ui("find_replace_nbt_results.ui")
+        self.resultsWidget = QtGui.QDockWidget("NBT Search", objectName="nbtSearch")
+        self.resultsWidget.setWidget(self.resultsWidgetContents)
+        self.resultsWidget.hide()
+
         self.resultsModel = NBTResultsModel()
-        self.widget.resultsView.setModel(self.resultsModel)
+        self.resultsWidgetContents.resultsView.setModel(self.resultsModel)
+
         self.widget.findButton.clicked.connect(self.find)
-        self.widget.stopButton.clicked.connect(self.stop)
-        self.widget.stopButton.setVisible(False)
+
+        self.resultsWidgetContents.stopButton.clicked.connect(self.stop)
 
         self.widget.searchNameCheckbox.toggled.connect(self.searchForToggled)
         self.widget.searchValueCheckbox.toggled.connect(self.searchForToggled)
         self.findTimer = None
         self.finder = None
 
+        self.widget.nameField.setText(nbtReplaceSettings.nameField.value(""))
+        self.widget.searchNameCheckbox.setChecked(len(self.widget.nameField.text()) > 0)
+        self.widget.nameField.textChanged.connect(self.nameFieldChanged)
+
+        self.widget.valueField.setText(nbtReplaceSettings.valueField.value(""))
+        self.widget.searchValueCheckbox.setChecked(len(self.widget.valueField.text()) > 0)
+        self.widget.valueField.textChanged.connect(self.valueFieldChanged)
+
+        self.widget.searchEntitiesCheckbox.setChecked(nbtReplaceSettings.searchEntitiesChecked.value(False))
+        self.widget.searchEntitiesCheckbox.toggled.connect(nbtReplaceSettings.searchEntitiesChecked.setValue)
+
+        self.widget.entityIDField.setText(nbtReplaceSettings.entityIDField.value(""))
+        self.widget.entityIDField.textChanged.connect(self.entityIDFieldChanged)
+
+        self.widget.searchTileEntitiesCheckbox.setChecked(nbtReplaceSettings.searchTileEntitiesChecked.value(False))
+        self.widget.searchTileEntitiesCheckbox.toggled.connect(nbtReplaceSettings.searchTileEntitiesChecked.setValue)
+
+        self.widget.tileEntityIDField.setText(nbtReplaceSettings.tileEntityIDField.value(""))
+        self.widget.tileEntityIDField.textChanged.connect(self.tileEntityIDFieldChanged)
+
+    def dialogOpened(self):
+        currentSelection = self.editorSession.currentSelection
+        self.widget.inSelectionCheckbox.setChecked(currentSelection is not None and currentSelection.volume > 0)
+
     def searchForToggled(self):
         canSearch = self.widget.searchNameCheckbox.isChecked() or self.widget.searchValueCheckbox.isChecked()
         self.widget.findButton.setEnabled(canSearch)
+
+    def nameFieldChanged(self, value):
+        nbtReplaceSettings.nameField.setValue(value)
+        self.widget.searchNameCheckbox.setChecked(len(value) > 0)
+
+    def valueFieldChanged(self, value):
+        nbtReplaceSettings.valueField.setValue(value)
+        self.widget.searchValueCheckbox.setChecked(len(value) > 0)
+
+    def entityIDFieldChanged(self, value):
+        nbtReplaceSettings.entityIDField.setValue(value)
+        if len(value):
+            self.widget.searchEntitiesCheckbox.setChecked(True)
+
+    def tileEntityIDFieldChanged(self, value):
+        nbtReplaceSettings.tileEntityIDField.setValue(value)
+        if len(value):
+            self.widget.searchTileEntitiesCheckbox.setChecked(True)
 
     def find(self):
         searchNames = self.widget.searchNameCheckbox.isChecked()
@@ -238,7 +309,6 @@ class FindReplaceNBT(QtCore.QObject):
         targetTileEntityIDs = self.widget.tileEntityIDField.text()
         if len(targetTileEntityIDs):
             targetTileEntityIDs = targetEntityIDs.split(';')
-
 
         if not searchNames and not searchValues:
             return
@@ -278,39 +348,46 @@ class FindReplaceNBT(QtCore.QObject):
                 if len(targetEntityIDs) and entity.id not in targetEntityIDs:
                     continue
 
+                try:
+                    uuid = entity.UUID
+                except KeyError:
+                    uuid = None  # Don't want to use find/replace on entities without UUIDs
+
                 tag = entity.raw_tag()
+
                 for name, subtag, path in walkNBT(tag):
                     result = _findTag(name, subtag, path)
                     if result:
                         name, path, value = result
-                        path = "%s@%s/%s" % (entity.id, entity.Position, path)
+                        location = entity.id, entity.Position, path, uuid
 
-                        results.append(NBTResultsEntry(name, path, value))
+                        results.append(NBTResultsEntry(name, location, value, NBTResultsEntry.EntityResult))
 
             self.resultsModel.addResults(results)
 
         def _findTileEntitiesInChunk(chunk):
             results = []
-            for entity in chunk.TileEntities:
-                if entity.Position not in selection:
+            for tileEntity in chunk.TileEntities:
+                if tileEntity.Position not in selection:
                     continue
-                if len(targetTileEntityIDs) and entity.id not in targetTileEntityIDs:
+                if len(targetTileEntityIDs) and tileEntity.id not in targetTileEntityIDs:
                     continue
 
-                tag = entity.raw_tag()
+                tag = tileEntity.raw_tag()
                 for name, subtag, path in walkNBT(tag):
                     result = _findTag(name, subtag, path)
                     if result:
                         name, path, value = result
-                        path = "%s@%s/%s" % (entity.id, entity.Position, path)
+                        location = tileEntity.id, tileEntity.Position, path, None
 
-                        results.append(NBTResultsEntry(name, path, value))
+                        results.append(NBTResultsEntry(name, location, value, NBTResultsEntry.TileEntityResult))
 
             self.resultsModel.addResults(results)
 
-
         def _find():
-            self.widget.progressBar.setMaximum(selection.chunkCount)
+            self.resultsWidget.show()
+            self.dialog.accept()
+            self.resultsWidgetContents.progressBar.setMaximum(selection.chunkCount-1)
             for i, cPos in enumerate(selection.chunkPositions()):
                 if dim.containsChunk(*cPos):
                     chunk = dim.getChunk(*cPos)
@@ -319,8 +396,8 @@ class FindReplaceNBT(QtCore.QObject):
                     if searchTileEntities:
                         _findTileEntitiesInChunk(chunk)
 
-                    self.widget.progressBar.setValue(i)
                     yield
+                self.resultsWidgetContents.progressBar.setValue(i)
 
             self.stop()
 
@@ -334,15 +411,14 @@ class FindReplaceNBT(QtCore.QObject):
 
         self.findTimer = QtCore.QTimer(timeout=find, interval=1.0)
         self.findTimer.start()
-        self.widget.findButton.setVisible(False)
-        self.widget.stopButton.setVisible(True)
+        self.resultsWidgetContents.stopButton.setEnabled(True)
 
     def stop(self):
         if self.findTimer:
             self.findTimer.stop()
-        self.widget.findButton.setVisible(True)
-        self.widget.stopButton.setVisible(False)
-        self.widget.progressBar.setValue(0)
+        self.resultsWidgetContents.stopButton.setEnabled(False)
+        self.widget.findButton.setEnabled(True)
+
 
 def walkNBT(tag, path=""):
     if tag.isCompound():
@@ -365,10 +441,20 @@ class FindReplaceDialog(QtGui.QDialog):
 
         self.findReplaceBlocks = FindReplaceBlocks(editorSession, self)
 
-        self.findReplaceNBT = FindReplaceNBT(editorSession)
+        self.findReplaceNBT = FindReplaceNBT(editorSession, self)
         self.nbtTab.setLayout(Column(self.findReplaceNBT.widget, margin=0))
 
+        self.resultsWidgets = [
+            # self.findReplaceBlocks.resultsWidget,
+            self.findReplaceNBT.resultsWidget,
 
+        ]
+        self.adjustSize()
+
+    def exec_(self):
+        self.findReplaceNBT.dialogOpened()
+        # self.findReplaceBlocks.dialogOpened()
+        super(FindReplaceDialog, self).exec_()
 
 
 

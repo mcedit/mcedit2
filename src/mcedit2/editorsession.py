@@ -237,6 +237,10 @@ class EditorSession(QtCore.QObject):
 
         self.undoStack.indexChanged.connect(self.undoIndexChanged)
 
+        self.findReplaceDialog = FindReplaceDialog(self)
+        for resultsWidget in self.findReplaceDialog.resultsWidgets:
+            self.dockWidgets.append((Qt.BottomDockWidgetArea, resultsWidget))
+
         if len(self.toolActions):
             self.toolActions[0].trigger()  # Must be called after toolChanged is connected to editorTab
 
@@ -327,8 +331,7 @@ class EditorSession(QtCore.QObject):
         NotImplementedYet()
 
     def findReplace(self):
-        dialog = FindReplaceDialog(self)
-        dialog.exec_()
+        self.findReplaceDialog.exec_()
 
     def deleteSelection(self):
         command = SimpleRevisionCommand(self, "Delete")
