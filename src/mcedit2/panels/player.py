@@ -9,6 +9,7 @@ from PySide import QtGui
 from PySide.QtCore import Qt
 
 from mcedit2.command import SimpleRevisionCommand
+from mcedit2.util.lazyprop import weakrefprop
 from mcedit2.util.screen import centerWidgetInScreen
 from mcedit2.widgets.nbttree.nbttreemodel import NBTTreeModel
 from mcedit2.util.load_ui import load_ui
@@ -73,6 +74,8 @@ class PlayerPanel(QtGui.QWidget):
         self.nbtEditor.editMade.connect(self.nbtEditWasMade)
 
         centerWidgetInScreen(self)
+
+    editorSession = weakrefprop()
 
     def initPropertiesWidget(self):
         if self.selectedPlayer is None:
