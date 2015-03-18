@@ -616,6 +616,15 @@ class WorldEditorDimension(object):
                     if matchEntityTags(ref, kw):
                         yield ref
 
+    def getTileEntity(self, pos, **kw):
+        cx = pos[0] >> 4
+        cz = pos[2] >> 4
+        chunk = self.getChunk(cx, cz)
+        for ref in chunk.TileEntities:
+            if ref.Position == pos:
+                if matchEntityTags(ref, kw):
+                    return ref
+
     def addEntity(self, ref):
         x, y, z = ref.Position
         cx, cz = chunk_pos(x, z)

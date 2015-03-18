@@ -46,7 +46,7 @@ class SelectBlockTool(EditorTool):
         self.toolWidget = load_ui("editortools/select_block.ui")
 
     def mousePress(self, event):
-        command = SelectBlockCommand(self, event.pos)
+        command = SelectBlockCommand(self, event.blockPosition)
         self.editorSession.pushCommand(command)
 
     def setMousePos(self, pos):

@@ -18,6 +18,7 @@ from mcedit2.util.raycast import rayCastInBounds
 from mcedit2.util.resources import resourcePath
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.undostack import MCEUndoStack
+from mcedit2.widgets.inspector import InspectorWidget
 from mcedit2.worldview.viewaction import UseToolMouseAction, TrackingMouseAction
 from mceditlib import util
 from mcedit2.rendering import chunkloader, scenegraph
@@ -240,6 +241,13 @@ class EditorSession(QtCore.QObject):
         self.findReplaceDialog = FindReplaceDialog(self)
         for resultsWidget in self.findReplaceDialog.resultsWidgets:
             self.dockWidgets.append((Qt.BottomDockWidgetArea, resultsWidget))
+
+        self.inspectorWidget = InspectorWidget(self)
+        self.inspectorDockWidget = QtGui.QDockWidget(self.tr("Inspector"), objectName="inspector")
+        self.inspectorDockWidget.setWidget(self.inspectorWidget)
+        self.inspectorDockWidget.hide()
+        self.dockWidgets.append((Qt.RightDockWidgetArea, self.inspectorDockWidget))
+
 
         if len(self.toolActions):
             self.toolActions[0].trigger()  # Must be called after toolChanged is connected to editorTab
@@ -547,10 +555,12 @@ class EditorSession(QtCore.QObject):
     # --- Inspector ---
 
     def inspectBlock(self, pos):
-        pass
+        self.inspectorDockWidget.show()
+        self.inspectorWidget.inspectBlock(pos)
 
     def inspectEntity(self, entity):
-        pass
+        self.inspectorDockWidget.show()
+        self.inspectorWidget.inspectEntity(entity)
 
 
 class EditorTab(QtGui.QWidget):
