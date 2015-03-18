@@ -12,6 +12,7 @@ from mcedit2.editorcommands.find_replace import FindReplaceDialog
 from mcedit2.editortools.select import SelectCommand
 from mcedit2.panels.player import PlayerPanel
 from mcedit2.util.dialogs import NotImplementedYet
+from mcedit2.util.lazyprop import weakrefprop
 from mcedit2.util.raycast import rayCastInBounds
 from mcedit2.util.resources import resourcePath
 from mcedit2.util.showprogress import showProgress
@@ -576,6 +577,7 @@ class EditorTab(QtGui.QWidget):
             view.destroy()
 
         super(EditorTab, self).destroy()
+    editorSession = weakrefprop()
 
     def toolDidChange(self, tool):
         if tool.toolWidget:
