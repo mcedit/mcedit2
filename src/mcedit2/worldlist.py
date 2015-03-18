@@ -270,18 +270,27 @@ class WorldListWidget(QtGui.QDialog):
 
     def removeWorldView(self):
         if self.worldView:
+            log.info("Removing view from WorldListWidget")
             self.worldView.textureAtlas.dispose()
             self.worldView.destroy()
-            self.worldView.setParent(None)
             self.stackedWidget.removeWidget(self.worldView)
+            self.worldView.setParent(None)
             self.worldView = None
 
+        self.selectedWorldIndex = -1
         self.chunkLoader = None
 
-    def closeEvent(self, event):
+    def hide(self):
         self.removeWorldView()
-        self.selectedWorldIndex = -1
-        #import gc; gc.collect()
+        super(WorldListWidget, self).hide()
+
+    def close(self):
+        self.removeWorldView()
+        super(WorldListWidget, self).close()
+
+    def reject(self):
+        self.removeWorldView()
+        super(WorldListWidget, self).reject()
 
     def showEvent(self, event):
         if len(self.itemWidgets):
