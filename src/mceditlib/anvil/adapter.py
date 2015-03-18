@@ -472,17 +472,18 @@ class AnvilWorldAdapter(object):
             blocktypes = PCBlockTypeSet()
             for entry in mid:
                 ID = entry['ItemId'].value
-                meta = entry['ordinal'].value
                 name = entry['ItemType'].value
                 if (ID, 0) not in blocktypes.statesByID:
-                    blocktypes.IDsByState[name] = ID, meta
-                    blocktypes.statesByID[ID, meta] = name
+                    blocktypes.IDsByState[name] = ID, 0
+                    blocktypes.statesByID[ID, 0] = name
+                    blocktypes.IDsByName[name] = ID
+                    blocktypes.namesByID[ID] = name
                     blocktypes.blockJsons[name] = {
                         'displayName':name,
                         'internalName':name,
                         'blockState':'',
                     }
-                    blocktypes.allBlocks.append(BlockType(ID, meta, blocktypes))
+                    blocktypes.allBlocks.append(BlockType(ID, 0, blocktypes))
 
             blocktypes.allBlocks.sort()
             self.blocktypes = blocktypes
