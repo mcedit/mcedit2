@@ -6,6 +6,7 @@ import logging
 
 from PySide import QtGui, QtCore, QtNetwork
 from PySide.QtCore import Qt
+import gc
 import numpy
 from mcedit2.library import LibraryWidget
 
@@ -307,7 +308,6 @@ class MCEditApp(QtGui.QApplication):
 
         return debugMenu
 
-
     def ensureSingle(self):
         serverName = "MCEdit.Application"
         socket = QtNetwork.QLocalSocket()
@@ -497,20 +497,18 @@ class MCEditApp(QtGui.QApplication):
     def tabCloseRequested(self, index):
         tab = self.tabWidget.widget(index)
         if hasattr(tab, "editorSession"):
-            editor = tab.editorSession
-            if editor.closeTab():
+            session = tab.editorSession
+            if session.closeTab():
+                log.info("Closed session %s", str(session))
                 self.tabWidget.removeTab(index)
 
                 # IMPORTANT: Even after removeTab is called, the tab widget must be unparented
-                editor.editorTab.setParent(None)
-
+                tab.setParent(None)
                 self.removeSessionDockWidgets()
-                del self.sessions[index]
-                editor.dispose()
-                #if len(self.sessions) == 0:
-                #    self.showWorldList()
-
-                import gc; gc.collect()
+                self.undoGroup.removeStack(session.undoStack)
+                session.undoStack.setParent(None)
+                self.sessions.remove(session)
+                gc.collect()
         else:
             self.tabWidget.removeTab(index)
 
