@@ -7,6 +7,7 @@ import logging
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
 from mcedit2.command import SimpleRevisionCommand
+from mcedit2.util.lazyprop import weakrefprop
 
 from mcedit2.widgets.nbttree.nbttreemodel import NBTFilterProxyModel, NBTPathRole, NBTIcon, NBTTreeModel
 from mcedit2.util.load_ui import registerCustomWidget
@@ -22,7 +23,7 @@ class NBTDataChangeCommand(SimpleRevisionCommand):
 @registerCustomWidget
 class NBTEditorWidget(QtGui.QWidget):
     undoCommandPrefixText = ""
-    editorSession = NotImplemented
+    editorSession = weakrefprop()
     proxyModel = None
     rootTag = None
 
