@@ -242,6 +242,7 @@ class FindReplaceNBT(QtCore.QObject):
         self.widget.findButton.clicked.connect(self.find)
 
         self.resultsWidgetContents.stopButton.clicked.connect(self.stop)
+        self.resultsWidgetContents.findAgainButton.clicked.connect(dialog.exec_)
 
         self.widget.searchNameCheckbox.toggled.connect(self.searchForToggled)
         self.widget.searchValueCheckbox.toggled.connect(self.searchForToggled)
@@ -387,6 +388,8 @@ class FindReplaceNBT(QtCore.QObject):
         def _find():
             self.resultsWidget.show()
             self.dialog.accept()
+            self.resultsWidgetContents.findAgainButton.setEnabled(False)
+
             self.resultsWidgetContents.progressBar.setMaximum(selection.chunkCount-1)
             for i, cPos in enumerate(selection.chunkPositions()):
                 if dim.containsChunk(*cPos):
@@ -416,8 +419,9 @@ class FindReplaceNBT(QtCore.QObject):
     def stop(self):
         if self.findTimer:
             self.findTimer.stop()
-        self.resultsWidgetContents.stopButton.setEnabled(False)
         self.widget.findButton.setEnabled(True)
+        self.resultsWidgetContents.stopButton.setEnabled(False)
+        self.resultsWidgetContents.findAgainButton.setEnabled(True)
 
 
 def walkNBT(tag, path=""):

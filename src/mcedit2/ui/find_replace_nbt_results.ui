@@ -64,6 +64,13 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QPushButton" name="findAgainButton">
+       <property name="text">
+        <string>Find Again...</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>
