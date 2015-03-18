@@ -242,7 +242,10 @@ class MCEditApp(QtGui.QApplication):
         statusBar.addPermanentWidget(self.cpsLabel)
         statusBar.addPermanentWidget(self.fpsLabel)
 
+        # --- Load settings ---
+
         mainWindow.loadSettings()
+        self.updateRecentFilesMenu()
 
         self.loadTimer = timer = LoaderTimer(self)
         timer.setInterval(0)
