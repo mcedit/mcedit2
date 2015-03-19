@@ -45,7 +45,8 @@ class InspectorWidget(QtGui.QWidget):
         self.tileEntity = self.editorSession.currentDimension.getTileEntity(pos)
         if self.tileEntity is not None:
             self.blockNBTEditor.setRootTag(self.tileEntity.raw_tag())
-
+        else:
+            self.blockNBTEditor.setRootTag(None)
         self.removeTileEntityButton.setEnabled(self.tileEntity is not None)
 
     def inspectEntity(self, entity):
@@ -53,7 +54,7 @@ class InspectorWidget(QtGui.QWidget):
         self.stackedWidget.setCurrentWidget(self.pageInspectEntity)
         self.entityIDLabel.setText(entity.id)
         try:
-            self.entityUUIDLabel.setText(entity.UUID)
+            self.entityUUIDLabel.setText(str(entity.UUID))
         except KeyError:
             self.entityUUIDLabel.setText(self.tr("(Not set)"))
 
