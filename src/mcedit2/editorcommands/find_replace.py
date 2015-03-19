@@ -3,6 +3,7 @@
 """
 from __future__ import absolute_import, division, print_function
 from collections import namedtuple
+from mceditlib import nbt
 from PySide import QtGui, QtCore
 import logging
 from PySide.QtCore import Qt
@@ -569,20 +570,37 @@ class FindReplaceNBT(QtCore.QObject):
             if shouldReplaceValue:
                 subtag = tag[result.tagName]
                 # xxx newTagType
-                subtag.value = newValue
+                if subtag.tagID in (nbt.ID_BYTE, nbt.ID_SHORT, nbt.ID_INT, nbt.ID_LONG):
+                    try:
+                        value = int(newValue)
+                    except ValueError:
+                        log.warn("Could not assign value %s to tag %s (could not convert to int)", newValue, subtag)
+                        return
+                elif subtag.tagID in (nbt.ID_FLOAT, nbt.ID_DOUBLE):
+                    try:
+                        value = float(newValue)
+                    except ValueError:
+                        log.warn("Could not assign value %s to tag %s (could not convert to float)", newValue, subtag)
+                        return
+                else:
+                    value = newValue
+                subtag.value = value
 
         def _replace():
             for result in entries:
                 if result.resultType == result.TileEntityResult:
                     tileEntity = self.editorSession.currentDimension.getTileEntity(result.position)
-                    tag = tileEntity.raw_tag()
-                    _replaceInTag(result, tag)
+                    if tileEntity:
+                        tag = tileEntity.raw_tag()
+                        _replaceInTag(result, tag)
+                        tileEntity.dirty()
 
                 if result.resultType == result.EntityResult:
                     entity = result.getEntity(self.editorSession.currentDimension)  # xxx put dimension in result!!!!
                     if entity:
                         tag = entity.raw_tag()
                         _replaceInTag(result, tag)
+                        entity.dirty()
 
                 # if result.resultType == result.ItemResult:  # xxx
                 yield
