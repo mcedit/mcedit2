@@ -286,7 +286,7 @@ class WorldView(QGLWidget):
         self.scaleChanged.emit(value)
         self.viewportMoved.emit(self)
 
-    def centerOnPoint(self, pos):
+    def centerOnPoint(self, pos, distance=None):
         """Center the view on the given position"""
         # delta = self.viewCenter() - self.centerPoint
         # self.centerPoint = pos - delta

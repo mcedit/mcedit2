@@ -116,7 +116,7 @@ class FourUpWorldView(QtGui.QWidget):
     def viewCenter(self):
         return self.xView.viewCenter()
 
-    def centerOnPoint(self, point):
+    def centerOnPoint(self, point, distance=None):
         for view in self.allViews:
             view.centerOnPoint(point)
 

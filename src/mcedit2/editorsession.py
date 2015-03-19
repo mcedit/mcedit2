@@ -442,7 +442,7 @@ class EditorSession(QtCore.QObject):
         try:
             player = self.worldEditor.getPlayer()
             center = Vector(*player.Position)
-            log.info("Centering on single-player player.")
+            log.info("Setting view angle to single-player player's view.")
             rotation = player.Rotation
             try:
                 self.editorTab.currentView().yawPitch = rotation
@@ -457,7 +457,7 @@ class EditorSession(QtCore.QObject):
                 center = self.currentDimension.bounds.origin + (self.currentDimension.bounds.size * 0.5)
 
         self.editorTab.miniMap.centerOnPoint(center)
-        self.editorTab.currentView().centerOnPoint(center)
+        self.editorTab.currentView().centerOnPoint(center, distance=0)
 
     # --- Tools ---
 

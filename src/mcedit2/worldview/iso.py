@@ -77,7 +77,7 @@ class IsoWorldView(WorldView):
     def cameraVector(self):
         return self._anglesToVector(self.yrot, self.xrot)
 
-    def centerOnPoint(self, pos):
+    def centerOnPoint(self, pos, distance=None):
         #self.rotateView(45., math.degrees(math.atan(1/math.sqrt(2))))
         vec = self.cameraVector()
         ray = Ray(pos, -vec)
