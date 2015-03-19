@@ -306,6 +306,8 @@ class MCEditApp(QtGui.QApplication):
 
         debugMenu.addAction("Heap Trace").triggered.connect(showHeapy)
 
+        debugMenu.addAction("Collect Garbage").triggered.connect(gc.collect)
+
         return debugMenu
 
     def ensureSingle(self):
