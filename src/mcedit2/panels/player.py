@@ -55,9 +55,14 @@ class PlayerPanel(QtGui.QWidget):
                 displayName = "[Single-player](%s)" % singlePlayerUUID
             else:
                 displayName = UUID  # xxx mojang api here
-                UUID = uuid.UUID(hex=UUID)
-                if UUID == singlePlayerUUID:
-                    continue  # Don't count single-player twice when it appears under playerData/
+                try:
+                    UUID = uuid.UUID(hex=UUID)
+                    if UUID == singlePlayerUUID:
+                        continue  # Don't count single-player twice when it appears under playerData/
+                except ValueError:  # badly formed uuid?
+                    log.warn("Could not get a UUID from %s", UUID)
+                    continue
+
             self.playerListBox.addItem(displayName, UUID)
 
         self.playerListBox.currentIndexChanged[int].connect(self.setSelectedPlayerIndex)
