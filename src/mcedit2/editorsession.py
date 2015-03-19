@@ -441,7 +441,7 @@ class EditorSession(QtCore.QObject):
         #  buffer read for that, now what?
         try:
             player = self.worldEditor.getPlayer()
-            center = Vector(*player.Position)
+            center = Vector(*player.Position) + (0, 1.8, 0)
             log.info("Setting view angle to single-player player's view.")
             rotation = player.Rotation
             try:
