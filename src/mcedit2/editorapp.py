@@ -469,17 +469,21 @@ class MCEditApp(QtGui.QApplication):
         displayFilenames = []
         for text, path in filenames:
             if displayNames[text] > 1:
-                text = text + " (%s)" % path
+                text += " (%s)" % path
             displayFilenames.append((text, path))
 
         for text, path in displayFilenames:
             log.info("Adding %s", text)
             action = recentWorldsMenu.addAction(text)
-            def _triggered():
-                self.loadFile(filename)
 
-            action.triggered.connect(_triggered)
-            action.__triggered = _triggered
+            def _triggered(p):
+                def _f():
+                    self.loadFile(p)
+                return _f
+
+            triggered = _triggered(path)
+            action.triggered.connect(triggered)
+            action.__triggered = triggered
 
     def addRecentFile(self, filename):
         recentFiles = RecentFilesSetting.jsonValue([])
