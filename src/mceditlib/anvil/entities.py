@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 from mceditlib import nbt
 from mceditlib.geometry import Vector
-from mceditlib.nbtattr import NBTAttr, NBTVectorAttr, NBTListAttr
+from mceditlib import nbtattr
 
 log = logging.getLogger(__name__)
 
@@ -18,10 +18,11 @@ class PCEntityRef(object):
     def raw_tag(self):
         return self.rootTag
 
-    id = NBTAttr("id", nbt.TAG_String)
-    Position = NBTVectorAttr("Pos", nbt.TAG_Double)
-    Motion = NBTVectorAttr("Motion", nbt.TAG_Double)
-    Rotation = NBTListAttr("Rotation", nbt.TAG_Float)
+    id = nbtattr.NBTAttr("id", nbt.TAG_String)
+    Position = nbtattr.NBTVectorAttr("Pos", nbt.TAG_Double)
+    Motion = nbtattr.NBTVectorAttr("Motion", nbt.TAG_Double)
+    Rotation = nbtattr.NBTListAttr("Rotation", nbt.TAG_Float)
+    UUID = nbtattr.NBTUUIDAttr()
 
     def copy(self):
         return self.copyWithOffset(Vector(0, 0, 0))
@@ -35,6 +36,8 @@ class PCEntityRef(object):
 
         return PCEntityRef(tag, None)
 
+    def dirty(self):
+        self.chunk.dirty = True
 
 class PCTileEntityRef(object):
     def __init__(self, rootTag, chunk=None):
@@ -44,7 +47,7 @@ class PCTileEntityRef(object):
     def raw_tag(self):
         return self.rootTag
 
-    id = NBTAttr("id", nbt.TAG_String)
+    id = nbtattr.NBTAttr("id", nbt.TAG_String)
 
     @property
     def Position(self):
@@ -71,3 +74,7 @@ class PCTileEntityRef(object):
             tag["TileZ"].value += copyOffset[2]
 
         return PCTileEntityRef(tag)
+
+
+    def dirty(self):
+        self.chunk.dirty = True
