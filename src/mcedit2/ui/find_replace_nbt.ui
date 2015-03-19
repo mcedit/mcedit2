@@ -215,7 +215,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="replaceTagTypeWithComboBox">
+         <widget class="QComboBox" name="replaceValueTagTypeComboBox">
           <item>
            <property name="text">
             <string>Existing</string>

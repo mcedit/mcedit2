@@ -22,13 +22,17 @@ def Settings():
 
 
 class MCESettingsOption(QtCore.QObject):
-    def __init__(self, settings, key, type, *args, **kwargs):
+    def __init__(self, settings, key, type, default=None, *args, **kwargs):
         super(MCESettingsOption, self).__init__(*args, **kwargs)
         self.settings = settings
         self.key = key
         self.type = type
+        self.default = default
 
     def value(self, default=None):
+        if default is None:
+            default = self.default
+
         value = self.settings.value(self.key, default)
         if self.type:
             value = self.type(value)
@@ -53,8 +57,8 @@ class MCESettingsNamespace(object):
 
         self.prefix = prefix
 
-    def getOption(self, key, type=None):
-        return self.rootSettings.getOption(self.prefix + key, type)
+    def getOption(self, key, type=None, default=None):
+        return self.rootSettings.getOption(self.prefix + key, type, default)
 
 
 class MCESettings(QtCore.QSettings):
@@ -123,7 +127,7 @@ class MCESettings(QtCore.QSettings):
     def setJsonValue(self, key, value):
         self.setValue(key, json.dumps(value))
 
-    def getOption(self, key, type=None):
+    def getOption(self, key, type=None, default=None):
         """
         Return an object that represents the setting at 'key'. The object may be used to get and set the value and
         get the value's valueChanged signal. Among other uses, the object's setValue attribute may be connected to the
@@ -138,7 +142,7 @@ class MCESettings(QtCore.QSettings):
         if option:
             return option
 
-        option = MCESettingsOption(self, key, type)
+        option = MCESettingsOption(self, key, type, default)
         self.options[key] = option
         return option
 
