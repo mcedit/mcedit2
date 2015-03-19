@@ -17,7 +17,19 @@ from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
 
-class NBTResultsEntry(namedtuple("NBTResultsEntry", "tagName value id path position uuid resultType")):
+class NBTResultsEntry(object):
+    # namedtuple("NBTResultsEntry", "tagName value id path position uuid resultType")):
+    def __init__(self, model, tagNameIndex, tagName, value, id, path, position, uuid, resultType):
+        self.model = model
+        self.tagNameIndex = tagNameIndex  # xxx REALLY SHOULD change model data through the model itself
+        self.tagName = tagName
+        self.value = value
+        self.id = id
+        self.path = path
+        self.position = position
+        self.uuid = uuid
+        self.resultType = resultType
+
     EntityResult = "ENTITY"
     TileEntityResult = "TILE_ENTITY"
     ItemResult = "ITEM"
@@ -25,11 +37,23 @@ class NBTResultsEntry(namedtuple("NBTResultsEntry", "tagName value id path posit
     ChunkResult = "CHUNK"
     FileResult = "FILE"
 
+    def setTagName(self, value):
+        self.tagName = value
+        self.model.dataChanged.emit(self.tagNameIndex, self.tagNameIndex)
+
 
 class NBTResultsModel(QtCore.QAbstractItemModel):
     def __init__(self):
         super(NBTResultsModel, self).__init__()
         self.results = []
+
+    def addEntry(self, *a, **kw):
+        index = self.index(len(self.results), 0)
+        entry = NBTResultsEntry(self, index, *a, **kw)
+        self.beginInsertRows(QtCore.QModelIndex(), len(self.results), len(self.results))
+        self.results.append(entry)
+        self.endInsertRows()
+        return entry
 
     # --- Shape ---
 
@@ -416,7 +440,6 @@ class FindReplaceNBT(QtCore.QObject):
                 return str(name_or_index), path, value
 
         def _findEntitiesInChunk(chunk):
-            results = []
             for entity in chunk.Entities:
                 if entity.Position not in selection:
                     continue
@@ -435,19 +458,17 @@ class FindReplaceNBT(QtCore.QObject):
                     if result:
                         name, path, value = result
 
-                        results.append(NBTResultsEntry(tagName=name,
-                                                       value=value,
-                                                       id=entity.id,
-                                                       path=path,
-                                                       position=entity.Position,
-                                                       uuid=uuid,
-                                                       resultType=NBTResultsEntry.EntityResult))
+                        self.resultsModel.addEntry(tagName=name,
+                                                   value=value,
+                                                   id=entity.id,
+                                                   path=path,
+                                                   position=entity.Position,
+                                                   uuid=uuid,
+                                                   resultType=NBTResultsEntry.EntityResult)
 
 
-            self.resultsModel.addResults(results)
 
         def _findTileEntitiesInChunk(chunk):
-            results = []
             for tileEntity in chunk.TileEntities:
                 if tileEntity.Position not in selection:
                     continue
@@ -460,15 +481,14 @@ class FindReplaceNBT(QtCore.QObject):
                     if result:
                         name, path, value = result
 
-                        results.append(NBTResultsEntry(tagName=name,
-                                                       value=value,
-                                                       id=tileEntity.id,
-                                                       path=path,
-                                                       position=tileEntity.Position,
-                                                       uuid=None,
-                                                       resultType=NBTResultsEntry.TileEntityResult))
+                        self.resultsModel.addEntry(tagName=name,
+                                                   value=value,
+                                                   id=tileEntity.id,
+                                                   path=path,
+                                                   position=tileEntity.Position,
+                                                   uuid=None,
+                                                   resultType=NBTResultsEntry.TileEntityResult)
 
-            self.resultsModel.addResults(results)
 
         def _find():
             self.resultsDockWidget.show()
@@ -523,6 +543,7 @@ class FindReplaceNBT(QtCore.QObject):
             if shouldReplaceName:
                 subtag = tag.pop(result.tagName)
                 tag[newName] = subtag
+                result.setTagName(newName)
 
             if shouldReplaceValue:
                 subtag = tag[result.tagName]
