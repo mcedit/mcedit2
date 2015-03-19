@@ -41,6 +41,13 @@ class NBTResultsEntry(object):
         self.tagName = value
         self.model.dataChanged.emit(self.tagNameIndex, self.tagNameIndex)
 
+    def getEntity(self, dim):
+        assert self.resultType == self.EntityResult
+        box = BoundingBox(self.position, (1, 1, 1)).chunkBox(dim)
+        entities = dim.getEntities(box, UUID=self.uuid)
+        if len(entities):
+            return entities[0]
+
 
 class NBTResultsModel(QtCore.QAbstractItemModel):
     def __init__(self):
@@ -289,6 +296,7 @@ class FindReplaceNBT(QtCore.QObject):
 
         self.resultsModel = NBTResultsModel()
         self.resultsWidget.resultsView.setModel(self.resultsModel)
+        self.resultsWidget.resultsView.clicked.connect(self.resultsViewIndexClicked)
 
         # --- Buttons ---
         self.widget.findButton.clicked.connect(self.find)
@@ -391,7 +399,20 @@ class FindReplaceNBT(QtCore.QObject):
             self.resultsWidget.replaceValueField.setText(value)
 
     def valueTagTypeChanged(self, index):
-        nbtReplaceSettings.replaceValueTagType.setValue(index)
+        if index != nbtReplaceSettings.replaceValueTagType.value():
+            nbtReplaceSettings.replaceValueTagType.setValue(index)
+            self.widget.replaceValueTagTypeComboBox.setCurrentIndex(index)
+            self.resultsWidget.replaceValueTagTypeComboBox.setCurrentIndex(index)
+
+    def resultsViewIndexClicked(self, modelIndex):
+        row = modelIndex.row()
+        result = self.resultsModel.results[row]
+        if result.resultType == result.EntityResult:
+            self.editorSession.zoomAndInspectEntity(result.getEntity(self.editorSession.currentDimension))  # xxxxxxx!!!
+        if result.resultType == result.TileEntityResult:
+            self.editorSession.zoomAndInspectBlock(result.position)
+
+
 
     def find(self):
         searchNames = self.widget.searchNameCheckbox.isChecked()
@@ -558,10 +579,10 @@ class FindReplaceNBT(QtCore.QObject):
                     _replaceInTag(result, tag)
 
                 if result.resultType == result.EntityResult:
-                    box = BoundingBox(result.position, (1, 1, 1)).chunkBox(self.editorSession.currentDimension)
-                    entity = self.editorSession.currentDimension.getEntities(box, UUID=result.uuid)
-                    tag = entity.raw_tag()
-                    _replaceInTag(result, tag)
+                    entity = result.getEntity(self.editorSession.currentDimension)  # xxx put dimension in result!!!!
+                    if entity:
+                        tag = entity.raw_tag()
+                        _replaceInTag(result, tag)
 
                 # if result.resultType == result.ItemResult:  # xxx
                 yield

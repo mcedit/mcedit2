@@ -562,6 +562,19 @@ class EditorSession(QtCore.QObject):
         self.inspectorDockWidget.show()
         self.inspectorWidget.inspectEntity(entity)
 
+    # --- Zooming ---
+
+    def zoomAndInspectBlock(self, pos):
+        self.zoomToPoint(pos)
+        self.inspectBlock(pos)
+
+    def zoomAndInspectEntity(self, entity):
+        self.zoomToPoint(entity.Position)
+        self.inspectEntity(entity)
+
+    def zoomToPoint(self, point):
+        self.editorTab.currentView().centerOnPoint(point, 15)
+
 
 class EditorTab(QtGui.QWidget):
     """
