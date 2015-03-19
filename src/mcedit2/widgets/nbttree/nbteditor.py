@@ -87,7 +87,7 @@ class NBTEditorWidget(QtGui.QWidget):
         self.proxyModel.setSourceModel(self.model)
         # self.proxyModel.setDynamicSortFilter(True)
 
-        self.treeView.setModel(self.model)
+        self.treeView.setModel(self.proxyModel)
         header = self.treeView.header()
         header.setStretchLastSection(False)
         header.setResizeMode(1, header.ResizeMode.Stretch)
