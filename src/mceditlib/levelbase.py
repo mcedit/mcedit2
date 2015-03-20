@@ -4,7 +4,6 @@
 
 from __future__ import absolute_import
 from collections import namedtuple
-from copy import deepcopy
 import itertools
 from logging import getLogger
 
@@ -14,8 +13,6 @@ import numpy
 from mceditlib.selection import BoundingBox
 from mceditlib import nbt
 from mceditlib.exceptions import ChunkNotPresent
-from mceditlib.nbtattr import NBTAttr, NBTVectorAttr
-from mceditlib.util import matchEntityTags
 
 
 log = getLogger(__name__)
@@ -36,24 +33,7 @@ class FakeChunkData(object):
     Width = Length = 16
 
     dimName = ""
-    _heightMap = None
     HeightMap = None
-    #
-    # @property
-    # def HeightMap(self):
-    #     """
-    #     Compute, cache, and return an artificial HeightMap for levels that don't provide one.
-    #     :return: Array of height info.
-    #     :rtype: ndarray(shape=(16, 16))
-    #     """
-    #     if self._heightMap is not None:
-    #         return self._heightMap
-    #     from mceditlib.heightmaps import computeChunkHeightMap
-    #
-    #     self._heightMap = computeChunkHeightMap(self)
-    #     return self._heightMap
-    #
-    # pass
 
     def sectionPositions(self):
         return self.dimension.bounds.sectionPositions(self.cx, self.cz)
@@ -392,15 +372,6 @@ class FakeChunkedLevelAdapter(object):
 
         return GetBlocksResult(Blocks, Data, BlockLight, SkyLight, Biomes)
 
-    def getEntities(self, selection, **kw):
-        if hasattr(self, 'Entities'):
-            for e in self.Entities:
-                refType = getattr(self, "EntityRefType", GenericEntityRef)
-                ref = refType(e, self)
-                if ref.Position in selection:
-                    if matchEntityTags(e, kw):
-                        yield ref
-
     def listDimensions(self):
         return [""]
 
@@ -408,100 +379,4 @@ class FakeChunkedLevelAdapter(object):
         pass
 
 
-class GenericEntityRef(object):
-    def __init__(self, rootTag, chunk=None):
-        self.rootTag = rootTag
-
-    def raw_tag(self):
-        return self.rootTag
-
-    def dirty(self):
-        pass
-
-    id = NBTAttr("id", nbt.TAG_String)
-    Position = NBTVectorAttr("Pos", None)
-
-
-
-
-
-#
-# class ChunkBase(object):
-# """
-#     Abstract base class for the chunks returned by LevelBase.getChunk
-#
-#     The internal storage of chunks varies between level formats. Chunks in the
-#     newest level format will have an array of 16x16x16 sections, each with a Y attribute
-#     and a set of Blocks, Data, SkyLight, and BlockLight arrays. Older formats have those
-#     arrays on the chunk directly. It is preferred to use the new world.getBlocks() function
-#     instead of directly accessing a chunk's arrays, but the arrays can still be accessed
-#     for maximum performance.
-#
-#     A chunk also has a HeightMap to speed skylight computations.
-#
-#     The HeightMap is shaped (16, 16) and records the y-coordinate of the lowest
-#     block in the column where sunlight is at full strength. See heightmaps.py for this computation.
-#     The HeightMap is also used for displaying low detail terrain in MCEdit, so
-#     ChunkBase will compute and cache a HeightMap for subclasses that don't override it. (xxx)
-#
-#     :ivar world: LevelBase
-#     :ivar chunkPosition: (int, int)
-#
-#
-#     """
-
-
-
-class LightedChunk(object):
-    """
-    Abstract subclass of ChunkBase that provides Anvil and Pocket chunks with
-    an implementation of chunkChanged. This method is called after
-    the Blocks array is accessed directly and takes an optional argument
-    which disables lighting calculation.
-    """
-    # def generateHeightMap(self):
-    #     """
-    #     Recalculate this chunk's HeightMap.
-    #     """
-    #     computeChunkHeightMap(self.blocktypes, self.Blocks, self.HeightMap)
-
-    def chunkChanged(self, calcLighting=True):
-        self.dirty = True
-        # self.needsLighting = calcLighting or self.needsLighting
-        # self.generateHeightMap()
-        # if calcLighting:
-        #     self.genFastLights()
-
-
-def genSkyLights(section): #xxxxxxxxx
-    section.SkyLight[:] = 0
-    if section.chunk.dimName in ("DIM1", "DIM-1"):
-        return  # no light in nether or the end
-
-    blocks = section.Blocks
-    la = section.blocktypes.lightAbsorption
-    skylight = section.SkyLight
-    heightmap = section.HeightMap
-
-    for x, z in itertools.product(xrange(16), xrange(16)):
-
-        skylight[x, z, heightmap[z, x]:] = 15
-        lv = 15
-        for y in reversed(range(heightmap[z, x])):
-            lv -= (la[blocks[x, z, y]] or 1)
-
-            if lv <= 0:
-                break
-            skylight[x, z, y] = lv
-
-
-class BoundsFromChunkPositionsMixin(object):
-    """
-    Provides 'bounds' and 'size' attributes to a level that provides 'chunkCount' and 'chunkPositions' attributes
-
-    Required attributes:
-
-    :ivar chunkCount: Number of chunks in this world
-    :ivar chunkPositions(): Iterator of (cx, cz) tuples
-    """
 
