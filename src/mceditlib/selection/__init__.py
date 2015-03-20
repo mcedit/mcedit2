@@ -346,12 +346,12 @@ class BoundingBox(SelectionBox):
             self._origin = origin._origin
             self._size = origin._size
         else:
-            self._origin = Vector(*(self.type(a) for a in origin))
+            self._origin = Vector(*[self.type(a) for a in origin])
             if maximum is not None:
                 maximum = Vector(*maximum)
                 self._size = maximum - self._origin
             else:
-                self._size = Vector(*(self.type(a) for a in size))
+                self._size = Vector(*[self.type(a) for a in size])
 
     def __repr__(self):
         return "%s(origin=%s, size=%s)" % (self.__class__.__name__, self.origin, self.size)
