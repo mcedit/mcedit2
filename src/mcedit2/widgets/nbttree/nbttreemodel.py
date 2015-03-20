@@ -252,6 +252,15 @@ class NBTTreeItem(object):
         if column == 0:
             return self.tag.name or str(self.childNumber())
         if column == 1:
+            if self.tag.tagID in (nbt.ID_BYTE_ARRAY, nbt.ID_SHORT_ARRAY, nbt.ID_INT_ARRAY):
+                size = self.tag.value.size
+                maxsize = min(8, size)
+                hexchars = self.tag.value.dtype.itemsize * 2
+                fmt = "%%0%dx" % hexchars
+                hexdata = " ".join(fmt % d for d in self.tag.value[:maxsize])
+                if size > maxsize:
+                    hexdata += "..."
+                return "(size=%d) %s" % (size, hexdata)
             return self.tag.value
 
     def parent(self):
