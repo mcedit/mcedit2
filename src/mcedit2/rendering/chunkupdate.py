@@ -140,9 +140,13 @@ class ChunkUpdate(object):
             chunkMesh.detailLevel = chunkMesh.detailLevel
 
             name = cls.__name__
-            worker = chunkMesh.makeChunkVertices(self.chunk, chunkInfo.worldScene.bounds)
-            for _ in profiler.iterate(worker, name):
-                yield
+            try:
+                worker = chunkMesh.makeChunkVertices(self.chunk, chunkInfo.worldScene.bounds)
+                for _ in profiler.iterate(worker, name):
+                    yield
+            except Exception as e:
+                log.exception("Failed rendering for mesh class %s: %s", cls, e)
+                continue
 
             blockMeshes.append(chunkMesh)
             chunkMesh.chunkUpdate = None
