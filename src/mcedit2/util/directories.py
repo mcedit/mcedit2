@@ -18,4 +18,5 @@ def getUserFilesDirectory():
         os.makedirs(dataDir)
     return dataDir
 
-
+def getUserSchematicsDirectory():
+    return os.path.join(getUserFilesDirectory(), "schematics")

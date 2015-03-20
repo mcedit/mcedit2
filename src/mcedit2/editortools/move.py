@@ -75,7 +75,7 @@ class MoveFinishCommand(SimpleRevisionCommand):
     def redo(self):
         super(MoveFinishCommand, self).redo()
         self.previousSelection = self.editorSession.currentSelection
-        self.editorSession.currentSelection = BoundingBox(self.pendingImport.pos, self.previousSelection.size)
+        self.editorSession.currentSelection = BoundingBox(self.pendingImport.pos, self.pendingImport.bounds.size)
         self.moveTool.removePendingImport(self.pendingImport)
 
 

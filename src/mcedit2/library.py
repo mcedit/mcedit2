@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function
 import logging
 import os
 from PySide import QtGui, QtCore
-from mcedit2.util.directories import getUserFilesDirectory
+from mcedit2.util.directories import getUserSchematicsDirectory
 from mcedit2.widgets.layout import Column
 
 log = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ class LibraryWidget(QtGui.QWidget):
     def __init__(self):
         super(LibraryWidget, self).__init__()
 
-        self.folderPath = os.path.join(getUserFilesDirectory(), "schematics")
+        self.folderPath = getUserSchematicsDirectory()
         if not os.path.exists(self.folderPath):
             os.makedirs(self.folderPath)
 

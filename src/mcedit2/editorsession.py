@@ -13,6 +13,7 @@ from mcedit2.editorcommands.find_replace import FindReplaceDialog
 from mcedit2.editortools.select import SelectCommand
 from mcedit2.panels.player import PlayerPanel
 from mcedit2.util.dialogs import NotImplementedYet
+from mcedit2.util.directories import getUserSchematicsDirectory
 from mcedit2.util.lazyprop import weakrefprop
 from mcedit2.util.raycast import rayCastInBounds
 from mcedit2.util.resources import resourcePath
@@ -123,6 +124,8 @@ class EditorSession(QtCore.QObject):
 
         self.menus = []
 
+        # - Edit -
+
         self.menuEdit = QtGui.QMenu(self.tr("Edit"))
         self.menuEdit.setObjectName("menuEdit")
 
@@ -190,6 +193,8 @@ class EditorSession(QtCore.QObject):
 
         self.menus.append(self.menuEdit)
 
+        # - Select -
+
         self.menuSelect = QtGui.QMenu(self.tr("Select"))
 
         self.actionSelectAll = QtGui.QAction(self.tr("Select All"), self, triggered=self.selectAll)
@@ -201,6 +206,26 @@ class EditorSession(QtCore.QObject):
         self.menuSelect.addAction(self.actionDeselect)
 
         self.menus.append(self.menuSelect)
+
+        # - Import/Export -
+
+        self.menuImportExport = QtGui.QMenu(self.tr("Import/Export"))
+
+        self.actionExport = QtGui.QAction(self.tr("Export"), self, triggered=self.export)
+        self.actionExport.setShortcut(QtGui.QKeySequence("Ctrl+Shift+E"))
+        self.menuImportExport.addAction(self.actionExport)
+
+        self.actionImport = QtGui.QAction(self.tr("Import"), self, triggered=self.import_)
+        self.actionImport.setShortcut(QtGui.QKeySequence("Ctrl+Shift+D"))
+        self.menuImportExport.addAction(self.actionImport)
+
+        self.actionImport = QtGui.QAction(self.tr("Show Exports Library"), self,
+                                          triggered=QtGui.qApp.libraryDockWidget.toggleViewAction().trigger)
+
+        self.actionImport.setShortcut(QtGui.QKeySequence("Ctrl+Shift+L"))
+        self.menuImportExport.addAction(self.actionImport)
+
+        self.menus.append(self.menuImportExport)
 
         # --- Resources ---
 
@@ -299,6 +324,7 @@ class EditorSession(QtCore.QObject):
         self.actionDeleteBlocks.setEnabled(enable)
         self.actionDeleteEntities.setEnabled(enable)
         self.actionFill.setEnabled(enable)
+        self.actionExport.setEnabled(enable)
 
     # --- Menu commands ---
 
@@ -377,6 +403,34 @@ class EditorSession(QtCore.QObject):
         command = SelectCommand(self, None)
         command.setText(self.tr("Deselect"))
         self.pushCommand(command)
+
+    # - Import/export -
+
+    def import_(self):
+        # prompt for a file to import
+        startingDir = Settings().value("import_dialog/starting_dir", getUserSchematicsDirectory())
+        result = QtGui.QFileDialog.getOpenFileName(self.mainWindow, self.tr("Import"),
+                                                   startingDir,
+                                                   "All files (*.*)")
+        if result:
+            filename = result[0]
+            if filename:
+                self.importSchematic(filename)
+
+    def export(self):
+        # prompt for filename and format. maybe use custom browser to save to export library??
+        startingDir = Settings().value("import_dialog/starting_dir", getUserSchematicsDirectory())
+        result = QtGui.QFileDialog.getSaveFileName(QtGui.qApp.mainWindow,
+                                                   self.tr("Export Schematic"),
+                                                   startingDir,
+                                                   "All files (*.*)")
+
+        if result:
+            filename = result[0]
+            if filename:
+                task = self.currentDimension.exportSchematicIter(self.currentSelection)
+                schematic = showProgress("Copying...", task)
+                schematic.saveToFile(filename)
 
     # --- Library support ---
 

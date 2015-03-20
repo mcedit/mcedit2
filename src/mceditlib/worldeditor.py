@@ -301,6 +301,10 @@ class WorldEditor(object):
         self.playerCache.clear()
         self.adapter.saveChanges()
 
+    def saveToFile(self, filename):
+        # XXXX only works with .schematics!!!
+        self.adapter.saveToFile(filename)
+
     def close(self):
         """
         Unload all chunks and close all open filehandles.
