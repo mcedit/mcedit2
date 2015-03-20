@@ -219,6 +219,7 @@ class MCEditApp(QtGui.QApplication):
         # -- Window Menu --
         mainWindow.menuWindow.addAction(self.undoDockWidget.toggleViewAction())
         mainWindow.menuWindow.addAction(self.logViewDockWidget.toggleViewAction())
+        mainWindow.menuWindow.addAction(self.libraryDockWidget.toggleViewAction())
 
         # --- World List ---
 
