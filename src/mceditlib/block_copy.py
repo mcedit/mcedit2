@@ -129,7 +129,7 @@ def copyBlocksIter(destLevel, sourceLevel, sourceSelection, destinationPoint, bl
                         continue
 
                     # Recompute destSectionBox and intersect using the shape of destSection.Blocks
-                    # after destChunk is loaded to work with odd shaped FakeChunks XXXXXXXXXXXX
+                    # after destChunk is loaded to work with odd shaped FakeChunkDatas XXXXXXXXXXXX
                     destSectionBox = SectionBox(destCpos[0], destCy, destCpos[1], destSection)
                     intersect = destSectionBox.intersect(destBox)
                     if intersect.volume == 0:

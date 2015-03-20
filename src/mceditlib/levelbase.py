@@ -23,6 +23,96 @@ log = getLogger(__name__)
 GetBlocksResult = namedtuple("GetBlocksResult", ["Blocks", "Data", "BlockLight", "SkyLight", "Biomes"])
 
 
+class FakeSection(object):
+    pass
+
+
+class FakeChunkData(object):
+    dirty = False
+
+    dimension = NotImplemented  #: The parent dimension that this chunk belongs to
+    cx = cz = NotImplemented  #: This chunk's position as a tuple (cx, cz)
+
+    Width = Length = 16
+
+    dimName = ""
+    _heightMap = None
+    HeightMap = None
+    #
+    # @property
+    # def HeightMap(self):
+    #     """
+    #     Compute, cache, and return an artificial HeightMap for levels that don't provide one.
+    #     :return: Array of height info.
+    #     :rtype: ndarray(shape=(16, 16))
+    #     """
+    #     if self._heightMap is not None:
+    #         return self._heightMap
+    #     from mceditlib.heightmaps import computeChunkHeightMap
+    #
+    #     self._heightMap = computeChunkHeightMap(self)
+    #     return self._heightMap
+    #
+    # pass
+
+    def sectionPositions(self):
+        return self.dimension.bounds.sectionPositions(self.cx, self.cz)
+
+    @property
+    def Height(self):
+        return self.dimension.Height
+
+    @property
+    def bounds(self):
+        return BoundingBox((self.cx << 4, 0, self.cz << 4), self.size)
+
+    @property
+    def size(self):
+        return self.Width, self.Height, self.Length
+
+    def sectionPositions(self):
+        return range(0, (self.Height + 15) >> 4)
+
+    def chunkChanged(self, needsLighting=True):
+        """
+        You are required to call this function after directly modifying any of a chunk's
+        arrays or its rootTag. Alternately, just set `chunk.dirty = True`
+
+        needsLighting is deprecated; Use the updateLights= argument
+        of setBlocks and other editing functions, or call updateLights(level, x, y, z) to
+        explicitly update lights yourself.
+
+        """
+        self.dirty = True
+
+    @property
+    def blocktypes(self):
+        return self.dimension.blocktypes
+
+    def getSection(self, cy, create=False):
+        y = cy << 4
+        if y < self.bounds.miny or y >= self.bounds.maxy:
+            return None
+
+        section = FakeSection()
+        section.chunk = self
+        slices = numpy.s_[:, :, cy << 4:(cy + 1 << 4)]
+        if hasattr(self, 'Blocks'):
+            section.Blocks = self.Blocks[slices].swapaxes(0, 2)
+        else:
+            raise NotImplementedError("ChunkBase.getSection is only implemented for chunks providing a Blocks array")
+        if hasattr(self, 'Data'):
+            section.Data = self.Data[slices].swapaxes(0, 2)
+        if hasattr(self, 'BlockLight'):
+            section.BlockLight = self.BlockLight[slices].swapaxes(0, 2)
+        if hasattr(self, 'SkyLight'):
+            section.SkyLight = self.SkyLight[slices].swapaxes(0, 2)
+
+        section.Y = cy
+
+        return section
+
+
 class FakeChunkedLevelAdapter(object):
     """ FakeChunkedLevelAdapter is an abstract class for implementing fixed size, non-chunked storage formats.
     Classic, Indev, and Schematic formats inherit from this class.  FakeChunkedLevelAdapter has dummy functions for
@@ -58,6 +148,8 @@ class FakeChunkedLevelAdapter(object):
 
     hasLights = False
 
+    ChunkDataClass = FakeChunkData
+
     @property
     def size(self):
         return self.Width, self.Height, self.Length
@@ -68,7 +160,7 @@ class FakeChunkedLevelAdapter(object):
 
     def readChunk(self, cx, cz, dimName, create=False):
         """
-        Creates a FakeChunk object representing the chunk at the given
+        Creates a FakeChunkData object representing the chunk at the given
         position. Subclasses may choose to override
         fakeBlocksForChunk and fakeDataForChunk to provide block and blockdata arrays.
         They may instead override getChunk and return a ChunkBase subclass.
@@ -78,7 +170,7 @@ class FakeChunkedLevelAdapter(object):
         """
         if not self.bounds.containsChunk(cx, cz):
             raise ChunkNotPresent((cx, cz))
-        chunk = FakeChunk()
+        chunk = self.ChunkDataClass()
         chunk.dimension = self
         chunk.cx = cx
         chunk.cz = cz
@@ -359,95 +451,6 @@ class GenericEntityRef(object):
 #
 #     """
 
-
-class FakeChunk(object):
-    dirty = False
-
-    dimension = NotImplemented  #: The parent dimension that this chunk belongs to
-    cx = cz = NotImplemented  #: This chunk's position as a tuple (cx, cz)
-
-    Width = Length = 16
-
-    dimName = ""
-    _heightMap = None
-    HeightMap = None
-    #
-    # @property
-    # def HeightMap(self):
-    #     """
-    #     Compute, cache, and return an artificial HeightMap for levels that don't provide one.
-    #     :return: Array of height info.
-    #     :rtype: ndarray(shape=(16, 16))
-    #     """
-    #     if self._heightMap is not None:
-    #         return self._heightMap
-    #     from mceditlib.heightmaps import computeChunkHeightMap
-    #
-    #     self._heightMap = computeChunkHeightMap(self)
-    #     return self._heightMap
-    #
-    # pass
-
-    def sectionPositions(self):
-        return self.dimension.bounds.sectionPositions(self.cx, self.cz)
-
-    @property
-    def Height(self):
-        return self.dimension.Height
-
-    @property
-    def bounds(self):
-        return BoundingBox((self.cx << 4, 0, self.cz << 4), self.size)
-
-    @property
-    def size(self):
-        return self.Width, self.Height, self.Length
-
-    def sectionPositions(self):
-        return range(0, (self.Height + 15) >> 4)
-
-    def chunkChanged(self, needsLighting=True):
-        """
-        You are required to call this function after directly modifying any of a chunk's
-        arrays or its rootTag. Alternately, just set `chunk.dirty = True`
-
-        needsLighting is deprecated; Use the updateLights= argument
-        of setBlocks and other editing functions, or call updateLights(level, x, y, z) to
-        explicitly update lights yourself.
-
-        """
-        self.dirty = True
-
-    @property
-    def blocktypes(self):
-        return self.dimension.blocktypes
-
-    def getSection(self, cy, create=False):
-        y = cy << 4
-        if y < self.bounds.miny or y >= self.bounds.maxy:
-            return None
-
-        section = FakeSection()
-        section.chunk = self
-        slices = numpy.s_[:, :, cy << 4:(cy + 1 << 4)]
-        if hasattr(self, 'Blocks'):
-            section.Blocks = self.Blocks[slices].swapaxes(0, 2)
-        else:
-            raise NotImplementedError("ChunkBase.getSection is only implemented for chunks providing a Blocks array")
-        if hasattr(self, 'Data'):
-            section.Data = self.Data[slices].swapaxes(0, 2)
-        if hasattr(self, 'BlockLight'):
-            section.BlockLight = self.BlockLight[slices].swapaxes(0, 2)
-        if hasattr(self, 'SkyLight'):
-            section.SkyLight = self.SkyLight[slices].swapaxes(0, 2)
-
-        section.Y = cy
-
-        return section
-
-
-class FakeSection(object):
-    pass
 
 
 class LightedChunk(object):

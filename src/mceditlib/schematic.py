@@ -5,6 +5,7 @@ Created on Jul 22, 2011
 '''
 from __future__ import absolute_import
 import atexit
+from collections import defaultdict
 from contextlib import closing
 import os
 import shutil
@@ -20,7 +21,7 @@ from mceditlib.anvil.entities import PCEntityRef
 from mceditlib.anvil.entities import PCTileEntityRef
 from mceditlib.exceptions import PlayerNotFound
 from mceditlib.selection import BoundingBox
-from mceditlib.levelbase import FakeChunkedLevelAdapter
+from mceditlib.levelbase import FakeChunkedLevelAdapter, FakeChunkData
 from mceditlib.blocktypes import pc_blocktypes, BlockTypeSet, blocktypes_named
 from mceditlib import nbt
 
@@ -33,6 +34,14 @@ def createSchematic(shape, blocktypes='Alpha'):
     editor = WorldEditor(adapter=adapter)
     return editor
 
+
+class SchematicChunkData(FakeChunkData):
+    def addEntity(self, entity):
+        self.dimension.addEntity(entity)
+
+    def addTileEntity(self, tileEntity):
+        self.dimension.addTileEntity(tileEntity)
+
 class SchematicFileAdapter(FakeChunkedLevelAdapter):
     """
 
@@ -42,6 +51,8 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
     # XXX use abstract entity ref or select correct ref for contained level format
     EntityRef = PCEntityRef
     TileEntityRef = PCTileEntityRef
+
+    ChunkDataClass = SchematicChunkData
 
     def __init__(self, shape=None, filename=None, blocktypes='Alpha', readonly=False, resume=False):
         """
@@ -156,8 +167,22 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
 
         self.rootTag["Data"].value &= 0xF  # discard high bits
 
-        self.Entities = [self.EntityRef(tag, None) for tag in self.rootTag["Entities"]]
-        self.TileEntities = [self.EntityRef(tag, None) for tag in self.rootTag["TileEntities"]]
+        self.entitiesByChunk = defaultdict(list)
+        for tag in self.rootTag["Entities"]:
+            ref = self.EntityRef(tag)
+            pos = ref.Position
+            cx, cy, cz = pos.chunkPos()
+            self.entitiesByChunk[cx, cz].append(tag)
+
+        self.tileEntitiesByChunk = defaultdict(list)
+        for tag in self.rootTag["TileEntities"]:
+            ref = self.TileEntityRef(tag)
+            pos = ref.Position
+            cx, cy, cz = pos.chunkPos()
+            self.tileEntitiesByChunk[cx, cz].append(tag)
+
+    def fakeEntitiesForChunk(self, cx, cz):
+        return self.entitiesByChunk[cx, cz], self.tileEntitiesByChunk[cx, cz]
 
     def syncToDisk(self):
         """
@@ -195,6 +220,24 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
             # Save only the even bytes, now that they contain the odd bytes in their lower bits.
             packed_add = packed_add[0::2]
             self.rootTag["AddBlocks"] = nbt.TAG_Byte_Array(packed_add)
+
+        entities = []
+        for e in self.entitiesByChunk.values():
+            entities.extend(e)
+
+        tileEntities = []
+        for te in self.tileEntitiesByChunk.values():
+            tileEntities.extend(te)
+
+        self.rootTag["Entities"] = nbt.TAG_List(entities)
+        self.rootTag["TileEntities"] = nbt.TAG_List(tileEntities)
+
+        log.info("Saving schematic %s with %d blocks, %d Entities and %d TileEntities",
+                 os.path.basename(filename),
+                 self.rootTag["Blocks"].value.size,
+                 len(self.rootTag["Entities"]),
+                 len(self.rootTag["TileEntities"]),
+                 )
 
         with open(filename, 'wb') as chunkfh:
             self.rootTag.save(chunkfh)
