@@ -34,6 +34,15 @@ def createSchematic(shape, blocktypes='Alpha'):
     editor = WorldEditor(adapter=adapter)
     return editor
 
+def blockIDMapping(blocktypes):
+    mapping = nbt.TAG_Compound()
+    for name, ID in blocktypes.IDsByName.iteritems():
+        mapping[str(ID)] = nbt.TAG_String(name)
+
+    return mapping
+
+def itemIDMapping(blocktypes):
+    return nbt.TAG_Compound()
 
 class SchematicChunkData(FakeChunkData):
     def addEntity(self, entity):
@@ -135,6 +144,16 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
             if "Biomes" in self.rootTag:
                 self.rootTag["Biomes"].value.shape = (l, w)
 
+            if "BlockIDs" in self.rootTag or "ItemIDs" in self.rootTag:
+                self.blocktypes = type(self.blocktypes)()
+
+            if "BlockIDs" in self.rootTag:
+                self.blocktypes.addBlockIDsFromSchematicTag(self.rootTag["BlockIDs"])
+            if "ItemIDs" in self.rootTag:
+                self.blocktypes.addItemIDsFromSchematicTag(self.rootTag["ItemIDs"])
+
+
+
         else:
             rootTag = nbt.TAG_Compound(name="Schematic")
             rootTag["Height"] = nbt.TAG_Short(shape[1])
@@ -151,6 +170,9 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
             rootTag["Biomes"] = nbt.TAG_Byte_Array(zeros((shape[2], shape[0]), uint8))
 
             self.rootTag = rootTag
+
+            self.rootTag["BlockIDs"] = blockIDMapping(blocktypes)
+            self.rootTag["ItemIDs"] = itemIDMapping(blocktypes)
 
         #expand blocks and data to chunk edges
         h16 = (self.Height + 15) & ~0xf

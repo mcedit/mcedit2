@@ -246,6 +246,22 @@ class BlockTypeSet(object):
             traceback.print_exc()
             raise
 
+    def addBlockIDsFromSchematicTag(self, mapping):
+        for ID, tag in mapping.iteritems():
+            try:
+                ID = int(ID)
+            except ValueError:
+                log.error("Can't parse %s as an integer.")
+                continue
+
+            name = tag.value
+            if name not in self.IDsByName:
+                self.IDsByName[name] = ID
+                self.namesByID[ID] = name
+
+    def addItemIDsFromSchematicTag(self, mapping):
+        pass
+
     def addJsonBlocksFromFile(self, filename):
         f = openResource(filename)
         try:
@@ -366,5 +382,27 @@ pc_blocktypes = PCBlockTypeSet()
 
 blocktypes_named = {"Alpha": pc_blocktypes}
 
-def convertBlocks(destTypes, sourceTypes, ID, meta):
-    return ID, meta  # xxx fixme
+def blocktypeConverter(destTypes, sourceTypes):
+    """
+
+    :param destTypes:
+    :type destTypes: BlockTypeSet
+    :param sourceTypes:
+    :type sourceTypes: BlockTypeSet
+    :return:
+    :rtype:
+    """
+    idTable = numpy.arange(0, id_limit, dtype=numpy.uint16)
+    for name, ID in sourceTypes.IDsByName.iteritems():
+        if name in destTypes.IDsByName:
+            try:
+                idTable[ID] = destTypes.IDsByName[name]
+            except IndexError:
+                log.error("Can't insert %s->%s into %s (%s???) ??", ID, destTypes.IDsByName[name], idTable.shape, type(ID))
+                raise
+
+    def _convert(ID, meta):
+        return idTable[ID], meta
+
+    return _convert
+

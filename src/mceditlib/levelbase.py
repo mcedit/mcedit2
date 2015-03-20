@@ -206,7 +206,6 @@ class FakeChunkedLevelAdapter(object):
         """Computes an artificial chunk count using self.Width and self.Length."""
         return (self.Width + 15 >> 4) * (self.Length + 15 >> 4)
 
-
     def chunkPositions(self, _):
         """Returns an artificial list of chunk positions using `self.Width` and `self.Length`"""
         return itertools.product(xrange(0, self.Width + 15 >> 4), xrange(0, self.Length + 15 >> 4))

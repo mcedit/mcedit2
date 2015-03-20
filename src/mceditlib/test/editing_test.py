@@ -2,6 +2,7 @@ import zipfile
 import numpy
 import pytest
 import logging
+from mceditlib.blocktypes import blocktypeConverter
 
 from mceditlib.export import extractSchematicFrom
 from mceditlib.selection import BoundingBox
@@ -46,6 +47,8 @@ def testImportAndConvert(world, sourceLevel):
     oldEntityCount = len(list(destDim.getEntities(BoundingBox(destPoint, sourceDim.bounds.size))))
     destDim.copyBlocks(sourceDim, sourceDim.bounds, destPoint, create=True)
 
+    convertBlocks = blocktypeConverter(world, sourceLevel)
+
     for sourceChunk in sourceDim.getChunks():
         cx = sourceChunk.cx
         cz = sourceChunk.cz
@@ -59,9 +62,7 @@ def testImportAndConvert(world, sourceLevel):
                 continue
             sourceSection = sourceChunk.getSection(cy)
 
-            convertedSourceBlocks, convertedSourceData = block_copy.convertBlocks(world, sourceLevel,
-                                                                                  sourceSection.Blocks,
-                                                                                  sourceSection.Data)
+            convertedSourceBlocks, convertedSourceData = convertBlocks(sourceSection.Blocks, sourceSection.Data)
 
             same = (destSection.Blocks == convertedSourceBlocks)
 
