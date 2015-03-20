@@ -277,7 +277,6 @@ class WorldListWidget(QtGui.QDialog):
             self.worldView.setParent(None)
             self.worldView = None
 
-        self.selectedWorldIndex = -1
         self.chunkLoader = None
 
     def hide(self):
