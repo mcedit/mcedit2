@@ -21,7 +21,7 @@ from mceditlib.anvil.entities import PCEntityRef
 from mceditlib.anvil.entities import PCTileEntityRef
 from mceditlib.exceptions import PlayerNotFound
 from mceditlib.selection import BoundingBox
-from mceditlib.levelbase import FakeChunkedLevelAdapter, FakeChunkData
+from mceditlib.fakechunklevel import FakeChunkedLevelAdapter, FakeChunkData
 from mceditlib.blocktypes import pc_blocktypes, BlockTypeSet, blocktypes_named
 from mceditlib import nbt
 

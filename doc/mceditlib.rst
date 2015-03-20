@@ -113,10 +113,10 @@ mceditlib.java module
     :undoc-members:
     :show-inheritance:
 
-mceditlib.levelbase module
+mceditlib.fakechunklevel module
 --------------------------
 
-.. automodule:: mceditlib.levelbase
+.. automodule:: mceditlib.fakechunklevel
     :members:
     :undoc-members:
     :show-inheritance:

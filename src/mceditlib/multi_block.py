@@ -1,7 +1,7 @@
 import numpy
 from mceditlib import relight
 from mceditlib.blocktypes import BlockType
-from mceditlib.levelbase import GetBlocksResult
+from mceditlib.fakechunklevel import GetBlocksResult
 
 import logging
 
