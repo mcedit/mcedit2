@@ -76,6 +76,9 @@ class ChunkLoader(QtCore.QObject):
          be notified of chunks loaded by any client's request, and be notified when
          a chunk is modified. See the IChunkLoaderClient class for details.
 
+        ChunkLoader is intended for clients who only need to view, display, or read chunks, such as WorldViews.
+        For editing chunks, use a subclass of Operation and/or use ComposeOperations to combine them.
+
         To use a ChunkLoader, create a ChunkLoader instance, add one or more IChunkLoaderClient-compatible
         objects using `addClient`, and then repeatedly call `next` (or simply iterate the ChunkLoader)
         to load and process chunks. `StopIteration` will be raised when all clients return None when

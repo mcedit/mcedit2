@@ -146,15 +146,12 @@
          </widget>
         </item>
         <item>
-         <widget class="QScrollArea" name="scrollArea">
+         <widget class="QListView" name="worldListView">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
           </property>
           <property name="verticalScrollBarPolicy">
            <enum>Qt::ScrollBarAlwaysOn</enum>
@@ -162,19 +159,12 @@
           <property name="horizontalScrollBarPolicy">
            <enum>Qt::ScrollBarAlwaysOff</enum>
           </property>
-          <property name="widgetResizable">
-           <bool>true</bool>
+          <property name="editTriggers">
+           <set>QAbstractItemView::NoEditTriggers</set>
           </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>99</width>
-             <height>585</height>
-            </rect>
-           </property>
-          </widget>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
          </widget>
         </item>
        </layout>

@@ -1,16 +1,4 @@
-WorldListItemWidget:checked {
-    background-color: palette(highlighted-text);
-    border: none;
-}
 
-WorldListItemWidget:pressed {
-    background-color: palette(highlighted-text);
-    border: none;
-}
-
-/*QTreeView::branch { xxx overrides platform style - include icons*/
-   /*border-bottom: 1px solid #d9d9d9;*/
-/*}*/
 
 QTreeView::item {
    border-bottom: 1px solid #d9d9d9;

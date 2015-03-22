@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
+from PySide.QtCore import Qt
 
 from arrow import arrow
 from PySide import QtGui, QtCore
@@ -40,58 +41,67 @@ def usefulFilename(adapter):
     else:
         return os.path.basename(adapter.filename)
 
-class WorldListItemWidget(QtGui.QPushButton):
+class WorldListItemWidget(QtGui.QWidget):
     doubleClicked = QtCore.Signal()
 
-    def __init__(self, worldAdapter, parent=None):
-        QtGui.QPushButton.__init__(self, parent)
-        self.filename = worldAdapter.filename
-        self.setCheckable(True)
-        self.setFlat(True)
+    def __init__(self, parent=None):
+        QtGui.QWidget.__init__(self, parent)
 
+        # mapLabel = QtGui.QLabel()
+        # mapLabel.setFixedSize(72, 72)
+        self.displayNameLabel = QtGui.QLabel("namenamename")
+        #self.lastPlayed = lastPlayedTime(worldAdapter)
+        #lastPlayedText = self.lastPlayed.humanize() if self.lastPlayed else "Unknown"
+        self.lastPlayedLabel = QtGui.QLabel("lastplayed")
+        #self.sizeLabel = QtGui.QLabel(self.tr("Calculating area..."))
+        # areaText = self.tr("%.02f million square meters") % (world.chunkCount * 0.25)
+        # diskSize = 0
+        # if hasattr(worldAdapter, 'worldFolder'):
+        #     folder = worldAdapter.worldFolder
+        #     for rf in folder.findRegionFiles():
+        #         diskSize += os.stat(rf).st_size
+        # else:
+        #     diskSize = os.stat(worldAdapter.filename).st_size
+        #
+        # self.diskSizeLabel = QtGui.QLabel(self.tr("%0.2f MB") % (diskSize / 1000000.0))
+
+        infoColumn = Column(
+            self.displayNameLabel,
+            self.lastPlayedLabel,
+            #self.diskSizeLabel,
+            None
+        )
+
+        #layout = Row(mapLabel, (infoColumn, 1), None)
+        layout = infoColumn
+        #if usefulFilename(world) == world.displayName:
+        #    boxLabelText = world.displayName
+        #else:
+        #    boxLabelText = self.tr("%s (%s)" % (world.displayName, usefulFilename(world)))
+
+        self.setLayout(layout)
+        #self.setMinimumSize(layout.sizeHint())
+        #self.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding)
+
+
+    def setFilename(self, filename):
+        worldAdapter = findAdapter(filename, readonly=True)
         try:
-            # mapLabel = QtGui.QLabel()
-            # mapLabel.setFixedSize(72, 72)
             displayNameLimit = 50
             name = displayName(worldAdapter.filename)
             if len(name) > displayNameLimit:
                 name = name[:displayNameLimit] + "..."
-            self.displayNameLabel = QtGui.QLabel(name)
-            self.lastPlayed = lastPlayedTime(worldAdapter)
-            lastPlayedText = self.lastPlayed.humanize() if self.lastPlayed else "Unknown"
-            self.lastPlayedLabel = QtGui.QLabel(lastPlayedText)
-            #self.sizeLabel = QtGui.QLabel(self.tr("Calculating area..."))
-            # areaText = self.tr("%.02f million square meters") % (world.chunkCount * 0.25)
-            # diskSize = 0
-            # if hasattr(worldAdapter, 'worldFolder'):
-            #     folder = worldAdapter.worldFolder
-            #     for rf in folder.findRegionFiles():
-            #         diskSize += os.stat(rf).st_size
-            # else:
-            #     diskSize = os.stat(worldAdapter.filename).st_size
-            #
-            # self.diskSizeLabel = QtGui.QLabel(self.tr("%0.2f MB") % (diskSize / 1000000.0))
 
-            infoColumn = Column(
-                self.displayNameLabel,
-                self.lastPlayedLabel,
-                #self.diskSizeLabel,
-                None
-            )
+            self.displayNameLabel.setText(name)
 
-            #layout = Row(mapLabel, (infoColumn, 1), None)
-            layout = infoColumn
-            #if usefulFilename(world) == world.displayName:
-            #    boxLabelText = world.displayName
-            #else:
-            #    boxLabelText = self.tr("%s (%s)" % (world.displayName, usefulFilename(world)))
-
-            self.setLayout(layout)
-            self.setMinimumSize(layout.sizeHint())
-            self.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding)
+            lastPlayed = lastPlayedTime(worldAdapter)
+            lastPlayedText = lastPlayed.humanize() if lastPlayed else "Unknown"
+            self.lastPlayedLabel.setText(lastPlayedText)
 
         except EnvironmentError as e:
-            setWidgetError(self, e)
+            self.displayNameLabel.setText(str(e))
+            self.lastPlayedLabel.setText("")
+
 
     def mouseDoubleClickEvent(self, event):
         self.doubleClicked.emit()
@@ -99,6 +109,68 @@ class WorldListItemWidget(QtGui.QPushButton):
     def setErrorMessage(self, msg):
         self.sizeLabel.setText(msg)
 
+
+class WorldListItemDelegate(QtGui.QStyledItemDelegate):
+    def __init__(self):
+        super(WorldListItemDelegate, self).__init__()
+        self.itemWidget = WorldListItemWidget()
+        self.itemWidget.adjustSize()
+        log.info("Size hint: %s", str(self.itemWidget.sizeHint()))
+        log.info("Size : %s", str(self.itemWidget.size()))
+
+    def paint(self, painter, option, index):
+        """
+
+        :param painter:
+        :type painter: QtGui.QPainter
+        :param option:
+        :type option: QtGui.QStyleOptionViewItemV4
+        :param index:
+        :type index:
+        :return:
+        :rtype:
+        """
+        option = QtGui.QStyleOptionViewItemV4(option)
+        self.initStyleOption(option, index)
+        style = QtGui.qApp.style()
+        style.drawPrimitive(QtGui.QStyle.PE_PanelItemViewItem, option, painter, self.parent())
+        filename = index.data(Qt.DisplayRole)
+        self.itemWidget.setGeometry(option.rect)
+        self.itemWidget.setFilename(filename)
+        self.itemWidget.render(painter,
+                               painter.deviceTransform().map(option.rect.topLeft()),  # QTBUG-26694
+                               renderFlags=QtGui.QWidget.DrawChildren)
+
+    def sizeHint(self, option, index):
+        return self.itemWidget.sizeHint()
+
+
+class WorldListModel(QtCore.QAbstractListModel):
+    def __init__(self, filenames=None):
+        super(WorldListModel, self).__init__()
+        if filenames is None:
+            filenames = []
+
+        self.filenames = filenames
+
+    def rowCount(self, index):
+        if index.isValid():
+            return 0
+
+        return len(self.filenames)
+
+    def data(self, index, role=Qt.DisplayRole):
+        if index.column() != 0:
+            return
+        row = index.row()
+        if role == Qt.DisplayRole:
+            return self.filenames[row]
+
+    def flags(self, index):
+        if not index.isValid():
+            return 0
+
+        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
 class WorldListWidget(QtGui.QDialog):
     def __init__(self, parent=None, f=0):
@@ -132,6 +204,13 @@ class WorldListWidget(QtGui.QDialog):
 
         centerWidgetInScreen(self, 0.75)
 
+        delegate = WorldListItemDelegate()
+        self.worldListView.setItemDelegate(delegate)
+        delegate.setParent(self.worldListView)  # PYSIDE-152: get the view widget to the drawPrimitive call
+
+        self.worldListView.clicked.connect(self.worldListItemClicked)
+        self.worldListView.doubleClicked.connect(self.worldListItemDoubleClicked)
+
         self.loadTimer = LoaderTimer(interval=0, timeout=self.loadTimerFired)
         self.loadTimer.start()
 
@@ -139,6 +218,8 @@ class WorldListWidget(QtGui.QDialog):
             self.minecraftInstallBox.addItem(install.name)
         self.minecraftInstallBox.setCurrentIndex(minecraftinstall.selectedInstallIndex())
         self._updateVersionsAndResourcePacks()
+
+        self.worldListModel = None
         self.reloadList()
 
     def _updateVersionsAndResourcePacks(self):
@@ -161,10 +242,6 @@ class WorldListWidget(QtGui.QDialog):
         return install, v, p
 
     def reloadList(self):
-        self.selectedWorldIndex = -1
-
-        self.itemWidgets = []
-
         try:
             if not os.path.isdir(self.saveFileDir):
                 raise IOError(u"Could not find the Minecraft saves directory!\n\n({0} was not found or is not a directory)".format(self.saveFileDir))
@@ -173,40 +250,9 @@ class WorldListWidget(QtGui.QDialog):
             potentialWorlds = os.listdir(self.saveFileDir)
             potentialWorlds = [os.path.join(self.saveFileDir, p) for p in potentialWorlds]
             worldFiles = [p for p in potentialWorlds if isLevel(AnvilWorldAdapter, p)]
-            worldAdapters = []
-            for f in worldFiles:
-                try:
-                    adapter = findAdapter(f, readonly=True)
-                except Exception as e:
-                    log.exception("Could not find adapter for %s: %r", f, e)
-                    continue
-                else:
-                    worldAdapters.append(adapter)
 
-            if len(worldAdapters) == 0:
-                raise IOError("No worlds found! You should probably play Minecraft to create your first world.")
-
-            column = QtGui.QVBoxLayout()
-            column.setContentsMargins(0, 0, 0, 0)
-            column.setSpacing(0)
-
-            worldGroup = QtGui.QButtonGroup(self)
-            #worldGroup.setExclusive(True)
-
-            for adapter in worldAdapters:
-                item = WorldListItemWidget(adapter)
-                self.itemWidgets.append(item)
-
-            self.itemWidgets.sort(key=lambda i: i.lastPlayed, reverse=True)
-
-            for i, item in enumerate(self.itemWidgets):
-                worldGroup.addButton(item, i)
-                column.addWidget(item)
-                item.doubleClicked.connect(self.worldListItemDoubleClicked)
-
-            worldGroup.buttonClicked[int].connect(self.worldListItemClicked)
-
-            self.scrollAreaWidgetContents.setLayout(column)
+            self.worldListModel = WorldListModel(worldFiles)
+            self.worldListView.setModel(self.worldListModel)
 
         except EnvironmentError as e:
             setWidgetError(self, e)
@@ -214,14 +260,14 @@ class WorldListWidget(QtGui.QDialog):
     def openWorldClicked(self):
         QtGui.qApp.chooseOpenWorld()
 
-    def worldListItemClicked(self, i):
-        if self.selectedWorldIndex == i:
-            return
-        self.selectedWorldIndex = i
-        import gc; gc.collect()
+    def worldListItemClicked(self, index):
+        row = index.row()
+        self.showWorld(row)
+
+    def showWorld(self, row):
         models = {}
         try:
-            worldEditor = worldeditor.WorldEditor(self.itemWidgets[i].filename, readonly=True)
+            worldEditor = worldeditor.WorldEditor(self.worldListModel.filenames[row], readonly=True)
         except (EnvironmentError, LevelFormatError) as e:
             setWidgetError(self.errorWidget, e)
             while self.stackedWidget.count():
@@ -292,11 +338,13 @@ class WorldListWidget(QtGui.QDialog):
         super(WorldListWidget, self).reject()
 
     def showEvent(self, event):
-        if len(self.itemWidgets):
-            self.itemWidgets[0].click()
+        if self.worldListModel and len(self.worldListModel.filenames):
+            self.showWorld(0)
 
-    def worldListItemDoubleClicked(self):
-        self.editClicked()
+    def worldListItemDoubleClicked(self, index):
+        row = index.row()
+        self.editWorldClicked.emit(self.worldListModel.filenames[row])
+        self.accept()
 
     @profiler.function("worldListLoadTimer")
     def loadTimerFired(self):
@@ -313,26 +361,40 @@ class WorldListWidget(QtGui.QDialog):
         else:
             self.loadTimer.setInterval(1000)
 
+    @property
+    def selectedWorldIndex(self):
+        indexes = self.worldView.selectedIndexes()
+        if len(indexes):
+            return indexes[0].row()
+
     editWorldClicked = QtCore.Signal(unicode)
     viewWorldClicked = QtCore.Signal(unicode)
     repairWorldClicked = QtCore.Signal(unicode)
     backupWorldClicked = QtCore.Signal(unicode)
 
     def editClicked(self):
-        self.editWorldClicked.emit(self.itemWidgets[self.selectedWorldIndex].filename)
-        self.accept()
+        index = self.selectedWorldIndex
+        if index is not None:
+            self.editWorldClicked.emit(self.worldListModel.filenames[index])
+            self.accept()
 
     def viewClicked(self):
-        self.viewWorldClicked.emit(self.itemWidgets[self.selectedWorldIndex].filename)
-        self.accept()
+        index = self.selectedWorldIndex
+        if index is not None:
+            self.viewWorldClicked.emit(self.worldListModel.filenames[index])
+            self.accept()
 
     def repairClicked(self):
-        self.repairWorldClicked.emit(self.itemWidgets[self.selectedWorldIndex].filename)
-        self.accept()
+        index = self.selectedWorldIndex
+        if index is not None:
+            self.repairWorldClicked.emit(self.worldListModel.filenames[index])
+            self.accept()
 
     def backupClicked(self):
-        self.backupWorldClicked.emit(self.itemWidgets[self.selectedWorldIndex].filename)
-        self.accept()
+        index = self.selectedWorldIndex
+        if index is not None:
+            self.backupWorldClicked.emit(self.worldListModel.filenames[index])
+            self.accept()
 
     def configureClicked(self):
         installsWidget = MinecraftInstallsDialog()
