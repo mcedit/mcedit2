@@ -14,17 +14,11 @@ import time
 import numpy
 
 from mceditlib import nbt
-from mceditlib.exceptions import ChunkNotPresent
+from mceditlib.exceptions import ChunkNotPresent, RegionFormatError
 
 log = logging.getLogger(__name__)
 
 __author__ = 'Rio'
-
-
-class RegionFormatError(RuntimeError):
-    """
-    Raised on an error in the region file format.
-    """
 
 
 def deflate(data):
