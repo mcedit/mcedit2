@@ -276,9 +276,11 @@ class WorldListWidget(QtGui.QDialog):
     def openWorldClicked(self):
         QtGui.qApp.chooseOpenWorld()
 
+    _currentFilename = None
     def worldListItemClicked(self, index):
         filename = index.data()
-        if filename:
+        if filename != self._currentFilename:
+            self._currentFilename = filename
             self.showWorld(filename)
 
     def showWorld(self, filename):
