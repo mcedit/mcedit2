@@ -4,6 +4,7 @@ from PySide.QtCore import Qt
 
 from arrow import arrow
 from PySide import QtGui, QtCore
+from mcedit2.appsettings import RecentFilesSetting
 from mcedit2.rendering import blockmeshes
 from mcedit2.rendering.blockmodels import BlockModels
 from mcedit2.rendering.chunkloader import ChunkLoader
@@ -27,6 +28,7 @@ from mceditlib.util import displayName
 
 log = logging.getLogger(__name__)
 
+
 def lastPlayedTime(adapter):
     try:
         time = adapter.metadata.LastPlayed
@@ -35,11 +37,13 @@ def lastPlayedTime(adapter):
     except AttributeError as e:
         return None
 
+
 def usefulFilename(adapter):
     if hasattr(adapter, 'worldFolder'):
         return os.path.basename(adapter.worldFolder.filename)
     else:
         return os.path.basename(adapter.filename)
+
 
 class WorldListItemWidget(QtGui.QWidget):
     doubleClicked = QtCore.Signal()
@@ -47,12 +51,9 @@ class WorldListItemWidget(QtGui.QWidget):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
 
-        # mapLabel = QtGui.QLabel()
-        # mapLabel.setFixedSize(72, 72)
         self.displayNameLabel = QtGui.QLabel("namenamename")
-        #self.lastPlayed = lastPlayedTime(worldAdapter)
-        #lastPlayedText = self.lastPlayed.humanize() if self.lastPlayed else "Unknown"
         self.lastPlayedLabel = QtGui.QLabel("lastplayed")
+
         #self.sizeLabel = QtGui.QLabel(self.tr("Calculating area..."))
         # areaText = self.tr("%.02f million square meters") % (world.chunkCount * 0.25)
         # diskSize = 0
@@ -72,42 +73,38 @@ class WorldListItemWidget(QtGui.QWidget):
             None
         )
 
-        #layout = Row(mapLabel, (infoColumn, 1), None)
-        layout = infoColumn
-        #if usefulFilename(world) == world.displayName:
-        #    boxLabelText = world.displayName
-        #else:
-        #    boxLabelText = self.tr("%s (%s)" % (world.displayName, usefulFilename(world)))
+        layout = Row(20, infoColumn)
 
         self.setLayout(layout)
-        #self.setMinimumSize(layout.sizeHint())
-        #self.setSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.MinimumExpanding)
 
-
-    def setFilename(self, filename):
-        worldAdapter = findAdapter(filename, readonly=True)
-        try:
-            displayNameLimit = 50
-            name = displayName(worldAdapter.filename)
-            if len(name) > displayNameLimit:
-                name = name[:displayNameLimit] + "..."
-
-            self.displayNameLabel.setText(name)
-
-            lastPlayed = lastPlayedTime(worldAdapter)
-            lastPlayedText = lastPlayed.humanize() if lastPlayed else "Unknown"
-            self.lastPlayedLabel.setText(lastPlayedText)
-
-        except EnvironmentError as e:
-            self.displayNameLabel.setText(str(e))
-            self.lastPlayedLabel.setText("")
-
+    def setWorldInfo(self, (name, lastPlayedText)):
+        self.displayNameLabel.setText(name)
+        self.lastPlayedLabel.setText(lastPlayedText)
 
     def mouseDoubleClickEvent(self, event):
         self.doubleClicked.emit()
 
     def setErrorMessage(self, msg):
         self.sizeLabel.setText(msg)
+
+
+def getWorldInfo(filename):
+    worldAdapter = findAdapter(filename, readonly=True)
+    try:
+        displayNameLimit = 40
+        name = displayName(worldAdapter.filename)
+
+        if len(name) > displayNameLimit:
+            name = name[:displayNameLimit] + "..."
+        if usefulFilename(worldAdapter) != displayName(worldAdapter.filename):
+            name = "%s (%s)" % (name, usefulFilename(worldAdapter))
+
+        lastPlayed = lastPlayedTime(worldAdapter)
+        lastPlayedText = lastPlayed.humanize() if lastPlayed else "Unknown"
+        return name, lastPlayedText
+    except EnvironmentError as e:
+        log.error("Failed getting world info for %s: %s", filename, e)
+        return str(e), ""
 
 
 class WorldListItemDelegate(QtGui.QStyledItemDelegate):
@@ -133,10 +130,10 @@ class WorldListItemDelegate(QtGui.QStyledItemDelegate):
         option = QtGui.QStyleOptionViewItemV4(option)
         self.initStyleOption(option, index)
         style = QtGui.qApp.style()
+        worldInfo = index.data(Qt.UserRole)
         style.drawPrimitive(QtGui.QStyle.PE_PanelItemViewItem, option, painter, self.parent())
-        filename = index.data(Qt.DisplayRole)
         self.itemWidget.setGeometry(option.rect)
-        self.itemWidget.setFilename(filename)
+        self.itemWidget.setWorldInfo(worldInfo)
         self.itemWidget.render(painter,
                                painter.deviceTransform().map(option.rect.topLeft()),  # QTBUG-26694
                                renderFlags=QtGui.QWidget.DrawChildren)
@@ -146,30 +143,32 @@ class WorldListItemDelegate(QtGui.QStyledItemDelegate):
 
 
 class WorldListModel(QtCore.QAbstractListModel):
-    def __init__(self, filenames=None):
+    def __init__(self, worlds=None):
         super(WorldListModel, self).__init__()
-        if filenames is None:
-            filenames = []
+        if worlds is None:
+            worlds = []
 
-        self.filenames = filenames
+        self.worlds = [(f, getWorldInfo(f)) for f in worlds]
 
     def rowCount(self, index):
         if index.isValid():
             return 0
 
-        return len(self.filenames)
+        return len(self.worlds)
 
     def data(self, index, role=Qt.DisplayRole):
         if index.column() != 0:
             return
         row = index.row()
+
         if role == Qt.DisplayRole:
-            return self.filenames[row]
+            return self.worlds[row][0]
+        if role == Qt.UserRole:
+            return self.worlds[row][1]
 
     def flags(self, index):
         if not index.isValid():
             return 0
-
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
 class WorldListWidget(QtGui.QDialog):
@@ -254,6 +253,23 @@ class WorldListWidget(QtGui.QDialog):
             self.worldListModel = WorldListModel(worldFiles)
             self.worldListView.setModel(self.worldListModel)
 
+            recentWorlds = RecentFilesSetting.value()
+            self.recentWorldsMenu = QtGui.QMenu()
+
+            def _triggered(f):
+                def triggered():
+                    self.editWorldClicked.emit(f)
+                    self.accept()
+                return triggered
+
+            for filename in recentWorlds:
+                displayName, lastPlayed = getWorldInfo(filename)
+                action = self.recentWorldsMenu.addAction(displayName)
+                action._editWorld = _triggered(filename)
+                action.triggered.connect(action._editWorld)
+
+            self.recentWorldsButton.setMenu(self.recentWorldsMenu)
+
         except EnvironmentError as e:
             setWidgetError(self, e)
 
@@ -261,13 +277,14 @@ class WorldListWidget(QtGui.QDialog):
         QtGui.qApp.chooseOpenWorld()
 
     def worldListItemClicked(self, index):
-        row = index.row()
-        self.showWorld(row)
+        filename = index.data()
+        if filename:
+            self.showWorld(filename)
 
-    def showWorld(self, row):
+    def showWorld(self, filename):
         models = {}
         try:
-            worldEditor = worldeditor.WorldEditor(self.worldListModel.filenames[row], readonly=True)
+            worldEditor = worldeditor.WorldEditor(filename, readonly=True)
         except (EnvironmentError, LevelFormatError) as e:
             setWidgetError(self.errorWidget, e)
             while self.stackedWidget.count():
@@ -338,12 +355,14 @@ class WorldListWidget(QtGui.QDialog):
         super(WorldListWidget, self).reject()
 
     def showEvent(self, event):
-        if self.worldListModel and len(self.worldListModel.filenames):
-            self.showWorld(0)
+        if self.worldListModel and len(self.worldListModel.worlds):
+            self.worldListView.setFocus()
+            self.worldListView.setCurrentIndex(self.worldListModel.createIndex(0, 0))
+            self.showWorld(self.worldListModel.worlds[0][0])
 
     def worldListItemDoubleClicked(self, index):
         row = index.row()
-        self.editWorldClicked.emit(self.worldListModel.filenames[row])
+        self.editWorldClicked.emit(self.worldListModel.worlds[row][0])
         self.accept()
 
     @profiler.function("worldListLoadTimer")
@@ -363,9 +382,9 @@ class WorldListWidget(QtGui.QDialog):
 
     @property
     def selectedWorldIndex(self):
-        indexes = self.worldView.selectedIndexes()
+        indexes = self.worldListView.selectedIndexes()
         if len(indexes):
-            return indexes[0].row()
+            return indexes[0]
 
     editWorldClicked = QtCore.Signal(unicode)
     viewWorldClicked = QtCore.Signal(unicode)
@@ -375,25 +394,25 @@ class WorldListWidget(QtGui.QDialog):
     def editClicked(self):
         index = self.selectedWorldIndex
         if index is not None:
-            self.editWorldClicked.emit(self.worldListModel.filenames[index])
+            self.editWorldClicked.emit(index.data(Qt.DisplayRole))
             self.accept()
 
     def viewClicked(self):
         index = self.selectedWorldIndex
         if index is not None:
-            self.viewWorldClicked.emit(self.worldListModel.filenames[index])
+            self.viewWorldClicked.emit(index.data(Qt.DisplayRole))
             self.accept()
 
     def repairClicked(self):
         index = self.selectedWorldIndex
         if index is not None:
-            self.repairWorldClicked.emit(self.worldListModel.filenames[index])
+            self.repairWorldClicked.emit(index.data(Qt.DisplayRole))
             self.accept()
 
     def backupClicked(self):
         index = self.selectedWorldIndex
         if index is not None:
-            self.backupWorldClicked.emit(self.worldListModel.filenames[index])
+            self.backupWorldClicked.emit(index.data(Qt.DisplayRole))
             self.accept()
 
     def configureClicked(self):
