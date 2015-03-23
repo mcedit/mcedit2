@@ -33,13 +33,19 @@ class MCESettingsOption(QtCore.QObject):
         if default is None:
             default = self.default
 
-        value = self.settings.value(self.key, default)
-        if self.type:
-            value = self.type(value)
+        if self.type == "json":
+            value = self.settings.jsonValue(self.key, default)
+        else:
+            value = self.settings.value(self.key, default)
+            if self.type:
+                value = self.type(value)
         return value
 
     def setValue(self, value):
-        return self.settings.setValue(self.key, value)
+        if self.type == "json":
+            return self.settings.setJsonValue(self.key, value)
+        else:
+            return self.settings.setValue(self.key, value)
 
     valueChanged = QtCore.Signal(object)
 
@@ -119,7 +125,8 @@ class MCESettings(QtCore.QSettings):
         if value is not None:
             try:
                 return json.loads(value)
-            except ValueError:  # No JSON object could be decoded
+            except ValueError as e:  # No JSON object could be decoded
+                log.error("Failed to decode setting %s: %s", key, e)
                 return default
         else:
             return default

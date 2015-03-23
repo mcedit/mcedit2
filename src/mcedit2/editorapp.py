@@ -8,6 +8,7 @@ from PySide import QtGui, QtCore, QtNetwork
 from PySide.QtCore import Qt
 import gc
 import numpy
+from mcedit2.appsettings import RecentFilesSetting
 from mcedit2.library import LibraryWidget
 
 from mcedit2.util import minecraftinstall
@@ -454,7 +455,7 @@ class MCEditApp(QtGui.QApplication):
     # --- Recent files ---
 
     def updateRecentFilesMenu(self):
-        recentFiles = RecentFilesSetting.jsonValue([])
+        recentFiles = RecentFilesSetting.value()
         recentWorldsMenu = self.mainWindow.menuRecent_Worlds
         for i, child in enumerate(recentWorldsMenu.children()):
             if i < 2:
@@ -489,14 +490,14 @@ class MCEditApp(QtGui.QApplication):
             action.__triggered = triggered
 
     def addRecentFile(self, filename):
-        recentFiles = RecentFilesSetting.jsonValue([])
+        recentFiles = RecentFilesSetting.value()
         if filename in recentFiles:
             return
         recentFiles.insert(0, filename)
         if len(recentFiles) > self.recentFileLimit:
             recentFiles = recentFiles[1:]
 
-        RecentFilesSetting.setJsonValue(recentFiles)
+        RecentFilesSetting.setValue(recentFiles)
         self.updateRecentFilesMenu()
 
     # --- Tabs and sessions ---
@@ -676,4 +677,4 @@ class MCEditApp(QtGui.QApplication):
     def hideWorldList(self):
         self.tabWidget.removeTab(self.tabWidget.indexOf(self.worldList))
 
-RecentFilesSetting = Settings().getOption('open_world_dialog/recent_files')
+
