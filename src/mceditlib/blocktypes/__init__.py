@@ -229,22 +229,13 @@ class BlockTypeSet(object):
         name = name.lower()
         return [v for v in self.allBlocks if name in v.displayName.lower() or name in v.aka.lower()]
 
-    def addIDMappingFromFile(self, filename):
-        f = openResource(filename)
-        try:
-            s = f.read()
-            log.info(u"Loading block ID mapping from (%s) %s", len(s), f)
-            entries = json.loads(s)
-            for ID, meta, nameAndState in entries:
-                internalName, blockState = self._splitInternalName(nameAndState)
-                self.IDsByState[nameAndState] = ID, meta
-                self.IDsByName[internalName] = ID
-            self.statesByID = {v: k for (k, v) in self.IDsByState.iteritems()}
-            self.namesByID = {v: k for (k, v) in self.IDsByName.iteritems()}
-        except EnvironmentError as e:
-            log.error(u"Exception while loading block ID mapping from %s: %s", f, e)
-            traceback.print_exc()
-            raise
+    def addIDMappingFromJSON(self, entries):
+        for ID, meta, nameAndState in entries:
+            internalName, blockState = self._splitInternalName(nameAndState)
+            self.IDsByState[nameAndState] = ID, meta
+            self.IDsByName[internalName] = ID
+        self.statesByID = {v: k for (k, v) in self.IDsByState.iteritems()}
+        self.namesByID = {v: k for (k, v) in self.IDsByName.iteritems()}
 
     def addBlockIDsFromSchematicTag(self, mapping):
         for ID, tag in mapping.iteritems():
@@ -262,18 +253,7 @@ class BlockTypeSet(object):
     def addItemIDsFromSchematicTag(self, mapping):
         pass
 
-    def addJsonBlocksFromFile(self, filename):
-        f = openResource(filename)
-        try:
-            s = f.read()
-            log.info(u"Loading block info from (%s) %s", len(s), f)
-            self.addJsonBlocks(json.loads(s))
-
-        except EnvironmentError as e:
-            log.error(u"Exception while loading block info from %s: %s", f, e)
-            traceback.print_exc()
-
-    def addJsonBlocks(self, blockJson):
+    def addBlocksFromJSON(self, blockJson):
         for block in blockJson:
             try:
                 self.addJsonBlock(block)
@@ -350,14 +330,32 @@ class BlockTypeSet(object):
                                                            (color >> 8) & 0xff,
                                                            color & 0xff)
 
+_cachedJsons = {}
+
+def getJsonFile(filename):
+    if filename in _cachedJsons:
+        return _cachedJsons[filename]
+
+    f = openResource(filename)
+    try:
+        s = f.read()
+        #log.info(u"Loading block ID mapping from (%s) %s", len(s), f)
+        entries = json.loads(s)
+        _cachedJsons[filename] = entries
+        return entries
+    except EnvironmentError as e:
+        log.error(u"Exception while loading JSON from %s: %s", f, e)
+        traceback.print_exc()
+
+
 class PCBlockTypeSet(BlockTypeSet):
     def __init__(self):
         super(PCBlockTypeSet, self).__init__()
         self.name = "Alpha"
-        self.addIDMappingFromFile("idmapping_raw.json")
-        self.addIDMappingFromFile("idmapping.json")
-        self.addJsonBlocksFromFile("minecraft_raw.json")
-        self.addJsonBlocksFromFile("minecraft.json")
+        self.addIDMappingFromJSON(getJsonFile("idmapping_raw.json"))
+        self.addIDMappingFromJSON(getJsonFile("idmapping.json"))
+        self.addBlocksFromJSON(getJsonFile("minecraft_raw.json"))
+        self.addBlocksFromJSON(getJsonFile("minecraft.json"))
 
 pc_blocktypes = PCBlockTypeSet()
 
