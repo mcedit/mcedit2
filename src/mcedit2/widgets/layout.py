@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from PySide import QtGui
+from PySide.QtCore import Qt
 
 
 def _Box(box, *a):
@@ -14,6 +15,8 @@ def _Box(box, *a):
             box.addLayout(*arg)
         if isinstance(item, QtGui.QWidget):
             box.addWidget(*arg)
+        if isinstance(item, (int, float)):
+            box.addSpacing(item)
         if item is None:
             box.addStretch()
 
