@@ -32,7 +32,10 @@ class IChunkLoaderClient(object):
     def requestChunk(self):
         """
         Return the coordinates of the chunk requested by the client. Each
-        call may return a different set of coordinates. Return None to request no chunks.
+        call to the client should return a different set of coordinates.
+
+        Return None to request no chunks.
+
         :rtype: (cx, cz)
         :return: Chunk coordinates
         """
@@ -61,7 +64,9 @@ class IChunkLoaderClient(object):
     def chunkNotLoaded(self, (cx, cz), exc):
         """
         Notifies the client that a chunk failed to load with an exception.
+
         :param (cx, cz): chunk position
+        :param exc: The exception that was thrown, usually IOError or LevelFormatError
         """
 
 
@@ -120,7 +125,7 @@ class ChunkLoader(QtCore.QObject):
         :type client: IChunkLoaderClient
         """
         try:
-            self.clients[:] = [c for c in self.clients if c() == client]
+            self.clients[:] = [c for c in self.clients if c() is not client]
             log.info("Removed: client %s",  client)
         except ValueError:
             pass
