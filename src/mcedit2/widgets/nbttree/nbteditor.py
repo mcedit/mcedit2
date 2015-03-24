@@ -78,7 +78,6 @@ class NBTEditorWidget(QtGui.QWidget):
 
             addExpanded(QtCore.QModelIndex())
 
-
         self.model.dataChanged.connect(self.dataDidChange)
         self.model.rowsInserted.connect(self.rowsDidInsert)
         self.model.rowsRemoved.connect(self.rowsDidRemove)
@@ -119,7 +118,7 @@ class NBTEditorWidget(QtGui.QWidget):
     indexAddingTo = None
 
     def itemClicked(self, index):
-        #index = self.proxyModel.mapToSource(index)
+        index = self.proxyModel.mapToSource(index)
         item = self.model.getItem(index)
         if index.column() == 2:
             if item.isList and item.tag.list_type:
@@ -184,8 +183,6 @@ class NBTEditorWidget(QtGui.QWidget):
 
     def addShortArray(self):
         self.addItemWithType(12)
-
-
 
     def tagNameForUndo(self, index):
         parent = self.model.parent(index)
