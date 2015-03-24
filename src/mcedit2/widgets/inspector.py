@@ -31,12 +31,15 @@ class InspectorWidget(QtGui.QWidget):
         self.tileEntity = None
         self.entity = None
 
-
     def editWasMade(self):
-        if self.currentEntity and self.currentEntity.chunk:
-            self.currentEntity.chunk.dirty = True
+        if self.entity and self.entity.chunk:
+            self.entity.chunk.dirty = True
+        if self.tileEntity and self.tileEntity.chunk:
+            self.tileEntity.chunk.dirty = True
 
     def inspectBlock(self, pos):
+        self.entity = None
+
         self.stackedWidget.setCurrentWidget(self.pageInspectBlock)
         x, y, z = pos
         self.blockXLabel.setText(str(x))
@@ -50,6 +53,8 @@ class InspectorWidget(QtGui.QWidget):
         self.removeTileEntityButton.setEnabled(self.tileEntity is not None)
 
     def inspectEntity(self, entity):
+        self.tileEntity = None
+
         self.entity = entity
         self.stackedWidget.setCurrentWidget(self.pageInspectEntity)
         self.entityIDLabel.setText(entity.id)
