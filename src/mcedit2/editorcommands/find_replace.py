@@ -429,7 +429,7 @@ class FindReplaceNBT(QtCore.QObject):
         searchTileEntities = self.widget.searchTileEntitiesCheckbox.isChecked()
         targetTileEntityIDs = self.widget.tileEntityIDField.text()
         if len(targetTileEntityIDs):
-            targetTileEntityIDs = targetEntityIDs.split(';')
+            targetTileEntityIDs = targetTileEntityIDs.split(';')
 
         if not searchNames and not searchValues:
             return
@@ -444,18 +444,21 @@ class FindReplaceNBT(QtCore.QObject):
             selection = dim.bounds
 
         def _matchTag(name_or_index, tag):
-            if not tag.isCompound() and not tag.isList() and searchValues and targetValue in tag.value:
-                return True
-            if searchNames and targetName in name_or_index:
+            if searchValues and not tag.isCompound() and not tag.isList():
+                if tag.tagID == nbt.ID_STRING and targetValue in tag.value:
+                    return True
+                elif targetValue == tag.value:
+                    return True
+            if searchNames and isinstance(name_or_index, basestring) and targetName in name_or_index:
                 return True
             return False
 
         def _findTag(name_or_index, tag, path):
             if _matchTag(name_or_index, tag):
                 if tag.isCompound():
-                    value = "Compound"
+                    value = "Compound"  # describeCompound
                 elif tag.isList():
-                    value = "List"
+                    value = "List"  # describeList
                 else:
                     value = str(tag.value)
 
@@ -624,12 +627,14 @@ def walkNBT(tag, path=None):
     if tag.isCompound():
         for name, subtag in tag.iteritems():
             yield (name, subtag, path)
-            walkNBT(subtag, path + [name])
+            for result in walkNBT(subtag, path + [name]):
+                yield result
 
     if tag.isList():
         for i, subtag in enumerate(tag):
             yield (i, subtag, path)
-            walkNBT(subtag, path + [i])
+            for result in walkNBT(subtag, path + [i]):
+                yield result
 
 
 class FindReplaceDialog(QtGui.QDialog):
