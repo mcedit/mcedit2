@@ -3,7 +3,6 @@
 # $ pyinstaller mcedit2.spec
 
 a = Analysis(['src/mcedit2/main.py'],
-             pathex=[r'c:\Users\Rio\Documents\mcedit2-distrib\mcedit2\src'],
              hiddenimports=['PySide.QtXml', 'zmq'],
              hookspath=['.'],
              runtime_hooks=None,
