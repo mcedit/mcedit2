@@ -106,6 +106,10 @@ def startup():
     setup_logging()
     sys.excepthook = excepthook
 
+    pyi_tmpdir = getattr(sys, "_MEIPASS", None)
+    if pyi_tmpdir:
+        os.chdir(pyi_tmpdir)
+        
     import pygments.lexers
     if hasattr(pygments.lexers, 'newmod'):
         # pyinstaller hack - must call before importing from mcedit2
