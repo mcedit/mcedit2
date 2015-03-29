@@ -10,5 +10,23 @@ from PyInstaller.hooks.hookutils import collect_data_files
 
 log = logging.getLogger(__name__)
 
-datas = collect_data_files('mceditlib') + collect_data_files('mcedit2')
+# Remove cython and coverage byproducts
+def ext_filter(source):
+    base = os.path.basename(source)
+    if base == '.coverage':
+        return False
+    name, ext = os.path.splitext(base)
+    return ext not in ('.c', '.html')
+
+mceditlib_datas = collect_data_files('mceditlib')
+mceditlib_datas = [(source, dest)
+                   for source, dest in mceditlib_datas
+                   if ext_filter(source)]
+
+mcedit2_datas = collect_data_files('mcedit2')
+mcedit2_datas = [(source, dest)
+                 for source, dest in mcedit2_datas
+                 if ext_filter(source)]
+
+datas = mceditlib_datas + mcedit2_datas
 
