@@ -6,7 +6,12 @@ a = Analysis(['src/mcedit2/main.py'],
              hiddenimports=['PySide.QtXml', 'zmq'],
              hookspath=['.'],
              runtime_hooks=None,
-             excludes=['tkinter', 'tcl', 'tk', 'wx']
+             excludes=['Tkinter', 'Tcl', 'Tk', 'wx',
+                       'IPython.sphinxext', 'IPython.nbconvert',
+                       'IPython.lib.editorhooks', 'IPython.core.tests',
+                       'IPython.extensions.cythonmagic',
+                       'jinja2',
+                       ]
              )
 
 # Suppress pyconfig.h warning
@@ -27,6 +32,21 @@ pyz = PYZ(a.pure)
 
 onefile = True
 
+# Remove IPython html assets, saving 1.5MB.
+# Disables using the embedded IPython for notebooks
+# Anyone who wants this can run from source!
+def ipy_filter(filename):
+    return not (
+        filename.startswith("IPython\\html") or
+        filename.startswith("IPython\\nbconvert") or
+        filename.startswith("IPython\\nbformat") or
+        filename.startswith("IPython\\testing")
+    )
+
+a.datas = [(filename, path, filetype)
+           for filename, path, filetype in a.datas
+           if ipy_filter(filename)]
+
 if onefile:
     a.scripts += a.binaries + a.zipfiles + a.datas
 
@@ -36,7 +56,7 @@ exe = EXE(pyz,
           name='mcedit2.exe',
           debug=False,
           strip=None,
-          upx=True,
+          upx=False,
           console=True,
           icon="mcediticon.ico")
 
