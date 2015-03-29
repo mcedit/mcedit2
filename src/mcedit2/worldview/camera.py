@@ -184,9 +184,10 @@ class CameraWorldView(WorldView):
     def __init__(self, *a, **kw):
         self.fov = 70.0  # needed by updateMatrices called from WorldView.__init__
         self._yawPitch = -45., 25.
+        self.viewDistance = 32
+
         WorldView.__init__(self, *a, **kw)
         self.compassNode.yawPitch = self._yawPitch
-        self.viewDistance = 32
         self.viewActions = [CameraMoveMouseAction(),
                              CameraPanMouseAction()]
 
@@ -245,7 +246,7 @@ class CameraWorldView(WorldView):
         fovy = degrees(atan(w / h * tan(radians(self.fov) * 0.5)))
 
         projection = QtGui.QMatrix4x4()
-        projection.perspective(fovy, w / h, 1, 1000)
+        projection.perspective(fovy, w / h, 0.05, self.viewDistance * 20)
         self.matrixNode.projection = projection
 
     @lazyprop
