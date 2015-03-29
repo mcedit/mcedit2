@@ -11,6 +11,7 @@ import numpy
 
 from PySide.QtCore import Qt
 from PySide import QtGui, QtCore
+from mcedit2.rendering.layers import Layer
 from mcedit2.util import profiler
 
 from mcedit2.widgets.layout import Column, Row
@@ -38,7 +39,17 @@ class CameraWorldViewFrame(QtGui.QWidget):
         perspectiveInput.toggle()
         perspectiveInput.toggled.connect(view.setPerspective)
 
-        self.setLayout(Column(Row((QtGui.QWidget(), 1),
+        showButton = QtGui.QPushButton("Show...")
+        showMenu = QtGui.QMenu()
+        for layer in Layer.AllLayers:
+            showMenu.addAction(layer)
+
+        showButton.setMenu(showMenu)
+
+        view._showMenu = showMenu
+
+        self.setLayout(Column(Row(None,
+                                  showButton,
                                   perspectiveInput,
                                   QtGui.QLabel("View Distance:"),
                                   viewDistanceInput,
