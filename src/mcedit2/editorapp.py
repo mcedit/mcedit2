@@ -492,7 +492,7 @@ class MCEditApp(QtGui.QApplication):
     def addRecentFile(self, filename):
         recentFiles = RecentFilesSetting.value()
         if filename in recentFiles:
-            return
+            recentFiles.remove(filename)
         recentFiles.insert(0, filename)
         if len(recentFiles) > self.recentFileLimit:
             recentFiles = recentFiles[:-1]
