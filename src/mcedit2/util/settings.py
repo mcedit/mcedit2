@@ -22,27 +22,30 @@ def Settings():
 
 
 class MCESettingsOption(QtCore.QObject):
-    def __init__(self, settings, key, type, default=None, *args, **kwargs):
+    def __init__(self, settings, key, valueType=None, default=None, *args, **kwargs):
         super(MCESettingsOption, self).__init__(*args, **kwargs)
         self.settings = settings
         self.key = key
-        self.type = type
+        self.valueType = valueType
         self.default = default
 
     def value(self, default=None):
         if default is None:
             default = self.default
 
-        if self.type == "json":
+        if self.valueType == "json":
             value = self.settings.jsonValue(self.key, default)
         else:
             value = self.settings.value(self.key, default)
-            if self.type:
-                value = self.type(value)
+            if self.valueType is bool:
+                if isinstance(value, basestring):
+                    value = value.lower() == "true"
+            elif self.valueType:
+                value = self.valueType(value)
         return value
 
     def setValue(self, value):
-        if self.type == "json":
+        if self.valueType == "json":
             return self.settings.setJsonValue(self.key, value)
         else:
             return self.settings.setValue(self.key, value)
@@ -81,7 +84,9 @@ class MCESettings(QtCore.QSettings):
         :rtype: MCESettings
         """
         dataDir = directories.getUserFilesDirectory()
-        super(MCESettings, self).__init__(os.path.join(dataDir, "mcedit2.ini"), QtCore.QSettings.IniFormat, *args,
+        iniPath = os.path.join(dataDir, "mcedit2.ini")
+        log.info("Loading app settings from %s", iniPath)
+        super(MCESettings, self).__init__(iniPath, QtCore.QSettings.IniFormat, *args,
                                            **kwargs)
         self.options = {}
         #= defaultdict(lambda: QtCore.Signal(object))
