@@ -114,10 +114,10 @@ class MeshBase(object):
     renderType = NotImplemented
     extraTextures = ()
     renderstate = renderstates.RenderstateAlphaTestNode
-    vertexArrays = ()
+    sceneNode = None
 
-    def bufferSize(self):
-        return sum(a.buffer.size for a in self.vertexArrays) * 4
+    # def bufferSize(self):
+    #     return sum(a.buffer.size for a in self.vertexArrays) * 4
 
 
 class ChunkMeshBase(MeshBase):
@@ -127,4 +127,3 @@ class ChunkMeshBase(MeshBase):
         :type chunkUpdate: ChunkUpdate
         """
         self.chunkUpdate = chunkUpdate
-        self.vertexArrays = []

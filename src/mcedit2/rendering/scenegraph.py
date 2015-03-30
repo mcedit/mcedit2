@@ -207,9 +207,11 @@ class VertexNode(Node):
     def __init__(self, vertexArrays):
         """
 
-        :type vertexArrays: VertexArrayBuffer
+        :type vertexArrays: list[VertexArrayBuffer]
         """
         super(VertexNode, self).__init__()
+        if not isinstance(vertexArrays, (list, tuple)):
+            vertexArrays = [vertexArrays]
         self.vertexArrays = vertexArrays
 
 

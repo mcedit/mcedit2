@@ -4,7 +4,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 import numpy
-from mcedit2.rendering import renderstates
+from mcedit2.rendering import renderstates, scenegraph
 from mcedit2.rendering.blockmeshes import standardCubeTemplates
 from mcedit2.rendering.blockmeshes import ChunkMeshBase
 from mcedit2.rendering.layers import Layer
@@ -58,7 +58,8 @@ class TileEntityMesh(EntityMeshBase):
 
         tiles = self._computeVertices(tilePositions, (0xff, 0xff, 0x33, 0x44), chunkPosition=chunk.chunkPosition)
         yield
-        self.vertexArrays = [tiles]
+        self.sceneNode = scenegraph.VertexNode(tiles)
+
 
 
 class MonsterRenderer(EntityMeshBase):
@@ -84,7 +85,8 @@ class MonsterRenderer(EntityMeshBase):
                                          offset=True,
                                          chunkPosition=chunk.chunkPosition)
         yield
-        self.vertexArrays = [monsters]
+        self.sceneNode = scenegraph.VertexNode(monsters)
+
 
 
 class ItemRenderer(EntityMeshBase):
@@ -111,8 +113,9 @@ class ItemRenderer(EntityMeshBase):
             entityPositions.append(pos)
             entityColors.append(color)
 
-        entities = self._computeVertices(entityPositions,
+        items = self._computeVertices(entityPositions,
                                          numpy.array(entityColors, dtype='uint8')[:, numpy.newaxis, numpy.newaxis],
                                          offset=True, chunkPosition=chunk.chunkPosition)
         yield
-        self.vertexArrays = [entities]
+        self.sceneNode = scenegraph.VertexNode(items)
+

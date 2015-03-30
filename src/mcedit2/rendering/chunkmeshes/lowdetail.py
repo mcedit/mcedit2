@@ -4,7 +4,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 import numpy
-from mcedit2.rendering import renderstates
+from mcedit2.rendering import renderstates, scenegraph
 from mcedit2.rendering.blockmeshes import standardCubeTemplates
 from mcedit2.rendering.blockmeshes import ChunkMeshBase
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
@@ -99,7 +99,7 @@ class LowDetailBlockMesh(ChunkMeshBase):
 
         yield
         if self.detailLevel == 2:
-            self.vertexArrays = [va0]
+            self.sceneNode = scenegraph.VertexNode(va0)
             return
 
         # Calculate how deep each column needs to go to be flush with the adjacent column;
@@ -134,9 +134,12 @@ class LowDetailBlockMesh(ChunkMeshBase):
         va2.vertex[:, (0, 3), 0] -= 1.0  # turn diagonally
 
 
-        vertexArrays = [va1, va2, va0]
+        nodes = [scenegraph.VertexNode(v) for v in (va1, va2, va0)]
 
-        self.vertexArrays = vertexArrays
+        self.sceneNode = scenegraph.Node()
+        for node in nodes:
+            self.sceneNode.addChild(node)
+
 
 
 class OverheadBlockMesh(LowDetailBlockMesh):

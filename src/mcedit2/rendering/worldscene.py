@@ -119,14 +119,13 @@ class SceneUpdateTask(object):
                             if arrayNode.meshType in meshTypes:
                                 chunkNode.removeChild(arrayNode)
 
-                        # Create one VertexNode for each visible layer in this chunk
+                        # Add the scene nodes created by each mesh builder
                         for mesh in layerMeshes:
-                            if len(mesh.vertexArrays):
-                                node = scenegraph.VertexNode(mesh.vertexArrays)
-                                node.layerName = layer
-                                node.meshType = type(mesh)
-                                chunkNode.layers[layer] = node
-                                chunkNode.addChild(node)
+                            if mesh.sceneNode:
+                                mesh.sceneNode.layerName = layer
+                                mesh.sceneNode.meshType = type(mesh)
+                                chunkNode.layers[layer] = mesh.sceneNode
+                                chunkNode.addChild(mesh.sceneNode)
 
                         chunkInfo.renderedLayers.add(layer)
 

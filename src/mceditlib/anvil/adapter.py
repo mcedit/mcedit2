@@ -275,7 +275,7 @@ class AnvilChunkData(object):
             tag["Level"]["TileTicks"] = self.TileTicks
         elif "TileTicks" in tag["Level"]:
             del tag["Level"]["TileTicks"]
-            
+
         log.debug(u"Saved chunk {0}".format(self))
         return tag
 
