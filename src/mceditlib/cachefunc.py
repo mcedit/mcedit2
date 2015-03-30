@@ -121,6 +121,13 @@ class lru_cache_object(object):
             key += (self.kwd_mark,) + tuple(sorted(kwds.items()))
         del self.cache[key], self.refcount[key]
 
+        # Remove all occurences of key from queue
+        try:
+            while True:
+                self.queue.remove(key)
+        except ValueError:  # x not in deque
+            pass
+
     def store(self, result, *args, **kwds):
         key = args
         if kwds:
@@ -193,6 +200,7 @@ class lfu_cache_object(object):
                 for key, _ in nsmallest(self.maxsize // 10,
                                         self.use_count.iteritems(),
                                         key=itemgetter(1)):
+
                     if self.should_decache is None or self.should_decache(self.cache[key]) is True:
                         if self.will_decache is not None:
                             self.will_decache(self.cache[key])
