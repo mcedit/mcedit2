@@ -52,6 +52,7 @@ class WorldEditorChunk(object):
         self.Entities = [editor.adapter.EntityRef(tag, self) for tag in chunkData.Entities]
         self.TileEntities = [editor.adapter.TileEntityRef(tag, self) for tag in chunkData.TileEntities]
 
+
     def buildNBTTag(self):
         return self.chunkData.buildNBTTag()
 
@@ -134,6 +135,15 @@ class WorldEditorChunk(object):
         ref.chunk = None
         ref.rootTag = None
 
+    @property
+    def TileTicks(self):
+        """
+        Directly accesses the TAG_List of TAG_Compounds. Not protected by Refs like Entities and TileEntities are.
+
+        :return:
+        :rtype:
+        """
+        return self.chunkData.TileTicks
 
 class WorldEditor(object):
     def __init__(self, filename=None, create=False, readonly=False, adapterClass=None, adapter=None, resume=None):

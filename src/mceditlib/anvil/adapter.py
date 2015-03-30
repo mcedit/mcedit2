@@ -214,6 +214,9 @@ class AnvilChunkData(object):
 
         self.Entities = self.rootTag["Level"]["Entities"]
         self.TileEntities = self.rootTag["Level"]["TileEntities"]
+        self.TileTicks = self.rootTag["Level"].get("TileTicks")
+        if self.TileTicks is None:
+            self.TileTicks = nbt.TAG_List()
 
         # self.Entities = [PCEntityRef(tag) for tag in self.rootTag["Level"]["Entities"]]
         # del self.rootTag["Level"]["Entities"]
@@ -268,6 +271,11 @@ class AnvilChunkData(object):
 
         tag["Level"]["Sections"] = sections
 
+        if len(self.TileTicks):
+            tag["Level"]["TileTicks"] = self.TileTicks
+        elif "TileTicks" in tag["Level"]:
+            del tag["Level"]["TileTicks"]
+            
         log.debug(u"Saved chunk {0}".format(self))
         return tag
 
