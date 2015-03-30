@@ -13,4 +13,4 @@ class Layer:
     TileEntities = "TileEntities"
     TileTicks = "TileTicks"
     TerrainPopulated = "TerrainPopulated"
-    AllLayers = (Blocks, Entities, Monsters, Items, TileEntities, TileTicks)
+    AllLayers = (Blocks, Entities, Items, TileEntities, TileTicks)

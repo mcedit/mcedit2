@@ -6,6 +6,7 @@ import logging
 import sys
 import collections
 import numpy
+import itertools
 
 from mcedit2.rendering.layers import Layer
 from mcedit2.rendering import chunkupdate, scenegraph
@@ -74,8 +75,7 @@ class SceneUpdateTask(object):
         if chunkInfo is None:
             return True
 
-        #log.info("Wants chunk %s? %s", cPos, len(chunkNode.invalidLayers))
-        return len(chunkInfo.invalidLayers)
+        return chunkInfo.layersToRender
 
     def workOnChunk(self, chunk, visibleSections=None):
         work = 0
@@ -91,31 +91,47 @@ class SceneUpdateTask(object):
                 if (work % SceneUpdateTask.workFactor) == 0:
                     yield
 
-            chunkInfo.invalidLayers = set()
             meshesByRS = collections.defaultdict(list)
             for mesh in chunkUpdate.blockMeshes:
                 meshesByRS[mesh.renderstate].append(mesh)
 
+            # Create one ChunkNode for each renderstate group, if needed
             for renderstate in renderstates.allRenderstates:
                 groupNode = self.worldScene.getRenderstateGroup(renderstate)
+                if groupNode.containsChunkNode(cPos):
+                    chunkNode = groupNode.getChunkNode(cPos)
+                else:
+                    chunkNode = ChunkNode(cPos)
+                    groupNode.addChunkNode(chunkNode)
+
                 meshes = meshesByRS[renderstate]
                 if len(meshes):
-                    arrays = sum([mesh.vertexArrays for mesh in meshes], [])
-                    if len(arrays):
-                        chunkNode = ChunkNode(cPos)
-                        groupNode.addChunkNode(chunkNode)
-                        node = scenegraph.VertexNode(arrays)
-                        chunkNode.addChild(node)
-                    else:
-                        groupNode.discardChunkNode(*cPos)
+                    meshes = sorted(meshes, key=lambda m: m.layer)
 
-                        # Need a way to signal WorldScene that this chunk didn't need updating in this renderstate,
-                        # but it should keep the old vertex arrays for the state.
-                        # Alternately, signal WorldScene that the chunk did update for the renderstate and no
-                        # vertex arrays resulted. Return a mesh with zero length vertexArrays
-                        #else:
-                        #    groupNode.discardChunkNode(*cPos)
+                    for layer, layerMeshes in itertools.groupby(meshes, lambda m: m.layer):
+                        if layer not in self.worldScene.visibleLayers:
+                            continue
+                        layerMeshes = list(layerMeshes)
 
+                        # Check if the mesh was re-rendered and remove the old mesh
+                        meshTypes = set(type(m) for m in layerMeshes)
+                        for arrayNode in chunkNode.children:
+                            if arrayNode.meshType in meshTypes:
+                                chunkNode.removeChild(arrayNode)
+
+                        # Create one VertexNode for each visible layer in this chunk
+                        for mesh in layerMeshes:
+                            if len(mesh.vertexArrays):
+                                node = scenegraph.VertexNode(mesh.vertexArrays)
+                                node.layerName = layer
+                                node.meshType = type(mesh)
+                                chunkNode.layers[layer] = node
+                                chunkNode.addChild(node)
+
+                        chunkInfo.renderedLayers.add(layer)
+
+                if chunkNode.childCount() == 0:
+                    groupNode.discardChunkNode(*cPos)
 
         except Exception as e:
             logging.exception(u"Rendering chunk %s failed: %r", cPos, e)
@@ -165,16 +181,6 @@ class WorldScene(scenegraph.Node):
             self.renderstateNodes[rsClass].addChild(groupNode)
 
         return groupNode
-    #
-    # def toggleLayer(self, val, layer):
-    #     self.chunkGroupNode.toggleLayer(val, layer)
-    #
-    # drawEntities = layerProperty(Layer.Entities)
-    # drawTileEntities = layerProperty(Layer.TileEntities)
-    # drawTileTicks = layerProperty(Layer.TileTicks)
-    # drawMonsters = layerProperty(Layer.Monsters)
-    # drawItems = layerProperty(Layer.Items)
-    # drawTerrainPopulated = layerProperty(Layer.TerrainPopulated)
 
     def discardChunk(self, cx, cz):
         """
@@ -254,3 +260,15 @@ class WorldScene(scenegraph.Node):
             self.chunkRenderInfo[cPos] = chunkInfo
 
         return chunkInfo
+
+    def setLayerVisible(self, layerName, visible):
+        if visible:
+            self.visibleLayers.add(layerName)
+        else:
+            self.visibleLayers.discard(layerName)
+
+        for groupNode in self.groupNodes.itervalues():
+            groupNode.setLayerVisible(layerName, visible)
+
+    def setVisibleLayers(self, layerNames):
+        self.visibleLayers = set(layerNames)

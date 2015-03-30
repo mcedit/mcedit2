@@ -95,7 +95,7 @@ class ChunkUpdate(object):
     def __iter__(self):
 
         chunkInfo = self.chunkInfo
-        if 0 == len(chunkInfo.invalidLayers):
+        if 0 == chunkInfo.layersToRender:
             yield
             return
 
@@ -109,6 +109,7 @@ class ChunkUpdate(object):
                 yield
 
         self.blockMeshes.extend(highDetailBlocks)
+        chunkInfo.invalidLayers.clear()
 
         raise StopIteration
 
@@ -116,12 +117,12 @@ class ChunkUpdate(object):
     def buildChunkMeshes(self):
         """
         Rebuild the meshes which render the entire chunk from top to bottom
+
         :return:
         :rtype:
         """
         chunkInfo = self.chunkInfo
         blockMeshes = self.blockMeshes
-        existingBlockVertexNodes = sum([list(node.children) for node in chunkInfo.getChunkVertexNodes()], [])
 
         for cls in self.wholeChunkMeshClasses:
             if chunkInfo.detailLevel not in cls.detailLevels:
@@ -129,11 +130,7 @@ class ChunkUpdate(object):
                 continue
             if cls.layer not in chunkInfo.visibleLayers:
                 continue
-            if cls.layer not in chunkInfo.invalidLayers:
-                for vertexNode in existingBlockVertexNodes:
-                    if vertexNode.meshClass is cls:  # xxxxx
-                        blockMeshes.append(existingBlockVertexNodes[cls])
-
+            if cls.layer not in chunkInfo.invalidLayers and cls.layer in chunkInfo.renderedLayers:
                 continue
 
             chunkMesh = cls(self)

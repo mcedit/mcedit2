@@ -66,6 +66,9 @@ class Node(object):
         self.touchChildren()
         self._children[:] = []
 
+    def childCount(self):
+        return len(self._children)
+
     @property
     def children(self):
         return iter(self._children)

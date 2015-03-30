@@ -18,10 +18,12 @@ from mcedit2.rendering import worldscene, loadablechunks, sky, compass
 from mcedit2.rendering.chunknode import ChunkNode
 from mcedit2.rendering.frustum import Frustum
 from mcedit2.rendering.geometrycache import GeometryCache
+from mcedit2.rendering.layers import Layer
 from mcedit2.rendering.textureatlas import TextureAtlas
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 from mcedit2.rendering import scenegraph, rendergraph
 from mcedit2.util import profiler, raycast
+from mcedit2.util.settings import Settings
 from mcedit2.widgets.infopanel import InfoPanel
 from mceditlib import faces, exceptions
 from mceditlib.geometry import Vector, Ray
@@ -88,6 +90,10 @@ class WorldView(QGLWidget):
         QGLWidget.__init__(self, shareWidget=sharedGLWidget)
         self.setSizePolicy(QtGui.QSizePolicy.Policy.Expanding, QtGui.QSizePolicy.Policy.Expanding)
         self.setFocusPolicy(Qt.ClickFocus)
+
+        self.layerToggleGroup = LayerToggleGroup()
+        self.layerToggleGroup.layerToggled.connect(self.setLayerVisible)
+
         self.dimension = dimension
         self.worldScene = None
         self.loadableChunksNode = None
@@ -144,6 +150,7 @@ class WorldView(QGLWidget):
     def createSceneGraph(self):
         sceneGraph = scenegraph.Node()
         self.worldScene = self.createWorldScene()
+        self.worldScene.setVisibleLayers(self.layerToggleGroup.getVisibleLayers())
 
         clearNode = scenegraph.ClearNode()
         skyNode = sky.SkyNode()
@@ -562,7 +569,9 @@ class WorldView(QGLWidget):
         self.worldScene.invalidateChunk(cx, cz)
         self.resetLoadOrder()
 
-
+    def setLayerVisible(self, layerName, visible):
+        self.worldScene.setLayerVisible(layerName, visible)
+        self.resetLoadOrder()
 
 def iterateChunks(x, z, radius):
     """
@@ -708,3 +717,42 @@ class WorldCursorInfo(InfoPanel):
         except Exception as e:
             log.exception("Error describing block: %r", e)
             return "Error describing block: %r" % e
+
+LayerToggleOptions = Settings().getNamespace("layertoggleoptions")
+
+class LayerToggleGroup(QtCore.QObject):
+    def __init__(self, *args, **kwargs):
+        super(LayerToggleGroup, self).__init__(*args, **kwargs)
+        self.actions = {}
+        self.actionGroup = QtGui.QActionGroup(self)
+        self.actionGroup.setExclusive(False)
+        self.options = {}
+        for layer in Layer.AllLayers:
+            option = LayerToggleOptions.getOption("%s_visible" % layer, bool, True)
+            self.options[layer] = option
+
+            action = QtGui.QAction(layer, self)
+            action.setCheckable(True)
+            action.setChecked(option.value())
+            log.info("LAYER %s VISIBLE %s", layer, option.value())
+            action.layerName = layer
+            self.actions[layer] = action
+            self.actionGroup.addAction(action)
+
+        self.actionGroup.triggered.connect(self.actionTriggered)
+
+        self.menu = QtGui.QMenu()
+
+        for layer in Layer.AllLayers:
+            self.menu.addAction(self.actions[layer])
+
+    def actionTriggered(self, action):
+        checked = action.isChecked()
+        log.info("Set layer %s to %s", action.layerName, checked)
+        self.options[action.layerName].setValue(checked)
+        self.layerToggled.emit(action.layerName, checked)
+
+    layerToggled = QtCore.Signal(str, bool)
+
+    def getVisibleLayers(self):
+        return [layer for layer in self.actions if self.actions[layer].isChecked()]

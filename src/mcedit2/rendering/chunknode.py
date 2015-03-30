@@ -26,6 +26,8 @@ class ChunkRenderInfo(object):
         self.worldScene = worldScene
         self.detailLevel = worldScene.minlod
         self.invalidLayers = set(layers.Layer.AllLayers)
+        self.renderedLayers = set()
+
         self.chunkPosition = chunkPosition
         self.bufferSize = 0
         self.vertexNodes = []
@@ -40,8 +42,8 @@ class ChunkRenderInfo(object):
         return self.worldScene.visibleLayers #xxxx
 
     @property
-    def done(self):
-        return len(self.invalidLayers) == 0
+    def layersToRender(self):
+        return len(self.invalidLayers) + len(self.visibleLayers - self.renderedLayers)
 
 class ChunkNode(scenegraph.Node):
     RenderNodeClass = rendergraph.TranslateRenderNode
@@ -58,6 +60,7 @@ class ChunkNode(scenegraph.Node):
         self.chunkPosition = chunkPosition
         cx, cz = chunkPosition
         self.translateOffset = (cx << 4, 0, cz << 4)
+        self.layers = {}
 
 
 class ChunkGroupNode(NamedChildrenNode):
@@ -117,3 +120,10 @@ class ChunkGroupNode(NamedChildrenNode):
 
     def clear(self):
         super(ChunkGroupNode, self).clear()
+
+    def setLayerVisible(self, layerName, visible):
+        for area in self._children.itervalues():
+            for chunkNode in area._children.itervalues():
+                node = chunkNode.layers.get(layerName)
+                if node is not None:
+                    node.visible = visible

@@ -9,6 +9,7 @@ import numpy
 cimport numpy
 
 from mcedit2.rendering import renderstates
+from mcedit2.rendering.layers import Layer
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 cimport mcedit2.rendering.blockmodels as blockmodels
 
@@ -30,6 +31,7 @@ class BlockModelMesh(object):
         """
         self.sectionUpdate = sectionUpdate
         self.vertexArrays = []
+        self.layer = Layer.Blocks
 
     def createVertexArrays(self):
         DEF quadBytes = 32

@@ -159,6 +159,10 @@ class SlicedWorldScene(scenegraph.Node):
         for mesh in self.sliceScenes.values():
             mesh.invalidateChunk(*c)
 
+    def setVisibleLayers(self, layerNames):
+        for scene in self.sliceScenes.itervalues():
+            scene.setVisibleLayers(layerNames)
+
 
 class CutawayWorldView(WorldView):
     def __init__(self, *a, **kw):

@@ -8,17 +8,17 @@ import math
 from math import degrees, atan, tan, radians, cos, sin
 
 import numpy
-
 from PySide.QtCore import Qt
 from PySide import QtGui, QtCore
+
 from mcedit2.rendering.layers import Layer
 from mcedit2.util import profiler
-
 from mcedit2.widgets.layout import Column, Row
 from mcedit2.util.lazyprop import lazyprop
 from mcedit2.worldview.viewcontrols import ViewControls
-from mcedit2.worldview.worldview import WorldView, iterateChunks
+from mcedit2.worldview.worldview import WorldView, iterateChunks, LayerToggleGroup
 from mcedit2.worldview.viewaction import ViewAction
+
 
 log = logging.getLogger(__name__)
 
@@ -40,13 +40,7 @@ class CameraWorldViewFrame(QtGui.QWidget):
         perspectiveInput.toggled.connect(view.setPerspective)
 
         showButton = QtGui.QPushButton("Show...")
-        showMenu = QtGui.QMenu()
-        for layer in Layer.AllLayers:
-            showMenu.addAction(layer)
-
-        showButton.setMenu(showMenu)
-
-        view._showMenu = showMenu
+        showButton.setMenu(view.layerToggleGroup.menu)
 
         self.setLayout(Column(Row(None,
                                   showButton,
@@ -214,6 +208,7 @@ class CameraWorldView(WorldView):
         self.viewDistance = val
         self._chunkIter = None
         self.discardChunksOutsideViewDistance()
+        self.update()
 
     def centerOnPoint(self, pos, distance=20):
         awayVector = self.cameraVector * -distance
@@ -257,7 +252,7 @@ class CameraWorldView(WorldView):
         fovy = degrees(atan(w / h * tan(radians(self.fov) * 0.5)))
 
         projection = QtGui.QMatrix4x4()
-        projection.perspective(fovy, w / h, 0.05, self.viewDistance * 20)
+        projection.perspective(fovy, w / h, 0.05, max(256, self.viewDistance * 20))
         self.matrixNode.projection = projection
 
     @lazyprop
@@ -296,11 +291,8 @@ class CameraWorldView(WorldView):
         self.viewportMoved.emit(self)
 
     @profiler.function("discardChunks")
-    def discardChunksOutsideViewDistance(self, worldScene=None):
-        if worldScene is None:
-            worldScene = self.worldScene
-
-        positions = list(worldScene.chunkPositions())  # xxxx
+    def discardChunksOutsideViewDistance(self):
+        positions = list(self.worldScene.chunkPositions())  # xxxx
         if not len(positions):
             return
 
@@ -332,7 +324,7 @@ class CameraWorldView(WorldView):
         chunks = chunks[outsideCenter & outsideFocus]
 
         log.debug("Discarding %d chunks...", len(chunks))
-        worldScene.discardChunks(chunks)
+        self.worldScene.discardChunks(chunks)
 
     def recieveChunk(self, chunk):
         cx, cz = chunk.chunkPosition
@@ -342,7 +334,6 @@ class CameraWorldView(WorldView):
         if dx > self.viewDistance or dz > self.viewDistance:
             return iter([])
         return super(CameraWorldView, self).recieveChunk(chunk)
-
 
 class CameraPanMouseAction(ViewAction):
     button = Qt.RightButton
