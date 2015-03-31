@@ -295,7 +295,8 @@ class WorldEditor(object):
                 player.save()
 
         dirtyChunkCount = 0
-        for chunkData in self._chunkDataCache:
+        for cx, cz, dimName in self._chunkDataCache:
+            chunkData = self._chunkDataCache(cx, cz, dimName)
             if chunkData.dirty:
                 dirtyChunkCount += 1
                 self.adapter.writeChunk(chunkData)
@@ -350,7 +351,7 @@ class WorldEditor(object):
         for dimName in self.adapter.listDimensions():
             start = time.time()
             chunkPositions = set(self.adapter.chunkPositions(dimName))
-            chunkPositions.update((chunkData.cx, chunkData.cz) for chunkData in self._chunkDataCache if chunkData.dimName == dimName)
+            chunkPositions.update((cx, cz) for cx, cz, dimName in self._chunkDataCache if self._chunkDataCache(cx, cz).dimName == dimName)
             log.info("Dim %s: Found %d chunks in %0.2f seconds.",
                      dimName,
                      len(chunkPositions),
@@ -418,9 +419,10 @@ class WorldEditor(object):
     # --- Chunk dirty bit ---
 
     def listDirtyChunks(self):
-        for chunkData in self._chunkDataCache:
+        for cx, cz, dimName in self._chunkDataCache:
+            chunkData = self._chunkDataCache(cx, cz, dimName)
             if chunkData.dirty:
-                yield chunkData.cx, chunkData.cz
+                yield cx, cz, dimName
 
     def chunkBecameDirty(self, chunk):
         self.recentDirtyChunks[chunk.dimName].add((chunk.cx, chunk.cz))

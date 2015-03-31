@@ -144,7 +144,7 @@ class lru_cache_object(object):
         return key in self.cache
 
     def __iter__(self):
-        return self.cache.itervalues()
+        return iter(self.cache)
 
     should_decache = None
     will_decache = None
@@ -230,7 +230,7 @@ class lfu_cache_object(object):
         return key in self.cache
 
     def __iter__(self):
-        return self.cache.itervalues()
+        return iter(self.cache)
 
     should_decache = None
     will_decache = None
