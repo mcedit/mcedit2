@@ -119,6 +119,8 @@ class lru_cache_object(object):
         key = args
         if kwds:
             key += (self.kwd_mark,) + tuple(sorted(kwds.items()))
+        if key not in self.cache:
+            return
         del self.cache[key], self.refcount[key]
 
         # Remove all occurences of key from queue
@@ -217,6 +219,8 @@ class lfu_cache_object(object):
         key = args
         if kwds:
             key += (self.kwd_mark,) + tuple(sorted(kwds.items()))
+        if key not in self.cache:
+            return
         del self.cache[key], self.use_count[key]
 
     def __contains__(self, *args, **kwds):
