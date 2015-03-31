@@ -74,7 +74,6 @@ class LowDetailBlockMesh(ChunkMeshBase):
         blocksAbove = dim.getBlocks(x + (cx * 16), aboveY, z + (cz * 16)).Blocks
 
         flatcolors = dim.blocktypes.mapColor[topBlocks, topBlockData][:, numpy.newaxis, :]
-        # flatcolors[:,:,:3] *= (0.6 + (h * (0.4 / float(chunkHeight-1)))) [topBlocks != 0][:, numpy.newaxis, numpy.newaxis]
 
         yield
         vertexBuffer = VertexArrayBuffer(len(x), textures=False, lights=False)

@@ -106,8 +106,6 @@ class BlockTypeSet(object):
         self.brightness[:] = self.defaults['brightness']
         self.opacity = numpy.zeros(id_limit, dtype='uint8')
         self.opacity[:] = self.defaults['opacity']
-        self.mapColor = numpy.zeros((id_limit, 4), dtype='uint8')
-        self.mapColor[:] = self.defaultColor
         self.renderColor = numpy.zeros((id_limit, 16, 3), dtype='uint8')
         self.renderColor[:] = 0xFF
         self.mapColor = numpy.zeros((id_limit, 16, 3), dtype='uint8')

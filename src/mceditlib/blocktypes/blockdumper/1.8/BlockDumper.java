@@ -57,11 +57,11 @@ public class BlockDumper extends Block {
 		try {
 			// -- open streams --
 
-			FileOutputStream idMappingStream = new FileOutputStream(new File("idmapping.json"));
+			FileOutputStream idMappingStream = new FileOutputStream(new File("idmapping_raw.json"));
 			PrintWriter idMappingWriter = new PrintWriter(idMappingStream);
 			idMappingWriter.print("[\n");
 
-			FileOutputStream blockDumpStream = new FileOutputStream(new File("blockdump.json"));
+			FileOutputStream blockDumpStream = new FileOutputStream(new File("minecraft_raw.json"));
 			PrintWriter wri = new PrintWriter(blockDumpStream);
 			wri.format("[\n");
 
@@ -91,8 +91,6 @@ public class BlockDumper extends Block {
 					attrs.add(String.format("\"materialOpaque\": %s", m.isOpaque()));
 					attrs.add(String.format("\"materialReplacable\": %s", m.isReplaceable()));
 					attrs.add(String.format("\"materialSolid\": %s", m.isSolid()));
-					attrs.add(String.format("\"materialMapColor\": %s", m.getMaterialMapColor().colorValue));
-					attrs.add(String.format("\"materialMapColorIndex\": %s", m.getMaterialMapColor().colorIndex));
 
 					attrs.add(String.format("\"opaqueCube\": %s", b.isOpaqueCube()));
 					attrs.add(String.format("\"collidable\": %s", b.isCollidable()));
@@ -130,29 +128,33 @@ public class BlockDumper extends Block {
 					}
 
 					IBlockState defaultState = b.getDefaultState();
+					HashSet<String> seenStates = new HashSet<String>();
 					int defaultMeta = b.getMetaFromState(defaultState);
-					Set<String> metas = new HashSet<String>();
 					boolean hasItems = false;
 					for (int meta = 0; meta < 16; meta++) {
 						ArrayList<String> metaAttrs = (ArrayList<String>) attrs.clone();
 						try {
 							IBlockState bs = b.getStateFromMeta(meta);
 							String bsString = bs.toString();
-							if (metas.contains(bsString))
+							if(seenStates.contains(bsString)) {
 								continue;
+							}
+							seenStates.add(bsString);
 
-							metas.add(bsString);
 							idMapping.add(String.format("[%d, %d, \"%s\"]", id, meta, bsString));
 
 							if (meta == defaultMeta) {
 								metaAttrs.add("\"defaultState\": 1");
 							}
 
+							metaAttrs.add(String.format("\"materialMapColor\": %d", b.getMapColor(bs).colorValue));
 							metaAttrs.add(String.format("\"blockState\": \"%s\"", bs.toString()));
+							metaAttrs.add(String.format("\"renderType\": %d", b.getRenderType()));
 							ModelResourceLocation loc = (ModelResourceLocation) stateMap.get(bs);
 							if (loc != null) {
-								String resPath = loc.getResourcePath();
-								metaAttrs.add(String.format("\"resourcePath\": \"%s\"", resPath));
+								metaAttrs.add(String.format("\"resourcePath\": \"%s\"", loc.getResourcePath()));
+								metaAttrs.add(String.format("\"resourceVariant\": \"%s\"", loc.getResourceVariant()));
+
 							}
 
 							/*
