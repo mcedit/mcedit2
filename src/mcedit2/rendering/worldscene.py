@@ -202,9 +202,12 @@ class WorldScene(scenegraph.Node):
         """
         Mark the chunk for regenerating vertex data
         """
+        if invalidLayers is None:
+            invalidLayers = Layer.AllLayers
+
         node = self.chunkRenderInfo.get((cx, cz))
         if node:
-            node.invalidLayers = invalidLayers or Layer.AllLayers
+            node.invalidLayers.update(invalidLayers)
 
     _fastLeaves = False
 
