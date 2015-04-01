@@ -223,11 +223,16 @@ class WorldListWidget(QtGui.QDialog):
 
     def _updateVersionsAndResourcePacks(self):
         install = minecraftinstall.GetInstalls().getInstall(self.minecraftInstallBox.currentIndex())
+
+        self.minecraftVersionBox.clear()
         for version in sorted(install.versions, reverse=True):
             self.minecraftVersionBox.addItem(version)
+
+        self.resourcePackBox.clear()
         self.resourcePackBox.addItem(self.tr("(No resource pack)"))
         for resourcePack in sorted(install.resourcePacks):
             self.resourcePackBox.addItem(resourcePack)
+            
         self.saveFileDir = install.getSaveFileDir()
 
     def getSelectedIVP(self):
