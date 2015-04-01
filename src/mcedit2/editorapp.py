@@ -547,8 +547,26 @@ class MCEditApp(QtGui.QApplication):
 
     def loadFile(self, filename, readonly=False):
         self.hideWorldList()
+        fileLoadingDialog = QtGui.QProgressDialog(self.tr("Loading world..."),
+                                                  None,
+                                                  0,
+                                                  1,
+                                                  self.mainWindow)
+        fileLoadingDialog.setAutoReset(False)
+        fileLoadingDialog.setWindowModality(Qt.WindowModal)
+        fileLoadingDialog.setMinimumDuration(0)
+        fileLoadingDialog.setValue(0)
+        fileLoadingDialog.setWindowTitle(self.tr("Loading world..."))
+        self.processEvents()
+
+        def callback(current, max, status):
+            fileLoadingDialog.setValue(current)
+            fileLoadingDialog.setMaximum(max)
+            fileLoadingDialog.setLabelText(status)
+
+
         try:
-            session = EditorSession(filename, self.worldList.getSelectedIVP(), readonly=readonly)
+            session = EditorSession(filename, self.worldList.getSelectedIVP(), readonly=readonly, progressCallback=callback)
             self.undoGroup.addStack(session.undoStack)
 
             self.tabWidget.addTab(session.editorTab, session.tabCaption())
@@ -563,6 +581,7 @@ class MCEditApp(QtGui.QApplication):
             setWidgetError(errorTab, e)
             self.tabWidget.addTab(errorTab, "Failed to open %s" % filename)
 
+        fileLoadingDialog.reset()
         # XXX trigger viewportMoved to update minimap after GL initialization
         # session.editorTab.currentView().viewportMoved.emit(session.editorTab.currentView())
 

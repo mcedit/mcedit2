@@ -75,7 +75,19 @@ class PasteImportCommand(QtGui.QUndoCommand):
         self.editorSession.chooseTool("Move")
 
 class EditorSession(QtCore.QObject):
-    def __init__(self, filename, versionInfo, readonly=False):
+    def __init__(self, filename, versionInfo, readonly=False, progressCallback=None):
+        progressMax = 6  # fixme
+        if progressCallback is None:
+            def progress(status):
+                pass
+        else:
+
+            def progress(status):
+                progressCallback(progress.progressCount, progressMax, status)
+                progress.progressCount += 1
+
+            progress.progressCount = 0
+
         QtCore.QObject.__init__(self)
         self.undoStack = MCEUndoStack()
 
@@ -92,6 +104,7 @@ class EditorSession(QtCore.QObject):
 
         # --- Open world editor ---
         try:
+            progress("Creating WorldEditor...")
             self.worldEditor = WorldEditor(filename, readonly=readonly)
         except UndoFolderExists:
             msgBox = QtGui.QMessageBox()
@@ -119,6 +132,8 @@ class EditorSession(QtCore.QObject):
 
         self.loader.chunkCompleted.connect(self.chunkDidComplete)
         self.loader.allChunksDone.connect(self.updateView)
+
+        progress("Creating menus...")
 
         # --- Menus ---
 
@@ -229,6 +244,8 @@ class EditorSession(QtCore.QObject):
 
         # --- Resources ---
 
+        progress("Loading resources...")
+
         i, v, p = self.versionInfo
         self.resourceLoader = i.getResourceLoader(v, p)
         self.geometryCache = GeometryCache()
@@ -238,11 +255,14 @@ class EditorSession(QtCore.QObject):
         self.editorOverlay = scenegraph.Node()
 
         # --- Panels ---
+        progress("Loading panels...")
 
         self.playerPanel = PlayerPanel(self)
         self.panels = [self.playerPanel]
 
         # --- Tools ---
+
+        progress("Loading tools...")
 
         self.toolClasses = list(editortools.ToolClasses())
         self.toolActionGroup = QtGui.QActionGroup(self)
@@ -258,6 +278,8 @@ class EditorSession(QtCore.QObject):
         self.moveTool = self.getTool("Move")
 
         # --- Editor stuff ---
+        progress("Creating EditorTab...")
+
         self.editorTab = EditorTab(self)
         self.toolChanged.connect(self.toolDidChange)
 
@@ -273,9 +295,11 @@ class EditorSession(QtCore.QObject):
         self.inspectorDockWidget.hide()
         self.dockWidgets.append((Qt.RightDockWidgetArea, self.inspectorDockWidget))
 
-
         if len(self.toolActions):
             self.toolActions[0].trigger()  # Must be called after toolChanged is connected to editorTab
+
+        if hasattr(progress, 'progressCount') and progress.progressCount != progressMax:
+            log.info("Update progressMax to %d, please.", progress.progressCount)
 
     def dispose(self):
         if self.textureAtlas:
