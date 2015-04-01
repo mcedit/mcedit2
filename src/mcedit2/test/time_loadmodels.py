@@ -23,8 +23,8 @@ def main():
     dim = worldEditor.getDimension()
     positions = list(dim.chunkPositions())
 
-    minecraftinstall.listInstalls()
-    install = minecraftinstall.getDefaultInstall()
+    installs = minecraftinstall.GetInstalls()
+    install = installs.getDefaultInstall()
     loader = install.getResourceLoader(install.findVersion1_8(), None)
     def loadModels():
         o.models = BlockModels(worldEditor.blocktypes, loader)

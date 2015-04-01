@@ -17,12 +17,98 @@ from mceditlib import directories
 log = logging.getLogger(__name__)
 
 installationsOption = settings.Settings().getOption("minecraft_installs/installations")
+multiMCInstallsOption = settings.Settings().getOption("minecraft_installs/multimc_installs")
 currentInstallOption = settings.Settings().getOption("minecraft_installs/current_install", int)
+
+_installs = None
+
+
+def GetInstalls():
+    global _installs
+    if _installs is None:
+        _installs = MCInstallGroup()
+    return _installs
+
+
+class MCInstallGroup(object):
+    def __init__(self):
+        """
+        Represents all Minecraft installs known to MCEdit. Loads installs from settings and detects the current install
+        in ~/.minecraft or equivalent.
+
+        xxx also detects each MultiMC instance as a Minecraft install xxx
+
+        :return:
+        :rtype:
+        """
+        self._installations = list(self._loadInstalls())
+
+    def _loadInstalls(self):
+        for install in installationsOption.jsonValue([]):
+            name = install["name"]
+            path = install["path"]
+            try:
+                install = MCInstall(path, name)
+                install.checkUsable()
+                yield install
+            except MCInstallError as e:
+                log.warn("Not using install %s: %s", install.path, e)
+
+    def _saveInstalls(self):
+        installationsOption.setJsonValue([i.getJsonSettingValue() for i in self._installations])
+        log.warn("MCInstall settings: %s", installationsOption.jsonValue())
+
+    def getDefaultInstall(self):
+        """
+        Probes for a minecraft installation in the default install folder, and adds it to the group.
+
+        :return:
+        :rtype: MCInstall
+        """
+        minecraftDir = directories.minecraftDir
+        defaultInstall = MCInstall(minecraftDir, "(Default)")
+        try:
+            defaultInstall.checkUsable()
+        except MCInstallError as e:
+            log.warn("Default install not usable: %s", e)
+            return None
+        else:
+            value = defaultInstall.getJsonSettingValue()
+            if value not in installationsOption.jsonValue([]):
+                self._installations.append(defaultInstall)
+                self._saveInstalls()
+            return defaultInstall
+
+    def selectedInstallIndex(self):
+        return currentInstallOption.value(0)
+
+    @property
+    def installs(self):
+        return list(self._installations)
+
+    def getInstall(self, index):
+        return self._installations[index]
+
+    def ensureValidInstall(self):
+        """
+        Called on app startup. Display install config dialog if no installs were found
+
+        :return:
+        :rtype:
+        """
+        if not len(self._installations):
+            msgBox = QtGui.QMessageBox()
+            msgBox.setText("No usable Minecraft installs were found. MCEdit requires an installed Minecraft version to "
+                           "access block textures, models, and metadata. Minecraft 1.8 or greater is required.")
+            msgBox.exec_()
+            installsWidget = MinecraftInstallsDialog()
+            installsWidget.exec_()
 
 class MCInstall(object):
     def __init__(self, path, name="Unnamed"):
         self.name = name
         self.path = path
+        self.versionsDir = os.path.join(self.path, "versions")
 
     def checkUsable(self):
         """
@@ -41,10 +127,6 @@ class MCInstall(object):
         requiredVersions = [v for v in self.versions if v.startswith("1.8")]
         if not len(requiredVersions):
             raise MCInstallError("Minecraft version 1.8 and up is required. Use the Minecraft Launcher to download it.")
-
-    @property
-    def versionsDir(self):
-        return os.path.join(self.path, "versions")
 
     @property
     def versions(self):
@@ -147,76 +229,6 @@ class MCInstallError(ValueError):
     """
     Raised for invalid or unusable Minecraft installs.
     """
-
-def getDefaultInstall():
-    """
-
-    :return:
-    :rtype: MCInstall
-    """
-    minecraftDir = directories.minecraftDir
-    defaultInstall = MCInstall(minecraftDir, "(Default)")
-    try:
-        defaultInstall.checkUsable()
-    except MCInstallError as e:
-        log.warn("Default install not usable: %s", e)
-        return None
-    else:
-        value = defaultInstall.getJsonSettingValue()
-        if value not in installationsOption.jsonValue([]):
-            _installations.append(defaultInstall)
-            _saveInstalls()
-        return defaultInstall
-
-_installations = None
-
-def _saveInstalls():
-    installationsOption.setJsonValue([i.getJsonSettingValue() for i in _installations])
-    log.warn("MCInstall settings: %s", installationsOption.jsonValue())
-
-def _listInstalls():
-    for install in installationsOption.jsonValue([]):
-        name = install["name"]
-        path = install["path"]
-        try:
-            install = MCInstall(path, name)
-            install.checkUsable()
-            yield install
-        except MCInstallError as e:
-            log.warn("Not using install %s: %s", install.path, e)
-
-
-def listInstalls():
-    global _installations
-    if _installations is None:
-        _installations = list(_listInstalls())
-    getDefaultInstall()
-
-    return _installations
-
-def selectedInstallIndex():
-    return currentInstallOption.value(0)
-
-def getInstall(index):
-    return _installations[index]
-
-def ensureInstallation():
-    """
-    Called on app startup. Auto-detect install, display config dialog if no installs were found
-    :return:
-    :rtype:
-    """
-    listInstalls()
-
-    #raise MCInstallError("Displaying Minecraft Install dialog! xxx remove me")
-    if not len(_installations):
-        msgBox = QtGui.QMessageBox()
-        msgBox.setText("No usable Minecraft installs were found. MCEdit requires an installed Minecraft version to "
-                       "access block textures, models, and metadata. Minecraft 1.8 or greater is required.")
-        #msgBox.setInformativeText(e.message)
-        msgBox.exec_()
-        installsWidget = MinecraftInstallsDialog()
-        installsWidget.exec_()
 
 class NameItem(QtGui.QTableWidgetItem):
     def setData(self, data, role):

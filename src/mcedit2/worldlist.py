@@ -213,16 +213,16 @@ class WorldListWidget(QtGui.QDialog):
         self.loadTimer = LoaderTimer(interval=0, timeout=self.loadTimerFired)
         self.loadTimer.start()
 
-        for install in minecraftinstall.listInstalls():
+        for install in minecraftinstall.GetInstalls().installs:
             self.minecraftInstallBox.addItem(install.name)
-        self.minecraftInstallBox.setCurrentIndex(minecraftinstall.selectedInstallIndex())
+        self.minecraftInstallBox.setCurrentIndex(minecraftinstall.GetInstalls().selectedInstallIndex())
         self._updateVersionsAndResourcePacks()
 
         self.worldListModel = None
         self.reloadList()
 
     def _updateVersionsAndResourcePacks(self):
-        install = minecraftinstall.getInstall(self.minecraftInstallBox.currentIndex())
+        install = minecraftinstall.GetInstalls().getInstall(self.minecraftInstallBox.currentIndex())
         for version in sorted(install.versions, reverse=True):
             self.minecraftVersionBox.addItem(version)
         self.resourcePackBox.addItem(self.tr("(No resource pack)"))
@@ -232,7 +232,7 @@ class WorldListWidget(QtGui.QDialog):
 
     def getSelectedIVP(self):
         i = self.minecraftInstallBox.currentIndex()
-        install = minecraftinstall.getInstall(i)
+        install = minecraftinstall.GetInstalls().getInstall(i)
         v = self.minecraftVersionBox.currentText()
         if self.resourcePackBox.currentIndex() > 0:
             p = self.resourcePackBox.currentText()

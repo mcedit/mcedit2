@@ -72,7 +72,7 @@ class MCEditApp(QtGui.QApplication):
         self.DEBUG = DEBUG
         MCEditApp.app = self
 
-        minecraftinstall.ensureInstallation()
+        minecraftinstall.GetInstalls().ensureValidInstall()
         self.ensureSingle()
 
         self.commandLineWorlds = []
