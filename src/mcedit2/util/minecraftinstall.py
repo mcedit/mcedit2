@@ -16,8 +16,8 @@ from mceditlib import directories
 
 log = logging.getLogger(__name__)
 
-installationsOption = settings.Settings().getOption("minecraft_installs/installations")
-multiMCInstallsOption = settings.Settings().getOption("minecraft_installs/multimc_installs")
+installationsOption = settings.Settings().getOption("minecraft_installs/installations", "json", [])
+multiMCInstallsOption = settings.Settings().getOption("minecraft_installs/multimc_installs", "json", [])
 currentInstallOption = settings.Settings().getOption("minecraft_installs/current_install", int)
 
 _installs = None
@@ -42,9 +42,13 @@ class MCInstallGroup(object):
         :rtype:
         """
         self._installations = list(self._loadInstalls())
+        self._instances = list(self._loadMMCInstances())
+
+    def _loadMMCInstances(self):
+        return []
 
     def _loadInstalls(self):
-        for install in installationsOption.jsonValue([]):
+        for install in installationsOption.value():
             name = install["name"]
             path = install["path"]
             try:
@@ -55,8 +59,8 @@ class MCInstallGroup(object):
                 log.warn("Not using install %s: %s", install.path, e)
 
     def _saveInstalls(self):
-        installationsOption.setJsonValue([i.getJsonSettingValue() for i in self._installations])
-        log.warn("MCInstall settings: %s", installationsOption.jsonValue())
+        installationsOption.setValue([i.getJsonSettingValue() for i in self._installations])
+        log.info("MCInstall saved settings: %s", installationsOption.value())
 
     def getDefaultInstall(self):
         """
@@ -74,7 +78,7 @@ class MCInstallGroup(object):
             return None
         else:
             value = defaultInstall.getJsonSettingValue()
-            if value not in installationsOption.jsonValue([]):
+            if value not in installationsOption.value():
                 self._installations.append(defaultInstall)
                 self._saveInstalls()
             return defaultInstall
@@ -88,6 +92,14 @@ class MCInstallGroup(object):
 
     def getInstall(self, index):
         return self._installations[index]
+
+    def addInstall(self, install):
+        self._installations.append(install)
+        self._saveInstalls()
+
+    def removeInstall(self, index):
+        del self._installations[index]
+        self._saveInstalls()
 
     def ensureValidInstall(self):
         """
@@ -103,6 +115,7 @@ class MCInstallGroup(object):
             msgBox.exec_()
             installsWidget = MinecraftInstallsDialog()
             installsWidget.exec_()
+
 
 class MCInstall(object):
     def __init__(self, path, name="Unnamed"):
@@ -225,15 +238,18 @@ def usableVersion(version):
         return False
     return True
 
+
 class MCInstallError(ValueError):
     """
     Raised for invalid or unusable Minecraft installs.
     """
 
+
 class NameItem(QtGui.QTableWidgetItem):
     def setData(self, data, role):
         if role != Qt.EditRole or data != "(Default)":
             super(NameItem, self).setData(data, role)
+
 
 class PathItem(QtGui.QTableWidgetItem):
     def setData(self, data, role):
@@ -246,7 +262,7 @@ class MinecraftInstallsDialog(QtGui.QDialog):
         super(MinecraftInstallsDialog, self).__init__(*args, **kwargs)
         load_ui("minecraft_installs.ui", baseinstance=self)
         # populate list view
-        for row, install in enumerate(listInstalls()):
+        for row, install in enumerate(GetInstalls().installs):
             self._addInstall(install)
 
         self._hiliteRow(currentInstallOption.value(0))
@@ -260,7 +276,7 @@ class MinecraftInstallsDialog(QtGui.QDialog):
         self.okButton.clicked.connect(self.ok)
 
     def itemChanged(self, row, column):
-        install = _installations[row]
+        install = GetInstalls().installs[row]
         text = self.tableWidget.item(row, column).text()
         if column == 0:
             install.name = text
@@ -288,7 +304,6 @@ class MinecraftInstallsDialog(QtGui.QDialog):
         tableWidget.setItem(row, 2, pathItem)
         self._hiliteRow(row)
         currentInstallOption.setValue(row)
-        _saveInstalls()
 
     def _hiliteRow(self, hiliteRow):
         for row in range(self.tableWidget.rowCount()):
@@ -300,6 +315,7 @@ class MinecraftInstallsDialog(QtGui.QDialog):
 
     def add(self):
         folder = QtGui.QFileDialog.getExistingDirectory(self, "Choose a Minecraft installation folder (.minecraft)")
+        installs = GetInstalls()
         if not folder:
             return
         try:
@@ -309,14 +325,13 @@ class MinecraftInstallsDialog(QtGui.QDialog):
             message = "This minecraft install is unusable.\n(%s)" % e.message
             QtGui.QMessageBox.warning(self, "Minecraft Install Unusable", message)
         else:
-            _installations.append(install)
+            installs.addInstall(install)
             self._addInstall(install)
 
     def remove(self):
         row = self.tableWidget.currentRow()
-        del _installations[row]
+        GetInstalls().removeInstall(row)
         self.tableWidget.removeRow(row)
-        _saveInstalls()
 
     def select(self):
         row = self.tableWidget.currentRow()
@@ -327,7 +342,7 @@ class MinecraftInstallsDialog(QtGui.QDialog):
         self.close()
 
     def close(self):
-        if not len(_installations):
+        if not len(GetInstalls().installs):
             button = QtGui.QMessageBox.critical(self,
                                                 "Minecraft Install Needed",
                                                 "Cannot start MCEdit without at least one Minecraft installation version "
