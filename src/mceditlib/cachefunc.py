@@ -185,6 +185,8 @@ class lfu_cache_object(object):
         self.cache = {}                      # mapping of args to results
         self.use_count = Counter()           # times each key has been accessed
         self.kwd_mark = object()             # separate positional and keyword args
+        self.sentinel = object()             # marker for cache.get
+
         self.hits = self.misses = 0
         self.user_function = user_function
         self.maxsize = maxsize
@@ -196,11 +198,17 @@ class lfu_cache_object(object):
         self.use_count[key] += 1
 
         # get cache entry or compute if not found
-        try:
-            result = self.cache[key]
+        result = self.cache.get(key, self.sentinel)
+        if result is not self.sentinel:
             self.hits += 1
-        except KeyError:
-            result = self.user_function(*args, **kwds)
+        else:
+            try:
+                # exception thrown by user_function shouldn't leave cache and use_count inconsistent
+                result = self.user_function(*args, **kwds)
+            except:
+                self.use_count[key] -= 1
+                raise
+
             self.cache[key] = result
             self.misses += 1
 
