@@ -67,31 +67,42 @@ class lru_cache_object(object):
         self.refcount[key] += 1
 
         # get cache entry or compute if not found
-        try:
-            result = self.cache[key]
+
+        result = self.cache.get(key, self.sentinel)
+        if result is not self.sentinel:
             self.hits += 1
-        except KeyError:
-            result = self.user_function(*args, **kwds)
+        else:
+            try:
+                # exception thrown by user_function shouldn't leave cache, queue, and refcount inconsistent
+                result = self.user_function(*args, **kwds)
+            except:
+                self.queue.pop()
+                self.refcount[key] -= 1
+                raise
+
             self.cache[key] = result
             self.misses += 1
 
             # purge least recently used cache entry
             if len(self.cache) > self.maxsize:
-                stale_key = self.queue.popleft()
-                self.refcount[stale_key] -= 1
                 cannot_decache = []
                 while len(self.queue):
+                    # find a key with zero refcount
+                    stale_key = self.queue.popleft()
+                    self.refcount[stale_key] -= 1
                     while self.refcount[stale_key]:
                         stale_key = self.queue.popleft()
                         self.refcount[stale_key] -= 1
 
-                    if self.should_decache is None or self.should_decache(self.cache[stale_key]) is True:
+                    # attempt to evict the result from cache
+                    if self.should_decache is None or self.should_decache(self.cache[stale_key]):
+                        # allowed
                         if self.will_decache is not None:
                             self.will_decache(self.cache[stale_key])
-
                         del self.cache[stale_key], self.refcount[stale_key]
                         break
                     else:
+                        # denied
                         self.refcount[stale_key] += 1
                         cannot_decache.append(stale_key)
 
@@ -124,11 +135,7 @@ class lru_cache_object(object):
         del self.cache[key], self.refcount[key]
 
         # Remove all occurences of key from queue
-        try:
-            while True:
-                self.queue.remove(key)
-        except ValueError:  # x not in deque
-            pass
+        self.queue[:] = [s for s in self.queue if s != key]
 
     def store(self, result, *args, **kwds):
         key = args
