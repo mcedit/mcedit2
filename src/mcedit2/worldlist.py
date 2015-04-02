@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
+import zipfile
 from PySide.QtCore import Qt
 
 from arrow import arrow
@@ -175,16 +176,14 @@ class WorldListWidget(QtGui.QDialog):
     def __init__(self, parent=None, f=0):
         super(WorldListWidget, self).__init__(parent, f)
         self.setWindowTitle("World List")
+        load_ui('world_list.ui', baseinstance=self)
 
-        self.saveFileDir = None
         self.worldView = None
         self.chunkLoader = None
 
-        self.errorWidget = QtGui.QWidget()
-
-        load_ui('world_list.ui', baseinstance=self)
-
-        self.setLayout(Row(self))
+        self.errorWidget = None
+        self.blankWidget = QtGui.QWidget()
+        self.stackedWidget.addWidget(self.blankWidget)
 
         self.editButton.clicked.connect(self.editClicked)
         self.cancelButton.clicked.connect(self.reject)
@@ -213,13 +212,21 @@ class WorldListWidget(QtGui.QDialog):
         self.loadTimer = LoaderTimer(interval=0, timeout=self.loadTimerFired)
         self.loadTimer.start()
 
-        for install in minecraftinstall.GetInstalls().installs:
-            self.minecraftInstallBox.addItem(install.name)
-        self.minecraftInstallBox.setCurrentIndex(minecraftinstall.GetInstalls().selectedInstallIndex())
-        self._updateVersionsAndResourcePacks()
+        self._updateInstalls()
+
+        self.savesFolderComboBox.currentIndexChanged.connect(self.reloadList)
 
         self.worldListModel = None
         self.reloadList()
+        self.reloadRecentWorlds()
+
+    def _updateInstalls(self):
+        for install in minecraftinstall.GetInstalls().installs:
+            self.minecraftInstallBox.addItem(install.name)
+
+        self.minecraftInstallBox.setCurrentIndex(minecraftinstall.GetInstalls().selectedInstallIndex())
+
+        self._updateVersionsAndResourcePacks()
 
     def _updateVersionsAndResourcePacks(self):
         install = minecraftinstall.GetInstalls().getInstall(self.minecraftInstallBox.currentIndex())
@@ -232,8 +239,13 @@ class WorldListWidget(QtGui.QDialog):
         self.resourcePackBox.addItem(self.tr("(No resource pack)"))
         for resourcePack in sorted(install.resourcePacks):
             self.resourcePackBox.addItem(resourcePack)
-            
-        self.saveFileDir = install.getSaveFileDir()
+
+        self.saveDirs = install.getSaveDirs()
+        self.savesFolderComboBox.clear()
+        for filename in self.saveDirs:
+            self.savesFolderComboBox.addItem(os.path.basename(os.path.dirname(filename)), (filename, None))
+        for index, instance in enumerate(minecraftinstall.GetInstalls().instances):  # xxx instanceID?
+            self.savesFolderComboBox.addItem(instance.name, (instance.saveFileDir, index))
 
     def getSelectedIVP(self):
         i = self.minecraftInstallBox.currentIndex()
@@ -245,35 +257,54 @@ class WorldListWidget(QtGui.QDialog):
             p = None
         return install, v, p
 
+    def reloadRecentWorlds(self):
+        recentWorlds = RecentFilesSetting.value()
+        self.recentWorldsMenu = QtGui.QMenu()
+
+        def _triggered(f):
+            def triggered():
+                self.accept()
+                self.editWorldClicked.emit(f)
+            return triggered
+
+        for filename in recentWorlds:
+            try:
+                displayName, lastPlayed = getWorldInfo(filename)
+                action = self.recentWorldsMenu.addAction(displayName)
+                action._editWorld = _triggered(filename)
+                action.triggered.connect(action._editWorld)
+            except EnvironmentError as e:
+                log.exception("Failed to load world info")
+
+        self.recentWorldsButton.setMenu(self.recentWorldsMenu)
+
     def reloadList(self):
         try:
-            if not os.path.isdir(self.saveFileDir):
-                raise IOError(u"Could not find the Minecraft saves directory!\n\n({0} was not found or is not a directory)".format(self.saveFileDir))
+            itemData = self.savesFolderComboBox.itemData(self.savesFolderComboBox.currentIndex())
+            if itemData is None:
+                log.error("No item selected in savesFolderComboBox!!(?)")
+                return
+            saveFileDir, instanceIndex = itemData
+            if instanceIndex is not None:
+                # disable version selector, update resource packs(?)
+                pass
+            if not os.path.isdir(saveFileDir):
+                raise IOError(u"Could not find the Minecraft saves directory!\n\n({0} was not found or is not a directory)".format(saveFileDir))
 
-            log.info("Scanning %s for worlds...", self.saveFileDir)
-            potentialWorlds = os.listdir(self.saveFileDir)
-            potentialWorlds = [os.path.join(self.saveFileDir, p) for p in potentialWorlds]
+            log.info("Scanning %s for worlds...", saveFileDir)
+            potentialWorlds = os.listdir(saveFileDir)
+            potentialWorlds = [os.path.join(saveFileDir, p) for p in potentialWorlds]
             worldFiles = [p for p in potentialWorlds if isLevel(AnvilWorldAdapter, p)]
 
             self.worldListModel = WorldListModel(worldFiles)
             self.worldListView.setModel(self.worldListModel)
 
-            recentWorlds = RecentFilesSetting.value()
-            self.recentWorldsMenu = QtGui.QMenu()
 
-            def _triggered(f):
-                def triggered():
-                    self.editWorldClicked.emit(f)
-                    self.accept()
-                return triggered
 
-            for filename in recentWorlds:
-                displayName, lastPlayed = getWorldInfo(filename)
-                action = self.recentWorldsMenu.addAction(displayName)
-                action._editWorld = _triggered(filename)
-                action.triggered.connect(action._editWorld)
-
-            self.recentWorldsButton.setMenu(self.recentWorldsMenu)
+            if len(self.worldListModel.worlds):
+                self.worldListView.setFocus()
+                self.worldListView.setCurrentIndex(self.worldListModel.createIndex(0, 0))
+                self.showWorld(self.worldListModel.worlds[0][0])
 
         except EnvironmentError as e:
             setWidgetError(self, e)
@@ -282,29 +313,35 @@ class WorldListWidget(QtGui.QDialog):
         QtGui.qApp.chooseOpenWorld()
 
     _currentFilename = None
+
     def worldListItemClicked(self, index):
         filename = index.data()
         if filename != self._currentFilename:
             self._currentFilename = filename
             self.showWorld(filename)
 
+    def worldListItemDoubleClicked(self, index):
+        row = index.row()
+        self.accept()
+        self.editWorldClicked.emit(self.worldListModel.worlds[row][0])
+
     def showWorld(self, filename):
-        models = {}
+        self.removeWorldView()
+
         try:
             worldEditor = worldeditor.WorldEditor(filename, readonly=True)
-        except (EnvironmentError, LevelFormatError) as e:
-            setWidgetError(self.errorWidget, e)
-            while self.stackedWidget.count():
-                self.stackedWidget.removeWidget(self.stackedWidget.widget(0))
-
-            self.worldViewBox.addWidget(self.errorWidget)
-        else:
             i, v, p = self.getSelectedIVP()
-            blockModels = models.get(worldEditor.blocktypes)
             resLoader = i.getResourceLoader(v, p)
-            if blockModels is None:
-                models[worldEditor.blocktypes] = blockModels = BlockModels(worldEditor.blocktypes, resLoader)
+            blockModels = BlockModels(worldEditor.blocktypes, resLoader)
             textureAtlas = TextureAtlas(worldEditor, resLoader, blockModels)
+
+        except (EnvironmentError, LevelFormatError, zipfile.BadZipfile) as e:
+            self.errorWidget = QtGui.QWidget()
+            setWidgetError(self.errorWidget, e)
+            self.stackedWidget.addWidget(self.errorWidget)
+            self.stackedWidget.setCurrentWidget(self.errorWidget)
+
+        else:
 
             dim = worldEditor.getDimension()
             self.setWorldView(MinimapWorldView(dim, textureAtlas))
@@ -337,8 +374,11 @@ class WorldListWidget(QtGui.QDialog):
             self.removeWorldView()
         self.worldView = worldView
         self.stackedWidget.addWidget(worldView)
+        self.stackedWidget.setCurrentWidget(worldView)
 
     def removeWorldView(self):
+        self.stackedWidget.setCurrentWidget(self.blankWidget)
+        QtGui.qApp.processEvents()  # force repaint of stackedWidget to hide old error widget
         if self.worldView:
             log.info("Removing view from WorldListWidget")
             self.worldView.textureAtlas.dispose()
@@ -346,6 +386,9 @@ class WorldListWidget(QtGui.QDialog):
             self.stackedWidget.removeWidget(self.worldView)
             self.worldView.setParent(None)
             self.worldView = None
+        if self.errorWidget:
+            self.stackedWidget.removeWidget(self.errorWidget)
+            self.errorWidget = None
 
         self.chunkLoader = None
 
@@ -367,10 +410,7 @@ class WorldListWidget(QtGui.QDialog):
             self.worldListView.setCurrentIndex(self.worldListModel.createIndex(0, 0))
             self.showWorld(self.worldListModel.worlds[0][0])
 
-    def worldListItemDoubleClicked(self, index):
-        row = index.row()
-        self.editWorldClicked.emit(self.worldListModel.worlds[row][0])
-        self.accept()
+        self.reloadRecentWorlds()
 
     @profiler.function("worldListLoadTimer")
     def loadTimerFired(self):
