@@ -16,7 +16,11 @@ class ResourceLoader(object):
         self.zipFiles = []
 
     def addZipFile(self, zipPath):
-        self.zipFiles.append(zipfile.ZipFile(zipPath))
+        try:
+            zf = zipfile.ZipFile(zipPath)
+        except zipfile.BadZipfile as e:
+            raise IOError("Could not read %s as a zip file." % zipPath)
+        self.zipFiles.append(zf)
 
     def openStream(self, path):
         path = "assets/minecraft/%s" % path
