@@ -135,7 +135,7 @@ class lru_cache_object(object):
         del self.cache[key], self.refcount[key]
 
         # Remove all occurences of key from queue
-        self.queue[:] = [s for s in self.queue if s != key]
+        self.queue = collections.deque(s for s in self.queue if s != key)
 
     def store(self, result, *args, **kwds):
         key = args
