@@ -20,7 +20,7 @@ class FloodFillTool(EditorTool):
     iconName = "flood_fill"
 
     def mousePress(self, event):
-        command = FloodFillCommand(self.editorSession, event.blockPosition, self.blockTypeWidget.block)
+        command = FloodFillCommand(self.editorSession, event.blockPosition, self.blockTypeWidget.block, self.indiscriminateCheckBox.isChecked())
         self.editorSession.pushCommand(command)
 
     def __init__(self, editorSession, *args, **kwargs):
@@ -33,31 +33,38 @@ class FloodFillTool(EditorTool):
         self.blockTypeWidget.block = self.editorSession.worldEditor.blocktypes["stone"]
         self.blockTypeWidget.textureAtlas = self.editorSession.textureAtlas
 
+        self.indiscriminateCheckBox = QtGui.QCheckBox("Ignore block meta")
+        self.indiscriminateCheckBox.setChecked(False)
+
         toolWidget.setLayout(Column(Row(QtGui.QLabel("Block:"),
                                         self.blockTypeWidget),
+                                    self.indiscriminateCheckBox,
                                     None))
 
 
 
 class FloodFillCommand(SimplePerformCommand):
-    def __init__(self, editorSession, point, blockInfo):
+    def __init__(self, editorSession, point, blockInfo, indiscriminate):
         super(FloodFillCommand, self).__init__(editorSession)
         self.blockInfo = blockInfo
         self.point = point
-        self.indiscriminate = False  # xxx
+        self.indiscriminate = indiscriminate
 
     def perform(self):
-
         dim = self.editorSession.currentDimension
         point = self.point
 
         doomedBlock = dim.getBlockID(*point)
         doomedBlockData = dim.getBlockData(*point)
-        checkData = (doomedBlock not in (8, 9, 10, 11))
+        checkData = (doomedBlock not in (8, 9, 10, 11))  # always ignore data when replacing water/lava xxx forge fluids?
         indiscriminate = self.indiscriminate
 
+        log.info("Flood fill: replacing %s with %s", (doomedBlock, doomedBlockData), self.blockInfo)
+
         if doomedBlock == self.blockInfo.ID:
-            return
+            if indiscriminate or doomedBlockData == self.blockInfo.meta:
+                return
+
         if indiscriminate:
             checkData = False
             if doomedBlock == 2:  # grass
