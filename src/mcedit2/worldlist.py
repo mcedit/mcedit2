@@ -35,7 +35,7 @@ def lastPlayedTime(adapter):
         time = adapter.metadata.LastPlayed
         dt = arrow.Arrow.fromtimestamp(time / 1000.0)
         return dt
-    except AttributeError as e:
+    except (AttributeError, ValueError) as e:  # no lastplayed, or time is before 1970
         return None
 
 
