@@ -344,7 +344,7 @@ def copyToFolder(destFolder, sourceNode, presaveNode=None):
     if presaveNode:
         presaveFolder = presaveNode.worldFolder
     else:
-        presaveNode = None
+        presaveFolder = None
 
     sourceFolder = sourceNode.worldFolder
 
