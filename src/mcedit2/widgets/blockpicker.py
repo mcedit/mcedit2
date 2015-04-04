@@ -332,7 +332,6 @@ class BlockTypeListWidget(QtGui.QListView):
     def __init__(self, *args, **kwargs):
         super(BlockTypeListWidget, self).__init__(*args, **kwargs)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.multipleSelect = False
         self.setItemDelegate(BlockTypeListItemDelegate())
 
     blockSelectionChanged = QtCore.Signal(list, list)
@@ -405,8 +404,11 @@ class BlockTypePicker(QtGui.QDialog):
         return super(BlockTypePicker, self).exec_()
 
     def selectionDidChange(self, selectedBlocks, deselectedBlocks):
-        self.selectedTypesModel.addBlocks(selectedBlocks)
-        self.selectedTypesModel.removeBlocks(deselectedBlocks)
+        if self.multipleSelect:
+            self.selectedTypesModel.addBlocks(selectedBlocks)
+            self.selectedTypesModel.removeBlocks(deselectedBlocks)
+        else:
+            self.selectedTypesModel.setSelectedBlocks(selectedBlocks[:1])
         blocks = self.selectedTypesModel.selectedBlocks()
 
         self.selectedBlockTypesWidget.setBlocks(blocks)
@@ -433,7 +435,7 @@ class BlockTypePicker(QtGui.QDialog):
     def updatePicker(self):
         if self.textureAtlas is not None:
             log.info("Updating blocktype list widget (multiple=%s) for %s",
-                     self.listWidget.multipleSelect, self.blocktypes)
+                     self.multipleSelect, self.blocktypes)
 
             self.selectedBlockTypesWidget.setTextureAtlas(self.textureAtlas)
 
