@@ -76,7 +76,7 @@ class PasteImportCommand(QtGui.QUndoCommand):
 
 class EditorSession(QtCore.QObject):
     def __init__(self, filename, versionInfo, readonly=False, progressCallback=None):
-        progressMax = 6  # fixme
+        progressMax = 7  # fixme
         if progressCallback is None:
             def progress(status):
                 pass
@@ -127,11 +127,7 @@ class EditorSession(QtCore.QObject):
                 raise IOError("Uh-oh")
 
         self.worldEditor.requireRevisions()
-        self.currentDimension = self.worldEditor.getDimension()
-        self.loader = chunkloader.ChunkLoader(self.currentDimension)
-
-        self.loader.chunkCompleted.connect(self.chunkDidComplete)
-        self.loader.allChunksDone.connect(self.updateView)
+        self.currentDimension = None
 
         progress("Creating menus...")
 
@@ -276,6 +272,32 @@ class EditorSession(QtCore.QObject):
 
         self.selectionTool = self.getTool("Select")
         self.moveTool = self.getTool("Move")
+
+        # --- Dimensions ---
+
+        def _dimChanged(f):
+            def _changed():
+                self.gotoDimension(f)
+            return _changed
+
+
+        dimButton = self.changeDimensionButton = QtGui.QToolButton()
+        dimButton.setText(self.dimensionMenuLabel(""))
+        dimAction = self.changeDimensionAction = QtGui.QWidgetAction(self)
+        dimAction.setDefaultWidget(dimButton)
+        dimMenu = self.dimensionsMenu = QtGui.QMenu()
+
+        for dimName in self.worldEditor.listDimensions():
+            displayName = self.dimensionDisplayName(dimName)
+            action = dimMenu.addAction(displayName)
+            action._changed = _dimChanged(dimName)
+            action.triggered.connect(action._changed)
+
+        dimButton.setMenu(dimMenu)
+        dimButton.setPopupMode(dimButton.InstantPopup)
+
+        progress("Loading overworld dimension")
+        self.gotoDimension("")
 
         # --- Editor stuff ---
         progress("Creating EditorTab...")
@@ -427,6 +449,37 @@ class EditorSession(QtCore.QObject):
         command = SelectCommand(self, None)
         command.setText(self.tr("Deselect"))
         self.pushCommand(command)
+
+    # - Dimensions -
+
+    dimensionChanged = QtCore.Signal(object)
+
+
+    _dimDisplayNames = {"": "Overworld",
+                       "DIM-1": "Nether",
+                       "DIM1": "The End",
+                       }
+
+    def dimensionDisplayName(self, dimName):
+        return self._dimDisplayNames.get(dimName, dimName)
+
+    def dimensionMenuLabel(self, dimName):
+        return self.tr("Dimension: %s" % self.dimensionDisplayName(dimName))
+
+    def gotoDimension(self, dimName):
+        dim = self.worldEditor.getDimension(dimName)
+        if dim is self.currentDimension:
+            return
+        log.info("Going to dimension %s", dimName)
+        self.changeDimensionButton.setText(self.dimensionMenuLabel(dimName))
+        self.currentDimension = dim
+        self.loader = chunkloader.ChunkLoader(self.currentDimension)
+
+        self.loader.chunkCompleted.connect(self.chunkDidComplete)
+        self.loader.allChunksDone.connect(self.updateView)
+
+        self.dimensionChanged.emit(dim)
+
 
     # - Import/export -
 
@@ -671,11 +724,13 @@ class EditorTab(QtGui.QWidget):
         self.setContentsMargins(0, 0, 0, 0)
 
         self.editorSession = editorSession
+        self.editorSession.dimensionChanged.connect(self.dimensionDidChange)
         self.debugLastCenters = []
 
         self.viewButtonGroup = QtGui.QButtonGroup(self)
         self.viewButtonToolbar = QtGui.QToolBar()
         self.viewButtons = {}
+        self.viewFrames = []
         self.views = []
 
         for name, handler in (
@@ -698,7 +753,7 @@ class EditorTab(QtGui.QWidget):
         self.miniMapDockWidget.setWidget(self.miniMap)
         self.miniMapDockWidget.setFixedSize(256, 256)
 
-        self.views.append(self.miniMap)
+        self.viewFrames.append(self.miniMap)
 
         self.toolOptionsArea = QtGui.QScrollArea()
         self.toolOptionsArea.setWidgetResizable(True)
@@ -740,11 +795,16 @@ class EditorTab(QtGui.QWidget):
 
     def destroy(self):
         self.editorSession = None
-        for view in self.views:
+        for view in self.viewFrames:
             view.destroy()
 
         super(EditorTab, self).destroy()
     editorSession = weakrefprop()
+
+    def dimensionDidChange(self, dim):
+        for view in self.views:
+            view.setDimension(dim)
+            self.editorSession.loader.addClient(view)
 
     def toolDidChange(self, tool):
         if tool.toolWidget:
@@ -782,7 +842,8 @@ class EditorTab(QtGui.QWidget):
         self.miniMap.currentViewMatrixChanged(view)
 
     def _addView(self, frame):
-        self.views.append(frame)
+        self.viewFrames.append(frame)
+        self.views.append(frame.worldView)
         frame.stackIndex = self.viewStack.addWidget(frame)
         frame.worldView.viewportMoved.connect(self.viewOffsetChanged)
         frame.worldView.viewActions.extend([

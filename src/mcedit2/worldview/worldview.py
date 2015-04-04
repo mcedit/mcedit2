@@ -94,7 +94,7 @@ class WorldView(QGLWidget):
         self.layerToggleGroup = LayerToggleGroup()
         self.layerToggleGroup.layerToggled.connect(self.setLayerVisible)
 
-        self.dimension = dimension
+        self.dimension = None
         self.worldScene = None
         self.loadableChunksNode = None
 
@@ -120,18 +120,36 @@ class WorldView(QGLWidget):
             geometryCache = GeometryCache()
         self.geometryCache = geometryCache
 
-        self.matrixNode = scenegraph.MatrixNode()
-        self._updateMatrices()
+        self.matrixNode = None
+        self.overlayNode = None
 
-        self.overlayNode = scenegraph.Node()
-
-        self.sceneGraph = self.createSceneGraph()
-        self.renderGraph = rendergraph.createRenderNode(self.sceneGraph)
+        self.sceneGraph = None
+        self.renderGraph = None
 
         self.frameSamples = deque(maxlen=500)
         self.frameSamples.append(time.time())
 
         self.cursorNode = None
+
+        self.setDimension(dimension)
+
+    def setDimension(self, dimension):
+        """
+
+        :param dimension:
+        :type dimension: WorldEditorDimension
+        :return:
+        :rtype:
+        """
+        log.info("Changing %s to dimension %s", self, dimension)
+        self.dimension = dimension
+        self.makeCurrent()
+        if self.renderGraph:
+            self.renderGraph.destroy()
+        self.sceneGraph = self.createSceneGraph()
+        self.renderGraph = rendergraph.createRenderNode(self.sceneGraph)
+        self.resetLoadOrder()
+        self.update()
 
     def destroy(self):
         self.makeCurrent()
@@ -139,7 +157,11 @@ class WorldView(QGLWidget):
         super(WorldView, self).destroy()
 
     def __str__(self):
-        return "%s(%r)" % (self.__class__.__name__, displayName(self.dimension.worldEditor.filename))
+        if self.dimension:
+            dimName = displayName(self.dimension.worldEditor.filename) + ": " + self.dimension.dimName
+        else:
+            dimName = "None"
+        return "%s(%r)" % (self.__class__.__name__, dimName)
 
     def createCompass(self):
         return compass.CompassNode()
@@ -156,6 +178,11 @@ class WorldView(QGLWidget):
         skyNode = sky.SkyNode()
         self.loadableChunksNode = loadablechunks.LoadableChunksNode(self.dimension)
 
+        self.matrixNode = scenegraph.MatrixNode()
+        self._updateMatrices()
+
+        self.overlayNode = scenegraph.Node()
+
         self.matrixNode.addChild(self.loadableChunksNode)
         self.matrixNode.addChild(self.worldScene)
         self.matrixNode.addChild(self.overlayNode)
@@ -164,6 +191,8 @@ class WorldView(QGLWidget):
         sceneGraph.addChild(skyNode)
         sceneGraph.addChild(self.matrixNode)
         sceneGraph.addChild(self.compassOrthoNode)
+        if self.cursorNode:
+            self.matrixNode.addChild(self.cursorNode)
 
         return sceneGraph
 
