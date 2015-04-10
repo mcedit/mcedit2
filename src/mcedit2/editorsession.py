@@ -488,7 +488,7 @@ class EditorSession(QtCore.QObject):
     def import_(self):
         # prompt for a file to import
         startingDir = Settings().value("import_dialog/starting_dir", getUserSchematicsDirectory())
-        result = QtGui.QFileDialog.getOpenFileName(self.mainWindow, self.tr("Import"),
+        result = QtGui.QFileDialog.getOpenFileName(QtGui.qApp.mainWindow, self.tr("Import"),
                                                    startingDir,
                                                    "All files (*.*)")
         if result:
@@ -502,7 +502,7 @@ class EditorSession(QtCore.QObject):
         result = QtGui.QFileDialog.getSaveFileName(QtGui.qApp.mainWindow,
                                                    self.tr("Export Schematic"),
                                                    startingDir,
-                                                   "All files (*.*)")
+                                                   "Schematic files (*.schematic)")
 
         if result:
             filename = result[0]
