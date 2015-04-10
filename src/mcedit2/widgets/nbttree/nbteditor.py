@@ -52,7 +52,7 @@ class NBTEditorWidget(QtGui.QWidget):
 
         self.nbtTypesMenu.addAction(NBTIcon(7), self.tr("Byte Array"), self.addByteArray)
         self.nbtTypesMenu.addAction(NBTIcon(11), self.tr("Int Array"), self.addIntArray)
-        self.nbtTypesMenu.addAction(NBTIcon(12), self.tr("Short Array"), self.addShortArray)
+        # self.nbtTypesMenu.addAction(NBTIcon(12), self.tr("Short Array"), self.addShortArray)
 
 
     def setRootTag(self, rootTag, keepExpanded=False):
