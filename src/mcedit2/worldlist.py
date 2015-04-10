@@ -173,9 +173,10 @@ class WorldListModel(QtCore.QAbstractListModel):
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
 class WorldListWidget(QtGui.QDialog):
-    def __init__(self, parent=None, f=0):
-        super(WorldListWidget, self).__init__(parent, f)
+    def __init__(self, parent=None):
+        super(WorldListWidget, self).__init__(parent, f=Qt.Tool)
         self.setWindowTitle("World List")
+        self.setWindowModality(Qt.NonModal)
         load_ui('world_list.ui', baseinstance=self)
 
         self.worldView = None

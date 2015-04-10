@@ -640,10 +640,9 @@ class MCEditApp(QtGui.QApplication):
 
                 Settings().setValue("open_world_dialog/starting_dir", dirname)
                 self.loadFile(filename)
-                self.worldList.close()
 
     def showWorldList(self):
-        self.worldList.exec_()
+        self.worldList.show()
 
     def saveCurrentWorld(self):
         session = self.currentSession()
@@ -700,6 +699,7 @@ class MCEditApp(QtGui.QApplication):
         self.tabWidget.setCurrentIndex(0)
 
     def hideWorldList(self):
+        self.worldList.close()
         self.tabWidget.removeTab(self.tabWidget.indexOf(self.worldList))
 
 
