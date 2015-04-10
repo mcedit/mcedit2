@@ -42,6 +42,8 @@ class MCEditMainWindow(QtGui.QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MCEditMainWindow, self).__init__(*args, **kwargs)
         load_ui("main_window.ui", baseinstance=self)
+        from mcedit2 import __version__ as v
+        self.setWindowTitle(self.tr("MCEdit %(version)s") % {"version": v})
 
     def loadSettings(self):
         settings = Settings()
@@ -679,10 +681,11 @@ class MCEditApp(QtGui.QApplication):
     # --- Help Menu Actions ---
 
     def showAbout(self):
+        from mcedit2 import __version__ as v
         QtGui.QMessageBox.about(self.mainWindow,
-                                "MCEdit 2.0 tech demo",
-                                "MCEdit 2.0 tech demo\n\nCopyright 2014 "
-                                "David Rio Vierra. All rights reserved."
+                                "MCEdit %s" % v,
+                                "MCEdit %s\n\nCopyright 2014 "
+                                "David Rio Vierra. All rights reserved." % v
                                 )
 
     recentFileLimit = 15

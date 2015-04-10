@@ -76,6 +76,8 @@ class PasteImportCommand(QtGui.QUndoCommand):
 
 class EditorSession(QtCore.QObject):
     def __init__(self, filename, versionInfo, readonly=False, progressCallback=None):
+        from mcedit2 import __version__ as v
+
         progressMax = 7  # fixme
         if progressCallback is None:
             def progress(status):
@@ -109,7 +111,7 @@ class EditorSession(QtCore.QObject):
         except UndoFolderExists:
             msgBox = QtGui.QMessageBox()
             msgBox.setIcon(QtGui.QMessageBox.Warning)
-            msgBox.setWindowTitle(self.tr("MCEdit tech demo"))
+            msgBox.setWindowTitle(self.tr("MCEdit %(version)s") % {"version": v})
             msgBox.setText(self.tr("This world was not properly closed by MCEdit."))
             msgBox.setInformativeText(self.tr(
                 "MCEdit may have crashed. An undo history was found for this world. You may try to resume editing "
