@@ -13,6 +13,7 @@ from PySide import QtGui, QtCore
 
 from mcedit2.rendering.layers import Layer
 from mcedit2.util import profiler
+from mcedit2.util.settings import Settings
 from mcedit2.widgets.layout import Column, Row
 from mcedit2.util.lazyprop import lazyprop
 from mcedit2.worldview.viewcontrols import ViewControls
@@ -22,6 +23,9 @@ from mcedit2.worldview.viewaction import ViewAction
 
 log = logging.getLogger(__name__)
 
+settings = Settings()
+ViewDistanceSetting = settings.getOption("worldview/camera/view_distance", int, 32)
+PerspectiveSetting = settings.getOption("worldview/camera/perspective", bool, True)
 
 class CameraWorldViewFrame(QtGui.QWidget):
     def __init__(self, dimension, geometryCache, resourceLoader, shareGLWidget, *args, **kwargs):
@@ -31,13 +35,17 @@ class CameraWorldViewFrame(QtGui.QWidget):
 
         self.viewControls = ViewControls(view)
 
+        ViewDistanceSetting.connectAndCall(view.setViewDistance)
+
         viewDistanceInput = QtGui.QSpinBox(minimum=2, maximum=64, singleStep=2)
         viewDistanceInput.setValue(self.worldView.viewDistance)
-        viewDistanceInput.valueChanged.connect(view.setViewDistance)
+        viewDistanceInput.valueChanged.connect(ViewDistanceSetting.setValue)
+
+        PerspectiveSetting.connectAndCall(view.setPerspective)
 
         perspectiveInput = QtGui.QCheckBox("Perspective")
-        perspectiveInput.toggle()
-        perspectiveInput.toggled.connect(view.setPerspective)
+        perspectiveInput.setChecked(view.perspective)
+        perspectiveInput.toggled.connect(PerspectiveSetting.setValue)
 
         showButton = QtGui.QPushButton("Show...")
         showButton.setMenu(view.layerToggleGroup.menu)
