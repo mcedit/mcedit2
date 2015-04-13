@@ -58,6 +58,18 @@ class MCESettingsOption(QtCore.QObject):
     def setJsonValue(self, value):
         return self.settings.setJsonValue(self.key, value)
 
+    def connectAndCall(self, callback):
+        """
+        Connect `callback` to this option's `valueChanged` signal, then call it with the value of this option.
+
+        :param callback:
+        :type callback:
+        :return:
+        :rtype:
+        """
+        self.valueChanged.connect(callback)
+        callback(self.value())
+
 class MCESettingsNamespace(object):
     def __init__(self, rootSettings, prefix):
         self.rootSettings = rootSettings
