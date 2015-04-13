@@ -8,7 +8,7 @@ from PySide import QtGui, QtCore, QtNetwork
 from PySide.QtCore import Qt
 import gc
 import numpy
-from mcedit2.appsettings import RecentFilesSetting
+from mcedit2.appsettings import RecentFilesSetting, EnableLightingSetting
 from mcedit2.library import LibraryWidget
 
 from mcedit2.util import minecraftinstall
@@ -223,6 +223,16 @@ class MCEditApp(QtGui.QApplication):
         mainWindow.menuWindow.addAction(self.undoDockWidget.toggleViewAction())
         mainWindow.menuWindow.addAction(self.logViewDockWidget.toggleViewAction())
         mainWindow.menuWindow.addAction(self.libraryDockWidget.toggleViewAction())
+
+        # -- Options Menu --
+        mainWindow.actionEnable_Lighting_Updates.setChecked(EnableLightingSetting.value())
+        mainWindow.actionEnable_Lighting_Updates.toggled.connect(EnableLightingSetting.setValue)
+
+        EnableLightingSetting.valueChanged.connect(self.enableLightingChanged)
+        self.enableLightingChanged(EnableLightingSetting.value())
+
+        mainWindow.actionPreferences.triggered.connect(self.showPrefsDialog)
+
 
         # --- World List ---
 
@@ -702,4 +712,11 @@ class MCEditApp(QtGui.QApplication):
         self.worldList.close()
         self.tabWidget.removeTab(self.tabWidget.indexOf(self.worldList))
 
+    # --- Options ---
 
+    def enableLightingChanged(self, value):
+        from mceditlib import relight
+        relight.ENABLE_LIGHTING = value
+
+    def showPrefsDialog(self):
+        self.prefsDialog.exec_()

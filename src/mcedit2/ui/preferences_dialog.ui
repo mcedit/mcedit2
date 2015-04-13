@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>509</width>
+    <height>510</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Preferences</string>
+  </property>
+  <widget class="QPushButton" name="okButton">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>450</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>OK</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

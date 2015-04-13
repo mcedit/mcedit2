@@ -72,9 +72,20 @@
      <string>Window</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuOptions">
+    <property name="title">
+     <string>Options</string>
+    </property>
+    <addaction name="actionEnable_Lighting_Updates"/>
+    <addaction name="separator"/>
+    <addaction name="actionConfigure_Blocks_Items"/>
+    <addaction name="separator"/>
+    <addaction name="actionPreferences"/>
+   </widget>
    <addaction name="menuMCEdit"/>
    <addaction name="menuWindow"/>
    <addaction name="menuHelp"/>
+   <addaction name="menuOptions"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolsToolBar">
@@ -148,6 +159,30 @@
   <action name="actionClearRecent">
    <property name="text">
     <string>Clear</string>
+   </property>
+  </action>
+  <action name="actionEnable_Lighting_Updates">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Enable Lighting Updates</string>
+   </property>
+  </action>
+  <action name="actionPreferences">
+   <property name="text">
+    <string>Preferences...</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::PreferencesRole</enum>
+   </property>
+  </action>
+  <action name="actionConfigure_Blocks_Items">
+   <property name="text">
+    <string>Configure Blocks/Items...</string>
    </property>
   </action>
  </widget>
