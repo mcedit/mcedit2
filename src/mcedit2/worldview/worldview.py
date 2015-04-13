@@ -785,3 +785,7 @@ class LayerToggleGroup(QtCore.QObject):
 
     def getVisibleLayers(self):
         return [layer for layer in self.actions if self.actions[layer].isChecked()]
+
+    def setVisibleLayers(self, layers):
+        for layer in self.actions:
+            self.actions[layer].setChecked(layer in layers)
