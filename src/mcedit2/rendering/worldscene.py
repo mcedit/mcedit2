@@ -125,7 +125,6 @@ class SceneUpdateTask(object):
                             if mesh.sceneNode:
                                 mesh.sceneNode.layerName = layer
                                 mesh.sceneNode.meshType = type(mesh)
-                                chunkNode.layers[layer] = mesh.sceneNode
                                 chunkNode.addChild(mesh.sceneNode)
 
                         chunkInfo.renderedLayers.add(layer)

@@ -25,7 +25,6 @@ class ChunkNode(scenegraph.Node):
         self.chunkPosition = chunkPosition
         cx, cz = chunkPosition
         self.translateOffset = (cx << 4, 0, cz << 4)
-        self.layers = {}
 
 
 class ChunkGroupNode(NamedChildrenNode):
@@ -89,6 +88,6 @@ class ChunkGroupNode(NamedChildrenNode):
     def setLayerVisible(self, layerName, visible):
         for area in self._children.itervalues():
             for chunkNode in area._children.itervalues():
-                node = chunkNode.layers.get(layerName)
-                if node is not None:
-                    node.visible = visible
+                for node in chunkNode.children:
+                    if node.layerName == layerName:
+                        node.visible = visible

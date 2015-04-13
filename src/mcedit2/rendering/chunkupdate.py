@@ -58,7 +58,7 @@ class ChunkRenderInfo(object):
     @property
     def layersToRender(self):
         return len(self.invalidLayers) + len(self.visibleLayers - self.renderedLayers)
-    
+
 
 class ChunkUpdate(object):
     def __init__(self, updateTask, chunkInfo, chunk):
@@ -426,7 +426,6 @@ class SectionUpdate(object):
 
     @profiler.iterator("SectionUpdate")
     def __iter__(self):
-
         cx, cz = self.chunkUpdate.chunk.chunkPosition
 
         sectionBounds = SectionBox(cx, self.y, cz)
