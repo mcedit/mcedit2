@@ -3,47 +3,12 @@
 """
 from __future__ import absolute_import, division, print_function
 import logging
-from mcedit2.rendering import scenegraph, rendergraph, layers
+
+from mcedit2.rendering import scenegraph, rendergraph
 from mcedit2.rendering.scenegraph import NamedChildrenNode
 
+
 log = logging.getLogger(__name__)
-
-class ChunkRenderInfo(object):
-    maxlod = 2
-    minlod = 0
-
-    def __init__(self, worldScene, chunkPosition):
-        """
-
-        :param worldScene:
-        :type worldScene: mcedit2.rendering.worldscene.WorldScene
-        :param chunkPosition:
-        :type chunkPosition: (int, int)
-        :return:
-        :rtype:
-        """
-        super(ChunkRenderInfo, self).__init__()
-        self.worldScene = worldScene
-        self.detailLevel = worldScene.minlod
-        self.invalidLayers = set(layers.Layer.AllLayers)
-        self.renderedLayers = set()
-
-        self.chunkPosition = chunkPosition
-        self.bufferSize = 0
-        self.vertexNodes = []
-        cx, cz = chunkPosition
-        self.translateOffset = (cx << 4, 0, cz << 4)
-
-    def getChunkVertexNodes(self):
-        return iter(self.vertexNodes)
-
-    @property
-    def visibleLayers(self):
-        return self.worldScene.visibleLayers #xxxx
-
-    @property
-    def layersToRender(self):
-        return len(self.invalidLayers) + len(self.visibleLayers - self.renderedLayers)
 
 class ChunkNode(scenegraph.Node):
     RenderNodeClass = rendergraph.TranslateRenderNode

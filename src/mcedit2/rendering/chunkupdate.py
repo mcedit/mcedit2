@@ -22,11 +22,49 @@ from mceditlib.selection import BoundingBox, SectionBox
 log = logging.getLogger(__name__)
 
 
+class ChunkRenderInfo(object):
+    maxlod = 2
+    minlod = 0
+
+    def __init__(self, worldScene, chunkPosition):
+        """
+
+        :param worldScene:
+        :type worldScene: mcedit2.rendering.worldscene.WorldScene
+        :param chunkPosition:
+        :type chunkPosition: (int, int)
+        :return:
+        :rtype:
+        """
+        super(ChunkRenderInfo, self).__init__()
+        self.worldScene = worldScene
+        self.detailLevel = worldScene.minlod
+        self.invalidLayers = set(layers.Layer.AllLayers)
+        self.renderedLayers = set()
+
+        self.chunkPosition = chunkPosition
+        self.bufferSize = 0
+        self.vertexNodes = []
+        cx, cz = chunkPosition
+        self.translateOffset = (cx << 4, 0, cz << 4)
+
+    def getChunkVertexNodes(self):
+        return iter(self.vertexNodes)
+
+    @property
+    def visibleLayers(self):
+        return self.worldScene.visibleLayers #xxxx
+
+    @property
+    def layersToRender(self):
+        return len(self.invalidLayers) + len(self.visibleLayers - self.renderedLayers)
+    
+
 class ChunkUpdate(object):
     def __init__(self, updateTask, chunkInfo, chunk):
         """
         :type updateTask: mcedit2.rendering.worldscene.SceneUpdateTask
-        :type chunkInfo: mcedit2.rendering.chunknode.ChunkRenderInfo
+        :type chunkInfo: mcedit2.rendering.chunkupdate.ChunkRenderInfo
         :type chunk: AnvilChunk
         :rtype: ChunkUpdate
         """
@@ -401,4 +439,3 @@ class SectionUpdate(object):
             modelMesh.createVertexArrays()
         self.blockMeshes.append(modelMesh)
         yield
-
