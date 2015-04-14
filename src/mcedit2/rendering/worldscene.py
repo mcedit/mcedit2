@@ -82,9 +82,11 @@ class SceneUpdateTask(object):
         work = 0
         cPos = chunk.chunkPosition
 
+        log.debug("Working on chunk %s sections %s", cPos, visibleSections)
         chunkInfo = self.worldScene.getChunkRenderInfo(cPos)
 
-        chunkInfo.visibleSections = visibleSections
+        chunkInfo.visibleSections = visibleSections  # currently unused
+
         try:
             chunkUpdate = chunkupdate.ChunkUpdate(self, chunkInfo, chunk)
             for _ in chunkUpdate:
@@ -108,7 +110,7 @@ class SceneUpdateTask(object):
                 meshes = meshesByRS[renderstate]
                 if len(meshes):
                     meshes = sorted(meshes, key=lambda m: m.layer)
-
+                    log.debug("Updating chunk node for renderstate %s, mesh count %d", renderstate, len(meshes))
                     for layer, layerMeshes in itertools.groupby(meshes, lambda m: m.layer):
                         if layer not in self.worldScene.visibleLayers:
                             continue
@@ -116,7 +118,7 @@ class SceneUpdateTask(object):
 
                         # Check if the mesh was re-rendered and remove the old mesh
                         meshTypes = set(type(m) for m in layerMeshes)
-                        for arrayNode in chunkNode.children:
+                        for arrayNode in list(chunkNode.children):
                             if arrayNode.meshType in meshTypes:
                                 chunkNode.removeChild(arrayNode)
 
