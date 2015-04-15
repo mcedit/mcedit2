@@ -120,6 +120,17 @@ class WorldEditorChunk(object):
         self.chunkData.Entities.append(ref.rootTag)
         self.Entities.append(ref)
         ref.chunk = self
+        self.dirty = True
+
+    def removeEntity(self, ref):
+        self.chunkData.Entities.remove(ref.rootTag)
+        self.Entities.remove(ref)
+        ref.chunk = None
+        self.dirty = True
+
+    def removeEntities(self, entities):
+        for ref in entities:  # xxx O(n*m)
+            self.removeEntity(ref)
 
     def addTileEntity(self, ref):
         if ref.chunk is self:
@@ -127,6 +138,7 @@ class WorldEditorChunk(object):
         self.chunkData.TileEntities.append(ref.rootTag)
         self.TileEntities.append(ref)
         ref.chunk = self
+        self.dirty = True
 
     def removeTileEntity(self, ref):
         if ref.chunk is not self:
@@ -135,6 +147,7 @@ class WorldEditorChunk(object):
         self.TileEntities.remove(ref)
         ref.chunk = None
         ref.rootTag = None
+        self.dirty = True
 
     @property
     def TileTicks(self):
