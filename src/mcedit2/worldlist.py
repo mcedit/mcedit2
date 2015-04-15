@@ -267,8 +267,11 @@ class WorldListWidget(QtGui.QDialog):
                 self.accept()
                 self.editWorldClicked.emit(f)
             return triggered
-
+        dead = []
         for filename in recentWorlds:
+            if not os.path.exists(filename):
+                dead.append(filename)
+                continue
             try:
                 displayName, lastPlayed = getWorldInfo(filename)
                 action = self.recentWorldsMenu.addAction(displayName)
@@ -276,6 +279,11 @@ class WorldListWidget(QtGui.QDialog):
                 action.triggered.connect(action._editWorld)
             except EnvironmentError as e:
                 log.exception("Failed to load world info")
+
+        if len(dead):
+            for f in dead:
+                recentWorlds.remove(f)
+            RecentFilesSetting.setValue(recentWorlds)
 
         self.recentWorldsButton.setMenu(self.recentWorldsMenu)
 
