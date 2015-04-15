@@ -6,6 +6,7 @@ import weakref
 import itertools
 
 import numpy
+import re
 from mceditlib import cachefunc
 
 from mceditlib.block_copy import copyBlocksIter
@@ -522,6 +523,30 @@ class WorldEditor(object):
             dim = WorldEditorDimension(self, dimName)
             self.dimensions[dimName] = dim
         return dim
+
+    def dimNameFromNumber(self, dimNo):
+        """
+        Return the dimension name for the given number, as would be stored in the player's "dimension" tag.
+
+        Handles "DIM1" and "DIM-1" for vanilla dimensions. Most mods add more dimensions similar to "DIM-42", "DIM-100"
+        but some mods like Galacticraft use "DIM_SPACESTATION3" so make an educated guess about the dimension's name
+        ending with its number.
+
+        :param dimNo:
+        :type dimNo:
+        :return:
+        :rtype:
+        """
+        dimNoStr = str(dimNo)
+        for name in self.listDimensions():
+            if name.endswith(dimNoStr):
+                return name
+
+    def dimNumberFromName(self, dimName):
+        matches = re.findall(r'-[0-9]+', dimName)
+        if not len(matches):
+            raise ValueError("Could not parse a dimension number from %s", dimName)
+        return int(matches[-1])
 
 class WorldEditorDimension(object):
     def __init__(self, worldEditor, dimName):

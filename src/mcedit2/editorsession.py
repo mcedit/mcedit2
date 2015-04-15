@@ -575,8 +575,12 @@ class EditorSession(QtCore.QObject):
         try:
             player = self.worldEditor.getPlayer()
             center = Vector(*player.Position) + (0, 1.8, 0)
-            log.info("Setting view angle to single-player player's view.")
+            dimNo = player.Dimension
+            dimName = self.worldEditor.dimNameFromNumber(dimNo)
+            log.info("Setting view angle to single-player player's view in dimension %s.", dimName)
             rotation = player.Rotation
+            if dimName:
+                self.gotoDimension(dimName)
             try:
                 self.editorTab.currentView().yawPitch = rotation
             except AttributeError:

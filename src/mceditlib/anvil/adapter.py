@@ -937,7 +937,7 @@ class AnvilPlayerRef(object):
     Score = nbtattr.NBTAttr('Score', nbt.TAG_Int, 0)
     FallDistance = nbtattr.NBTAttr('FallDistance', nbt.TAG_Float, 0)
     OnGround = nbtattr.NBTAttr('OnGround', nbt.TAG_Byte, 0)
-    Dimension = nbtattr.NBTAttr('OnGround', nbt.TAG_Int, 0)
+    Dimension = nbtattr.NBTAttr('Dimension', nbt.TAG_Int, 0)
 
     Inventory = nbtattr.NBTListAttr('Inventory', nbt.TAG_Compound)
 
