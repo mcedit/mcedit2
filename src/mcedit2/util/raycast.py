@@ -24,9 +24,9 @@ class RayBoundsError(RayCastError):
     Raised when a ray exits or does not enter the level boundaries.
     """
 
-def rayCastInBounds(ray, dimension, maxDistance=100, hitAir=False):
+def rayCastInBounds(ray, dimension, maxDistance=100):
     try:
-        position, face = rayCast(ray, dimension, maxDistance, hitAir)
+        position, face = rayCast(ray, dimension, maxDistance)
     except RayBoundsError:
         ixs = rayIntersectsBox(dimension.bounds, ray)
         if ixs:
@@ -37,7 +37,7 @@ def rayCastInBounds(ray, dimension, maxDistance=100, hitAir=False):
     return position, face
 
 @profiler.function
-def rayCast(ray, dimension, maxDistance=100, hitAir=False):
+def rayCast(ray, dimension, maxDistance=100):
     """
     Borrowed from https://gamedev.stackexchange.com/questions/47362/cast-ray-to-select-block-in-voxel-game
 
@@ -48,6 +48,9 @@ def rayCast(ray, dimension, maxDistance=100, hitAir=False):
 
     Raises MaxDistanceError if the ray exceeded the max distance without hitting any blocks, or if the ray exits or
     doesn't enter the dimension's bounds.
+
+    Bypasses non-air blocks until the first air block is found, and only returns when a non-air block is found after
+    the first air block.
 
     :param ray:
     :type ray: Ray
@@ -74,6 +77,8 @@ def rayCast(ray, dimension, maxDistance=100, hitAir=False):
     currentCX, currentCY, currentCZ = point.intfloor()
     currentChunk = None
 
+    foundAir = False
+
     for pos, face in _cast(point, vector, maxDistance, 1):
         cx = pos[0] >> 4
         cz = pos[2] >> 4
@@ -83,7 +88,10 @@ def rayCast(ray, dimension, maxDistance=100, hitAir=False):
             if dimension.containsChunk(cx, cz):
                 currentChunk = dimension.getChunk(cx, cz)  # xxxx WorldEditor.recentlyLoadedChunks
         ID = dimension.getBlockID(*pos)
-        if ID or hitAir:
+
+        if ID == 0:
+            foundAir = True
+        if ID and foundAir:
             return Vector(*pos), faces.Face.fromVector(face)
 
     raise MaxDistanceError("Ray exceeded max distance.")
