@@ -7,6 +7,7 @@ import logging
 from OpenGL import GL
 
 from mcedit2.rendering import rendergraph
+from mcedit2.rendering.depths import DepthOffset
 
 log = logging.getLogger(__name__)
 
@@ -61,8 +62,10 @@ class RenderstateIceNode(_RenderstateAlphaBlendNode):
 
 class RenderstateEntityNode(rendergraph.RenderstateRenderNode):
     def enter(self):
-        GL.glPushAttrib(GL.GL_ENABLE_BIT)
-        GL.glDisable(GL.GL_DEPTH_TEST)
+        GL.glPushAttrib(GL.GL_ENABLE_BIT | GL.GL_POLYGON_BIT)
+        GL.glPolygonOffset(DepthOffset.Renderer-1, DepthOffset.Renderer-1)
+        GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
+        #GL.glDisable(GL.GL_DEPTH_TEST)
         # GL.glDisable(GL.GL_CULL_FACE)
         GL.glDisable(GL.GL_TEXTURE_2D)
         GL.glEnable(GL.GL_BLEND)
