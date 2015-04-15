@@ -294,7 +294,8 @@ class MCEditApp(QtGui.QApplication):
 
         if len(self.sessions) and self.args.eval:
             session = self.sessions[-1]
-            eval_globals = {"session": session}
+            eval_globals = {"session": session,
+                            "self": self}
             exec(self.args.eval, eval_globals)
 
     consoleWidget = None
