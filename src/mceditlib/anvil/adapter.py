@@ -496,6 +496,7 @@ class AnvilWorldAdapter(object):
                         'displayName': name,
                         'internalName': name,
                         'blockState': '',
+                        'unknown': True,
                     }
                     blocktypes.allBlocks.append(BlockType(ID, 0, blocktypes))
 

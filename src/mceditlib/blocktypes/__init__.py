@@ -98,6 +98,7 @@ class BlockTypeSet(object):
             'unlocalizedName': 'name.unknown',
             'opaqueCube': True,
             'renderType': 3,  # Model block - defaults to question mark box
+            'unknown': False,  # False for blocks loaded from builtin .json, True for FML IDs, False for blocks configured in editor
         }
 
         self.aka = defaultdict(lambda: "")

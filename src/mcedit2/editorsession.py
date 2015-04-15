@@ -712,6 +712,12 @@ class EditorSession(QtCore.QObject):
     def zoomToPoint(self, point):
         self.editorTab.currentView().centerOnPoint(point, 15)
 
+    # --- Blocktype handling ---
+
+    def unknownBlocks(self):
+        for blocktype in self.worldEditor.blocktypes:
+            if blocktype.unknown:
+                yield blocktype.internalName
 
 class EditorTab(QtGui.QWidget):
     """
