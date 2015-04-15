@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from PySide import QtGui, QtCore
 import logging
+from mcedit2.resourceloader import ResourceNotFound
 from mcedit2.util.load_ui import load_ui
 
 log = logging.getLogger(__name__)
@@ -56,21 +57,24 @@ def BlockTypePixmap(block, textureAtlas):
         log.debug("No texture for %s!", block.internalName + block.blockState)
         texname = "MCEDIT_UNKNOWN"
 
-    io = textureAtlas._openImageStream(texname)
-    data = io.read()
-    array = QtCore.QByteArray(data)
-    buf = QtCore.QBuffer(array)
-    reader = QtGui.QImageReader(buf)
-    image = reader.read()
-    pixmap = QtGui.QPixmap.fromImage(image)
+    try:
+        io = textureAtlas._openImageStream(texname)
+        data = io.read()
+        array = QtCore.QByteArray(data)
+        buf = QtCore.QBuffer(array)
+        reader = QtGui.QImageReader(buf)
+        image = reader.read()
+        pixmap = QtGui.QPixmap.fromImage(image)
 
-    w = pixmap.width()
-    h = pixmap.height()
-    s = min(w, h)
-    if w != h:
-        pixmap = pixmap.copy(0, 0, s, s)
+        w = pixmap.width()
+        h = pixmap.height()
+        s = min(w, h)
+        if w != h:
+            pixmap = pixmap.copy(0, 0, s, s)
 
-    if s != 32:
-        pixmap = pixmap.scaledToWidth(32)
+        if s != 32:
+            pixmap = pixmap.scaledToWidth(32)
 
-    return pixmap
+        return pixmap
+    except (ValueError, ResourceNotFound) as e:
+        log.warn("BlockTypePixmap: Failed to load texture %s: %r", texname, e)
