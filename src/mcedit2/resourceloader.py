@@ -33,3 +33,9 @@ class ResourceLoader(object):
             raise ResourceNotFound("Resource %s not found in search path" % path)
 
         return stream
+
+    def blockModelPaths(self):
+        for zf in self.zipFiles:
+            for name in zf.namelist():
+                if name.startswith("assets/minecraft/models/block"):
+                    yield name
