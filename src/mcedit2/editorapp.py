@@ -18,6 +18,7 @@ from mcedit2.util.load_ui import load_ui
 from mcedit2.util.objgraphwidget import ObjGraphWidget
 from mcedit2.util.resources import resourcePath
 from mcedit2.util.worldloader import LoaderTimer
+from mcedit2.widgets import prefsdialog, configureblocksdialog
 from mcedit2.widgets.blocktype_list import BlockListWidget
 from mcedit2.editorsession import EditorSession
 from mcedit2.widgets.layout import setWidgetError
@@ -104,6 +105,12 @@ class MCEditApp(QtGui.QApplication):
         self.tabWidget = self.mainWindow.tabWidget
         self.tabWidget.tabCloseRequested.connect(self.tabCloseRequested)
         self.tabWidget.currentChanged.connect(self.tabChanged)
+
+        # --- App Dialogs ---
+
+        self.prefsDialog = prefsdialog.PrefsDialog()
+        self.configureBlocksDialog = configureblocksdialog.ConfigureBlocksDialog()
+
 
         # --- Sessions ---
 
@@ -232,6 +239,7 @@ class MCEditApp(QtGui.QApplication):
         self.enableLightingChanged(EnableLightingSetting.value())
 
         mainWindow.actionPreferences.triggered.connect(self.showPrefsDialog)
+        mainWindow.actionConfigure_Blocks_Items.triggered.connect(self.showConfigureBlocksDialog)
 
 
         # --- World List ---
@@ -720,3 +728,6 @@ class MCEditApp(QtGui.QApplication):
 
     def showPrefsDialog(self):
         self.prefsDialog.exec_()
+
+    def showConfigureBlocksDialog(self):
+        self.configureBlocksDialog.exec_()

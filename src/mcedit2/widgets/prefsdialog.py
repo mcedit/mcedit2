@@ -1,5 +1,5 @@
 """
-    optionsdialog.py
+    prefsdialog.py
 """
 from __future__ import absolute_import, division, print_function
 import logging
