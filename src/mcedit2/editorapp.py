@@ -448,20 +448,24 @@ class MCEditApp(QtGui.QApplication):
                 session.editorTab.viewChanged.connect(self.viewInfo.setObject)
 
                 atlas = session.textureAtlas
-                atlas.load()
-                argbData = numpy.dstack((atlas.textureData[..., 3:], atlas.textureData[..., :3]))
-                argbData = argbData[::-1, :, ::-1]
-                buf = argbData.tostring()
-                textureAtlasImg = QtGui.QImage(buf,
-                                               atlas.width, atlas.height,
-                                               QtGui.QImage.Format_RGB32)
+                try:
+                    atlas.load()
+                except Exception as e:
+                    log.exception("Failed to finalize texture atlas.")
+                else:
+                    argbData = numpy.dstack((atlas.textureData[..., 3:], atlas.textureData[..., :3]))
+                    argbData = argbData[::-1, :, ::-1]
+                    buf = argbData.tostring()
+                    textureAtlasImg = QtGui.QImage(buf,
+                                                   atlas.width, atlas.height,
+                                                   QtGui.QImage.Format_RGB32)
 
-                textureAtlasImg.textureImageData = buf  # QImage does not retain backing data
+                    textureAtlasImg.textureImageData = buf  # QImage does not retain backing data
 
-                pixmap = QtGui.QPixmap.fromImage(textureAtlasImg)
-                pixmap = pixmap.scaled(atlas.width * 2, atlas.height * 2)
-                self.textureAtlasView.setPixmap(pixmap)
-                self.textureAtlasView.resize(atlas.width * 2, atlas.height * 2)
+                    pixmap = QtGui.QPixmap.fromImage(textureAtlasImg)
+                    pixmap = pixmap.scaled(atlas.width * 2, atlas.height * 2)
+                    self.textureAtlasView.setPixmap(pixmap)
+                    self.textureAtlasView.resize(atlas.width * 2, atlas.height * 2)
 
             for pos, dw in session.dockWidgets:
                 self.mainWindow.addDockWidget(pos, dw)
