@@ -47,7 +47,8 @@ class BlockModelMesh(object):
 
         atlas = self.sectionUpdate.chunkUpdate.updateTask.textureAtlas
         blockModels = atlas.blockModels
-        blockModels.cookQuads(atlas)
+        if not blockModels.cooked:
+            log.warn("createVertexArrays: Block models not cooked, aborting.")
 
         blocktypes = self.sectionUpdate.blocktypes
         areaBlocks = self.sectionUpdate.areaBlocks
