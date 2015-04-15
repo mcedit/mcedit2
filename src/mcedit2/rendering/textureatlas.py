@@ -111,6 +111,7 @@ class TextureAtlas(object):
                  len(self._rawTextures), util.displayName(self._filename), rawSize/1024)
 
 
+
     def load(self):
         if self._terrainTexture:
             return
@@ -133,12 +134,12 @@ class TextureAtlas(object):
         atlasHeight = 0
         self._rawTextures.sort(key=lambda (_, w, h, __): max(w, h), reverse=True)
 
-        for name, w, h, data in self._rawTextures:
+        for path, w, h, data in self._rawTextures:
             w += borderSize * 2
             h += borderSize * 2
             for slot in slots:
-                if slot.addTexture(name, w, h, data):
-                    log.debug("Slotting %s into an existing slot", name)
+                if slot.addTexture(path, w, h, data):
+                    log.debug("Slotting %s into an existing slot", path)
                     break
             else:
                 if atlasHeight < 24 * atlasWidth and atlasHeight + h < maxSize:
@@ -155,10 +156,10 @@ class TextureAtlas(object):
                     raise ValueError("Building texture atlas: Textures too large for maximum texture size. (Needed "
                                      "%s, only got %s", (atlasWidth, atlasHeight), (maxSize, maxSize))
 
-                if not slots[-1].addTexture(name, w, h, data):
+                if not slots[-1].addTexture(path, w, h, data):
                     raise ValueError("Building texture atlas: Internal error.")
 
-                log.debug("Slotting %s into a newly created slot", name)
+                log.debug("Slotting %s into a newly created slot", path)
 
         self.textureData = texData = numpy.zeros((atlasHeight, atlasWidth, 4), dtype='uint8')
         self.textureData[:] = [0xff, 0x0, 0xff, 0xff]
@@ -210,7 +211,7 @@ class TextureAtlas(object):
         if name == "MCEDIT_UNKNOWN":
             block_unknown = resourcePath("mcedit2/assets/mcedit2/block_unknown.png")
             return file(block_unknown, "rb")
-        return self._resourceLoader.openStream("assets/minecraft/textures/" + name + ".png")
+        return self._resourceLoader.openStream(name)
 
     def bindTerrain(self):
         self.load()

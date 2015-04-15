@@ -14,7 +14,7 @@ cdef class BlockModels:
     cdef object modelBlockJsons
     cdef object modelStateJsons
     cdef object modelQuads
-    cdef object _textureNames
+    cdef object _texturePaths
     cdef public object firstTextures
     cdef object cookedModels
     cdef ModelQuadList cookedModelsByID[4096][16]

@@ -118,7 +118,7 @@ cdef class BlockModels(object):
         self.modelBlockJsons = {}
         self.modelStateJsons = {}
         self.modelQuads = {}
-        self._textureNames = set()
+        self._texturePaths = set()
         self.firstTextures = {}  # first texture found for each block - used for icons (xxx)
         self.cookedModels = {}  # nameAndState -> list[(xyzuvstc, cullface)]
         #self.cookedModelsByID = numpy.zeros((256*16, 16), dtype=list)  # (id, meta) -> list[(xyzuvstc, cullface)]
@@ -334,8 +334,10 @@ cdef class BlockModels(object):
             else:
                 raise ValueError("Texture variable loop detected!")
 
+            if texture != u"MCEDIT_UNKNOWN":
+                texture = "assets/minecraft/textures/" + texture + ".png"
             self.firstTextures.setdefault(nameAndState, texture)
-            self._textureNames.add(texture)
+            self._texturePaths.add(texture)
 
             quads.append(FaceInfo(x1, y1, z1, x2, y2, z2, face,
                     texture, u1, v1, u2, v2, cullface,
@@ -345,7 +347,9 @@ cdef class BlockModels(object):
         return quads
 
     def getTextureNames(self):
-        return itertools.chain(iter(self._textureNames), ['blocks/water_still', 'blocks/lava_still'])
+        return itertools.chain(iter(self._texturePaths),
+                               ['assets/minecraft/textures/blocks/water_still.png',
+                                'assets/minecraft/textures/blocks/lava_still.png'])
 
     def cookQuads(self, textureAtlas):
         if self.cooked:

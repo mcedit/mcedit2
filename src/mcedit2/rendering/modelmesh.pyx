@@ -62,13 +62,13 @@ class BlockModelMesh(object):
         cdef unsigned short waterFlowID = blocktypes["minecraft:flowing_water"].ID
         cdef unsigned short lavaID = blocktypes["minecraft:lava"].ID
         cdef unsigned short lavaFlowID = blocktypes["minecraft:flowing_lava"].ID
-        waterTexTuple = self.sectionUpdate.chunkUpdate.textureAtlas.texCoordsByName["blocks/water_still"]
+        waterTexTuple = self.sectionUpdate.chunkUpdate.textureAtlas.texCoordsByName["assets/minecraft/textures/blocks/water_still.png"]
         cdef float[4] waterTex
         waterTex[0] = waterTexTuple[0]
         waterTex[1] = waterTexTuple[1]
         waterTex[2] = waterTexTuple[2]
         waterTex[3] = waterTexTuple[3]
-        lavaTexTuple = self.sectionUpdate.chunkUpdate.textureAtlas.texCoordsByName["blocks/lava_still"]
+        lavaTexTuple = self.sectionUpdate.chunkUpdate.textureAtlas.texCoordsByName["assets/minecraft/textures/blocks/lava_still.png"]
         cdef float[4] lavaTex
         lavaTex[0] = lavaTexTuple[0]
         lavaTex[1] = lavaTexTuple[1]
