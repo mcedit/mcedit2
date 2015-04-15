@@ -155,7 +155,8 @@ cdef class BlockModels(object):
             try:
                 statesJson = self._getBlockState(resourcePath)
             except ResourceNotFound as e:
-                log.warn("Could not get blockstates resource for %s, skipping... (%r)", block, e)
+                if block.internalName.startswith("minecraft:"):
+                    log.warn("Could not get blockstates resource for %s, skipping... (%r)", block, e)
                 continue
             variants = statesJson['variants']
             # variants is a dict with each key a resourceVariant value (from the block's ModelResourceLocation)
