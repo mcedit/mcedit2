@@ -210,7 +210,7 @@ class TextureAtlas(object):
         if name == "MCEDIT_UNKNOWN":
             block_unknown = resourcePath("mcedit2/assets/mcedit2/block_unknown.png")
             return file(block_unknown, "rb")
-        return self._resourceLoader.openStream("textures/" + name + ".png")
+        return self._resourceLoader.openStream("assets/minecraft/textures/" + name + ".png")
 
     def bindTerrain(self):
         self.load()

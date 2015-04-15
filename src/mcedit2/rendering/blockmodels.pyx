@@ -83,7 +83,7 @@ cdef class BlockModels(object):
             }
         model = self.modelBlockJsons.get(modelName)
         if model is None:
-            model = json.load(self.resourceLoader.openStream("models/%s.json" % modelName))
+            model = json.load(self.resourceLoader.openStream("assets/minecraft/models/%s.json" % modelName))
             self.modelBlockJsons[modelName] = model
         return model
 
@@ -98,7 +98,7 @@ cdef class BlockModels(object):
             }
         state = self.modelStateJsons.get(stateName)
         if state is None:
-            state = json.load(self.resourceLoader.openStream("blockstates/%s.json" % stateName))
+            state = json.load(self.resourceLoader.openStream("assets/minecraft/blockstates/%s.json" % stateName))
             self.modelStateJsons[stateName] = state
         return state
 

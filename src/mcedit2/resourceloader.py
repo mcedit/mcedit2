@@ -23,8 +23,6 @@ class ResourceLoader(object):
         self.zipFiles.append(zf)
 
     def openStream(self, path):
-        path = "assets/minecraft/%s" % path
-
         for zipFile in self.zipFiles:
             try:
                 stream = zipFile.open(path)
