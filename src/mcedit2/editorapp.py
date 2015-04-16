@@ -106,11 +106,6 @@ class MCEditApp(QtGui.QApplication):
         self.tabWidget.tabCloseRequested.connect(self.tabCloseRequested)
         self.tabWidget.currentChanged.connect(self.tabChanged)
 
-        # --- App Dialogs ---
-
-        self.prefsDialog = prefsdialog.PrefsDialog(mainWindow)
-        self.configureBlocksDialog = configureblocksdialog.ConfigureBlocksDialog(mainWindow)
-
         # --- Sessions ---
 
         self._currentSession = None
@@ -268,6 +263,23 @@ class MCEditApp(QtGui.QApplication):
 
         mainWindow.loadSettings()
         self.updateRecentFilesMenu()
+
+        # --- App Dialogs ---
+
+        self.prefsDialog = prefsdialog.PrefsDialog(None)
+        self.configureBlocksDialog = configureblocksdialog.ConfigureBlocksDialog(None)
+        self.configureBlocksDialog.finished.connect(self.configureBlocksFinished)
+
+        # Qt weirdness - initializing QDialog with parent puts the dialog at 0,0 instead of
+        # centering it on the parent. Have to set the parent explicitly and put the Qt.Dialog flag back on
+        # since changing the parent resets the window flags...
+        self.prefsDialog.setParent(mainWindow)
+        self.prefsDialog.setWindowFlags(Qt.Dialog)
+
+        self.configureBlocksDialog.setParent(mainWindow)
+        self.configureBlocksDialog.setWindowFlags(Qt.Dialog)
+
+        # --- Loader timer ---
 
         self.loadTimer = timer = LoaderTimer(self)
         timer.setInterval(0)
