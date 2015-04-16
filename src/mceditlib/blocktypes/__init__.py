@@ -211,7 +211,7 @@ class BlockTypeSet(object):
                 ID, meta = nameAndState
 
         elif isinstance(nameAndState, basestring):
-            if not nameAndState.startswith(self.namePrefix):
+            if ":" not in nameAndState:
                 nameAndState = self.namePrefix + nameAndState
             if nameAndState not in self.IDsByState:
                 if nameAndState in self.defaultBlockstates:
