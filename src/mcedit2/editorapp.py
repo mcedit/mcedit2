@@ -573,6 +573,20 @@ class MCEditApp(QtGui.QApplication):
         tab = self.currentTab()
         return getattr(tab, 'editorSession', None)
 
+    def getResourceLoaderForFilename(self, filename):
+        # Is this world inside a MultiMC instance?
+        filename = os.path.normpath(filename)
+        installs = minecraftinstall.GetInstalls()
+        for instance in installs.instances:
+            savesFolder = os.path.normpath(instance.saveFileDir)
+            if filename.startswith(savesFolder):
+                return instance.getResourceLoader()
+
+        # Nope. Use the version and respack chosen in the world list.
+        # ... should search for installs matching this one, but vanilla installs are still multi-version...
+        i, v, p = self.worldList.getSelectedIVP()
+        return i.getResourceLoader(v, p)
+
     def loadFile(self, filename, readonly=False):
         self.hideWorldList()
         fileLoadingDialog = QtGui.QProgressDialog(self.tr("Loading world..."),
@@ -594,7 +608,8 @@ class MCEditApp(QtGui.QApplication):
 
 
         try:
-            session = EditorSession(filename, self.worldList.getSelectedIVP(), readonly=readonly, progressCallback=callback)
+            resourceLoader = self.getResourceLoaderForFilename(filename)
+            session = EditorSession(filename, resourceLoader, readonly=readonly, progressCallback=callback)
             self.undoGroup.addStack(session.undoStack)
 
             self.tabWidget.addTab(session.editorTab, session.tabCaption())

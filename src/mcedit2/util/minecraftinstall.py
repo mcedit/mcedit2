@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function
 import hashlib
 import re
+import zipfile
 from PySide import QtGui, QtCore
 import logging
 import os
@@ -30,6 +31,11 @@ def GetInstalls():
         _installs = MCInstallGroup()
     return _installs
 
+def md5hash(filename):
+    md5 = hashlib.md5()
+    with file(filename, "rb") as f:
+        md5.update(f.read())
+        return md5.hexdigest()
 
 class MCInstallGroup(object):
     def __init__(self):
@@ -50,7 +56,7 @@ class MCInstallGroup(object):
         for install in multiMCInstallsOption.value():
             configFile = install["configFile"]
             try:
-                install = MultiMCInstall(configFile)
+                install = MultiMCInstall(self, configFile)
                 yield install
             except MultiMCInstallError as e:
                 log.warn("Not using MultiMC with config file %s: %s", configFile, e)
@@ -60,7 +66,7 @@ class MCInstallGroup(object):
             name = install["name"]
             path = install["path"]
             try:
-                install = MCInstall(path, name)
+                install = MCInstall(self, path, name)
                 install.checkUsable()
                 yield install
             except MCInstallError as e:
@@ -125,10 +131,15 @@ class MCInstallGroup(object):
         :return:
         :rtype:
         """
-        if not len(self._installations):
+        requiredVersion = self.findVersion1_8()
+        if not requiredVersion or not len(self._installations):
             msgBox = QtGui.QMessageBox()
-            msgBox.setText("No usable Minecraft installs were found. MCEdit requires an installed Minecraft version to "
-                           "access block textures, models, and metadata. Minecraft 1.8 or greater is required.")
+            if not requiredVersion:
+                msgBox.setText("No usable Minecraft installs were found.")
+            else:
+                msgBox.setText("MCEdit requires an installed Minecraft version 1.8 or greater to "
+                               "access block textures, models, and metadata.")
+
             msgBox.exec_()
             installsWidget = MinecraftInstallsDialog()
             installsWidget.exec_()
@@ -143,8 +154,40 @@ class MCInstallGroup(object):
             for instance in mmcInstall.instances:
                 yield instance
 
+
+    def findVersion1_8(self):
+        def matchVersion(version):
+            major, minor, rev = splitVersion(version)
+            if (major, minor) >= (1, 8):
+                if rev == "":
+                    return version
+                try:
+                    rev = int(rev[1:])  # skip revs like ".2-pre1" and ".1-OptiFine_HD_U_C7", only accept full releases
+                    return version
+                except ValueError:
+                    return
+
+        def jarOkay(path):
+            return zipfile.is_zipfile(path)
+
+        for install in self.installs:
+            for v in install.versions:
+                if matchVersion(v):
+                    jarPath = install.getVersionJarPath(v)
+                    if jarOkay(jarPath):
+                        return jarPath
+
+        for mmcInstall in self.mmcInstalls:
+            for v in mmcInstall.versions:
+                if matchVersion(v):
+                    jarPath = mmcInstall.getVersionJarPath(v)
+                    if jarOkay(jarPath):
+                        return jarPath
+
+
 class MCInstall(object):
-    def __init__(self, path, name="Unnamed"):
+    def __init__(self, installGroup, path, name="Unnamed"):
+        self.installGroup = installGroup
         self.name = name
         self.path = path
         self.versionsDir = os.path.join(self.path, "versions")
@@ -163,9 +206,6 @@ class MCInstall(object):
         if not len(self.versions):
             raise MCInstallError("Minecraft folder has no minecraft versions")
         log.info("Found versions:\n%s", self.versions)
-        requiredVersions = [v for v in self.versions if v.startswith("1.8")]
-        if not len(requiredVersions):
-            raise MCInstallError("Minecraft version 1.8 and up is required. Use the Minecraft Launcher to download it.")
 
     @property
     def versions(self):
@@ -200,29 +240,13 @@ class MCInstall(object):
 
         # Need v1.8 for block models
         if (major, minor) < (1, 8):
-            v1_8 = self.findVersion1_8()
-            loader.addZipFile(self.getVersionJarPath(v1_8))
+            v1_8 = self.installGroup.findVersion1_8()
+            loader.addZipFile(v1_8)
 
-        def md5hash(filename):
-            md5 = hashlib.md5()
-            with file(filename, "rb") as f:
-                md5.update(f.read())
-                return md5.hexdigest()
         info = ["%s (%s)" % (z.filename, md5hash(z.filename)) for z in loader.zipFiles]
         log.info("Created ResourceLoader with search path:\n%s", ",\n".join(info))
         return loader
 
-    def findVersion1_8(self):
-        for v in self.versions:
-            major, minor, rev = splitVersion(v)
-            if (major, minor) >= (1, 8):
-                if rev == "":
-                    return v
-                try:
-                    rev = int(rev[1:])  # skip revs like ".2-pre1" and ".1-OptiFine_HD_U_C7", only accept full releases
-                    return v
-                except ValueError:
-                    pass
 
 class MMCInstance(object):
     def __init__(self, install, path):
@@ -239,18 +263,42 @@ class MMCInstance(object):
         self.name = instanceSettings.value("name", "(unnamed)")
         self.install = install
         self.saveFileDir = os.path.join(path, "minecraft", "saves")
+        self.modsDir = os.path.join(path, "minecraft", "mods")
 
     @property
     def versions(self):
         return [self.version]
 
-    def getVersionJarPath(self, version):
+    def getVersionJarPath(self):
         return self.install.getVersionJarPath(self.version)
+
+    def getResourceLoader(self, resourcePack=None):
+        loader = ResourceLoader()
+        if resourcePack:
+            loader.addZipFile(resourcePack)
+        loader.addZipFile(self.getVersionJarPath())
+        major, minor, rev = splitVersion(self.version)
+
+        # Need v1.8 for block models
+        if (major, minor) < (1, 8):
+            v1_8 = self.install.installGroup.findVersion1_8()
+            loader.addZipFile(v1_8)
+
+        for mod in os.listdir(self.modsDir):
+            try:
+                loader.addZipFile(os.path.join(self.modsDir, mod))
+            except EnvironmentError as e:
+                log.exception("Failed to add mod %s to resource loader.", mod)
+                continue
+
+        info = ["%s (%s)" % (z.filename, md5hash(z.filename)) for z in loader.zipFiles]
+        log.info("Created ResourceLoader with search path:\n%s", ",\n".join(info))
+        return loader
 
 
 class MultiMCInstall(object):
-    def __init__(self, configPath):
-
+    def __init__(self, installGroup, configPath):
+        self.installGroup = installGroup
         self.configPath = configPath
         if not os.path.exists(configPath):
             raise MultiMCInstallError("Config file does not exist", configPath)
@@ -291,9 +339,14 @@ class MultiMCInstall(object):
     def getJsonSettingValue(self):
         return {"configFile": self.configPath}
 
-
     def getVersionJarPath(self, version):
         return os.path.join(self.versionsDir, version, version + ".jar")
+
+    @property
+    def versions(self):
+        for version in os.listdir(self.versionsDir):
+            if os.path.exists(os.path.join(self.versionsDir, version, version + ".jar")):
+                yield version
 
 def splitVersion(version):
     """

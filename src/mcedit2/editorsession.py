@@ -75,7 +75,20 @@ class PasteImportCommand(QtGui.QUndoCommand):
         self.editorSession.chooseTool("Move")
 
 class EditorSession(QtCore.QObject):
-    def __init__(self, filename, versionInfo, readonly=False, progressCallback=None):
+    def __init__(self, filename, resourceLoader, readonly=False, progressCallback=None):
+        """
+
+        :param filename:
+        :type filename: str
+        :param resourceLoader:
+        :type resourceLoader: mcedit2.resourceloader.ResourceLoader
+        :param readonly:
+        :type readonly: bool
+        :param progressCallback:
+        :type progressCallback: callable
+        :return:
+        :rtype:
+        """
         from mcedit2 import __version__ as v
 
         progressMax = 7  # fixme
@@ -101,8 +114,6 @@ class EditorSession(QtCore.QObject):
 
         self.copiedSchematic = None
         """:type : WorldEditor"""
-
-        self.versionInfo = versionInfo
 
         # --- Open world editor ---
         try:
@@ -244,8 +255,7 @@ class EditorSession(QtCore.QObject):
 
         progress("Loading resources...")
 
-        i, v, p = self.versionInfo
-        self.resourceLoader = i.getResourceLoader(v, p)
+        self.resourceLoader = resourceLoader
         self.geometryCache = GeometryCache()
         self.blockModels = BlockModels(self.worldEditor.blocktypes, self.resourceLoader)
         self.textureAtlas = TextureAtlas(self.worldEditor, self.resourceLoader, self.blockModels)
