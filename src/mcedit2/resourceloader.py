@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 import zipfile
+import re
 
 log = logging.getLogger(__name__)
 
@@ -38,4 +39,10 @@ class ResourceLoader(object):
         for zf in self.zipFiles:
             for name in zf.namelist():
                 if name.startswith("assets/minecraft/models/block"):
+                    yield name
+
+    def blockTexturePaths(self):
+        for zf in self.zipFiles:
+            for name in zf.namelist():
+                if re.match(r'assets/\w+/textures/blocks/.*\.png$', name):
                     yield name
