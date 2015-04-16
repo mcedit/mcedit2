@@ -56,15 +56,24 @@ def BlockTypePixmap(block, textureAtlas):
     if texname is None:
         log.debug("No texture for %s!", block.internalName + block.blockState)
         texname = "MCEDIT_UNKNOWN"
-
     try:
         io = textureAtlas._openImageStream(texname)
+        return TexturePixmap(io, texname=texname)
+    except (ValueError, ResourceNotFound) as e:
+        log.warn("BlockTypePixmap: Failed to read texture %s: %r", texname, e)
+
+
+def TexturePixmap(io, size=32, texname="Not provided"):
+    try:
         data = io.read()
         array = QtCore.QByteArray(data)
         buf = QtCore.QBuffer(array)
         reader = QtGui.QImageReader(buf)
         image = reader.read()
         pixmap = QtGui.QPixmap.fromImage(image)
+        if pixmap.isNull():
+            log.warn("File %s produced a null pixmap", texname)
+            return None
 
         w = pixmap.width()
         h = pixmap.height()
@@ -72,9 +81,9 @@ def BlockTypePixmap(block, textureAtlas):
         if w != h:
             pixmap = pixmap.copy(0, 0, s, s)
 
-        if s != 32:
-            pixmap = pixmap.scaledToWidth(32)
+        if s != size:
+            pixmap = pixmap.scaledToWidth(size)
 
         return pixmap
-    except (ValueError, ResourceNotFound) as e:
-        log.warn("BlockTypePixmap: Failed to load texture %s: %r", texname, e)
+    except ValueError as e:
+        log.warn("TexturePixmap: Failed to load texture %s: %r", texname, e)
