@@ -62,6 +62,39 @@ class BlockDefinition(object):
 class ConfigureBlocksItemDelegate(QtGui.QStyledItemDelegate):
     pass
 
+class TextureListModel(QtCore.QAbstractListModel):
+    def __init__(self, resourceLoader):
+        super(TextureListModel, self).__init__()
+        self.resourceLoader = resourceLoader
+        self.textureNames = list(resourceLoader.blockTexturePaths())
+        self.texturePixmaps = {}
+
+    def rowCount(self, parent):
+        if parent.isValid():
+            return 0
+        return len(self.textureNames)
+
+    def data(self, index, role=Qt.DisplayRole):
+        if not index.isValid():
+            return
+
+        row = index.row()
+        texturePath = self.textureNames[row]
+        if role == Qt.DisplayRole:
+            return texturePath.rsplit("/", 1)[-1]
+        if role == Qt.DecorationRole:
+            pixmap = self.texturePixmaps.get(texturePath)
+            if pixmap:
+                return pixmap
+
+            f = self.resourceLoader.openStream(texturePath)
+            pixmap = TexturePixmap(f, 48, texturePath)
+            self.texturePixmaps[texturePath] = pixmap
+            return pixmap
+        if role == Qt.UserRole:
+            return texturePath
+
+
 class ConfigureBlocksItemModel(QtCore.QAbstractItemModel):
 
     def __init__(self, *args, **kwargs):
@@ -200,7 +233,7 @@ class ConfigureBlocksDialog(QtGui.QDialog):
         header.setResizeMode(2, QtGui.QHeaderView.Fixed)
         header.setResizeMode(1, QtGui.QHeaderView.Stretch)
 
-        self.textureList.itemClicked.connect(self.textureClicked)
+        self.textureList.clicked.connect(self.textureClicked)
 
 
     def getConfiguredBlocks(self):
@@ -302,7 +335,7 @@ class ConfigureBlocksDialog(QtGui.QDialog):
             return None
         return self.model.definedBlocks[blockIndex.row()]
 
-    def textureClicked(self, item):
+    def textureClicked(self, index):
         blockDef = self.currentBlockDef()
         if blockDef is None:
             return
@@ -310,7 +343,7 @@ class ConfigureBlocksDialog(QtGui.QDialog):
         textureRow = self.modelTexturesTable.currentRow()
         texVar = self.modelTexturesTable.item(textureRow, 0).data(Qt.UserRole)
 
-        texturePath = item.data(Qt.UserRole)
+        texturePath = index.data(Qt.UserRole)
         blockDef.modelTextures[texVar] = texturePath
 
         displayName = texturePath.rsplit("/", 1)[-1]
@@ -341,16 +374,9 @@ class ConfigureBlocksDialog(QtGui.QDialog):
         for displayName, modelPath in firstModels + models:
             self.modelNameBox.addItem(displayName, modelPath)
 
-        self.textureList.clear()
-        for texturePath in session.resourceLoader.blockTexturePaths():
-            displayName = texturePath.rsplit("/", 1)[-1]
-            f = session.resourceLoader.openStream(texturePath)
-            pixmap = TexturePixmap(f, 48, texturePath)
-            icon = QtGui.QIcon(pixmap)
-            item = QtGui.QListWidgetItem(icon, displayName)
-            item.setData(Qt.UserRole, texturePath)
+        texListModel = TextureListModel(session.resourceLoader)
+        self.textureList.setModel(texListModel)
 
-            self.textureList.addItem(item)
 
         self.exec_()
 
