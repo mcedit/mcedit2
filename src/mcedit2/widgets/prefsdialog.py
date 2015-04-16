@@ -9,7 +9,7 @@ from mcedit2.util.load_ui import load_ui
 log = logging.getLogger(__name__)
 
 class PrefsDialog(QtGui.QDialog):
-    def __init__(self):
-        super(PrefsDialog, self).__init__()
+    def __init__(self, parent):
+        super(PrefsDialog, self).__init__(parent)
         load_ui("preferences_dialog.ui", baseinstance=self)
         self.okButton.clicked.connect(self.accept)

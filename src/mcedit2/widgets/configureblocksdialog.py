@@ -2,27 +2,170 @@
     configureblocksdialog.py
 """
 from __future__ import absolute_import, division, print_function
+import json
 import logging
+import os
 from PySide import QtGui, QtCore
+from PySide.QtCore import Qt
+from mcedit2.util.directories import getUserFilesDirectory
 from mcedit2.util.load_ui import load_ui
+from mcedit2.widgets.blocktype_list import TexturePixmap
 
 log = logging.getLogger(__name__)
+
+class BlockDefinition(object):
+    def __init__(self, internalName=None, defJson=None):
+        super(BlockDefinition, self).__init__()
+        assert internalName or defJson, "Need at least one of internalName or defJson to create BlockDefinition"
+        if defJson is None:
+            self.internalName = internalName
+            self.rotationFlags = []
+            self.meta = 0
+            self.opacity = 15
+            self.brightness = 0
+            self.unlocalizedName = internalName
+            self.englishName = internalName
+            self.modelPath = None
+            self.modelRotations = [0, 0, 0]
+            self.modelTextures = {}
+        else:
+            self.internalName = defJson['internalName']
+            self.rotationFlags = defJson['internalName']
+            self.meta = defJson['meta']
+            self.opacity = defJson['opacity']
+            self.brightness = defJson['brightness']
+            self.unlocalizedName = defJson['unlocalizedName']
+            self.englishName = defJson['englishName']
+            self.modelPath = defJson['modelPath']
+            self.modelRotations = defJson['modelRotations']
+            self.modelTextures = defJson['modelTextures']
+
+    def exportAsJson(self):
+        keys = ['internalName',
+                'rotationFlags',
+                'meta',
+                'opacity',
+                'brightness',
+                'unlocalizedName',
+                'englishName',
+                'modelPath',
+                'modelRotations',
+                'modelTextures']
+
+        d = {}
+        for key in keys:
+            d[key] = getattr(self, key)
+
+        return d
+
 
 class ConfigureBlocksItemDelegate(QtGui.QStyledItemDelegate):
     pass
 
 class ConfigureBlocksItemModel(QtCore.QAbstractItemModel):
+
+    def __init__(self, *args, **kwargs):
+        super(ConfigureBlocksItemModel, self).__init__(*args, **kwargs)
+        self.headerTitles = ["Icon",
+                             "Block ID",
+                             "Rotation Flags",
+                             "Meta",
+                             "Opacity",
+                             "Brightness",
+                             "Unlocalized Name",
+                             "Name"]
+
+        definedBlocksFilename = "defined_blocks.json"
+        self.definedBlocksFilePath = os.path.join(getUserFilesDirectory(), definedBlocksFilename)
+        try:
+            definedBlocks = json.load(file(self.definedBlocksFilePath, "r"))
+        except (ValueError, EnvironmentError) as e:
+            log.warn("Failed to read definitions file %s", definedBlocksFilename)
+            definedBlocks = []
+        if not isinstance(definedBlocks, list):
+            definedBlocks = []
+        self.definedBlocks = []
+
+        for defJson in definedBlocks:
+            try:
+                self.definedBlocks.append(BlockDefinition(defJson=defJson))
+            except (KeyError, ValueError) as e:
+                log.warn("Failed to load a definition from %s", definedBlocksFilename)
+
+    def exportAsJson(self):
+        defs = []
+        for blockDef in self.definedBlocks:
+            defs.append(blockDef.exportAsJson())
+        return defs
+
+    def writeToJson(self):
+        json.dump(self.exportAsJson(), file(self.definedBlocksFilePath, "w"))
+
+    def headerData(self, column, orientation, role=Qt.DisplayRole):
+        if orientation == Qt.Vertical:
+            return None
+        if role == Qt.DisplayRole:
+            return self.headerTitles[column]
+
     def columnCount(self, index):
-        return 0
+        return len(self.headerTitles)
 
     def rowCount(self, index):
-        return 0
+        if index.isValid():
+            return 0
+        return len(self.definedBlocks)
 
+    def index(self, row, column, parent=QtCore.QModelIndex()):
+        if parent.isValid():
+            return QtCore.QModelIndex()
+
+        return self.createIndex(row, column, None)
+
+    def parent(self, index):
+        return QtCore.QModelIndex()
+
+    def flags(self, index):
+        flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+        return flags
+
+    def data(self, index, role=Qt.DisplayRole):
+        row = index.row()
+        column = index.column()
+        blockDef = self.definedBlocks[row]
+        if role == Qt.DisplayRole:
+            if column == 0:  # icon
+                return None
+            if column == 1:  # ID
+                return blockDef.internalName
+            if column == 2:  # rotationFlags
+                return blockDef.rotationFlags
+            if column == 3:  # meta
+                return blockDef.meta
+            if column == 4:  # opacity
+                return blockDef.opacity
+            if column == 5:  # brightness
+                return blockDef.brightness
+            if column == 6:  # unlocalizedName
+                return blockDef.unlocalizedName
+            if column == 7:  # name
+                return blockDef.englishName
+
+    def addBlock(self, internalName):
+        log.info("Adding block %s", internalName)
+        blockDef = BlockDefinition(internalName)
+        self.beginInsertRows(QtCore.QModelIndex(), len(self.definedBlocks), len(self.definedBlocks))
+        self.definedBlocks.append(blockDef)
+        log.info("Appended")
+        self.endInsertRows()
+
+    def setBlockModelPath(self, row, modelPath):
+        blockDef = self.definedBlocks[row]
+        blockDef.modelPath = modelPath
 
 
 class ConfigureBlocksDialog(QtGui.QDialog):
-    def __init__(self):
-        super(ConfigureBlocksDialog, self).__init__()
+    def __init__(self, parent):
+        super(ConfigureBlocksDialog, self).__init__(parent)
         load_ui("configure_blocks_dialog.ui", baseinstance=self)
         self.okButton.clicked.connect(self.accept)
 
@@ -31,5 +174,200 @@ class ConfigureBlocksDialog(QtGui.QDialog):
 
         self.blocksView.setModel(self.model)
         self.blocksView.setItemDelegate(self.itemDelegate)
+
+        self.blocksView.clicked.connect(self.currentBlockClicked)
+
+        self.addBlockButton.clicked.connect(self.addBlock)
+
+        headerWidths = [
+            48,
+            200,
+            75,
+            60,
+            60,
+            75,
+            180,
+            180,
+        ]
+        for i, w in enumerate(headerWidths):
+            self.blocksView.setColumnWidth(i, w)
+
+        self.setModelControlsEnabled(False)
+        self.modelNameBox.currentIndexChanged.connect(self.modelNameChanged)
+
+        header = self.modelTexturesTable.horizontalHeader()
+        header.resizeSection(2, 40)
+        header.setResizeMode(2, QtGui.QHeaderView.Fixed)
+        header.setResizeMode(1, QtGui.QHeaderView.Stretch)
+
+        self.textureList.itemClicked.connect(self.textureClicked)
+
+
+    def getConfiguredBlocks(self):
+        return self.model.exportToJson()
+
+    def setModelControlsEnabled(self, enabled):
+        self.modelNameBox.setEnabled(enabled)
+        self.xRotationBox.setEnabled(enabled)
+        self.yRotationBox.setEnabled(enabled)
+        self.zRotationBox.setEnabled(enabled)
+        self.modelTexturesTable.setEnabled(enabled)
+
+    def currentBlockClicked(self, index):
+        """
+        Block in the top block list was clicked. Set up the model list,
+
+        :param index:
+        :type index:
+        :return:
+        :rtype:
+        """
+        if index.isValid():
+            self.setModelControlsEnabled(True)
+            modelPath = self.model.definedBlocks[index.row()].modelPath
+            row = self.modelNameBox.findData(modelPath, Qt.UserRole)
+            if row == -1:
+                row = 0
+            self.modelNameBox.setCurrentIndex(row)
+            self.modelNameChanged(row)
+
+
+    def modelNameChanged(self, row):
+        blockIndex = self.blocksView.currentIndex()
+        if not blockIndex.isValid():
+            return
+
+        modelPath = self.modelNameBox.itemData(row, Qt.UserRole)
+        if modelPath is None:  # modelNameBox is empty?
+            return
+        self.model.setBlockModelPath(blockIndex.row(), modelPath)
+
+        modelJson = json.load(self.session.resourceLoader.openStream(modelPath))
+
+        # Parse block model and its parents and look for unbound textures
+        elements = []
+        textures = {}
+        while modelJson is not None:
+            if 'textures' in modelJson:
+                textures.update(modelJson['textures'])
+            if 'elements' in modelJson:
+                elements.extend(modelJson['elements'])
+            if 'parent' in modelJson:
+                modelPath = "assets/minecraft/models/%s.json" % modelJson['parent']
+                modelJson = json.load(self.session.resourceLoader.openStream(modelPath))
+            else:
+                modelJson = None
+
+        unboundTextures = set()
+        for element in elements:
+            if 'faces' not in element:
+                continue
+            faces = element['faces']
+            for side, face in faces.iteritems():
+                if 'texture' in face:
+                    texture = face['texture']
+                    lasttex = texture
+                    for i in range(30):
+                        if texture.startswith("#"):
+                            lasttex = texture
+                            texture = textures.get(texture[1:], texture)
+                        else:
+                            break
+                        if lasttex == texture:
+                            break
+                    if texture.startswith("#"):
+                        unboundTextures.add(texture)
+
+        self.modelTexturesTable.clearContents()
+        self.modelTexturesTable.setRowCount(len(unboundTextures))
+        blockDef = self.model.definedBlocks[blockIndex.row()]
+        boundTextures = blockDef.modelTextures
+
+        for row, texture in enumerate(sorted(unboundTextures)):
+
+            texVarItem = QtGui.QTableWidgetItem(texture)
+            texVarItem.setData(Qt.UserRole, texture)
+
+            texturePath = boundTextures.get(texture, "Unbound")
+            displayName = texturePath.rsplit("/", 1)[-1]
+            texPathItem = QtGui.QTableWidgetItem(displayName)
+            texPathItem.setData(Qt.UserRole, texturePath)
+
+            self.modelTexturesTable.setItem(row, 0, texVarItem)
+            self.modelTexturesTable.setItem(row, 1, texPathItem)
+
+    def currentBlockDef(self):
+        blockIndex = self.blocksView.currentIndex()
+        if not blockIndex.isValid():
+            return None
+        return self.model.definedBlocks[blockIndex.row()]
+
+    def textureClicked(self, item):
+        blockDef = self.currentBlockDef()
+        if blockDef is None:
+            return
+
+        textureRow = self.modelTexturesTable.currentRow()
+        texVar = self.modelTexturesTable.item(textureRow, 0).data(Qt.UserRole)
+
+        texturePath = item.data(Qt.UserRole)
+        blockDef.modelTextures[texVar] = texturePath
+
+        displayName = texturePath.rsplit("/", 1)[-1]
+        texPathItem = QtGui.QTableWidgetItem(displayName)
+        texPathItem.setData(Qt.UserRole, texturePath)
+        self.modelTexturesTable.setItem(textureRow, 1, texPathItem)
+
+    def execWithSession(self, session):
+        self.session = session
+
+        self.internalNameBox.clear()
+        for internalName in session.unknownBlocks():
+            self.internalNameBox.addItem(internalName, internalName)
+
+        firstModels = []
+        models = []
+        self.modelNameBox.clear()
+        for modelPath in session.resourceLoader.blockModelPaths():
+            displayName = modelPath.replace("assets/minecraft/models/block/", "")
+            displayName = displayName.replace(".json", "")
+
+            # List commonly used models first
+            if displayName.startswith("cube"):
+                firstModels.append((displayName, modelPath))
+            else:
+                models.append((displayName, modelPath))
+
+        for displayName, modelPath in firstModels + models:
+            self.modelNameBox.addItem(displayName, modelPath)
+
+        self.textureList.clear()
+        for texturePath in session.resourceLoader.blockTexturePaths():
+            displayName = texturePath.rsplit("/", 1)[-1]
+            f = session.resourceLoader.openStream(texturePath)
+            pixmap = TexturePixmap(f, 48, texturePath)
+            icon = QtGui.QIcon(pixmap)
+            item = QtGui.QListWidgetItem(icon, displayName)
+            item.setData(Qt.UserRole, texturePath)
+
+            self.textureList.addItem(item)
+
+        self.exec_()
+
+    def addBlock(self):
+        internalName = self.internalNameBox.currentText()
+        # index = self.internalNameBox.findText(internalName)
+        # if index != -1:
+        #     self.internalNameBox.removeItem(index)
+        self.model.addBlock(internalName)
+
+    def done(self, result):
+        self.model.writeToJson()
+        super(ConfigureBlocksDialog, self).done(result)
+
+    def close(self):
+        self.model.writeToJson()
+        super(ConfigureBlocksDialog, self).close()
+
 
 

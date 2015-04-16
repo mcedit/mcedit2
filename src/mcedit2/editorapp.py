@@ -108,9 +108,8 @@ class MCEditApp(QtGui.QApplication):
 
         # --- App Dialogs ---
 
-        self.prefsDialog = prefsdialog.PrefsDialog()
-        self.configureBlocksDialog = configureblocksdialog.ConfigureBlocksDialog()
-
+        self.prefsDialog = prefsdialog.PrefsDialog(mainWindow)
+        self.configureBlocksDialog = configureblocksdialog.ConfigureBlocksDialog(mainWindow)
 
         # --- Sessions ---
 
@@ -750,4 +749,4 @@ class MCEditApp(QtGui.QApplication):
         self.prefsDialog.exec_()
 
     def showConfigureBlocksDialog(self):
-        self.configureBlocksDialog.exec_()
+        self.configureBlocksDialog.execWithSession(self.currentSession())
