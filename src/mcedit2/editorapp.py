@@ -620,13 +620,15 @@ class MCEditApp(QtGui.QApplication):
 
         try:
             resourceLoader = self.getResourceLoaderForFilename(filename)
-            session = EditorSession(filename, resourceLoader, readonly=readonly, progressCallback=callback)
+            configuredBlocks = self.configureBlocksDialog.getConfiguredBlocks()
+            session = EditorSession(filename, resourceLoader, configuredBlocks, readonly=readonly, progressCallback=callback)
             self.undoGroup.addStack(session.undoStack)
 
             self.tabWidget.addTab(session.editorTab, session.tabCaption())
             self.tabWidget.setCurrentWidget(session.editorTab)
             self.sessions.append(session)
             self.addRecentFile(filename)
+
             session.loadDone()
 
         except EnvironmentError as e:
@@ -761,4 +763,8 @@ class MCEditApp(QtGui.QApplication):
         self.prefsDialog.exec_()
 
     def showConfigureBlocksDialog(self):
-        self.configureBlocksDialog.execWithSession(self.currentSession())
+        self.configureBlocksDialog.showWithSession(self.currentSession())
+
+    def configureBlocksFinished(self):
+        configuredBlocks = self.configureBlocksDialog.getConfiguredBlocks()
+        self.currentSession().setConfiguredBlocks(configuredBlocks)

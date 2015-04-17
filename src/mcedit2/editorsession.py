@@ -16,12 +16,10 @@ from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.directories import getUserSchematicsDirectory
 from mcedit2.util.lazyprop import weakrefprop
 from mcedit2.util.raycast import rayCastInBounds
-from mcedit2.util.resources import resourcePath
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.undostack import MCEUndoStack
 from mcedit2.widgets.inspector import InspectorWidget
 from mcedit2.worldview.viewaction import UseToolMouseAction, TrackingMouseAction
-from mceditlib import util
 from mcedit2.rendering import chunkloader, scenegraph
 from mcedit2.rendering.geometrycache import GeometryCache
 from mcedit2.rendering.textureatlas import TextureAtlas
@@ -31,6 +29,7 @@ from mcedit2.worldview.camera import CameraWorldViewFrame
 from mcedit2.worldview.cutaway import CutawayWorldViewFrame
 from mcedit2.worldview.minimap import MinimapWorldView
 from mcedit2.worldview.overhead import OverheadWorldViewFrame
+from mceditlib import util
 from mceditlib.geometry import Vector
 from mceditlib.operations import ComposeOperations
 from mceditlib.operations.entity import RemoveEntitiesOperation
@@ -38,7 +37,7 @@ from mceditlib.selection import BoundingBox
 from mceditlib.exceptions import PlayerNotFound
 from mceditlib.revisionhistory import UndoFolderExists
 from mceditlib.worldeditor import WorldEditor
-
+from mceditlib.blocktypes import BlockType
 
 log = logging.getLogger(__name__)
 """
@@ -75,13 +74,15 @@ class PasteImportCommand(QtGui.QUndoCommand):
         self.editorSession.chooseTool("Move")
 
 class EditorSession(QtCore.QObject):
-    def __init__(self, filename, resourceLoader, readonly=False, progressCallback=None):
+    def __init__(self, filename, resourceLoader, configuredBlocks, readonly=False, progressCallback=None):
         """
 
         :param filename:
         :type filename: str
         :param resourceLoader:
         :type resourceLoader: mcedit2.resourceloader.ResourceLoader
+        :param configuredBlocks:
+        :type configuredBlocks: dict???
         :param readonly:
         :type readonly: bool
         :param progressCallback:
@@ -91,7 +92,7 @@ class EditorSession(QtCore.QObject):
         """
         from mcedit2 import __version__ as v
 
-        progressMax = 7  # fixme
+        progressMax = 8  # fixme
         if progressCallback is None:
             def progress(status):
                 pass
@@ -111,6 +112,7 @@ class EditorSession(QtCore.QObject):
         self.undoBlock = None
         self.currentTool = None
         self.dirty = False
+        self.configuredBlocks = None
 
         self.copiedSchematic = None
         """:type : WorldEditor"""
@@ -141,6 +143,9 @@ class EditorSession(QtCore.QObject):
 
         self.worldEditor.requireRevisions()
         self.currentDimension = None
+
+        progress("Loading configured blocks...")
+        self.setConfiguredBlocks(configuredBlocks)
 
         progress("Creating menus...")
 
@@ -356,6 +361,65 @@ class EditorSession(QtCore.QObject):
 
     def toolDidChange(self, tool):
         self.editorTab.toolDidChange(tool)
+
+    # --- Block config ---
+
+    def setConfiguredBlocks(self, configuredBlocks):
+        blocktypes = self.worldEditor.blocktypes
+        if self.configuredBlocks is not None:
+            # Remove all previously configured blocks
+            deadJsons = []
+            for json in blocktypes.blockJsons:
+                if '__configured__' in json:
+                    deadJsons.append(json)
+
+            deadIDs = set((j['internalName'], j['meta']) for j in deadJsons)
+            blocktypes.allBlocks[:] = [
+                bt for bt in blocktypes.allBlocks
+                if (bt.internalName, bt.meta) in deadIDs
+            ]
+
+            for json in deadJsons:
+                internalName = json['internalName']
+                fakeState = json['blockState']
+                blocktypes.blockJsons.remove(json)
+                ID = blocktypes.IDsByName[internalName]
+
+                del blocktypes.IDsByState[internalName + fakeState]
+                del blocktypes.statesByID[ID, json['meta']]
+
+        for blockDef in configuredBlocks:
+            internalName = blockDef.internalName
+            if blockDef.meta == 0:
+                if internalName in blocktypes.IDsByName:
+                    blockType = blocktypes[internalName]
+                    blockJson = blockType.json
+            else:
+                # not automatically created by FML mapping loader
+                fakeState = '[%d]' % blockDef.meta
+                blocktypes.blockJsons[internalName] = {
+                    'displayName': internalName,
+                    'internalName': internalName,
+                    'blockState': fakeState,
+                    'unknown': False,
+                    'meta': blockDef.meta,
+                }
+                ID = blocktypes.IDsByName[internalName]
+                blockType = BlockType(ID, blockDef.meta, blocktypes)
+                blocktypes.allBlocks.append(blockType)
+                blocktypes.IDsByState[internalName + fakeState] = ID, blockDef.meta
+                blocktypes.statesByID[ID, blockDef.meta] = internalName + fakeState
+
+                blockJson = blockType.json
+
+            blockJson['forcedModel'] = blockDef.modelPath
+            blockJson['forcedModelTextures'] = blockDef.modelTextures
+            blockJson['forcedModelRotation'] = blockDef.modelRotations
+            blockJson['forcedRotationFlags'] = blockDef.rotationFlags
+            blockJson['__configured__'] = True
+
+
+        self.configuredBlocks = configuredBlocks
 
     # --- Selection ---
 

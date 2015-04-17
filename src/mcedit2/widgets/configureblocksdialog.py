@@ -352,7 +352,7 @@ class ConfigureBlocksDialog(QtGui.QDialog):
         texPathItem.setData(Qt.UserRole, texturePath)
         self.modelTexturesTable.setItem(textureRow, 1, texPathItem)
 
-    def execWithSession(self, session):
+    def showWithSession(self, session):
         self.session = session
 
         self.internalNameBox.clear()
@@ -380,8 +380,7 @@ class ConfigureBlocksDialog(QtGui.QDialog):
         texListModel = TextureListModel(session.resourceLoader)
         self.textureList.setModel(texListModel)
 
-
-        self.exec_()
+        self.show()
 
     def addBlock(self):
         internalName = self.internalNameBox.currentText()
