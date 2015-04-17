@@ -18,27 +18,17 @@ class BlockDefinition(object):
         super(BlockDefinition, self).__init__()
         assert internalName or defJson, "Need at least one of internalName or defJson to create BlockDefinition"
         if defJson is None:
-            self.internalName = internalName
-            self.rotationFlags = []
-            self.meta = 0
-            self.opacity = 15
-            self.brightness = 0
-            self.unlocalizedName = internalName
-            self.englishName = internalName
-            self.modelPath = None
-            self.modelRotations = [0, 0, 0]
-            self.modelTextures = {}
-        else:
-            self.internalName = defJson['internalName']
-            self.rotationFlags = defJson['internalName']
-            self.meta = defJson['meta']
-            self.opacity = defJson['opacity']
-            self.brightness = defJson['brightness']
-            self.unlocalizedName = defJson['unlocalizedName']
-            self.englishName = defJson['englishName']
-            self.modelPath = defJson['modelPath']
-            self.modelRotations = defJson['modelRotations']
-            self.modelTextures = defJson['modelTextures']
+            defJson = {}
+        self.internalName = internalName or defJson['internalName']
+        self.rotationFlags = defJson.get('rotationFlags', [])
+        self.meta = defJson.get('meta', 0)
+        self.opacity = defJson.get('opacity', 15)
+        self.brightness = defJson.get('brightness', 0)
+        self.unlocalizedName = defJson.get('unlocalizedName', internalName)
+        self.englishName = defJson.get('englishName', internalName)
+        self.modelPath = defJson.get('modelPath', None)
+        self.modelRotations = defJson.get('modelRotations', [0, 0, 0])
+        self.modelTextures = defJson.get('modelTextures', {})
 
     def exportAsJson(self):
         keys = ['internalName',
@@ -123,7 +113,7 @@ class ConfigureBlocksItemModel(QtCore.QAbstractItemModel):
             try:
                 self.definedBlocks.append(BlockDefinition(defJson=defJson))
             except (KeyError, ValueError) as e:
-                log.warn("Failed to load a definition from %s", definedBlocksFilename)
+                log.warn("Failed to load a definition from %s: %r", definedBlocksFilename, e)
 
     def exportAsJson(self):
         defs = []
@@ -157,8 +147,29 @@ class ConfigureBlocksItemModel(QtCore.QAbstractItemModel):
     def parent(self, index):
         return QtCore.QModelIndex()
 
+    COL_ICON = 0
+    COL_ID = 1
+    COL_ROTATION = 2
+    COL_META = 3
+    COL_OPACITY = 4
+    COL_BRIGHTNESS = 5
+    COL_UNLOCALIZED = 6
+    COL_ENGLISH = 7
+
     def flags(self, index):
+        if not index.isValid():
+            return 0
+
         flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+        if index.column() in (self.COL_ID,
+                              self.COL_META,
+                              self.COL_OPACITY,
+                              self.COL_BRIGHTNESS,
+                              self.COL_UNLOCALIZED,
+                              self.COL_ENGLISH,
+                              ):
+            flags |= Qt.ItemIsEditable
+
         return flags
 
     def data(self, index, role=Qt.DisplayRole):
@@ -166,22 +177,49 @@ class ConfigureBlocksItemModel(QtCore.QAbstractItemModel):
         column = index.column()
         blockDef = self.definedBlocks[row]
         if role == Qt.DisplayRole:
-            if column == 0:  # icon
+            if column == self.COL_ICON:
                 return None
-            if column == 1:  # ID
+            if column == self.COL_ID:
                 return blockDef.internalName
-            if column == 2:  # rotationFlags
+            if column == self.COL_ROTATION:
                 return blockDef.rotationFlags
-            if column == 3:  # meta
+            if column == self.COL_META:
                 return blockDef.meta
-            if column == 4:  # opacity
+            if column == self.COL_OPACITY:
                 return blockDef.opacity
-            if column == 5:  # brightness
+            if column == self.COL_BRIGHTNESS:
                 return blockDef.brightness
-            if column == 6:  # unlocalizedName
+            if column == self.COL_UNLOCALIZED:
                 return blockDef.unlocalizedName
-            if column == 7:  # name
+            if column == self.COL_ENGLISH:
                 return blockDef.englishName
+
+    def setData(self, index, value, role=Qt.DisplayRole):
+        row = index.row()
+        column = index.column()
+        blockDef = self.definedBlocks[row]
+        if role == Qt.EditRole:
+            try:
+                if column == self.COL_ID:
+                    blockDef.internalName = value
+                if column == self.COL_META:
+                    blockDef.meta = int(value)
+                if column == self.COL_OPACITY:
+                    blockDef.opacity = int(value)
+                if column == self.COL_BRIGHTNESS:
+                    blockDef.brightness = int(value)
+                if column == self.COL_UNLOCALIZED:
+                    blockDef.unlocalizedName = value
+                if column == self.COL_ENGLISH:
+                    blockDef.englishName = value
+            except ValueError:
+                log.exception("ValueError in setData")
+                return False
+
+            self.dataChanged.emit(index, index)
+            return True
+
+        return False
 
     def addBlock(self, internalName):
         log.info("Adding block %s", internalName)
