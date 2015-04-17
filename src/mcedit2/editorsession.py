@@ -376,7 +376,7 @@ class EditorSession(QtCore.QObject):
             deadIDs = set((j['internalName'], j['meta']) for j in deadJsons)
             blocktypes.allBlocks[:] = [
                 bt for bt in blocktypes.allBlocks
-                if (bt.internalName, bt.meta) in deadIDs
+                if (bt.internalName, bt.meta) not in deadIDs
             ]
 
             for json in deadJsons:
@@ -390,25 +390,29 @@ class EditorSession(QtCore.QObject):
 
         for blockDef in configuredBlocks:
             internalName = blockDef.internalName
+            if internalName not in blocktypes.IDsByName:
+                # no ID mapped to this name, skip
+                continue
+
             if blockDef.meta == 0:
-                if internalName in blocktypes.IDsByName:
-                    blockType = blocktypes[internalName]
-                    blockJson = blockType.json
+                blockType = blocktypes[internalName]
+                blockJson = blockType.json
             else:
                 # not automatically created by FML mapping loader
+                ID = blocktypes.IDsByName[internalName]
                 fakeState = '[%d]' % blockDef.meta
-                blocktypes.blockJsons[internalName] = {
+                nameAndState = internalName + fakeState
+                blocktypes.blockJsons[nameAndState] = {
                     'displayName': internalName,
                     'internalName': internalName,
                     'blockState': fakeState,
                     'unknown': False,
                     'meta': blockDef.meta,
                 }
-                ID = blocktypes.IDsByName[internalName]
                 blockType = BlockType(ID, blockDef.meta, blocktypes)
                 blocktypes.allBlocks.append(blockType)
-                blocktypes.IDsByState[internalName + fakeState] = ID, blockDef.meta
-                blocktypes.statesByID[ID, blockDef.meta] = internalName + fakeState
+                blocktypes.IDsByState[nameAndState] = ID, blockDef.meta
+                blocktypes.statesByID[ID, blockDef.meta] = nameAndState
 
                 blockJson = blockType.json
 
