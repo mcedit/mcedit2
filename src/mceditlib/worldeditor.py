@@ -365,7 +365,7 @@ class WorldEditor(object):
         for dimName in self.adapter.listDimensions():
             start = time.time()
             chunkPositions = set(self.adapter.chunkPositions(dimName))
-            chunkPositions.update((cx, cz) for cx, cz, dimName in self._chunkDataCache if self._chunkDataCache(cx, cz).dimName == dimName)
+            chunkPositions.update((cx, cz) for cx, cz, cDimName in self._chunkDataCache if cDimName == dimName)
             log.info("Dim %s: Found %d chunks in %0.2f seconds.",
                      dimName,
                      len(chunkPositions),
