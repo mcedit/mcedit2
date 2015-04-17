@@ -631,7 +631,7 @@ cdef short rotateFace(short face, short axis, int degrees):
         return face
 
     while degrees > 0:
-        idx -= 1
+        idx += 1
         degrees -= 90
     idx %= 4
     return rots[idx]
@@ -683,11 +683,11 @@ cdef variantRotation(variantXrot, variantYrot, variantZrot):
     if variantXrot or variantYrot or variantZrot:
         matrix = np.matrix(np.identity(4))
         if variantYrot:
-            matrix *= npRotate("y", -variantYrot)
+            matrix *= npRotate("y", variantYrot)
         if variantXrot:
-            matrix *= npRotate("x", -variantXrot)
+            matrix *= npRotate("x", variantXrot)
         if variantZrot:
-            matrix *= npRotate("z", -variantZrot)
+            matrix *= npRotate("z", variantZrot)
         return matrix[:3, :3]
 
 @lru_cache()
