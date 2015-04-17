@@ -49,4 +49,4 @@ class ResourceLoader(object):
                     continue
                 seen.add(name)
                 if re.match(r'assets/\w+/textures/blocks/.*\.png$', name):
-                    yield name
+                    yield zf.filename, name

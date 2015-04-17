@@ -59,6 +59,14 @@ class TextureListModel(QtCore.QAbstractListModel):
         self.textureNames = list(resourceLoader.blockTexturePaths())
         self.texturePixmaps = {}
 
+    def zipfilePaths(self):
+        zips = set()
+        for zipFilename, _ in self.textureNames:
+            if zipFilename in zips:
+                continue
+            zips.add(zipFilename)
+            yield zipFilename
+
     def rowCount(self, parent):
         if parent.isValid():
             return 0
@@ -69,7 +77,7 @@ class TextureListModel(QtCore.QAbstractListModel):
             return
 
         row = index.row()
-        texturePath = self.textureNames[row]
+        zipFilename, texturePath = self.textureNames[row]
         if role == Qt.DisplayRole:
             return texturePath.rsplit("/", 1)[-1]
         if role == Qt.DecorationRole:
@@ -81,8 +89,13 @@ class TextureListModel(QtCore.QAbstractListModel):
             pixmap = TexturePixmap(f, 48, texturePath)
             self.texturePixmaps[texturePath] = pixmap
             return pixmap
-        if role == Qt.UserRole:
+        if role == self.TexturePathRole:
             return texturePath
+        if role == self.ZipfilePathRole:
+            return zipFilename
+
+    TexturePathRole = Qt.UserRole
+    ZipfilePathRole = Qt.UserRole + 1
 
 
 class ConfigureBlocksItemModel(QtCore.QAbstractItemModel):
@@ -247,6 +260,9 @@ class ConfigureBlocksDialog(QtGui.QDialog):
         load_ui("configure_blocks_dialog.ui", baseinstance=self)
         self.okButton.clicked.connect(self.accept)
 
+        self.texListNameProxyModel = None
+        self.texListZipProxyModel = None
+
         self.model = ConfigureBlocksItemModel()
         self.itemDelegate = ConfigureBlocksItemDelegate()
 
@@ -282,6 +298,21 @@ class ConfigureBlocksDialog(QtGui.QDialog):
 
         self.textureList.clicked.connect(self.textureClicked)
 
+        self.textureSearchBox.editTextChanged.connect(self.textureSearched)
+        self.textureZipBox.activated[int].connect(self.textureZipChanged)
+
+    def textureZipChanged(self, row):
+        if self.texListZipProxyModel is None:
+            return
+
+        zipFilename = self.textureZipBox.itemData(row)
+        self.texListZipProxyModel.setFilterFixedString(zipFilename)
+
+    def textureSearched(self, value):
+        if self.texListNameProxyModel is None:
+            return
+
+        self.texListNameProxyModel.setFilterRegExp(value)
 
     def getConfiguredBlocks(self):
         return self.model.definedBlocks
@@ -388,7 +419,11 @@ class ConfigureBlocksDialog(QtGui.QDialog):
             return
 
         textureRow = self.modelTexturesTable.currentRow()
-        texVar = self.modelTexturesTable.item(textureRow, 0).data(Qt.UserRole)
+        selectedItem = self.modelTexturesTable.item(textureRow, 0)
+        if selectedItem is None:
+            return
+
+        texVar = selectedItem.data(Qt.UserRole)
 
         texturePath = index.data(Qt.UserRole)
         blockDef.modelTextures[texVar] = texturePath
@@ -424,7 +459,20 @@ class ConfigureBlocksDialog(QtGui.QDialog):
             self.modelNameBox.addItem(displayName, modelPath)
 
         texListModel = TextureListModel(session.resourceLoader)
-        self.textureList.setModel(texListModel)
+        self.texListNameProxyModel = QtGui.QSortFilterProxyModel()
+        self.texListNameProxyModel.setSourceModel(texListModel)
+        self.texListNameProxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
+
+        self.texListZipProxyModel = QtGui.QSortFilterProxyModel()
+        self.texListZipProxyModel.setSourceModel(self.texListNameProxyModel)
+        self.texListZipProxyModel.setFilterRole(TextureListModel.ZipfilePathRole)
+
+        self.textureList.setModel(self.texListZipProxyModel)
+
+        self.textureZipBox.clear()
+        self.textureZipBox.addItem("[All files]", "")
+        for zipFilename in texListModel.zipfilePaths():
+            self.textureZipBox.addItem(os.path.basename(zipFilename), zipFilename)
 
         self.show()
 

@@ -35,7 +35,7 @@
          <property name="childrenCollapsible">
           <bool>false</bool>
          </property>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <layout class="QVBoxLayout" name="verticalLayout_2">
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -84,7 +84,7 @@
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <layout class="QHBoxLayout" name="horizontalLayout_7">
            <item>
             <layout class="QFormLayout" name="formLayout">
@@ -273,6 +273,9 @@
               </item>
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_3">
+                <item>
+                 <widget class="QComboBox" name="textureZipBox"/>
+                </item>
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_3">
                   <item>
