@@ -66,6 +66,13 @@
                </property>
               </widget>
              </item>
+             <item>
+              <widget class="QPushButton" name="removeBlockButton">
+               <property name="text">
+                <string>Remove</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
            <item>

@@ -229,6 +229,13 @@ class ConfigureBlocksItemModel(QtCore.QAbstractItemModel):
         log.info("Appended")
         self.endInsertRows()
 
+    def removeBlock(self, row):
+        if row >= len(self.definedBlocks):
+            return
+        self.beginRemoveRows(QtCore.QModelIndex(), row, row)
+        del self.definedBlocks[row]
+        self.endRemoveRows()
+
     def setBlockModelPath(self, row, modelPath):
         blockDef = self.definedBlocks[row]
         blockDef.modelPath = modelPath
@@ -249,6 +256,7 @@ class ConfigureBlocksDialog(QtGui.QDialog):
         self.blocksView.clicked.connect(self.currentBlockClicked)
 
         self.addBlockButton.clicked.connect(self.addBlock)
+        self.removeBlockButton.clicked.connect(self.removeBlock)
 
         headerWidths = [
             48,
@@ -426,6 +434,15 @@ class ConfigureBlocksDialog(QtGui.QDialog):
         # if index != -1:
         #     self.internalNameBox.removeItem(index)
         self.model.addBlock(internalName)
+
+    def removeBlock(self):
+        index = self.blocksView.currentIndex()
+        if not index.isValid():
+            return
+
+        row = index.row()
+        self.model.removeBlock(row)
+
 
     def done(self, result):
         self.model.writeToJson()
