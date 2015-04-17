@@ -174,6 +174,7 @@ class WorldScene(scenegraph.Node):
     def setTextureAtlas(self, textureAtlas):
         self.textureAtlas = textureAtlas
         self.textureAtlasNode.textureAtlas = textureAtlas
+        self.updateTask.textureAtlas = textureAtlas
         self.discardAllChunks()
 
     def chunkPositions(self):
