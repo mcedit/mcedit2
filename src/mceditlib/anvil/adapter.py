@@ -18,6 +18,7 @@ from mceditlib.anvil.entities import PCEntityRef, PCTileEntityRef
 from mceditlib.anvil.worldfolder import AnvilWorldFolder
 from mceditlib.blocktypes import pc_blocktypes, PCBlockTypeSet, BlockType
 from mceditlib.geometry import Vector
+from mceditlib.nbt import NBTFormatError
 from mceditlib.selection import BoundingBox
 from mceditlib import nbtattr
 from mceditlib.exceptions import PlayerNotFound, ChunkNotPresent
@@ -454,7 +455,7 @@ class AnvilWorldAdapter(object):
             metadataTag = nbt.load(buf=self.selectedRevision.readFile("level.dat"))
             self.metadata = AnvilWorldMetadata(metadataTag)
             self.loadFMLMapping()
-        except (EnvironmentError, zlib.error) as e:
+        except (EnvironmentError, zlib.error, NBTFormatError) as e:
             log.info("Error loading level.dat, trying level.dat_old ({0})".format(e))
             try:
                 metadataTag = nbt.load(buf=self.selectedRevision.readFile("level.dat_old"))
