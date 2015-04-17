@@ -42,7 +42,11 @@ class ResourceLoader(object):
                     yield name
 
     def blockTexturePaths(self):
+        seen = set()
         for zf in self.zipFiles:
             for name in zf.namelist():
+                if name in seen:
+                    continue
+                seen.add(name)
                 if re.match(r'assets/\w+/textures/blocks/.*\.png$', name):
                     yield name
