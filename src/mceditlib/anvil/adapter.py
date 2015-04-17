@@ -1011,7 +1011,7 @@ class AnvilPlayerRef(object):
 
     @property
     def dimName(self):
-        return self._dimNames[self.Dimension]
+        return self._dimNames.get(self.Dimension, "Unknown dimension %s" % self.Dimension)  # xxx ask adapter
 
     @dimName.setter
     def dimName(self, name):
