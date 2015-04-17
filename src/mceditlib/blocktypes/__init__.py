@@ -97,8 +97,15 @@ class BlockTypeSet(object):
             'blockState': '[UNKNOWN_STATE]',
             'unlocalizedName': 'name.unknown',
             'opaqueCube': True,
+            'resourcePath': None,  # Name of states file in assets/minecraft/blockstates/
+            'resourceVariant': None,  # Name of variant from above file to use for this block type
+            'forcedModel': None,  # Name of model file in assets/minecraft/models/block, forced by user configured blocks
+            'forcedModelTextures': None,  # Mapping of texture variables to full texture paths, forced by user configured blocks
+            'forcedModelRotation': None,  # Mapping of 'x', 'y', 'z' to 0, 90, 180 etc to rotate model. for non-forced blocks this is specified in the states file.
+            'forcedRotationFlags': None,  # One or more of 'north', 'south' etc to use when rotating this block
             'renderType': 3,  # Model block - defaults to question mark box
             'unknown': False,  # False for blocks loaded from builtin .json, True for FML IDs, False for blocks configured in editor
+            'color': 0xffffff,
         }
 
         self.aka = defaultdict(lambda: "")
@@ -144,10 +151,6 @@ class BlockTypeSet(object):
         blockJson = self.blockJsons[nameAndState]
         if attr == "json":
             return blockJson
-        if attr == "resourcePath":
-            resourcePath = blockJson.get(attr)
-            if resourcePath is None:
-                return block.internalName.replace(self.namePrefix, "")
 
         retval = blockJson.get(attr)
         if retval is None:
