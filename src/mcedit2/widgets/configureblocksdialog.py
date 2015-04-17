@@ -226,9 +226,10 @@ class ConfigureBlocksDialog(QtGui.QDialog):
             self.blocksView.setColumnWidth(i, w)
 
         self.setModelControlsEnabled(False)
-        self.modelNameBox.currentIndexChanged.connect(self.modelNameChanged)
+        self.modelNameBox.activated.connect(self.modelNameChanged)
 
         header = self.modelTexturesTable.horizontalHeader()
+        header.resizeSection(0, 50)
         header.resizeSection(2, 40)
         header.setResizeMode(2, QtGui.QHeaderView.Fixed)
         header.setResizeMode(1, QtGui.QHeaderView.Stretch)
@@ -237,7 +238,7 @@ class ConfigureBlocksDialog(QtGui.QDialog):
 
 
     def getConfiguredBlocks(self):
-        return self.model.exportToJson()
+        return self.model.definedBlocks
 
     def setModelControlsEnabled(self, enabled):
         self.modelNameBox.setEnabled(enabled)
@@ -366,6 +367,8 @@ class ConfigureBlocksDialog(QtGui.QDialog):
             displayName = displayName.replace(".json", "")
 
             # List commonly used models first
+            if displayName == "cube_all":
+                firstModels.insert(0, (displayName, modelPath))
             if displayName.startswith("cube"):
                 firstModels.append((displayName, modelPath))
             else:
