@@ -144,9 +144,6 @@ class EditorSession(QtCore.QObject):
         self.worldEditor.requireRevisions()
         self.currentDimension = None
 
-        progress("Loading configured blocks...")
-        self.setConfiguredBlocks(configuredBlocks)
-
         progress("Creating menus...")
 
         # --- Menus ---
@@ -258,12 +255,11 @@ class EditorSession(QtCore.QObject):
 
         # --- Resources ---
 
-        progress("Loading resources...")
-
         self.resourceLoader = resourceLoader
         self.geometryCache = GeometryCache()
-        self.blockModels = BlockModels(self.worldEditor.blocktypes, self.resourceLoader)
-        self.textureAtlas = TextureAtlas(self.worldEditor, self.resourceLoader, self.blockModels)
+
+        progress("Loading textures and models...")
+        self.setConfiguredBlocks(configuredBlocks)  # Must be called after resourceLoader is in place
 
         self.editorOverlay = scenegraph.Node()
 
@@ -364,6 +360,9 @@ class EditorSession(QtCore.QObject):
 
     # --- Block config ---
 
+    # Emitted when configuredBlocks is changed. TextureAtlas and BlockModels will also have changed.
+    configuredBlocksChanged = QtCore.Signal()
+
     def setConfiguredBlocks(self, configuredBlocks):
         blocktypes = self.worldEditor.blocktypes
         if self.configuredBlocks is not None:
@@ -424,6 +423,11 @@ class EditorSession(QtCore.QObject):
 
 
         self.configuredBlocks = configuredBlocks
+
+        self.blockModels = BlockModels(self.worldEditor.blocktypes, self.resourceLoader)
+        self.textureAtlas = TextureAtlas(self.worldEditor, self.resourceLoader, self.blockModels)
+
+        self.configuredBlocksChanged.emit()
 
     # --- Selection ---
 
@@ -820,7 +824,6 @@ class EditorTab(QtGui.QWidget):
         self.viewButtonGroup = QtGui.QButtonGroup(self)
         self.viewButtonToolbar = QtGui.QToolBar()
         self.viewButtons = {}
-        self.viewFrames = []
         self.views = []
 
         for name, handler in (
@@ -843,7 +846,7 @@ class EditorTab(QtGui.QWidget):
         self.miniMapDockWidget.setWidget(self.miniMap)
         self.miniMapDockWidget.setFixedSize(256, 256)
 
-        self.viewFrames.append(self.miniMap)
+        self.views.append(self.miniMap)
 
         self.toolOptionsArea = QtGui.QScrollArea()
         self.toolOptionsArea.setWidgetResizable(True)
@@ -883,13 +886,19 @@ class EditorTab(QtGui.QWidget):
             currentViewName = "Cam"
         self.viewButtons[currentViewName].click()
 
+        self.editorSession.configuredBlocksChanged.connect(self.configuredBlocksDidChange)
+
     def destroy(self):
         self.editorSession = None
-        for view in self.viewFrames:
+        for view in self.views:
             view.destroy()
 
         super(EditorTab, self).destroy()
     editorSession = weakrefprop()
+
+    def configuredBlocksDidChange(self):
+        for view in self.views:
+            view.setTextureAtlas(self.editorSession.textureAtlas)
 
     def dimensionDidChange(self, dim):
         for view in self.views:
@@ -932,7 +941,6 @@ class EditorTab(QtGui.QWidget):
         self.miniMap.currentViewMatrixChanged(view)
 
     def _addView(self, frame):
-        self.viewFrames.append(frame)
         self.views.append(frame.worldView)
         frame.stackIndex = self.viewStack.addWidget(frame)
         frame.worldView.viewportMoved.connect(self.viewOffsetChanged)

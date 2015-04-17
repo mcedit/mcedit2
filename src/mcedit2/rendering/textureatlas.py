@@ -215,7 +215,6 @@ class TextureAtlas(object):
         return self._resourceLoader.openStream(name)
 
     def bindTerrain(self):
-        self.load()
         self._terrainTexture.bind()
 
     _dayTime = 1.0

@@ -86,6 +86,11 @@ class SlicedWorldScene(scenegraph.Node):
         self.textureAtlas = textureAtlas
         self.dim = 0
 
+    def setTextureAtlas(self, textureAtlas):
+        self.textureAtlas = textureAtlas
+        for scene in self.sliceScenes.itervalues():
+            scene.setTextureAtlas(scene)
+
     depthLimit = 0  # Number of depths to display
     advancedDepthLimit = 4  # Additional depths to calculate and cache
     loadRadius = 320

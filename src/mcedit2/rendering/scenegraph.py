@@ -150,10 +150,18 @@ class RenderstateNode(Node):
 class TextureAtlasNode(Node):
     RenderNodeClass = rendergraph.TextureAtlasRenderNode
 
-    def __init__(self, textureAtlas):
+    def __init__(self, textureAtlas=None):
         super(TextureAtlasNode, self).__init__()
         self.textureAtlas = textureAtlas
 
+    @property
+    def textureAtlas(self):
+        return self._textureAtlas
+
+    @textureAtlas.setter
+    def textureAtlas(self, value):
+        self._textureAtlas = value
+        self.dirty = True
 
 class TranslateNode(Node):
     RenderNodeClass = rendergraph.TranslateRenderNode

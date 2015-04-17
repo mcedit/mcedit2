@@ -139,7 +139,7 @@ class SceneUpdateTask(object):
 
 
 class WorldScene(scenegraph.Node):
-    def __init__(self, dimension, textureAtlas, geometryCache=None, bounds=None):
+    def __init__(self, dimension, textureAtlas=None, geometryCache=None, bounds=None):
         super(WorldScene, self).__init__()
 
         self.dimension = dimension
@@ -170,6 +170,11 @@ class WorldScene(scenegraph.Node):
 
         self.minlod = 0
         self.bounds = bounds
+
+    def setTextureAtlas(self, textureAtlas):
+        self.textureAtlas = textureAtlas
+        self.textureAtlasNode.textureAtlas = textureAtlas
+        self.discardAllChunks()
 
     def chunkPositions(self):
         return self.chunkRenderInfo.iterkeys()

@@ -134,11 +134,10 @@ class TextureAtlasRenderNode(RenderstateRenderNode):
         super(TextureAtlasRenderNode, self).__init__(sceneNode)
         self.textureAtlas = sceneNode.textureAtlas
 
-    def compile(self):
-        self.textureAtlas.load()
-        super(TextureAtlasRenderNode, self).compile()
-
     def enter(self):
+        if self.textureAtlas is None:
+            return
+
         GL.glColor(1., 1., 1., 1.)
         textureAtlas = self.textureAtlas
         GL.glActiveTexture(GL.GL_TEXTURE0)
@@ -163,6 +162,9 @@ class TextureAtlasRenderNode(RenderstateRenderNode):
         GL.glEnable(GL.GL_CULL_FACE)
 
     def exit(self):
+        if self.textureAtlas is None:
+            return
+
         GL.glDisable(GL.GL_CULL_FACE)
         GL.glActiveTexture(GL.GL_TEXTURE1)
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)

@@ -73,7 +73,7 @@ class WorldView(QGLWidget):
     mouseBlockPos = Vector(0, 0, 0)
     mouseBlockFace = faces.FaceYIncreasing
 
-    def __init__(self, dimension, textureAtlas, geometryCache=None, sharedGLWidget=None):
+    def __init__(self, dimension, textureAtlas=None, geometryCache=None, sharedGLWidget=None):
         """
 
         :param dimension:
@@ -97,6 +97,7 @@ class WorldView(QGLWidget):
         self.dimension = None
         self.worldScene = None
         self.loadableChunksNode = None
+        self.textureAtlas = None
 
         self.mouseRay = Ray(Vector(0, 1, 0), Vector(0, -1, 0))
 
@@ -112,7 +113,7 @@ class WorldView(QGLWidget):
         self.viewActions = []
         self.pressedKeys = set()
 
-        self.textureAtlas = textureAtlas
+        self.setTextureAtlas(textureAtlas)
 
         if geometryCache is None and sharedGLWidget is not None:
             geometryCache = sharedGLWidget.geometryCache
@@ -150,6 +151,14 @@ class WorldView(QGLWidget):
         self.renderGraph = rendergraph.createRenderNode(self.sceneGraph)
         self.resetLoadOrder()
         self.update()
+
+    def setTextureAtlas(self, textureAtlas):
+        self.textureAtlas = textureAtlas
+        self.makeCurrent()
+        textureAtlas.load()
+        if self.worldScene:
+            self.worldScene.setTextureAtlas(textureAtlas)
+        self.resetLoadOrder()
 
     def destroy(self):
         self.makeCurrent()
