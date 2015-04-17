@@ -139,7 +139,7 @@ cdef class BlockModels(object):
         missingnoProxy.color = 0xFFFFFF
         log.info("Loading block models...")
 
-        cdef dict modelDict=None, textures, textureVars
+        cdef dict modelDict, textures, textureVars
         cdef list elements
         cdef int i
         cdef short variantXrot, variantYrot, variantZrot
@@ -154,6 +154,7 @@ cdef class BlockModels(object):
             internalName = block.internalName
             blockState = block.blockState
             resourcePath = block.resourcePath
+            modelDict = None
 
             if block.forcedModel is not None:  # user-configured block
                 modelDict = self._getBlockModelByPath(block.forcedModel)
