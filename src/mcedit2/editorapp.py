@@ -391,7 +391,10 @@ class MCEditApp(QtGui.QApplication):
 
     def updateStatusLabel(self, pos=None, blocktype=None, cps=None, fps=None):
         if pos is not None:
-            self.positionLabel.setText("%s, chunk %s" % (tuple(pos), tuple(pos.chunkPos())))
+            if isinstance(pos, basestring):
+                self.positionLabel.setText(pos)
+            else:
+                self.positionLabel.setText("%s, chunk %s" % (tuple(pos), tuple(pos.chunkPos())))
         if blocktype is not None:
             self.blockNameLabel.setText("%s" % blocktype.displayName)
             self.blocktypeLabel.setText("(%d:%d)%s%s" % (blocktype.ID, blocktype.meta, blocktype.internalName, blocktype.blockState))
