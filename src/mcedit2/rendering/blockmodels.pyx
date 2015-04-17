@@ -70,21 +70,26 @@ cdef class FaceInfo(object):
         self.tintcolor = tintcolor
 
 
+UNKNOWN_MODEL = {
+    u"parent": u"block/cube_all",
+    u"textures": {
+        u"all": u"MCEDIT_UNKNOWN"
+    }
+}
 
 cdef class BlockModels(object):
-
     def _getBlockModel(self, modelName):
         if modelName == u"block/MCEDIT_UNKNOWN":
-            return {
-                u"parent": u"block/cube_all",
-                u"textures": {
-                    u"all": u"MCEDIT_UNKNOWN"
-                }
-            }
-        model = self.modelBlockJsons.get(modelName)
+            return UNKNOWN_MODEL
+        modelPath = "assets/minecraft/models/%s.json" % modelName
+
+        return self._getBlockModelByPath(modelPath)
+
+    def _getBlockModelByPath(self, modelPath):
+        model = self.modelBlockJsons.get(modelPath)
         if model is None:
-            model = json.load(self.resourceLoader.openStream("assets/minecraft/models/%s.json" % modelName))
-            self.modelBlockJsons[modelName] = model
+            model = json.load(self.resourceLoader.openStream(modelPath))
+            self.modelBlockJsons[modelPath] = model
         return model
 
     def _getBlockState(self, stateName):
@@ -121,7 +126,7 @@ cdef class BlockModels(object):
         self._texturePaths = set()
         self.firstTextures = {}  # first texture found for each block - used for icons (xxx)
         self.cookedModels = {}  # nameAndState -> list[(xyzuvstc, cullface)]
-        #self.cookedModelsByID = numpy.zeros((256*16, 16), dtype=list)  # (id, meta) -> list[(xyzuvstc, cullface)]
+
         memset(self.cookedModelsByID, 0, sizeof(self.cookedModelsByID))
         self.cooked = False
 
@@ -134,11 +139,10 @@ cdef class BlockModels(object):
         missingnoProxy.color = 0xFFFFFF
         log.info("Loading block models...")
 
-        cdef dict modelDict, textures, textureVars
+        cdef dict modelDict=None, textures, textureVars
         cdef list elements
         cdef int i
         cdef short variantXrot, variantYrot, variantZrot
-
 
         for i, block in enumerate(list(blocktypes) + [missingnoProxy]):
             if i % 100 == 0:
@@ -151,54 +155,62 @@ cdef class BlockModels(object):
             blockState = block.blockState
             resourcePath = block.resourcePath
 
-            nameAndState = internalName + blockState
-            try:
-                statesJson = self._getBlockState(resourcePath)
-            except ResourceNotFound as e:
-                if block.internalName.startswith("minecraft:"):
-                    log.warn("Could not get blockstates resource for %s, skipping... (%r)", block, e)
-                continue
-            variants = statesJson['variants']
-            # variants is a dict with each key a resourceVariant value (from the block's ModelResourceLocation)
-            # the value for this key is either a dict describing which model to use
-            # ... or a list of such models to be selected from randomly
-            #
-            # each model dict must have a 'model' key whose value is the name of a file under assets/minecraft/models
-            # model dict may also have optional keys 'x', 'y', 'z' with a value in degrees, to rotate the model
-            # around that axis
-            # another optional key is 'uvlock', which needs investigating
-            # variant dict for 'rail':
+            if block.forcedModel is not None:  # user-configured block
+                modelDict = self._getBlockModelByPath(block.forcedModel)
 
-            # "variants": {
-            #     "shape=north_south": { "model": "normal_rail_flat" },
-            #     "shape=east_west": { "model": "normal_rail_flat", "y": 90 },
-            #     "shape=ascending_east": { "model": "normal_rail_raised_ne", "y": 90 },
-            #     "shape=ascending_west": { "model": "normal_rail_raised_sw", "y": 90 },
-            #     "shape=ascending_north": { "model": "normal_rail_raised_ne" },
-            #     "shape=ascending_south": { "model": "normal_rail_raised_sw" },
-            #     "shape=south_east": { "model": "normal_rail_curved" },
-            #     "shape=south_west": { "model": "normal_rail_curved", "y": 90 },
-            #     "shape=north_west": { "model": "normal_rail_curved", "y": 180 },
-            #     "shape=north_east": { "model": "normal_rail_curved", "y": 270 }
-            # }
+            elif resourcePath is not None:
+                nameAndState = internalName + blockState
+                try:
+                    statesJson = self._getBlockState(resourcePath)
+                except ResourceNotFound as e:
+                    if block.internalName.startswith("minecraft:"):
+                        log.warn("Could not get blockstates resource for %s, skipping... (%r)", block, e)
+                    continue
+                variants = statesJson['variants']
+                # variants is a dict with each key a resourceVariant value (from the block's ModelResourceLocation)
+                # the value for this key is either a dict describing which model to use
+                # ... or a list of such models to be selected from randomly
+                #
+                # each model dict must have a 'model' key whose value is the name of a file under assets/minecraft/models
+                # model dict may also have optional keys 'x', 'y', 'z' with a value in degrees, to rotate the model
+                # around that axis
+                # another optional key is 'uvlock', which needs investigating
+                # variant dict for 'rail':
 
-            resourceVariant = block.resourceVariant
-            log.debug("Loading %s#%s for %s", resourcePath, resourceVariant, block)
-            variantDict = variants[resourceVariant]
-            if isinstance(variantDict, list):
-                variantDict = variantDict[0]  # do the random pick thing later, if at all
-            modelName = variantDict['model']
-            try:
-                modelDict = self._getBlockModel("block/" + modelName)
-            except ResourceNotFound as e:
-                log.exception("Could not get model resource %s for block %s, skipping... (%r)", modelName, block, e)
+                # "variants": {
+                #     "shape=north_south": { "model": "normal_rail_flat" },
+                #     "shape=east_west": { "model": "normal_rail_flat", "y": 90 },
+                #     "shape=ascending_east": { "model": "normal_rail_raised_ne", "y": 90 },
+                #     "shape=ascending_west": { "model": "normal_rail_raised_sw", "y": 90 },
+                #     "shape=ascending_north": { "model": "normal_rail_raised_ne" },
+                #     "shape=ascending_south": { "model": "normal_rail_raised_sw" },
+                #     "shape=south_east": { "model": "normal_rail_curved" },
+                #     "shape=south_west": { "model": "normal_rail_curved", "y": 90 },
+                #     "shape=north_west": { "model": "normal_rail_curved", "y": 180 },
+                #     "shape=north_east": { "model": "normal_rail_curved", "y": 270 }
+                # }
+
+                resourceVariant = block.resourceVariant
+                log.debug("Loading %s#%s for %s", resourcePath, resourceVariant, block)
+                variantDict = variants[resourceVariant]
+                if isinstance(variantDict, list):
+                    variantDict = variantDict[0]  # do the random pick thing later, if at all
+                modelName = variantDict['model']
+                try:
+                    modelDict = self._getBlockModel("block/" + modelName)
+                except ResourceNotFound as e:
+                    log.exception("Could not get model resource %s for block %s, skipping... (%r)", modelName, block, e)
+                    continue
+                except ValueError as e:
+                    log.exception("Error parsing json for block/%s: %s", modelName, e)
+                    continue
+                variantXrot = variantDict.get("x", 0)
+                variantYrot = variantDict.get("y", 0)
+                variantZrot = variantDict.get("z", 0)
+
+            if modelDict is None:
+                log.info("No model found for %s", internalName)
                 continue
-            except ValueError as e:
-                log.exception("Error parsing json for block/%s: %s", modelName, e)
-                continue
-            variantXrot = variantDict.get("x", 0)
-            variantYrot = variantDict.get("y", 0)
-            variantZrot = variantDict.get("z", 0)
 
             # model will either have an 'elements' key or a 'parent' key (maybe both).
             # 'parent' will be the name of a model
@@ -249,6 +261,14 @@ cdef class BlockModels(object):
             else:
                 raise ValueError("Parent loop detected in block model %s" % modelName)
 
+            if block.forcedModelTextures:  # user-configured model textures
+                for var, tex in block.forcedModelTextures.iteritems():
+                    textureVars[var[1:]] = tex
+            if block.forcedModelRotation:
+                variantXrot = block.forcedModelRotation[0]
+                variantYrot = block.forcedModelRotation[1]
+                variantZrot = block.forcedModelRotation[2]
+
             try:
                 # each element describes a box with up to six faces, each with a texture. convert the box into
                 # quads.
@@ -267,8 +287,6 @@ cdef class BlockModels(object):
                 for element in allElements:
                     quads = self.buildBoxQuads(element, nameAndState, textureVars, variantXrot, variantYrot, variantZrot, variantMatrix, blockColor)
                     allQuads.extend(quads)
-
-
 
                 self.modelQuads[internalName + blockState] = allQuads
 
@@ -329,13 +347,13 @@ cdef class BlockModels(object):
                     raise ValueError("Texture variable %s is not assigned." % lasttexvar)
                 elif texture[0] == u"#":
                     lasttexvar = texture
-                    texture = textureVars[texture[1:]]
+                    texture = textureVars.get(texture[1:], u"MCEDIT_UNKNOWN")
                 else:
                     break
             else:
                 raise ValueError("Texture variable loop detected!")
 
-            if texture != u"MCEDIT_UNKNOWN":
+            if texture != u"MCEDIT_UNKNOWN" and not texture.endswith(".png"):
                 texture = "assets/minecraft/textures/" + texture + ".png"
             self.firstTextures.setdefault(nameAndState, texture)
             self._texturePaths.add(texture)
@@ -387,8 +405,11 @@ cdef class BlockModels(object):
             modelQuads.quads = <ModelQuad *>malloc(modelQuads.count * sizeof(ModelQuad))
 
             for i, faceInfo in enumerate(allQuads):
-
-                l, t, w, h = texCoordsByName[faceInfo.texture]
+                if faceInfo.texture not in texCoordsByName:
+                    log.warn("Texture %s was not loaded, using 'UNKNOWN'", faceInfo.texture)
+                    l, t, w, h = texCoordsByName[UNKNOWN_BLOCK]
+                else:
+                    l, t, w, h = texCoordsByName[faceInfo.texture]
                 u1 = faceInfo.u1
                 u2 = faceInfo.u2
                 v1 = faceInfo.v1
