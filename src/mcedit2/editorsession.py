@@ -30,6 +30,7 @@ from mcedit2.worldview.cutaway import CutawayWorldViewFrame
 from mcedit2.worldview.minimap import MinimapWorldView
 from mcedit2.worldview.overhead import OverheadWorldViewFrame
 from mceditlib import util
+from mceditlib.anvil.biome_types import BiomeTypes
 from mceditlib.geometry import Vector
 from mceditlib.operations import ComposeOperations
 from mceditlib.operations.entity import RemoveEntitiesOperation
@@ -262,6 +263,8 @@ class EditorSession(QtCore.QObject):
         self.setConfiguredBlocks(configuredBlocks)  # Must be called after resourceLoader is in place
 
         self.editorOverlay = scenegraph.Node()
+
+        self.biomeTypes = BiomeTypes()
 
         # --- Panels ---
         progress("Loading panels...")
@@ -707,7 +710,7 @@ class EditorSession(QtCore.QObject):
 
     def chunkDidComplete(self):
         from mcedit2 import editorapp
-        editorapp.MCEditApp.app.updateStatusLabel(None, None, self.loader.cps, self.editorTab.currentView().fps)
+        editorapp.MCEditApp.app.updateStatusLabel(None, None, None, self.loader.cps, self.editorTab.currentView().fps)
 
     def updateStatusFromEvent(self, event):
         from mcedit2 import editorapp
@@ -715,9 +718,17 @@ class EditorSession(QtCore.QObject):
             id = self.currentDimension.getBlockID(*event.blockPosition)
             data = self.currentDimension.getBlockData(*event.blockPosition)
             block = self.worldEditor.blocktypes[id, data]
-            editorapp.MCEditApp.app.updateStatusLabel(event.blockPosition, block, self.loader.cps, event.view.fps)
+            biomeID = self.currentDimension.getBiomeID(event.blockPosition[0], event.blockPosition[2])
+            biome = self.biomeTypes.types.get(biomeID)
+            if biome is not None:
+                biomeName = biome.name
+            else:
+                biomeName = "Unknown biome"
+
+            biomeText = "%s (%d)" % (biome.name, biomeID)
+            editorapp.MCEditApp.app.updateStatusLabel(event.blockPosition, block, biomeText, self.loader.cps, event.view.fps)
         else:
-            editorapp.MCEditApp.app.updateStatusLabel('(N/A)', None, self.loader.cps, event.view.fps)
+            editorapp.MCEditApp.app.updateStatusLabel('(N/A)', None, None, self.loader.cps, event.view.fps)
 
     def viewMousePress(self, event):
         self.updateStatusFromEvent(event)

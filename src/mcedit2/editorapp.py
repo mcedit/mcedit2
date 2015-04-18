@@ -247,6 +247,7 @@ class MCEditApp(QtGui.QApplication):
         # --- Status Bar ---
 
         self.positionLabel = QtGui.QLabel("xx, yy, zz", minimumWidth=100)
+        self.biomeLabel = QtGui.QLabel("Nowhere", minimumWidth=100)
         self.blocktypeLabel = QtGui.QLabel("(-1:-1)minecraft:rocktonium", minimumWidth=250)
         self.blockNameLabel = QtGui.QLabel("rocktonium", minimumWidth=150)
         self.cpsLabel = QtGui.QLabel("-1 cps", minimumWidth=65)
@@ -254,6 +255,7 @@ class MCEditApp(QtGui.QApplication):
 
         statusBar = mainWindow.statusBar()
         statusBar.addPermanentWidget(self.positionLabel)
+        statusBar.addPermanentWidget(self.biomeLabel)
         statusBar.addPermanentWidget(self.blocktypeLabel)
         statusBar.addPermanentWidget(self.blockNameLabel)
         statusBar.addPermanentWidget(self.cpsLabel)
@@ -389,12 +391,14 @@ class MCEditApp(QtGui.QApplication):
 
     # --- Status Bar ---
 
-    def updateStatusLabel(self, pos=None, blocktype=None, cps=None, fps=None):
+    def updateStatusLabel(self, pos=None, blocktype=None, biome=None, cps=None, fps=None):
         if pos is not None:
             if isinstance(pos, basestring):
                 self.positionLabel.setText(pos)
             else:
                 self.positionLabel.setText("%s, chunk %s" % (tuple(pos), tuple(pos.chunkPos())))
+        if biome is not None:
+            self.biomeLabel.setText("%s" % biome)
         if blocktype is not None:
             self.blockNameLabel.setText("%s" % blocktype.displayName)
             self.blocktypeLabel.setText("(%d:%d)%s%s" % (blocktype.ID, blocktype.meta, blocktype.internalName, blocktype.blockState))
