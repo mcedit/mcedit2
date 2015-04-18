@@ -202,6 +202,7 @@ class FakeBrushChunk(object):
         self.dimension = world
         self.cx = cx
         self.cz = cz
+        self.Biomes = numpy.zeros((16, 16), numpy.uint8)
 
     @property
     def blocktypes(self):
