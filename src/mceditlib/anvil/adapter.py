@@ -110,7 +110,7 @@ class AnvilSection(object):
     4-bit arrays are unpacked to byte arrays to make them work with numpy's array routines.
 
     To create the full 12-bit block ID, the Blocks array is extended to 16 bits and the Add array is merged into
-    the Blocks array.
+    the high bits of the Blocks array.
 
     :ivar Y: section's Y value [0..(world.Height+15) >> 4]
     :ivar Blocks: Block IDs [0..4095]
@@ -460,8 +460,8 @@ class AnvilWorldAdapter(object):
             try:
                 metadataTag = nbt.load(buf=self.selectedRevision.readFile("level.dat_old"))
                 self.metadata = AnvilWorldMetadata(metadataTag)
+                self.metadata.dirty = True
                 log.info("level.dat restored from backup.")
-                self.saveChanges()
             except Exception as e:
                 traceback.print_exc()
                 log.info("%r while loading level.dat_old. Initializing with defaults.", e)
