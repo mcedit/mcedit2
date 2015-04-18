@@ -7,6 +7,7 @@ import json
 import logging
 import math
 import itertools
+from PySide import QtGui
 
 import numpy as np
 cimport numpy as cnp
@@ -25,10 +26,12 @@ from libc.string cimport memset
 
 log = logging.getLogger(__name__)
 
+
 cdef struct ModelQuad:
     float[32] xyzuvstc
     char[4] cullface  # isCulled, dx, dy, dz
     char[4] quadface  # face, dx, dy, dz
+    char biomeTintType
 
 cdef struct ModelQuadList:
     int count
@@ -46,11 +49,12 @@ cdef class FaceInfo(object):
         int textureRotation
         int variantXrot, variantYrot, variantZrot
         object tintcolor
+        char biomeTintType
 
     def __init__(self, x1, y1, z1, x2, y2, z2, face,
                  texture, u1, v1, u2, v2, cullface,
                  shade, ox, oy, oz, elementMatrix, textureRotation,
-                 variantXrot, variantYrot, variantZrot, variantMatrix, tintcolor):
+                 variantXrot, variantYrot, variantZrot, variantMatrix, tintcolor, biomeTintType):
         self.x1, self.y1, self.z1 = x1, y1, z1
         self.x2, self.y2, self.z2 = x2, y2, z2
         self.face = face
@@ -68,7 +72,7 @@ cdef class FaceInfo(object):
         self.variantZrot = variantZrot
         self.variantMatrix = variantMatrix
         self.tintcolor = tintcolor
-
+        self.biomeTintType = biomeTintType
 
 UNKNOWN_MODEL = {
     u"parent": u"block/cube_all",
@@ -120,6 +124,22 @@ cdef class BlockModels(object):
         self.resourceLoader = resourceLoader
         self.blocktypes = blocktypes
 
+        self.grassImage = QtGui.QImage.fromData(resourceLoader.openStream("assets/minecraft/textures/colormap/grass.png").read())
+        self.grassImage = self.grassImage.convertToFormat(QtGui.QImage.Format_ARGB32)
+        self.grassImageX = self.grassImage.width()
+        self.grassImageY = self.grassImage.height()
+
+        self._grassImageBits = self.grassImage.bits()
+        self.grassImageBits = self._grassImageBits
+
+        self.foliageImage = QtGui.QImage.fromData(resourceLoader.openStream("assets/minecraft/textures/colormap/foliage.png").read())
+        self.foliageImage = self.foliageImage.convertToFormat(QtGui.QImage.Format_ARGB32)
+        self.foliageImageX = self.foliageImage.width()
+        self.foliageImageY = self.foliageImage.height()
+
+        self._foliageImageBits = self.foliageImage.bits()
+        self.foliageImageBits = self._foliageImageBits
+
         self.modelBlockJsons = {}
         self.modelStateJsons = {}
         self.modelQuads = {}
@@ -143,6 +163,7 @@ cdef class BlockModels(object):
         cdef list elements
         cdef int i
         cdef short variantXrot, variantYrot, variantZrot
+        cdef char biomeTintType
 
         for i, block in enumerate(list(blocktypes) + [missingnoProxy]):
             if i % 100 == 0:
@@ -270,6 +291,13 @@ cdef class BlockModels(object):
                 variantYrot = block.forcedModelRotation[1]
                 variantZrot = block.forcedModelRotation[2]
 
+            if block.biomeTintType == "grass":
+                biomeTintType = BIOME_GRASS
+            elif block.biomeTintType == "foliage":
+                biomeTintType = BIOME_FOLIAGE
+            else:
+                biomeTintType = BIOME_NONE
+
             try:
                 # each element describes a box with up to six faces, each with a texture. convert the box into
                 # quads.
@@ -286,7 +314,7 @@ cdef class BlockModels(object):
 
                 variantMatrix = variantRotation(variantXrot, variantYrot, variantZrot)
                 for element in allElements:
-                    quads = self.buildBoxQuads(element, nameAndState, textureVars, variantXrot, variantYrot, variantZrot, variantMatrix, blockColor)
+                    quads = self.buildBoxQuads(element, nameAndState, textureVars, variantXrot, variantYrot, variantZrot, variantMatrix, blockColor, biomeTintType)
                     allQuads.extend(quads)
 
                 self.modelQuads[internalName + blockState] = allQuads
@@ -299,7 +327,7 @@ cdef class BlockModels(object):
 
     def buildBoxQuads(self, dict element, unicode nameAndState, dict textureVars,
                        short variantXrot, short variantYrot, short variantZrot,
-                       cnp.ndarray variantMatrix, tuple blockColor):
+                       cnp.ndarray variantMatrix, tuple blockColor, char biomeTintType):
         quads = []
         shade = element.get("shade", True)
 
@@ -362,7 +390,7 @@ cdef class BlockModels(object):
             quads.append(FaceInfo(x1, y1, z1, x2, y2, z2, face,
                     texture, u1, v1, u2, v2, cullface,
                     shade, ox, oy, oz, elementMatrix, info.get("rotation", 0),
-                    variantXrot, variantYrot, variantZrot, variantMatrix, tintcolor))
+                    variantXrot, variantYrot, variantZrot, variantMatrix, tintcolor, biomeTintType))
 
         return quads
 
@@ -466,14 +494,17 @@ cdef class BlockModels(object):
                         rgba[28 + 32*j + 2] = 0xff
                         rgba[28 + 32*j + 3] = 0xff
 
-
+                modelQuads.quads[i].biomeTintType = 0
                 if faceInfo.tintcolor is not None:
-                    tr, tg, tb = faceInfo.tintcolor
-                    for j in range(4):
-                        rgba[28 + 32*j + 0] = (tr * rgba[28 + 32*j + 0]) >> 8
-                        rgba[28 + 32*j + 1] = (tg * rgba[28 + 32*j + 1]) >> 8
-                        rgba[28 + 32*j + 2] = (tb * rgba[28 + 32*j + 2]) >> 8
-
+                    #log.info("Applying tint color for face %d of %s, biomeTint=%d", i, nameAndState, faceInfo.biomeTintType)
+                    if faceInfo.biomeTintType is BIOME_NONE:
+                        tr, tg, tb = faceInfo.tintcolor
+                        for j in range(4):
+                            rgba[28 + 32*j + 0] = (tr * rgba[28 + 32*j + 0]) >> 8
+                            rgba[28 + 32*j + 1] = (tg * rgba[28 + 32*j + 1]) >> 8
+                            rgba[28 + 32*j + 2] = (tb * rgba[28 + 32*j + 2]) >> 8
+                    else:
+                        modelQuads.quads[i].biomeTintType = faceInfo.biomeTintType
 
                 #cookedQuads.append((xyzuvstc, cullface, face))
                 if cullface != -1:

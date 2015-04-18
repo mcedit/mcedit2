@@ -106,6 +106,7 @@ class BlockTypeSet(object):
             'renderType': 3,  # Model block - defaults to question mark box
             'unknown': False,  # False for blocks loaded from builtin .json, True for FML IDs, False for blocks configured in editor
             'color': 0xffffff,
+            'biomeTintType': None,  # "grass", "leaves", or None
         }
 
         self.aka = defaultdict(lambda: "")

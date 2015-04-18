@@ -1,3 +1,13 @@
 [
-
+  {"internalName": "minecraft:grass", "blockState": "minecraft:grass[snowy=false]", "biomeTintType": "grass"},
+  {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=false,decayable=true,variant=oak]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=false,decayable=false,variant=oak]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=true,decayable=false,variant=oak]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=true,decayable=true,variant=oak]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=false,decayable=true,variant=jungle]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=false,decayable=false,variant=jungle]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=true,decayable=false,variant=jungle]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=true,decayable=true,variant=jungle]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:tallgrass", "blockState": "minecraft:tallgrass[type=tall_grass]", "biomeTintType": "grass"},
+  {"internalName": "minecraft:tallgrass", "blockState": "minecraft:tallgrass[type=fern]", "biomeTintType": "grass"}
 ]

@@ -34,13 +34,18 @@ class BlockModelMesh(object):
         self.layer = Layer.Blocks
 
     def createVertexArrays(self):
-        DEF quadBytes = 32
+        DEF quadFloats = 32
+        DEF vertexBytes = 32
         cdef numpy.ndarray[numpy.uint16_t, ndim=3] areaBlocks
         cdef numpy.ndarray[numpy.uint8_t, ndim=3] areaBlockLight
         cdef numpy.ndarray[numpy.uint8_t, ndim=3] areaSkyLight
         cdef numpy.ndarray[numpy.uint8_t, ndim=3] areaData
+        cdef numpy.ndarray[numpy.uint8_t, ndim=2] areaBiomes
         cdef numpy.ndarray[numpy.uint8_t, ndim=1] renderType
         cdef numpy.ndarray[numpy.uint8_t, ndim=1] opaqueCube
+        cdef numpy.ndarray[numpy.float32_t, ndim=1] biomeTemp
+        cdef numpy.ndarray[numpy.float32_t, ndim=1] biomeRain
+
         cdef blockmodels.BlockModels blockModels
 
         cdef short cy = self.sectionUpdate.cy
@@ -55,8 +60,13 @@ class BlockModelMesh(object):
         areaBlockLight = self.sectionUpdate.areaLights("BlockLight")
         areaSkyLight = self.sectionUpdate.areaLights("SkyLight")
         areaData = self.sectionUpdate.areaData
+        areaBiomes = self.sectionUpdate.areaBiomes
         renderType = self.sectionUpdate.renderType
         opaqueCube = blocktypes.opaqueCube
+        biomeTemp = self.sectionUpdate.biomeTemp
+        biomeRain = self.sectionUpdate.biomeRain
+
+
 
         #faceQuadVerts = []
         cdef unsigned short waterID = blocktypes["minecraft:water"].ID
@@ -87,12 +97,22 @@ class BlockModelMesh(object):
 
         cdef unsigned short rx, ry, rz
         cdef unsigned char bl, sl
+        cdef unsigned char tintType
+        cdef unsigned char biomeID
+        cdef float temperature, rainfall
+        cdef unsigned int imageX, imageY
+        cdef size_t imageOffset
 
         cdef size_t buffer_ptr = 0
         cdef size_t buffer_size = 256
-        cdef float * vertexBuffer = <float *>malloc(buffer_size * sizeof(float) * quadBytes)
+        cdef float * vertexBuffer = <float *>malloc(buffer_size * sizeof(float) * quadFloats)
         cdef float * xyzuvstc
         cdef numpy.ndarray vabuffer
+        cdef unsigned char * vertexColor
+        cdef unsigned short color
+        cdef size_t vertex, channel
+        cdef const unsigned char * tintColor
+
         if vertexBuffer == NULL:
             return
         for y in range(1, 17):
@@ -107,10 +127,11 @@ class BlockModelMesh(object):
                     meta = areaData[y, z, x]
 
                     if renderType[ID] == 3:  # model blocks
-
                         quads = blockModels.cookedModelsByID[ID][meta]
                         if quads.count == 0:
                             continue
+
+                        biomeID = areaBiomes[z, x]
 
                         for i in range(quads.count):
                             quad = quads.quads[i]
@@ -128,9 +149,43 @@ class BlockModelMesh(object):
                             bl = areaBlockLight[ny, nz, nx]  # xxx block.useNeighborLighting
                             sl = areaSkyLight[ny, nz, nx]
 
+                            xyzuvstc = vertexBuffer + buffer_ptr * quadFloats
+                            memcpy(xyzuvstc, quad.xyzuvstc, sizeof(float) * quadFloats)
 
-                            xyzuvstc = vertexBuffer + buffer_ptr * quadBytes
-                            memcpy(xyzuvstc, quad.xyzuvstc, sizeof(float) * quadBytes)
+                            temperature = biomeTemp[biomeID]
+                            rainfall = biomeRain[biomeID]
+                            temperature = min(max(temperature, 0.0), 1.0)
+                            rainfall = min(max(rainfall, 0.0), 1.0)
+
+                            rainfall *= temperature
+
+                            if quad.biomeTintType:
+                                if quad.biomeTintType == blockmodels.BIOME_GRASS:
+                                    imageX = <unsigned int>((1.0 - temperature) * (blockModels.grassImageX - 1))
+                                    imageY = <unsigned int>((1.0 - rainfall) * (blockModels.grassImageY - 1))
+                                    if biomeID == 2:
+                                        log.info("B: %d, T: %f, R: %f, \tX: %d, Y: %d", biomeID, temperature, rainfall, imageX, imageY)
+                                    imageOffset = imageX + blockModels.grassImageX * imageY
+                                    tintColor = &blockModels.grassImageBits[imageOffset * 4]
+                                if quad.biomeTintType == blockmodels.BIOME_FOLIAGE:
+                                    imageX = <unsigned int>((1.0 - temperature) * (blockModels.foliageImageX - 1))
+                                    imageY = <unsigned int>((1.0 - rainfall) * (blockModels.foliageImageY - 1))
+                                    if biomeID == 2:
+                                        log.info("B: %d, T: %f, R: %f, \tX: %d, Y: %d", biomeID, temperature, rainfall, imageX, imageY)
+                                    imageOffset = imageX + blockModels.foliageImageX * imageY
+                                    tintColor = &blockModels.foliageImageBits[imageOffset * 4]
+
+                                vertexColor = <unsigned char *>xyzuvstc
+                                for vertex in range(4):
+                                    for channel in range(3):
+                                        color = vertexColor[vertexBytes * vertex + vertexBytes - 4 + channel]
+                                        # format is ARGB8, but this is with respect to 4-byte words
+                                        # when the words are little endian, the byte ordering becomes BGRA
+                                        # what i REALLY SHOULD do is get the pixel as an int and bit shift the bytes out.
+                                        color *= tintColor[2-channel]
+                                        color >>= 8
+                                        vertexColor[vertexBytes * vertex + vertexBytes - 4 + channel] = <unsigned char>color
+
 
                             xyzuvstc[0] += rx
                             xyzuvstc[1] += ry
@@ -163,7 +218,7 @@ class BlockModelMesh(object):
 
                             if buffer_ptr >= buffer_size:
                                 buffer_size *= 2
-                                vertexBuffer = <float *>realloc(vertexBuffer, buffer_size * sizeof(float) * quadBytes)
+                                vertexBuffer = <float *>realloc(vertexBuffer, buffer_size * sizeof(float) * quadFloats)
 
                     elif renderType[ID] == 1:
                         if ID == waterFlowID or ID == waterID:
@@ -196,8 +251,8 @@ class BlockModelMesh(object):
                                 if nMeta > 7 or 7 - (nMeta & 0x7) >= 7 - (meta & 0x7):
                                     continue  # cull face as the neighboring block is fuller
 
-                            xyzuvstc = vertexBuffer + buffer_ptr * quadBytes
-                            memcpy(xyzuvstc, quad.xyzuvstc, sizeof(float) * quadBytes)
+                            xyzuvstc = vertexBuffer + buffer_ptr * quadFloats
+                            memcpy(xyzuvstc, quad.xyzuvstc, sizeof(float) * quadFloats)
 
                             xyzuvstc[0] += rx
                             xyzuvstc[1] += ry
@@ -238,11 +293,11 @@ class BlockModelMesh(object):
 
                             if buffer_ptr >= buffer_size:
                                 buffer_size *= 2
-                                vertexBuffer = <float *>realloc(vertexBuffer, buffer_size * sizeof(float) * quadBytes)
+                                vertexBuffer = <float *>realloc(vertexBuffer, buffer_size * sizeof(float) * quadFloats)
 
         if buffer_ptr:  # now buffer size
             vertexArray = VertexArrayBuffer(buffer_ptr)
             vabuffer = vertexArray.buffer
-            memcpy(vabuffer.data, vertexBuffer, buffer_ptr * sizeof(float) * quadBytes)
+            memcpy(vabuffer.data, vertexBuffer, buffer_ptr * sizeof(float) * quadFloats)
             self.sceneNode = scenegraph.VertexNode(vertexArray)
         free(vertexBuffer)

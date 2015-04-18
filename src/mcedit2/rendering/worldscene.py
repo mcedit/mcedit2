@@ -15,6 +15,7 @@ from mcedit2.rendering.chunknode import ChunkNode, ChunkGroupNode
 from mcedit2.rendering.chunkupdate import ChunkRenderInfo
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.geometrycache import GeometryCache
+from mceditlib.anvil.biome_types import BiomeTypes
 
 log = logging.getLogger(__name__)
 
@@ -64,12 +65,19 @@ class SceneUpdateTask(object):
         for block in self.worldScene.dimension.blocktypes:
             self.renderType[block.ID] = block.renderType
 
+        biomeTypes = BiomeTypes()
+        self.biomeRain = numpy.zeros((256*256,), numpy.float32)
+        self.biomeTemp = numpy.zeros((256*256,), numpy.float32)
+
+        for biome in biomeTypes.types.itervalues():
+            self.biomeRain[biome.ID] = biome.rainfall
+            self.biomeTemp[biome.ID] = biome.temperature
+
     overheadMode = False
 
     maxWorkFactor = 64
     minWorkFactor = 1
     workFactor = 2
-
 
     def wantsChunk(self, cPos):
         chunkInfo = self.worldScene.chunkRenderInfo.get(cPos)

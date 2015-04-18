@@ -254,6 +254,14 @@ class SectionUpdate(object):
     def areaData(self):
         return self.areaBlocksOrData("Data")
 
+    @lazyprop
+    def areaBiomes(self):
+        chunkWidth, chunkLength, chunkHeight = self.chunkSection.Blocks.shape
+        areaBiomes = numpy.zeros((chunkWidth+2, chunkLength+2), numpy.uint8)
+        # need neighbors later to blend biome colors
+        areaBiomes[1:-1, 1:-1] = self.chunkUpdate.chunk.Biomes
+        return areaBiomes
+
     def areaBlocksOrData(self, arrayName):
         """
         Return the blocks in an 18-wide cube centered on this section. Only retrieves blocks from the
@@ -328,6 +336,14 @@ class SectionUpdate(object):
     @property
     def renderType(self):
         return self.chunkUpdate.updateTask.renderType
+
+    @property
+    def biomeTemp(self):
+        return self.chunkUpdate.updateTask.biomeTemp
+
+    @property
+    def biomeRain(self):
+        return self.chunkUpdate.updateTask.biomeRain
 
     @lazyprop
     def exposedBlockMasks(self):
