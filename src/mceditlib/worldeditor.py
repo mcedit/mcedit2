@@ -764,7 +764,7 @@ class WorldEditorDimension(object):
             chunk = self.getChunk(cx, cz)
             sec = chunk.getSection(cy, create=True)
             if sec:
-                array = sec.Data
+                array = sec.Blocks
                 assert array is not None
                 if array is not None:
                     array[y & 0xf, z & 0xf, x & 0xf] = value
@@ -795,6 +795,27 @@ class WorldEditorDimension(object):
                 assert array is not None
                 if array is not None:
                     array[y & 0xf, z & 0xf, x & 0xf] = value
+            chunk.dirty = True
+
+    def getBiomeID(self, x, z, default=0):
+        cx = x >> 4
+        cz = z >> 4
+        if self.containsChunk(cx, cz):
+            chunk = self.getChunk(cx, cz)
+            array = chunk.Biomes
+            if array is not None:
+                return array[z & 0xf, x & 0xf]
+        return default
+
+    def setBiomeID(self, x, z, value):
+        cx = x >> 4
+        cz = z >> 4
+        if self.containsChunk(cx, cz):
+            chunk = self.getChunk(cx, cz)
+            array = chunk.Biomes
+            assert array is not None
+            if array is not None:
+                array[z & 0xf, x & 0xf] = value
             chunk.dirty = True
 
     # --- Blocks by coordinate arrays ---
