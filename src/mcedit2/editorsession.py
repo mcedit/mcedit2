@@ -725,7 +725,7 @@ class EditorSession(QtCore.QObject):
             else:
                 biomeName = "Unknown biome"
 
-            biomeText = "%s (%d)" % (biome.name, biomeID)
+            biomeText = "%s (%d)" % (biomeName, biomeID)
             editorapp.MCEditApp.app.updateStatusLabel(event.blockPosition, block, biomeText, self.loader.cps, event.view.fps)
         else:
             editorapp.MCEditApp.app.updateStatusLabel('(N/A)', None, None, self.loader.cps, event.view.fps)
