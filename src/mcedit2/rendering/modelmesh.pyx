@@ -163,15 +163,11 @@ class BlockModelMesh(object):
                                 if quad.biomeTintType == blockmodels.BIOME_GRASS:
                                     imageX = <unsigned int>((1.0 - temperature) * (blockModels.grassImageX - 1))
                                     imageY = <unsigned int>((1.0 - rainfall) * (blockModels.grassImageY - 1))
-                                    if biomeID == 2:
-                                        log.info("B: %d, T: %f, R: %f, \tX: %d, Y: %d", biomeID, temperature, rainfall, imageX, imageY)
                                     imageOffset = imageX + blockModels.grassImageX * imageY
                                     tintColor = &blockModels.grassImageBits[imageOffset * 4]
                                 if quad.biomeTintType == blockmodels.BIOME_FOLIAGE:
                                     imageX = <unsigned int>((1.0 - temperature) * (blockModels.foliageImageX - 1))
                                     imageY = <unsigned int>((1.0 - rainfall) * (blockModels.foliageImageY - 1))
-                                    if biomeID == 2:
-                                        log.info("B: %d, T: %f, R: %f, \tX: %d, Y: %d", biomeID, temperature, rainfall, imageX, imageY)
                                     imageOffset = imageX + blockModels.foliageImageX * imageY
                                     tintColor = &blockModels.foliageImageBits[imageOffset * 4]
 
