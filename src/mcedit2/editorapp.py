@@ -602,7 +602,19 @@ class MCEditApp(QtGui.QApplication):
 
         # Nope. Use the version and respack chosen in the world list.
         # ... should search for installs matching this one, but vanilla installs are still multi-version...
-        return self.worldList.getSelectedResourceLoader()
+        return self.getSelectedResourceLoader()
+
+    def getSelectedResourceLoader(self):
+        i = minecraftinstall.currentInstallOption.value()
+        if i == -1:
+            return minecraftinstall.GetInstalls().getDefaultResourceLoader()
+
+        install = minecraftinstall.GetInstalls().getInstall(i)
+        v = minecraftinstall.currentVersionOption.value()
+        if not v:
+            v = list(install.versions)[0]
+        p = minecraftinstall.currentResourcePackOption.value() or None
+        return install.getResourceLoader(v, p)
 
     def loadFile(self, filename, readonly=False):
         self.hideWorldList()

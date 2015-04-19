@@ -216,10 +216,18 @@ class WorldListWidget(QtGui.QDialog):
         self._updateInstalls()
 
         self.savesFolderComboBox.currentIndexChanged.connect(self.reloadList)
-
+        self.minecraftInstallBox.currentIndexChanged.connect(minecraftinstall.currentInstallOption.setValue)
+        self.minecraftVersionBox.currentIndexChanged[str].connect(minecraftinstall.currentVersionOption.setValue)
+        self.resourcePackBox.currentIndexChanged.connect(self.resourcePackChanged)
         self.worldListModel = None
         self.reloadList()
         self.reloadRecentWorlds()
+
+    def resourcePackChanged(self, index):
+        if index == 0:
+            minecraftinstall.currentResourcePackOption.setValue("")
+        else:
+            minecraftinstall.currentResourcePackOption.setValue(self.resourcePackBox.currentText())
 
     def _updateInstalls(self):
         for install in minecraftinstall.GetInstalls().installs:
@@ -250,19 +258,6 @@ class WorldListWidget(QtGui.QDialog):
 
         for index, instance in enumerate(minecraftinstall.GetInstalls().instances):  # xxx instanceID?
             self.savesFolderComboBox.addItem(instance.name, (instance.saveFileDir, index))
-
-    def getSelectedResourceLoader(self):
-        i = self.minecraftInstallBox.currentIndex()
-        if i == -1:
-            return minecraftinstall.GetInstalls().getDefaultResourceLoader()
-
-        install = minecraftinstall.GetInstalls().getInstall(i)
-        v = self.minecraftVersionBox.currentText()
-        if self.resourcePackBox.currentIndex() > 0:
-            p = self.resourcePackBox.currentText()
-        else:
-            p = None
-        return install, v, p
 
     def reloadRecentWorlds(self):
         recentWorlds = RecentFilesSetting.value()

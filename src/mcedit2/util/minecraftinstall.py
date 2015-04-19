@@ -19,8 +19,10 @@ log = logging.getLogger(__name__)
 
 installationsOption = settings.Settings().getOption("minecraft_installs/installations", "json", [])
 multiMCInstallsOption = settings.Settings().getOption("minecraft_installs/multimc_installs", "json", [])
-currentInstallOption = settings.Settings().getOption("minecraft_installs/current_install", int)
-currentMMCInstanceOption = settings.Settings().getOption("minecraft_installs/current_install", int)
+currentInstallOption = settings.Settings().getOption("minecraft_installs/current_install", int, 0)
+currentVersionOption = settings.Settings().getOption("minecraft_installs/current_version", unicode, "")
+currentResourcePackOption = settings.Settings().getOption("minecraft_installs/current_resource_pack", unicode, "")
+currentMMCInstanceOption = settings.Settings().getOption("minecraft_installs/current_mmc_instance", int)
 
 _installs = None
 
@@ -85,7 +87,7 @@ class MCInstallGroup(object):
         :rtype: MCInstall
         """
         minecraftDir = directories.minecraftDir
-        defaultInstall = MCInstall(minecraftDir, "(Default)")
+        defaultInstall = MCInstall(self, minecraftDir, "(Default)")
         try:
             defaultInstall.checkUsable()
         except MCInstallError as e:
@@ -445,7 +447,7 @@ class MinecraftInstallsDialog(QtGui.QDialog):
 
     def itemChanged(self, row, column):
         install = GetInstalls().installs[row]
-        text = self.tableWidget.item(row, column).text()
+        text = self.minecraftInstallsTable.item(row, column).text()
         if column == 0:
             install.name = text
         if column == 2:
@@ -554,7 +556,7 @@ class MinecraftInstallsDialog(QtGui.QDialog):
             event.ignore()
 
     def close(self):
-        if not len(GetInstalls().findVersion1_8()):
+        if not GetInstalls().findVersion1_8():
             button = QtGui.QMessageBox.critical(self,
                                                 "Minecraft Install Needed",
                                                 "Cannot start MCEdit without at least one Minecraft installation version "
