@@ -132,13 +132,11 @@ class MCInstallGroup(object):
         :rtype:
         """
         requiredVersion = self.findVersion1_8()
-        if not requiredVersion or not len(self._installations):
+        if not requiredVersion:
             msgBox = QtGui.QMessageBox()
-            if not requiredVersion:
-                msgBox.setText("No usable Minecraft installs were found.")
-            else:
-                msgBox.setText("MCEdit requires an installed Minecraft version 1.8 or greater to "
-                               "access block textures, models, and metadata.")
+            msgBox.setWindowTitle("Minecraft not found.")
+            msgBox.setText("MCEdit requires an installed Minecraft version 1.8 or greater to "
+                           "access block textures, models, and metadata.")
 
             msgBox.exec_()
             installsWidget = MinecraftInstallsDialog()
@@ -184,6 +182,10 @@ class MCInstallGroup(object):
                     if jarOkay(jarPath):
                         return jarPath
 
+    def getDefaultResourceLoader(self):
+        loader = ResourceLoader()
+        loader.addZipFile(self.findVersion1_8())
+        return loader
 
 class MCInstall(object):
     def __init__(self, installGroup, path, name="Unnamed"):
@@ -500,7 +502,7 @@ class MinecraftInstallsDialog(QtGui.QDialog):
         if not folder:
             return
         try:
-            install = MCInstall(folder)
+            install = MCInstall(installs, folder)
             install.checkUsable()
         except MCInstallError as e:
             message = "This minecraft install is unusable.\n(%s)" % e.message
@@ -531,7 +533,7 @@ class MinecraftInstallsDialog(QtGui.QDialog):
             return
 
         try:
-            install = MultiMCInstall(configPath)
+            install = MultiMCInstall(installs, configPath)
         except MultiMCInstallError as e:
             message = "This MultiMC install is unusable.\n(%s)" % e.message
             QtGui.QMessageBox.warning(self, "MultiMC Install Unusable", message)
@@ -547,8 +549,12 @@ class MinecraftInstallsDialog(QtGui.QDialog):
     def ok(self):
         self.close()
 
+    def closeEvent(self, event):
+        if not self.close():
+            event.ignore()
+
     def close(self):
-        if not len(GetInstalls().installs):
+        if not len(GetInstalls().findVersion1_8()):
             button = QtGui.QMessageBox.critical(self,
                                                 "Minecraft Install Needed",
                                                 "Cannot start MCEdit without at least one Minecraft installation version "
@@ -558,5 +564,7 @@ class MinecraftInstallsDialog(QtGui.QDialog):
 
             if button == QtGui.QMessageBox.Close:
                 raise SystemExit
+            return False
         else:
             super(MinecraftInstallsDialog, self).close()
+            return True

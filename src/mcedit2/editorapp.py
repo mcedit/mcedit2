@@ -602,8 +602,7 @@ class MCEditApp(QtGui.QApplication):
 
         # Nope. Use the version and respack chosen in the world list.
         # ... should search for installs matching this one, but vanilla installs are still multi-version...
-        i, v, p = self.worldList.getSelectedIVP()
-        return i.getResourceLoader(v, p)
+        return self.worldList.getSelectedResourceLoader()
 
     def loadFile(self, filename, readonly=False):
         self.hideWorldList()

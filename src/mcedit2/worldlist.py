@@ -230,26 +230,32 @@ class WorldListWidget(QtGui.QDialog):
         self._updateVersionsAndResourcePacks()
 
     def _updateVersionsAndResourcePacks(self):
-        install = minecraftinstall.GetInstalls().getInstall(self.minecraftInstallBox.currentIndex())
-
         self.minecraftVersionBox.clear()
-        for version in sorted(install.versions, reverse=True):
-            self.minecraftVersionBox.addItem(version)
-
         self.resourcePackBox.clear()
         self.resourcePackBox.addItem(self.tr("(No resource pack)"))
-        for resourcePack in sorted(install.resourcePacks):
-            self.resourcePackBox.addItem(resourcePack)
 
-        self.saveDirs = install.getSaveDirs()
         self.savesFolderComboBox.clear()
-        for filename in self.saveDirs:
-            self.savesFolderComboBox.addItem(os.path.basename(os.path.dirname(filename)), (filename, None))
+
+        if self.minecraftInstallBox.count():
+            install = minecraftinstall.GetInstalls().getInstall(self.minecraftInstallBox.currentIndex())
+
+            for version in sorted(install.versions, reverse=True):
+                self.minecraftVersionBox.addItem(version)
+
+            for resourcePack in sorted(install.resourcePacks):
+                self.resourcePackBox.addItem(resourcePack)
+
+            for filename in install.getSaveDirs():
+                self.savesFolderComboBox.addItem(os.path.basename(os.path.dirname(filename)), (filename, None))
+
         for index, instance in enumerate(minecraftinstall.GetInstalls().instances):  # xxx instanceID?
             self.savesFolderComboBox.addItem(instance.name, (instance.saveFileDir, index))
 
-    def getSelectedIVP(self):
+    def getSelectedResourceLoader(self):
         i = self.minecraftInstallBox.currentIndex()
+        if i == -1:
+            return minecraftinstall.GetInstalls().getDefaultResourceLoader()
+
         install = minecraftinstall.GetInstalls().getInstall(i)
         v = self.minecraftVersionBox.currentText()
         if self.resourcePackBox.currentIndex() > 0:
@@ -339,8 +345,7 @@ class WorldListWidget(QtGui.QDialog):
 
         try:
             worldEditor = worldeditor.WorldEditor(filename, readonly=True)
-            i, v, p = self.getSelectedIVP()
-            resLoader = i.getResourceLoader(v, p)
+            resLoader = QtGui.qApp.getResourceLoaderForFilename(filename)
             blockModels = BlockModels(worldEditor.blocktypes, resLoader)
             textureAtlas = TextureAtlas(worldEditor, resLoader, blockModels)
 
