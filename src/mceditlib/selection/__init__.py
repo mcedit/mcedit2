@@ -101,6 +101,14 @@ class SelectionBox(object):
         return self.box_mask(SectionBox(cx, cy, cz))
 
     def box_mask(self, box):
+        """
+        Return a boolean mask array for the given bounding box. Array indices are ordered YZX.
+
+        :param box:
+        :type box:
+        :return:
+        :rtype: ndarray | None
+        """
         raise NotImplementedError
 
     mincx = NotImplemented
@@ -612,6 +620,18 @@ class ShapedSelection(BoundingBox):
 
     def __cmp__(self, b):
         return cmp((self.origin, self.size, self.shapeFunc), None if b is None else (b.origin, b.size, b.shapeFunc))
+
+    @property
+    def positions(self):
+        for cx, cz in self.chunkPositions():
+            for cy in self.sectionPositions(cx, cz):
+                mask = self.section_mask(cx, cy, cz)
+                y, z, x = mask.nonzero()
+                x = x + (cx << 4)
+                y = y + (cy << 4)
+                z = z + (cz << 4)
+                for i in range(len(x)):
+                    yield x[i], y[i], z[i]
 
 
 # --- Shape functions ---

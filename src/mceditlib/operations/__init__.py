@@ -6,9 +6,9 @@ class Operation(object):
         A function that operates on every chunk within a selection. Can be composed with other operations.
 
         :param selection: Area to operate within
-        :type selection: SelectionBox
+        :type selection: mceditlib.selection.SelectionBox
         :param dimension: World dimension to operate on
-        :type dimension: WorldEditorDimension
+        :type dimension: mceditlib.worldeditor.WorldEditorDimension
         """
         self.dimension = dimension
         self.selection = selection
