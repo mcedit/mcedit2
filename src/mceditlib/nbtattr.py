@@ -39,6 +39,8 @@ class NBTUUIDAttr(object):
 
     def __get__(self, instance, owner):
         tag = instance.rootTag
+        if 'UUIDLeast' not in tag or 'UUIDMost' not in tag:
+            return None
         least = tag["UUIDLeast"].value & 0xffffffffffffffffL
         most = tag["UUIDMost"].value & 0xffffffffffffffffL
         uuidInt = (most << 64 | least) & 0xffffffffffffffffffffffffffffffffL

@@ -46,8 +46,9 @@ class NBTResultsEntry(object):
         assert self.resultType == self.EntityResult
         box = BoundingBox(self.position, (1, 1, 1)).chunkBox(dim)
         entities = dim.getEntities(box, UUID=self.uuid)
-        if len(entities):
-            return entities[0]
+        for entity in entities:
+            return entity
+        return None
 
 
 class NBTResultsModel(QtCore.QAbstractItemModel):
