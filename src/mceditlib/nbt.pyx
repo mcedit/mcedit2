@@ -118,7 +118,7 @@ cdef class TAG_Value:
     cdef public char tagID
 
     def __repr__(self):
-        return "<%s name=\"%s\" value=%r>" % (self.__class__.__name__, self.name, self.value)
+        return "<%s name=%r value=%r>" % (self.__class__.__name__, self.name, self.value)
 
     def __str__(self):
         return nested_string(self)
@@ -244,7 +244,7 @@ cdef class TAG_Byte_Array(TAG_Value):
         save_array(self.value, buf, 1)
 
     def __repr__(self):
-        return "<%s name=%s length=%d>" % (self.__class__.__name__, self.name, len(self.value))
+        return "<%s name=%r length=%d>" % (self.__class__.__name__, self.name, len(self.value))
 
     def __richcmp__(self, other, type):
         if type == 2: # __eq__
@@ -272,7 +272,7 @@ cdef class TAG_Int_Array(TAG_Value):
         save_array(self.value, buf, 4)
 
     def __repr__(self):
-        return "<%s name=%s length=%d>" % (self.__class__.__name__, len(self.value))
+        return "<%s name=%r length=%d>" % (self.__class__.__name__, self.name, len(self.value))
 
     def __richcmp__(self, other, type):
         if type == 2: # __eq__
@@ -300,7 +300,7 @@ cdef class TAG_Short_Array(TAG_Value):
         save_array(self.value, buf, 2)
 
     def __repr__(self):
-        return "<%s name=%s length=%d>" % (self.__class__.__name__, len(self.value))
+        return "<%s name=%r length=%d>" % (self.__class__.__name__, self.name, len(self.value))
 
     def __richcmp__(self, other, type):
         if type == 2: # __eq__
@@ -350,7 +350,7 @@ cdef class _TAG_List(TAG_Value):
 
 
     def __repr__(self):
-        return "<%s name='%s' list_type=%r length=%d>" % (self.__class__.__name__, self.name,
+        return "<%s name=%r list_type=%r length=%d>" % (self.__class__.__name__, self.name,
                                                           tag_classes[self.list_type],
                                                           len(self))
 
@@ -463,7 +463,7 @@ cdef class _TAG_Compound(TAG_Value):
         return len(self.value)
 
     def __repr__(self):
-        return "<%s name='%s' keys=%r>" % (str(self.__class__.__name__), self.name, self.keys())
+        return "<%s name=%r keys=%r>" % (str(self.__class__.__name__), self.name, self.keys())
 
     def add(self, TAG_Value tag):
         if not tag._name:
