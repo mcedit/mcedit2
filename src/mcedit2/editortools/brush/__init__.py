@@ -213,7 +213,8 @@ class Biome(BrushMode):
         selection = ShapedSelection(box, brushTool.brushStyle.shapeFunc)
         cursorLevel = MaskLevel(selection,
                                 brushTool.editorSession.worldEditor.blocktypes["minecraft:grass"],
-                                brushTool.editorSession.worldEditor.blocktypes)
+                                brushTool.editorSession.worldEditor.blocktypes,
+                                biomeID=self.getOptions()['biomeID'])
         return cursorLevel
 
 class BrushModes(object):
@@ -234,7 +235,7 @@ NULL_ID = 255  # xxx
 
 
 class MaskLevel(object):
-    def __init__(self, selection, fillBlock, blocktypes):
+    def __init__(self, selection, fillBlock, blocktypes, biomeID=None):
         """
         Level emulator to be used for rendering brushes and selections.
 
@@ -248,13 +249,14 @@ class MaskLevel(object):
         self.blocktypes = blocktypes
         self.sectionCache = {}
         self.fillBlock = fillBlock
+        self.biomeID = biomeID
         self.filename = "Temporary Level (%s %s %s)" % (selection, fillBlock, blocktypes)
 
     def chunkPositions(self):
         return self.bounds.chunkPositions()
 
     def getChunk(self, cx, cz, create=False):
-        return FakeBrushChunk(self, cx, cz)
+        return FakeBrushChunk(self, cx, cz, self.biomeID)
 
     def containsChunk(self, cx, cz):
         return self.bounds.containsChunk(cx, cz)
@@ -270,7 +272,7 @@ class FakeBrushChunk(object):
     Entities = ()
     TileEntities = ()
 
-    def __init__(self, world, cx, cz):
+    def __init__(self, world, cx, cz, biomeID=None):
         """
 
         :type world: MaskLevel
@@ -279,6 +281,8 @@ class FakeBrushChunk(object):
         self.cx = cx
         self.cz = cz
         self.Biomes = numpy.zeros((16, 16), numpy.uint8)
+        if biomeID:
+            self.Biomes[:] = biomeID
 
     @property
     def blocktypes(self):
