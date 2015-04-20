@@ -300,6 +300,8 @@ def setBlocks(dimension, x, y, z,
             Blocks = _Blocks
             Data = _Data
 
+    if Blocks is None and Data is None:
+        updateLights = False
 
     Blocks = numpy.atleast_3d(Blocks) if Blocks is not None else None
     Data = numpy.atleast_3d(Data) if Data is not None else None
