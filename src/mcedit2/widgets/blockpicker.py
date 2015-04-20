@@ -546,9 +546,10 @@ class BlockTypeButton(QtGui.QPushButton):
                  else block
                  for block in value]
 
-        if self._blocks != value:
-            self.blocksChanged.emit(value)
+        old = self._blocks
         self._blocks = value
+        if old != value:
+            self.blocksChanged.emit(value)
         self.updateView()
 
     def showPicker(self):
