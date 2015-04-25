@@ -408,6 +408,10 @@ cdef class _TAG_List(TAG_Value):
     def isList(self):
         return True
 
+    @property
+    def tagClass(self):
+        return tag_classes[self.list_type]
+
 
 class TAG_List(_TAG_List, collections.MutableSequence):
     pass
