@@ -359,8 +359,9 @@ class FindReplaceNBT(QtCore.QObject):
         self.widget.inSelectionCheckbox.setChecked(currentSelection is not None and currentSelection.volume > 0)
 
     def searchForToggled(self):
-        canSearch = self.widget.searchNameCheckbox.isChecked() or self.widget.searchValueCheckbox.isChecked()
-        self.widget.findButton.setEnabled(canSearch)
+        #canSearch = self.widget.searchNameCheckbox.isChecked() or self.widget.searchValueCheckbox.isChecked()
+        #self.widget.findButton.setEnabled(canSearch)
+        pass
 
     def nameFieldChanged(self, value):
         nbtReplaceSettings.nameField.setValue(value)
@@ -432,8 +433,10 @@ class FindReplaceNBT(QtCore.QObject):
         if len(targetTileEntityIDs):
             targetTileEntityIDs = targetTileEntityIDs.split(';')
 
-        if not searchNames and not searchValues:
+        if not any((searchNames, searchValues, searchEntities, searchTileEntities)):
+            # Nothing to find
             return
+
 
         dim = self.editorSession.currentDimension
         inSelection = self.widget.inSelectionCheckbox.isChecked()
@@ -477,6 +480,17 @@ class FindReplaceNBT(QtCore.QObject):
                 except KeyError:
                     uuid = None  # Don't want to use find/replace on entities without UUIDs
 
+                if not searchNames and not searchValues:
+                    # Finding entities only
+                    self.resultsModel.addEntry(tagName="id",
+                                               value=entity.id,
+                                               id=entity.id,
+                                               path=[],
+                                               position=entity.Position,
+                                               uuid=uuid,
+                                               resultType=NBTResultsEntry.EntityResult)
+                    continue
+
                 tag = entity.raw_tag()
 
                 for name, subtag, path in walkNBT(tag):
@@ -499,6 +513,17 @@ class FindReplaceNBT(QtCore.QObject):
                 if tileEntity.Position not in selection:
                     continue
                 if len(targetTileEntityIDs) and tileEntity.id not in targetTileEntityIDs:
+                    continue
+
+                if not searchNames and not searchValues:
+                    # Finding tile entities only
+                    self.resultsModel.addEntry(tagName="id",
+                                               value=tileEntity.id,
+                                               id=tileEntity.id,
+                                               path=[],
+                                               position=tileEntity.Position,
+                                               uuid=None,
+                                               resultType=NBTResultsEntry.TileEntityResult)
                     continue
 
                 tag = tileEntity.raw_tag()
