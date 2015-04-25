@@ -4,11 +4,8 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 import os
-import subprocess
-import sys
 
 from PySide import QtUiTools, QtCore, QtGui
-from mcedit2 import main
 
 from mcedit2.util.resources import resourcePath
 
