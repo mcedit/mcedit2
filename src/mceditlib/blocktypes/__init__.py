@@ -4,14 +4,14 @@
 """
 from __future__ import absolute_import
 from logging import getLogger
-import os
 import traceback
-from os.path import join
 from collections import defaultdict, namedtuple
-import json
 
 import numpy
-import re
+from mceditlib.blocktypes import itemtypes
+
+from mceditlib.blocktypes.json_resources import openResource, getJsonFile
+
 
 log = getLogger(__name__)
 import logging
@@ -25,11 +25,11 @@ MCXDecreasing = 4 #west
 MCXIncreasing = 5 #east
 
 
-class BlockType(namedtuple("_BlockType", "ID, meta, blocktypeSet")):
+class BlockType(namedtuple("_BlockType", "ID meta blocktypeSet")):
     """
     Value object representing an (id, data, blocktypeSet) tuple.
     Accessing its attributes will return the corresponding elements
-    of its parent material's json arrays.
+    of its parent set's json arrays.
 
     """
 
@@ -57,21 +57,6 @@ class BlockType(namedtuple("_BlockType", "ID, meta, blocktypeSet")):
 
 
 id_limit = 4096
-
-
-def openResource(filename):
-    path = join(os.path.dirname(__file__), filename)
-    if not os.path.exists(path):
-        try:
-            # py2exe, .egg
-            import pkg_resources
-            return pkg_resources.resource_stream(__name__, filename)
-        except ImportError as e:
-            log.exception("pkg_resources not available")
-            raise
-
-    return file(path)
-
 
 class BlockTypeSet(object):
     defaultColor = (0xc9, 0x77, 0xf0, 0xff)
@@ -128,7 +113,8 @@ class BlockTypeSet(object):
 
     def getBlockTypeAttr(self, block, attr):
         """
-        Called when accessing an attribute of a BlockType.
+        Return an attribute from the given block's json dict.
+
         :param block:
         :type block:
         :param attr:
@@ -333,23 +319,6 @@ class BlockTypeSet(object):
                                                            (color >> 8) & 0xff,
                                                            color & 0xff)
 
-_cachedJsons = {}
-
-def getJsonFile(filename):
-    if filename in _cachedJsons:
-        return _cachedJsons[filename]
-
-    f = openResource(filename)
-    try:
-        s = f.read()
-        #log.info(u"Loading block ID mapping from (%s) %s", len(s), f)
-        entries = json.loads(s)
-        _cachedJsons[filename] = entries
-        return entries
-    except EnvironmentError as e:
-        log.error(u"Exception while loading JSON from %s: %s", f, e)
-        traceback.print_exc()
-
 
 class PCBlockTypeSet(BlockTypeSet):
     def __init__(self):
@@ -360,26 +329,9 @@ class PCBlockTypeSet(BlockTypeSet):
         self.addBlocksFromJSON(getJsonFile("minecraft_raw.json"))
         self.addBlocksFromJSON(getJsonFile("minecraft.json"))
 
-pc_blocktypes = PCBlockTypeSet()
+        self.itemTypes = itemtypes.PCItemTypeSet()
 
-# def printStaticDefs(blocktypes):
-#     varNames = set()
-#     for block in blocktypes.allBlocks:
-#         blockJson = block.json
-#         name = blockJson['displayName']
-#         #internalName = blockJson['internalName']
-#         nameAndState = blockJson['blockState']
-#         internalName, blockState = blocktypes._splitInternalName(nameAndState)
-#         variableName = re.sub(r"[^\w]", '', name)
-#         varName = variableName
-#         i=2
-#         while varName in varNames:
-#             varName = "%s%d" % (variableName, i)
-#             i += 1
-#         varNames.add(varName)
-#         print("self.%s = self['%s', '%s']" % (varName, internalName, blockState))
-#     raise SystemExit
-# printStaticDefs(pc_blocktypes)
+pc_blocktypes = PCBlockTypeSet()
 
 blocktypes_named = {"Alpha": pc_blocktypes}
 
