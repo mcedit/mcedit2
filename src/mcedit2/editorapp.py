@@ -89,12 +89,16 @@ class MCEditApp(QtGui.QApplication):
         translator.load(resourcePath('mcedit2/i18n/en_US.ts'))
         self.installTranslator(translator)
 
+        log.info("Loaded translator.")
+
         self.setOrganizationName("MCEdit")
         self.setOrganizationDomain("mcedit.net")
         self.setApplicationName("MCEdit")
         self.setWindowIcon(QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/mcediticon.png")))
         styleSheet = file(resourcePath("mcedit2/styles/mcedit2.qcss")).read()
         self.setStyleSheet(styleSheet)
+
+        log.info("Loaded stylesheet.")
 
         # --- Main Window ---
 
@@ -105,6 +109,8 @@ class MCEditApp(QtGui.QApplication):
         self.tabWidget = self.mainWindow.tabWidget
         self.tabWidget.tabCloseRequested.connect(self.tabCloseRequested)
         self.tabWidget.currentChanged.connect(self.tabChanged)
+
+        log.info("Loaded main window.")
 
         # --- Sessions ---
 
@@ -138,8 +144,9 @@ class MCEditApp(QtGui.QApplication):
 
         self.libraryView.doubleClicked.connect(self.libraryItemDoubleClicked)
 
-
         self.globalPanels = [self.undoDockWidget, self.logViewDockWidget, self.libraryDockWidget]
+
+        log.info("Loaded panels.")
 
         # --- Debug Widgets ---
 
@@ -192,6 +199,8 @@ class MCEditApp(QtGui.QApplication):
             mainWindow.panelsToolBar.addAction(infoDockWidget.toggleViewAction())
             infoDockWidget.close()
 
+            log.info("Loaded debug widgets.")
+
         # --- Menu Actions ---
 
         # -- MCEdit menu --
@@ -235,6 +244,7 @@ class MCEditApp(QtGui.QApplication):
         mainWindow.actionPreferences.triggered.connect(self.showPrefsDialog)
         mainWindow.actionConfigure_Blocks_Items.triggered.connect(self.showConfigureBlocksDialog)
 
+        log.info("Loaded menus.")
 
         # --- World List ---
 
@@ -243,6 +253,8 @@ class MCEditApp(QtGui.QApplication):
         self.worldList.viewWorldClicked.connect(self.viewWorldFromList)
         self.worldList.backupWorldClicked.connect(self.backupWorldFromList)
         self.worldList.repairWorldClicked.connect(self.repairWorldFromList)
+
+        log.info("Loaded world list.")
 
         # --- Status Bar ---
 
@@ -261,10 +273,14 @@ class MCEditApp(QtGui.QApplication):
         statusBar.addPermanentWidget(self.cpsLabel)
         statusBar.addPermanentWidget(self.fpsLabel)
 
+        log.info("Loaded status bar.")
+
         # --- Load settings ---
 
         mainWindow.loadSettings()
         self.updateRecentFilesMenu()
+
+        log.info("Loaded settings.")
 
         # --- App Dialogs ---
 
@@ -280,6 +296,8 @@ class MCEditApp(QtGui.QApplication):
 
         self.configureBlocksDialog.setParent(mainWindow)
         self.configureBlocksDialog.setWindowFlags(Qt.Dialog)
+
+        log.info("Loaded app dialogs.")
 
         # --- Loader timer ---
 
@@ -298,6 +316,7 @@ class MCEditApp(QtGui.QApplication):
     @profiler.function
     def didFinishLaunching(self):
         # --- Open files from command line ---
+        log.info("Opening worlds from command line.")
 
         if len(self.commandLineWorlds):
             for filename in self.commandLineWorlds:
