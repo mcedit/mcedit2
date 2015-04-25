@@ -74,25 +74,18 @@ def rayCast(ray, dimension, maxDistance=100):
         point = intersects[0][0]
 
     point = advanceToChunk(Ray(point, vector), dimension, maxDistance * 4)
-    currentCX, currentCY, currentCZ = point.intfloor()
-    currentChunk = None
 
     foundAir = False
 
     for pos, face in _cast(point, vector, maxDistance, 1):
-        cx = pos[0] >> 4
-        cz = pos[2] >> 4
-        if cx != currentCX or cz != currentCZ:
-            currentCX = cx
-            currentCZ = cz
-            if dimension.containsChunk(cx, cz):
-                currentChunk = dimension.getChunk(cx, cz)  # xxxx WorldEditor.recentlyLoadedChunks
         ID = dimension.getBlockID(*pos)
 
-        if ID == 0:
+        if ID == 0:  # xxx configurable air blocks?
             foundAir = True
         if ID and foundAir:
             return Vector(*pos), faces.Face.fromVector(face)
+        if pos not in bounds:
+            raise RayBoundsError("Ray exited dimension bounds")
 
     raise MaxDistanceError("Ray exceeded max distance.")
 
