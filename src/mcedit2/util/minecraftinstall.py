@@ -223,7 +223,10 @@ class MCInstall(object):
 
     @property
     def resourcePacks(self):
-        return os.listdir(os.path.join(self.path, "resourcepacks"))
+        respackFolder = os.path.join(self.path, "resourcepacks")
+        if not os.path.isdir(respackFolder):
+            return []
+        return os.listdir(respackFolder)
 
     def getSaveDirs(self):
         return [os.path.join(self.path, "saves")]  # xxx profile.json
