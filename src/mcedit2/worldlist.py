@@ -103,7 +103,7 @@ def getWorldInfo(filename):
         lastPlayed = lastPlayedTime(worldAdapter)
         lastPlayedText = lastPlayed.humanize() if lastPlayed else "Unknown"
         return name, lastPlayedText
-    except EnvironmentError as e:
+    except Exception as e:
         log.error("Failed getting world info for %s: %s", filename, e)
         return str(e), ""
 
