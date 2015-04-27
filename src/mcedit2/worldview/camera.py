@@ -260,7 +260,7 @@ class CameraWorldView(WorldView):
         fovy = degrees(atan(w / h * tan(radians(self.fov) * 0.5)))
 
         projection = QtGui.QMatrix4x4()
-        projection.perspective(fovy, w / h, 0.05, max(256, self.viewDistance * 20))
+        projection.perspective(fovy, w / h, 0.05, 2048)
         self.matrixNode.projection = projection
 
     @lazyprop
