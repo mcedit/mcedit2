@@ -19,6 +19,7 @@ from mcedit2.util.worldloader import LoaderTimer
 from mcedit2.widgets.layout import Column, Row, setWidgetError
 from mcedit2.worldview.minimap import MinimapWorldView
 from mceditlib.anvil.adapter import AnvilWorldAdapter
+from mceditlib.blocktypes import VERSION_1_7, VERSION_1_8
 from mceditlib.geometry import Vector
 from mceditlib.exceptions import LevelFormatError, PlayerNotFound
 from mceditlib import worldeditor
@@ -54,6 +55,7 @@ class WorldListItemWidget(QtGui.QWidget):
 
         self.displayNameLabel = QtGui.QLabel("namenamename")
         self.lastPlayedLabel = QtGui.QLabel("lastplayed")
+        self.versionInfoLabel = QtGui.QLabel("version")
 
         #self.sizeLabel = QtGui.QLabel(self.tr("Calculating area..."))
         # areaText = self.tr("%.02f million square meters") % (world.chunkCount * 0.25)
@@ -70,6 +72,7 @@ class WorldListItemWidget(QtGui.QWidget):
         infoColumn = Column(
             self.displayNameLabel,
             self.lastPlayedLabel,
+            self.versionInfoLabel,
             #self.diskSizeLabel,
             None
         )
@@ -78,9 +81,10 @@ class WorldListItemWidget(QtGui.QWidget):
 
         self.setLayout(layout)
 
-    def setWorldInfo(self, (name, lastPlayedText)):
+    def setWorldInfo(self, (name, lastPlayedText, versionInfo)):
         self.displayNameLabel.setText(name)
         self.lastPlayedLabel.setText(lastPlayedText)
+        self.versionInfoLabel.setText(versionInfo)
 
     def mouseDoubleClickEvent(self, event):
         self.doubleClicked.emit()
@@ -102,10 +106,24 @@ def getWorldInfo(filename):
 
         lastPlayed = lastPlayedTime(worldAdapter)
         lastPlayedText = lastPlayed.humanize() if lastPlayed else "Unknown"
-        return name, lastPlayedText
+
+        version = "Unknown Version"
+        try:
+            stackVersion = worldAdapter.blocktypes.itemStackVersion
+            if stackVersion == VERSION_1_7:
+                version = "Minecraft 1.7"
+                if "FML" in worldAdapter.metadata.metadataTag:
+                    version = "MinecraftForge 1.7"
+
+            if stackVersion == VERSION_1_8:
+                version = "Minecraft 1.8"
+        except Exception as e:
+            log.warn("Failed to get version info for %s: %r", filename, e)
+        return name, lastPlayedText, version
+
     except Exception as e:
-        log.error("Failed getting world info for %s: %s", filename, e)
-        return str(e), ""
+        log.error("Failed getting world info for %s: %r", filename, e)
+        return str(e), "", ""
 
 
 class WorldListItemDelegate(QtGui.QStyledItemDelegate):
@@ -144,6 +162,8 @@ class WorldListItemDelegate(QtGui.QStyledItemDelegate):
 
 
 class WorldListModel(QtCore.QAbstractListModel):
+    WorldInfoRole = Qt.UserRole
+
     def __init__(self, worlds=None):
         super(WorldListModel, self).__init__()
         if worlds is None:
@@ -164,7 +184,7 @@ class WorldListModel(QtCore.QAbstractListModel):
 
         if role == Qt.DisplayRole:
             return self.worlds[row][0]
-        if role == Qt.UserRole:
+        if role == self.WorldInfoRole:
             return self.worlds[row][1]
 
     def flags(self, index):
@@ -274,7 +294,7 @@ class WorldListWidget(QtGui.QDialog):
                 dead.append(filename)
                 continue
             try:
-                displayName, lastPlayed = getWorldInfo(filename)
+                displayName, lastPlayed, versionInfo = getWorldInfo(filename)
                 action = self.recentWorldsMenu.addAction(displayName)
                 action._editWorld = _triggered(filename)
                 action.triggered.connect(action._editWorld)
@@ -390,7 +410,6 @@ class WorldListWidget(QtGui.QDialog):
         QtGui.qApp.processEvents()  # force repaint of stackedWidget to hide old error widget
         if self.worldView:
             log.info("Removing view from WorldListWidget")
-            self.worldView.textureAtlas.dispose()
             self.worldView.destroy()
             self.stackedWidget.removeWidget(self.worldView)
             self.worldView.setParent(None)
