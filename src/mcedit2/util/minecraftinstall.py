@@ -241,7 +241,10 @@ class MCInstall(object):
     def getResourceLoader(self, version, resourcePack):
         loader = ResourceLoader()
         if resourcePack:
-            loader.addZipFile(self.getResourcePackPath(resourcePack))
+            try:
+                loader.addZipFile(self.getResourcePackPath(resourcePack))
+            except Exception as e:
+                log.warn("Failed to load resource pack: %r\nPack: %s", e, resourcePack)
         loader.addZipFile(self.getVersionJarPath(version))
         major, minor, rev = splitVersion(version)
 
