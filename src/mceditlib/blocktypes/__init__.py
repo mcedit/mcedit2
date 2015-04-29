@@ -321,8 +321,9 @@ class BlockTypeSet(object):
 
 
 class PCBlockTypeSet(BlockTypeSet):
-    def __init__(self):
+    def __init__(self, itemStackVersion=None):
         super(PCBlockTypeSet, self).__init__()
+        self.itemStackVersion = itemStackVersion or VERSION_1_7
         self.name = "Alpha"
         self.addIDMappingFromJSON(getJsonFile("idmapping_raw.json"))
         self.addIDMappingFromJSON(getJsonFile("idmapping.json"))
@@ -331,6 +332,9 @@ class PCBlockTypeSet(BlockTypeSet):
 
         self.itemTypes = itemtypes.PCItemTypeSet()
 
+
+VERSION_1_7 = 17
+VERSION_1_8 = 18
 
 
 def blocktypeConverter(destTypes, sourceTypes):
