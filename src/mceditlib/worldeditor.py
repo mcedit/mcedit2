@@ -50,16 +50,13 @@ class EntityListProxy(collections.MutableSequence):
 
     chunk = weakrefprop()
 
-    def __init__(self, chunk, attrName, refClass=None):
+    def __init__(self, chunk, attrName, refClass):
         self.attrName = attrName
         self.refClass = refClass
         self.chunk = chunk
 
     def __getitem__(self, key):
-        if self.refClass:
-            return self.refClass(getattr(self.chunk.chunkData, self.attrName)[key], self.chunk)
-        else:
-            return getattr(self.chunk.chunkData, self.attrName)[key].value
+        return self.refClass(getattr(self.chunk.chunkData, self.attrName)[key], self.chunk)
 
     def __setitem__(self, key, value):
         if not isinstance(value, self.refClass):
