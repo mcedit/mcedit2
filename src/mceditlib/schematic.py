@@ -4,13 +4,9 @@ Created on Jul 22, 2011
 @author: Rio
 '''
 from __future__ import absolute_import
-import atexit
 from collections import defaultdict
-from contextlib import closing
 import os
-import shutil
-import tempfile
-import zipfile
+
 from logging import getLogger
 
 from numpy import array, swapaxes, uint8, zeros
@@ -22,10 +18,13 @@ from mceditlib.anvil.entities import PCTileEntityRef
 from mceditlib.exceptions import PlayerNotFound
 from mceditlib.selection import BoundingBox
 from mceditlib.fakechunklevel import FakeChunkedLevelAdapter, FakeChunkData
-from mceditlib.blocktypes import pc_blocktypes, BlockTypeSet, blocktypes_named
+from mceditlib.blocktypes import BlockTypeSet, PCBlockTypeSet
 from mceditlib import nbt
 
 log = getLogger(__name__)
+
+
+blocktypeClassesByName = {"Alpha": PCBlockTypeSet}
 
 def createSchematic(shape, blocktypes='Alpha'):
     from mceditlib.worldeditor import WorldEditor
@@ -55,8 +54,6 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
     """
 
     """
-    blocktypes = pc_blocktypes
-
     # XXX use abstract entity ref or select correct ref for contained level format
     EntityRef = PCEntityRef
     TileEntityRef = PCTileEntityRef
@@ -94,8 +91,8 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
             self.filename = None
             rootTag = None
 
-        if blocktypes in blocktypes_named:
-            self.blocktypes = blocktypes_named[blocktypes]
+        if blocktypes in blocktypeClassesByName:
+            self.blocktypes = blocktypeClassesByName[blocktypes]()
         else:
             assert(isinstance(blocktypes, BlockTypeSet))
             self.blocktypes = blocktypes
@@ -103,7 +100,7 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
         if rootTag:
             self.rootTag = rootTag
             if "Materials" in rootTag:
-                self.blocktypes = blocktypes_named[self.Materials]
+                self.blocktypes = blocktypeClassesByName[self.Materials]()
             else:
                 rootTag["Materials"] = nbt.TAG_String(self.blocktypes.name)
 
@@ -527,107 +524,107 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
             chunk.Biomes[0:srcBiomes.shape[0], 0:srcBiomes.shape[1]] = srcBiomes
         return chunk
 
-
-class INVEditChest(FakeChunkedLevelAdapter):
-    Width = 1
-    Height = 1
-    Length = 1
-    Blocks = None
-    Data = array([[[0]]], 'uint8')
-    Entities = nbt.TAG_List()
-    Materials = pc_blocktypes
-
-    @classmethod
-    def _isTagLevel(cls, rootTag):
-        return "Inventory" in rootTag
-
-    def __init__(self, filename):
-        self.filename = filename
-        rootTag = nbt.load(filename)
-        self.Blocks = array([[[pc_blocktypes.Chest.ID]]], 'uint8')
-        for item in list(rootTag["Inventory"]):
-            slot = item["Slot"].value
-            if slot < 9 or slot >= 36:
-                rootTag["Inventory"].remove(item)
-            else:
-                item["Slot"].value -= 9  # adjust for different chest slot indexes
-
-        self.rootTag = rootTag
-
-    @property
-    def TileEntities(self):
-        chestTag = nbt.TAG_Compound()
-        chestTag["id"] = nbt.TAG_String("Chest")
-        chestTag["Items"] = nbt.TAG_List(self.rootTag["Inventory"])
-        chestTag["x"] = nbt.TAG_Int(0)
-        chestTag["y"] = nbt.TAG_Int(0)
-        chestTag["z"] = nbt.TAG_Int(0)
-
-        return nbt.TAG_List([chestTag], name="TileEntities")
-
-
-class ZipSchematic (AnvilWorldAdapter):
-    def __init__(self, filename, create=False):
-        raise NotImplementedError("No adapter for zipped world/schematic files yet!!!")
-        self.zipfilename = filename
-
-        tempdir = tempfile.mktemp("schematic")
-        if create is False:
-            zf = zipfile.ZipFile(filename)
-            zf.extractall(tempdir)
-            zf.close()
-
-        super(ZipSchematic, self).__init__(tempdir, create)
-        atexit.register(shutil.rmtree, self.worldFolder.filename, True)
-
-
-        try:
-            schematicDat = nbt.load(self.worldFolder.getFilePath("schematic.dat"))
-
-            self.Width = schematicDat['Width'].value
-            self.Height = schematicDat['Height'].value
-            self.Length = schematicDat['Length'].value
-
-            if "Materials" in schematicDat:
-                self.blocktypes = blocktypes_named[schematicDat["Materials"].value]
-
-        except Exception as e:
-            print "Exception reading schematic.dat, skipping: {0!r}".format(e)
-            self.Width = 0
-            self.Length = 0
-
-    def __del__(self):
-        shutil.rmtree(self.worldFolder.filename, True)
-
-    def saveChanges(self):
-        self.saveToFile(self.zipfilename)
-
-    def saveToFile(self, filename):
-        super(ZipSchematic, self).saveChanges()
-        schematicDat = nbt.TAG_Compound()
-        schematicDat.name = "Mega Schematic"
-
-        schematicDat["Width"] = nbt.TAG_Int(self.size[0])
-        schematicDat["Height"] = nbt.TAG_Int(self.size[1])
-        schematicDat["Length"] = nbt.TAG_Int(self.size[2])
-        schematicDat["Materials"] = nbt.TAG_String(self.blocktypes.name)
-
-        schematicDat.save(self.worldFolder.getFilePath("schematic.dat"))
-
-        basedir = self.worldFolder.filename
-        assert os.path.isdir(basedir)
-        with closing(zipfile.ZipFile(filename, "w", zipfile.ZIP_STORED)) as z:
-            for root, dirs, files in os.walk(basedir):
-                # NOTE: ignore empty directories
-                for fn in files:
-                    absfn = os.path.join(root, fn)
-                    zfn = absfn[len(basedir) + len(os.sep):]  # XXX: relative path
-                    z.write(absfn, zfn)
-
-    def getWorldBounds(self):
-        return BoundingBox((0, 0, 0), (self.Width, self.Height, self.Length))
-
-    @classmethod
-    def canOpenFile(cls, filename):
-        return zipfile.is_zipfile(filename)
-
+#
+# class INVEditChest(FakeChunkedLevelAdapter):
+#     Width = 1
+#     Height = 1
+#     Length = 1
+#     Blocks = None
+#     Data = array([[[0]]], 'uint8')
+#     Entities = nbt.TAG_List()
+#     Materials = pc_blocktypes
+#
+#     @classmethod
+#     def _isTagLevel(cls, rootTag):
+#         return "Inventory" in rootTag
+#
+#     def __init__(self, filename):
+#         self.filename = filename
+#         rootTag = nbt.load(filename)
+#         self.Blocks = array([[[pc_blocktypes.Chest.ID]]], 'uint8')
+#         for item in list(rootTag["Inventory"]):
+#             slot = item["Slot"].value
+#             if slot < 9 or slot >= 36:
+#                 rootTag["Inventory"].remove(item)
+#             else:
+#                 item["Slot"].value -= 9  # adjust for different chest slot indexes
+#
+#         self.rootTag = rootTag
+#
+#     @property
+#     def TileEntities(self):
+#         chestTag = nbt.TAG_Compound()
+#         chestTag["id"] = nbt.TAG_String("Chest")
+#         chestTag["Items"] = nbt.TAG_List(self.rootTag["Inventory"])
+#         chestTag["x"] = nbt.TAG_Int(0)
+#         chestTag["y"] = nbt.TAG_Int(0)
+#         chestTag["z"] = nbt.TAG_Int(0)
+#
+#         return nbt.TAG_List([chestTag], name="TileEntities")
+#
+#
+# class ZipSchematic (AnvilWorldAdapter):
+#     def __init__(self, filename, create=False):
+#         raise NotImplementedError("No adapter for zipped world/schematic files yet!!!")
+#         self.zipfilename = filename
+#
+#         tempdir = tempfile.mktemp("schematic")
+#         if create is False:
+#             zf = zipfile.ZipFile(filename)
+#             zf.extractall(tempdir)
+#             zf.close()
+#
+#         super(ZipSchematic, self).__init__(tempdir, create)
+#         atexit.register(shutil.rmtree, self.worldFolder.filename, True)
+#
+#
+#         try:
+#             schematicDat = nbt.load(self.worldFolder.getFilePath("schematic.dat"))
+#
+#             self.Width = schematicDat['Width'].value
+#             self.Height = schematicDat['Height'].value
+#             self.Length = schematicDat['Length'].value
+#
+#             if "Materials" in schematicDat:
+#                 self.blocktypes = blocktypeClassesByName[schematicDat["Materials"].value]()
+#
+#         except Exception as e:
+#             print "Exception reading schematic.dat, skipping: {0!r}".format(e)
+#             self.Width = 0
+#             self.Length = 0
+#
+#     def __del__(self):
+#         shutil.rmtree(self.worldFolder.filename, True)
+#
+#     def saveChanges(self):
+#         self.saveToFile(self.zipfilename)
+#
+#     def saveToFile(self, filename):
+#         super(ZipSchematic, self).saveChanges()
+#         schematicDat = nbt.TAG_Compound()
+#         schematicDat.name = "Mega Schematic"
+#
+#         schematicDat["Width"] = nbt.TAG_Int(self.size[0])
+#         schematicDat["Height"] = nbt.TAG_Int(self.size[1])
+#         schematicDat["Length"] = nbt.TAG_Int(self.size[2])
+#         schematicDat["Materials"] = nbt.TAG_String(self.blocktypes.name)
+#
+#         schematicDat.save(self.worldFolder.getFilePath("schematic.dat"))
+#
+#         basedir = self.worldFolder.filename
+#         assert os.path.isdir(basedir)
+#         with closing(zipfile.ZipFile(filename, "w", zipfile.ZIP_STORED)) as z:
+#             for root, dirs, files in os.walk(basedir):
+#                 # NOTE: ignore empty directories
+#                 for fn in files:
+#                     absfn = os.path.join(root, fn)
+#                     zfn = absfn[len(basedir) + len(os.sep):]  # XXX: relative path
+#                     z.write(absfn, zfn)
+#
+#     def getWorldBounds(self):
+#         return BoundingBox((0, 0, 0), (self.Width, self.Height, self.Length))
+#
+#     @classmethod
+#     def canOpenFile(cls, filename):
+#         return zipfile.is_zipfile(filename)
+#

@@ -331,9 +331,7 @@ class PCBlockTypeSet(BlockTypeSet):
 
         self.itemTypes = itemtypes.PCItemTypeSet()
 
-pc_blocktypes = PCBlockTypeSet()
 
-blocktypes_named = {"Alpha": pc_blocktypes}
 
 def blocktypeConverter(destTypes, sourceTypes):
     """

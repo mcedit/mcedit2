@@ -16,7 +16,7 @@ import time
 from mceditlib import nbt
 from mceditlib.anvil.entities import PCEntityRef, PCTileEntityRef
 from mceditlib.anvil.worldfolder import AnvilWorldFolder
-from mceditlib.blocktypes import pc_blocktypes, PCBlockTypeSet, BlockType
+from mceditlib.blocktypes import PCBlockTypeSet, BlockType
 from mceditlib.geometry import Vector
 from mceditlib.nbt import NBTFormatError
 from mceditlib.selection import BoundingBox
@@ -381,7 +381,6 @@ class AnvilWorldAdapter(object):
 
     minHeight = 0
     maxHeight = 256
-    blocktypes = pc_blocktypes
     hasLights = True
 
     EntityRef = PCEntityRef
@@ -470,6 +469,10 @@ class AnvilWorldAdapter(object):
         assert self.metadata.version == VERSION_ANVIL, "Pre-Anvil world formats are not supported (for now)"
 
     def loadFMLMapping(self):
+
+        blocktypes = PCBlockTypeSet(itemStackVersion)
+        self.blocktypes = blocktypes
+
         metadataTag = self.metadata.metadataTag
         fml = metadataTag.get('FML')
         if fml is None:
@@ -479,7 +482,6 @@ class AnvilWorldAdapter(object):
         if itemdata is not None:
             count = 0
             log.info("Adding block IDs from FML for MC 1.7")
-            blocktypes = PCBlockTypeSet()
             replacedIDs = []
             for entry in itemdata:
                 ID = entry['V'].value
@@ -523,7 +525,7 @@ class AnvilWorldAdapter(object):
 
             blocktypes.allBlocks.sort()
             log.info("Added %d blocks.", count)
-            self.blocktypes = blocktypes
+
 
 
     def _createMetadataTag(self, random_seed=None):
