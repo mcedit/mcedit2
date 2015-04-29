@@ -213,16 +213,8 @@ class AnvilChunkData(object):
             levelTag["Biomes"] = nbt.TAG_Byte_Array(numpy.empty((16, 16), 'uint8'))
             levelTag["Biomes"].value[:] = -1
 
-        self.Entities = self.rootTag["Level"]["Entities"]
-        self.TileEntities = self.rootTag["Level"]["TileEntities"]
-        self.TileTicks = self.rootTag["Level"].get("TileTicks")
-        if self.TileTicks is None:
-            self.TileTicks = nbt.TAG_List()
-
-        # self.Entities = [PCEntityRef(tag) for tag in self.rootTag["Level"]["Entities"]]
-        # del self.rootTag["Level"]["Entities"]
-        # self.TileEntities = [PCTileEntityRef(tag) for tag in self.rootTag["Level"]["TileEntities"]]
-        # del self.rootTag["Level"]["TileEntities"]
+        if "TileTicks" not in levelTag:
+            levelTag["TileTicks"] = nbt.TAG_List()
 
     def _create(self):
         chunkTag = nbt.TAG_Compound()
@@ -240,9 +232,9 @@ class AnvilChunkData(object):
 
         levelTag["Entities"] = nbt.TAG_List()
         levelTag["TileEntities"] = nbt.TAG_List()
+        levelTag["TileTicks"] = nbt.TAG_List()
 
         self.rootTag = chunkTag
-
         self.dirty = True
 
     def _load(self, rootTag):
@@ -270,15 +262,13 @@ class AnvilChunkData(object):
             sanitizeBlocks(section, self.adapter.blocktypes)
             sections.append(section.buildNBTTag())
 
-        tag["Level"]["Sections"] = sections
+        chunkTag["Level"]["Sections"] = sections
 
-        if len(self.TileTicks):
-            tag["Level"]["TileTicks"] = self.TileTicks
-        elif "TileTicks" in tag["Level"]:
-            del tag["Level"]["TileTicks"]
+        if len(self.TileTicks) == 0:
+            del chunkTag["Level"]["TileTicks"]
 
         log.debug(u"Saved chunk {0}".format(self))
-        return tag
+        return chunkTag
 
     def sectionPositions(self):
         return self._sections.keys()
@@ -317,6 +307,18 @@ class AnvilChunkData(object):
     @property
     def blocktypes(self):
         return self.adapter.blocktypes
+
+    @property
+    def Entities(self):
+        return self.rootTag["Level"]["Entities"]
+
+    @property
+    def TileEntities(self):
+        return self.rootTag["Level"]["TileEntities"]
+
+    @property
+    def TileTicks(self):
+        return self.rootTag["Level"]["TileTicks"]
 
     @property
     def Biomes(self):
