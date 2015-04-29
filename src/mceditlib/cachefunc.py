@@ -106,7 +106,8 @@ class lru_cache_object(object):
                         self.refcount[stale_key] += 1
                         cannot_decache.append(stale_key)
 
-                self.queue.extendleft(cannot_decache)
+                # Put these at the back of the queue - should_decache=False is counted as a hit
+                self.queue.extend(cannot_decache)
 
         # periodically compact the queue by eliminating duplicate keys
         # while preserving order of most recent access
