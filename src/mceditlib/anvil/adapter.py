@@ -14,9 +14,9 @@ import zlib
 import time
 
 from mceditlib import nbt
-from mceditlib.anvil.entities import PCEntityRef, PCTileEntityRef
+from mceditlib.anvil.entities import PCEntityRef, PCTileEntityRef, ItemStackRef
 from mceditlib.anvil.worldfolder import AnvilWorldFolder
-from mceditlib.blocktypes import PCBlockTypeSet, BlockType
+from mceditlib.blocktypes import PCBlockTypeSet, BlockType, VERSION_1_8, VERSION_1_7
 from mceditlib.geometry import Vector
 from mceditlib.nbt import NBTFormatError
 from mceditlib.selection import BoundingBox
@@ -249,7 +249,31 @@ class AnvilChunkData(object):
         """ does not recalculate any data or light """
 
         log.debug(u"Saving chunk: {0}".format(self))
-        tag = self.rootTag.copy()
+
+        log.debug("Converting ItemStacks")
+
+        if self.blocktypes.itemStackVersion == VERSION_1_7:
+            def convertStack(stack):
+                if stack["id"].tagID == nbt.ID_STRING:
+                    stack["id"] = nbt.TAG_Short(self.blocktypes.itemTypes.internalNamesByID[stack["id"].value])
+        elif self.blocktypes.itemStackVersion == VERSION_1_8:
+            def convertStack(stack):
+                if stack["id"].tagID == nbt.ID_SHORT:
+                    stack["id"] = nbt.TAG_Short(self.blocktypes.itemTypes[stack["id"].value].ID)
+
+        def convertAllStacks(tags):
+            for tag in tags:
+                if ItemStackRef.tagIsItemStack(tag):
+                    convertStack(tag)
+                if tag.tagID == nbt.ID_COMPOUND:
+                    convertAllStacks(tag.itervalues())
+                if tag.tagID == nbt.ID_LIST and tag.list_type in (nbt.ID_LIST, nbt.ID_COMPOUND):
+                    convertAllStacks(tag)
+
+        convertAllStacks(self.Entities)
+        convertAllStacks(self.TileEntities)
+
+        chunkTag = self.rootTag.copy()
 
         sections = nbt.TAG_List()
         for _, section in self._sections.iteritems():
@@ -397,9 +421,6 @@ class AnvilWorldAdapter(object):
     maxHeight = 256
     hasLights = True
 
-    EntityRef = PCEntityRef
-    TileEntityRef = PCTileEntityRef
-
     def __init__(self, filename=None, create=False, readonly=False, resume=None):
         """
         Load a Minecraft for PC level (Anvil format) from the given filename. It can point to either
@@ -420,6 +441,9 @@ class AnvilWorldAdapter(object):
         :rtype: AnvilWorldAdapter
         """
         self.lockTime = 0
+
+        self.EntityRef = PCEntityRef
+        self.TileEntityRef = PCTileEntityRef
 
         assert not (create and readonly)
 
@@ -457,6 +481,8 @@ class AnvilWorldAdapter(object):
 
         else:
             self.loadMetadata()
+
+
 
     def __repr__(self):
         return "AnvilWorldAdapter(%r)" % self.filename
@@ -939,7 +965,7 @@ class AnvilWorldAdapter(object):
         return self.getPlayer(playerUUID)
 
 
-class PlayerAbilitiesAttrs(nbtattr.CompoundAttrs):
+class PlayerAbilitiesRef(nbtattr.NBTCompoundRef):
     mayBuild = nbtattr.NBTAttr('mayBuild', nbt.TAG_Byte, 0)
     instabuild = nbtattr.NBTAttr('instabuild', nbt.TAG_Byte, 0)
     flying = nbtattr.NBTAttr('flying', nbt.TAG_Byte, 0)
@@ -953,15 +979,6 @@ class AnvilPlayerRef(object):
         self.adapter = adapter
         self.rootTag = adapter.getPlayerTag(playerUUID)
         self.dirty = False
-    #
-    # @property
-    # def rootTag(self):
-    #     if self.playerTag is None or self.playerTag() is None:
-    #         tag = self.adapter.getPlayerTag(self.playerName)
-    #         self.playerTag = weakref.ref(tag)
-    #
-    #         return tag
-    #     return self.playerTag()
 
     UUID = nbtattr.NBTUUIDAttr()
 
@@ -988,7 +1005,7 @@ class AnvilPlayerRef(object):
     GAMETYPE_ADVENTURE = 2
     GameType = nbtattr.NBTAttr('playerGameType', nbt.TAG_Int, GAMETYPE_SURVIVAL)
 
-    abilities = nbtattr.NBTCompoundAttr("abilities", PlayerAbilitiesAttrs)
+    abilities = nbtattr.NBTCompoundAttr("abilities", PlayerAbilitiesRef)
 
     def setAbilities(self, gametype):
         # Assumes GAMETYPE_CREATIVE is the only mode with these abilities set,
