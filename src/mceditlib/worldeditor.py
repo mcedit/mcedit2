@@ -10,12 +10,14 @@ import re
 from mceditlib import cachefunc
 
 from mceditlib.block_copy import copyBlocksIter
+from mceditlib.nbtattr import NBTListProxy
 from mceditlib.operations.block_fill import FillBlocksOperation
 from mceditlib.selection import BoundingBox
 from mceditlib.findadapter import findAdapter
 from mceditlib.multi_block import getBlocks, setBlocks
 from mceditlib.schematic import createSchematic
 from mceditlib.util import displayName, chunk_pos, exhaust, matchEntityTags
+from mceditlib.util.lazyprop import weakrefprop
 
 
 log = logging.getLogger(__name__)
@@ -37,6 +39,44 @@ def string_func(array):
 numpy.set_string_function(string_func)
 
 
+class EntityListProxy(collections.MutableSequence):
+    """
+    A proxy for the Entities and TileEntities lists of a WorldEditorChunk. Accessing an element returns an EntityRef
+    or TileEntityRef wrapping the element of the underlying NBT compound, with a reference to the WorldEditorChunk.
+
+    These Refs cannot be created at load time as they hold a reference to the chunk, preventing the chunk from being
+    unloaded when its refcount reaches zero.
+    """
+
+    chunk = weakrefprop()
+
+    def __init__(self, chunk, attrName, refClass=None):
+        self.attrName = attrName
+        self.refClass = refClass
+        self.chunk = chunk
+
+    def __getitem__(self, key):
+        if self.refClass:
+            return self.refClass(getattr(self.chunk.chunkData, self.attrName)[key], self.chunk)
+        else:
+            return getattr(self.chunk.chunkData, self.attrName)[key].value
+
+    def __setitem__(self, key, value):
+        if not isinstance(value, self.refClass):
+            raise ValueError("Not the expected ref class %r for list %r: %r", self.refClass, self.attrName, type(value))
+        getattr(self.chunk.chunkData, self.attrName)[key] = value.rootTag
+
+    def __delitem__(self, key):
+        del getattr(self.chunk.chunkData, self.attrName)[key]
+
+    def __len__(self):
+        return len(getattr(self.chunk.chunkData, self.attrName))
+
+    def insert(self, index, value):
+        if not isinstance(value, self.refClass):
+            raise ValueError("Not the expected ref class %r for list %r: %r", self.refClass, self.attrName, type(value))
+        getattr(self.chunk.chunkData, self.attrName).insert(index, value.rootTag)
+
 class WorldEditorChunk(object):
     """
     This is a 16x16xH chunk in a format-independent world.
@@ -44,14 +84,19 @@ class WorldEditorChunk(object):
     vertical sections of 16x16x16, accessed using the `getSection` method.
     """
 
+
+
     def __init__(self, chunkData, editor):
         self.worldEditor = editor
         self.chunkData = chunkData
         self.cx, self.cz = chunkData.cx, chunkData.cz
         self.dimName = chunkData.dimName
         self.dimension = editor.getDimension(self.dimName)
-        self.Entities = [editor.adapter.EntityRef(tag, self) for tag in chunkData.Entities]
-        self.TileEntities = [editor.adapter.TileEntityRef(tag, self) for tag in chunkData.TileEntities]
+
+        self.Entities = EntityListProxy(self, "Entities", editor.adapter.EntityRef)
+        self.TileEntities = EntityListProxy(self, "TileEntities", editor.adapter.TileEntityRef)
+        #self.Entities = [editor.adapter.EntityRef(tag, self) for tag in chunkData.Entities]
+        #self.TileEntities = [editor.adapter.TileEntityRef(tag, self) for tag in chunkData.TileEntities]
 
 
     def buildNBTTag(self):
@@ -118,13 +163,11 @@ class WorldEditorChunk(object):
         if ref.chunk is self:
             return
         self.chunkData.Entities.append(ref.rootTag)
-        self.Entities.append(ref)
         ref.chunk = self
         self.dirty = True
 
     def removeEntity(self, ref):
         self.chunkData.Entities.remove(ref.rootTag)
-        self.Entities.remove(ref)
         ref.chunk = None
         self.dirty = True
 
@@ -136,7 +179,6 @@ class WorldEditorChunk(object):
         if ref.chunk is self:
             return
         self.chunkData.TileEntities.append(ref.rootTag)
-        self.TileEntities.append(ref)
         ref.chunk = self
         self.dirty = True
 
@@ -144,7 +186,6 @@ class WorldEditorChunk(object):
         if ref.chunk is not self:
             return
         self.chunkData.TileEntities.remove(ref.rootTag)
-        self.TileEntities.remove(ref)
         ref.chunk = None
         ref.rootTag = None
         self.dirty = True
