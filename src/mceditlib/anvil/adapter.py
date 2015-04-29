@@ -372,6 +372,18 @@ class AnvilWorldMetadata(object):
         for name, val in zip(("SpawnX", "SpawnY", "SpawnZ"), pos):
             self.rootTag[name] = nbt.TAG_Int(val)
 
+    def is1_8World(self):
+        # Minecraft 1.8 adds a dozen tags to level.dat/Data. These tags are removed if
+        # the world is played in 1.7 (and all of the items are removed too!)
+        # Use some of these tags to decide whether to use 1.7 format ItemStacks or 1.8 format ones.
+        # In 1.8, the stack's "id" is a string, but in 1.7 it is an int.
+        tags = (t in self.rootTag for t in (
+            'BorderCenterX', 'BorderCenterZ',
+            'BorderDamagePerBlock',
+            'BorderSafeZone',
+            'BorderSize'
+        ))
+        return any(tags)
 
 class AnvilWorldAdapter(object):
     """
@@ -455,7 +467,7 @@ class AnvilWorldAdapter(object):
         try:
             metadataTag = nbt.load(buf=self.selectedRevision.readFile("level.dat"))
             self.metadata = AnvilWorldMetadata(metadataTag)
-            self.loadFMLMapping()
+            self.loadBlockMapping()
         except (EnvironmentError, zlib.error, NBTFormatError) as e:
             log.info("Error loading level.dat, trying level.dat_old ({0})".format(e))
             try:
@@ -470,7 +482,11 @@ class AnvilWorldAdapter(object):
 
         assert self.metadata.version == VERSION_ANVIL, "Pre-Anvil world formats are not supported (for now)"
 
-    def loadFMLMapping(self):
+    def loadBlockMapping(self):
+        if self.metadata.is1_8World():
+            itemStackVersion = VERSION_1_8
+        else:
+            itemStackVersion = VERSION_1_7
 
         blocktypes = PCBlockTypeSet(itemStackVersion)
         self.blocktypes = blocktypes
