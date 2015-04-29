@@ -396,8 +396,8 @@ class WorldEditor(object):
         """
         return self.adapter.readChunk(cx, cz, dimName)
 
-    def _shouldUnloadChunkData(self, chunkData):
-        return (chunkData.cx, chunkData.cz, chunkData.dimName) not in self._loadedChunks
+    def _shouldUnloadChunkData(self, key):
+        return key not in self._loadedChunks
 
     def _willUnloadChunkData(self, chunkData):
         if chunkData.dirty and not self.readonly:

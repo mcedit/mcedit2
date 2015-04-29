@@ -95,7 +95,7 @@ class lru_cache_object(object):
                         self.refcount[stale_key] -= 1
 
                     # attempt to evict the result from cache
-                    if self.should_decache is None or self.should_decache(self.cache[stale_key]):
+                    if self.should_decache is None or self.should_decache(stale_key):
                         # allowed
                         if self.will_decache is not None:
                             self.will_decache(self.cache[stale_key])
