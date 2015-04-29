@@ -8,7 +8,9 @@ import logging
 import time
 import datetime
 import functools
-from mcedit2.util.lazyprop import lazyprop
+
+from mceditlib.util.lazyprop import lazyprop
+
 
 log = logging.getLogger(__name__)
 

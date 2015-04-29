@@ -4,17 +4,17 @@ import os
 
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
+from mcedit2.rendering.blockmodels import BlockModels
 
 from mcedit2 import editortools
 from mcedit2.command import SimpleRevisionCommand
-from mcedit2.rendering.blockmodels import BlockModels
 from mcedit2.editorcommands.fill import fillCommand
 from mcedit2.editorcommands.find_replace import FindReplaceDialog
 from mcedit2.editortools.select import SelectCommand
 from mcedit2.panels.player import PlayerPanel
 from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.directories import getUserSchematicsDirectory
-from mcedit2.util.lazyprop import weakrefprop
+from mceditlib.util.lazyprop import weakrefprop
 from mcedit2.util.raycast import rayCastInBounds
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.undostack import MCEUndoStack
@@ -39,6 +39,7 @@ from mceditlib.exceptions import PlayerNotFound
 from mceditlib.revisionhistory import UndoFolderExists
 from mceditlib.worldeditor import WorldEditor
 from mceditlib.blocktypes import BlockType
+
 
 log = logging.getLogger(__name__)
 """

@@ -3,10 +3,13 @@
 """
 from __future__ import absolute_import, division, print_function
 import logging
+
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
-from mcedit2.util.lazyprop import weakrefprop
+
+from mceditlib.util.lazyprop import weakrefprop
 from mcedit2.util.settings import Settings
+
 
 log = logging.getLogger(__name__)
 

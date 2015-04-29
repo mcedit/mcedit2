@@ -11,13 +11,12 @@ import numpy
 from PySide.QtCore import Qt
 from PySide import QtGui, QtCore
 
-from mcedit2.rendering.layers import Layer
 from mcedit2.util import profiler
 from mcedit2.util.settings import Settings
 from mcedit2.widgets.layout import Column, Row
-from mcedit2.util.lazyprop import lazyprop
+from mceditlib.util.lazyprop import lazyprop
 from mcedit2.worldview.viewcontrols import ViewControls
-from mcedit2.worldview.worldview import WorldView, iterateChunks, LayerToggleGroup
+from mcedit2.worldview.worldview import WorldView, iterateChunks
 from mcedit2.worldview.viewaction import ViewAction
 
 

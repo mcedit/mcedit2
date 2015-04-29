@@ -5,15 +5,15 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 
 import numpy
+from mcedit2.rendering.modelmesh import BlockModelMesh
 
 from mcedit2.rendering import layers
 from mcedit2.rendering.chunkmeshes.entitymesh import TileEntityMesh, MonsterRenderer, ItemRenderer
 from mcedit2.rendering.chunkmeshes.lowdetail import LowDetailBlockMesh, OverheadBlockMesh
 from mcedit2.rendering.chunkmeshes.terrainpop import TerrainPopulatedRenderer
 from mcedit2.rendering.chunkmeshes.tileticks import TileTicksRenderer
-from mcedit2.rendering.modelmesh import BlockModelMesh
 from mcedit2.util import profiler
-from mcedit2.util.lazyprop import lazyprop
+from mceditlib.util.lazyprop import lazyprop
 from mceditlib import faces
 from mceditlib import exceptions
 from mceditlib.selection import BoundingBox, SectionBox

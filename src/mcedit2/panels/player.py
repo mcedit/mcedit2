@@ -9,9 +9,8 @@ from PySide import QtGui
 from PySide.QtCore import Qt
 
 from mcedit2.command import SimpleRevisionCommand
-from mcedit2.util.lazyprop import weakrefprop
+from mceditlib.util.lazyprop import weakrefprop
 from mcedit2.util.screen import centerWidgetInScreen
-from mcedit2.widgets.nbttree.nbttreemodel import NBTTreeModel
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.resources import resourcePath
 from mcedit2.widgets.propertylist import PropertyListModel

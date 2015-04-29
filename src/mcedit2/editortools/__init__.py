@@ -6,7 +6,8 @@ import logging
 import os
 
 from PySide import QtCore, QtGui
-from mcedit2.util.lazyprop import weakrefprop
+
+from mceditlib.util.lazyprop import weakrefprop
 from mcedit2.util.resources import resourcePath
 
 
