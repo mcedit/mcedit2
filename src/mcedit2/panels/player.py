@@ -11,6 +11,9 @@ from PySide.QtCore import Qt
 from mcedit2.command import SimpleRevisionCommand
 from mceditlib.util.lazyprop import weakrefprop
 from mcedit2.util.screen import centerWidgetInScreen
+from mcedit2.widgets.inventory import InventoryView, InventoryItemModel, InventoryEditor
+from mcedit2.widgets.layout import Row
+from mcedit2.widgets.nbttree.nbttreemodel import NBTTreeModel
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.resources import resourcePath
 from mcedit2.widgets.propertylist import PropertyListModel
@@ -35,6 +38,9 @@ class PlayerPanel(QtGui.QWidget):
         self.selectedUUID = None
 
         load_ui("panels/player.ui", baseinstance=self)
+
+        self.inventoryEditor = InventoryEditor()
+        self.inventoryGroupBox.setLayout(Row(self.inventoryEditor))
 
         self.movePlayerButton.clicked.connect(self.movePlayerToCamera)
         self.viewPlayerButton.clicked.connect(self.showPlayerView)
@@ -79,6 +85,7 @@ class PlayerPanel(QtGui.QWidget):
 
         self.nbtEditor.editorSession = self.editorSession
         self.nbtEditor.editMade.connect(self.nbtEditWasMade)
+
 
         centerWidgetInScreen(self)
 
@@ -126,6 +133,10 @@ class PlayerPanel(QtGui.QWidget):
         self.nbtEditor.undoCommandPrefixText = ("Player %s: " % self.selectedUUID) if self.selectedUUID else "Single-player: "
         self.nbtEditor.setRootTag(self.selectedPlayer.rootTag if self.selectedPlayer else None)
 
+    def updateInventory(self):
+        self.inventoryEditor.editorSession = self.editorSession
+        self.inventoryEditor.inventoryRef = self.selectedPlayer.Inventory
+
     def nbtEditWasMade(self):
         self.selectedPlayer.dirty = True
 
@@ -163,6 +174,7 @@ class PlayerPanel(QtGui.QWidget):
     def setSelectedPlayerUUID(self, UUID):
         self.selectedUUID = UUID
         self.updateNBTTree()
+        self.updateInventory()
 
     @property
     def selectedPlayer(self):
