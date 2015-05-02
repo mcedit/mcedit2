@@ -29,7 +29,7 @@ class PlayerPanel(QtGui.QWidget):
         :type editorSession: mcedit2.editorsession.EditorSession
         :rtype: PlayerPanel
         """
-        super(PlayerPanel, self).__init__(f=Qt.Tool)
+        super(PlayerPanel, self).__init__(QtGui.qApp.mainWindow, f=Qt.Tool)
 
         self.editorSession = editorSession
         self.selectedUUID = None
