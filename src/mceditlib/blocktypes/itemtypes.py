@@ -27,7 +27,7 @@ class ItemType(_ItemType):
         return "<ItemType (%d:%d)%s>" % (self.ID, self.meta, names)
 
     def __str__(self):
-        return "%s (%s%s) [%s:%s]" % (self.displayName, self.internalName, self.blockState, self.ID, self.meta)
+        return "%s (%s) [%s:%s]" % (self.name, self.internalName, self.ID, self.meta)
 
     def __cmp__(self, other):
         if not isinstance(other, ItemType):
@@ -49,7 +49,7 @@ class ItemTypeSet(object):
         self.IDsByInternalName = {}
 
         self.defaults = {
-
+            "texture": None
         }
 
     def getItemTypeAttr(self, itemType, attr):
@@ -72,17 +72,30 @@ class ItemTypeSet(object):
             return itemJson
 
         retval = itemJson.get(attr)
+
+        if attr in ("name", "texture"):
+            if isinstance(retval, list):
+                assert itemType.meta is not None, "ItemType %s: Got a list %s for attr %s but meta is None" % (
+                    itemType.internalName, retval, attr
+                )
+                assert itemType.meta < len(retval), "ItemType %s: Got meta %d but no item in list %s" % (
+                    itemType.internalName, itemType.meta, retval
+                )
+                return retval[itemType.meta]
+
         if retval is None:
             if attr not in self.defaults:
-                raise AttributeError
+                raise AttributeError(attr)
             retval = self.defaults[attr]
 
         return retval
 
     def loadItemsFromJson(self, json):
+        # loading JSON taken from MCEdit-Unified
+        # xxx make the ItemDumper already
         for jsonName, item in json.iteritems():
+            internalName = "minecraft:" + jsonName
             try:
-                internalName = "minecraft:" + jsonName
                 ID = int(item["id"])
                 name = item["name"]
                 item["internalName"] = internalName
@@ -90,9 +103,15 @@ class ItemTypeSet(object):
                 self.IDsByInternalName[internalName] = ID
                 self.itemJsons[ID] = item
 
+                texture = item.get("texture")
+
                 if isinstance(name, list):
                     # damage is meta value
-                    for meta, metaName in enumerate(name):
+                    for meta, _ in enumerate(name):
+                        self.allItems.append(ItemType(ID, meta, self))
+
+                elif isinstance(texture, list):
+                    for meta, _ in enumerate(texture):
                         self.allItems.append(ItemType(ID, meta, self))
                 else:
                     # damage is item damage
@@ -103,6 +122,9 @@ class ItemTypeSet(object):
 
     def __iter__(self):
         return iter(self.allItems)
+
+    def __len__(self):
+        return len(self.allItems)
 
     def __getitem__(self, key):
         """
