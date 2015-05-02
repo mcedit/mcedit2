@@ -134,7 +134,7 @@ class Fill(BrushMode):
         self.optionsWidget = QtGui.QWidget()
         label = QtGui.QLabel(self.tr("Fill Block:"))
         self.blockTypeButton = BlockTypeButton()
-        self.blockTypeButton.textureAtlas = brushTool.editorSession.textureAtlas
+        self.blockTypeButton.editorSession = brushTool.editorSession
         self.blockTypeButton.block = brushTool.editorSession.worldEditor.blocktypes['minecraft:stone']
         self.blockTypeButton.blocksChanged.connect(brushTool.updateCursor)
 

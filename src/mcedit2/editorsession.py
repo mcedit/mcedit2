@@ -696,7 +696,6 @@ class EditorSession(QtCore.QObject):
             if t.name == name:
                 return t
 
-
     def chooseTool(self, name):
         oldTool = self.currentTool
         self.currentTool = self.getTool(name)

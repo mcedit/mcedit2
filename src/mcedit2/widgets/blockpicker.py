@@ -498,30 +498,35 @@ class BlockTypeButton(QtGui.QPushButton):
 
     blocksChanged = QtCore.Signal(list)
 
-    _textureAtlas = None
+    _editorSession = None
 
     @property
-    def textureAtlas(self):
-        return self._textureAtlas
+    def editorSession(self):
+        return self._editorSession
 
-    @textureAtlas.setter
-    def textureAtlas(self, textureAtlas):
+    @editorSession.setter
+    def editorSession(self, editorSession):
         """
 
-        :type textureAtlas: mcedit2.rendering.textureatlas.TextureAtlas
+        :type editorSession: mcedit2.editorsession.EditorSession
         """
-        self._textureAtlas = textureAtlas
-        self.picker.textureAtlas = textureAtlas
+        self._editorSession = editorSession
+        self.picker.textureAtlas = editorSession.textureAtlas
+        editorSession.configuredBlocksChanged.connect(self.configuredBlocksDidChange)
+        self.updateView()
+
+    def configuredBlocksDidChange(self):
+        self.picker.textureAtlas = self.editorSession.textureAtlas
         self.updateView()
 
     def updateView(self):
-        if self.textureAtlas and self.blocks:
+        if self.editorSession and self.blocks:
             log.info("Updating button with %s", self.blocks)
 
             layout = self.layout()
             if self._viewWidget:
                 layout.removeWidget(self._viewWidget)
-            self._viewWidget = BlockTypesItemWidget(self, self.blocks, self.textureAtlas)
+            self._viewWidget = BlockTypesItemWidget(self, self.blocks, self.editorSession.textureAtlas)
             layout.addWidget(self._viewWidget)
 
             assert isinstance(layout, QtGui.QLayout)
@@ -541,7 +546,7 @@ class BlockTypeButton(QtGui.QPushButton):
 
     @blocks.setter
     def blocks(self, value):
-        value = [self.textureAtlas.blocktypes[block]
+        value = [self.editorSession.blocktypes[block]
                  if not isinstance(block, BlockType)
                  else block
                  for block in value]

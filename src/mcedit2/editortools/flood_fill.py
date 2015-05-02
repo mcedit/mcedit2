@@ -31,7 +31,7 @@ class FloodFillTool(EditorTool):
 
         self.blockTypeWidget = BlockTypeButton()
         self.blockTypeWidget.block = self.editorSession.worldEditor.blocktypes["stone"]
-        self.blockTypeWidget.textureAtlas = self.editorSession.textureAtlas
+        self.blockTypeWidget.editorSession = self.editorSession
 
         self.indiscriminateCheckBox = QtGui.QCheckBox("Ignore block meta")
         self.indiscriminateCheckBox.setChecked(False)
