@@ -55,6 +55,11 @@ class PlayerPanel(QtGui.QWidget):
             log.info("Failed to get single-player UUID.")
             singlePlayerUUID = None
 
+        if "" in playerUUIDs:
+            # Move singleplayer to beginning of list
+            playerUUIDs.remove("")
+            playerUUIDs.insert(0, "")
+
         for UUID in playerUUIDs:  # xxx live update?
             if UUID == "":
                 displayName = "[Single-player](%s)" % singlePlayerUUID
@@ -63,7 +68,7 @@ class PlayerPanel(QtGui.QWidget):
                 try:
                     UUID = uuid.UUID(hex=UUID)
                     if UUID == singlePlayerUUID:
-                        continue  # Don't count single-player twice when it appears under playerData/
+                        displayName = "[Multiplayer](%s)" % singlePlayerUUID
                 except ValueError:  # badly formed uuid?
                     log.warn("Could not get a UUID from %s", UUID)
                     continue
