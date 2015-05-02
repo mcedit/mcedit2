@@ -41,7 +41,7 @@ class BlockListWidget(QtGui.QWidget):
                     table.setItem(row, i, QtGui.QTableWidgetItem(data))
 
 
-def BlockTypePixmap(block, textureAtlas):
+def BlockTypePixmap(block, textureAtlas, size=32):
     """
 
     :param block:
@@ -58,7 +58,7 @@ def BlockTypePixmap(block, textureAtlas):
         texname = "MCEDIT_UNKNOWN"
     try:
         io = textureAtlas._openImageStream(texname)
-        return TexturePixmap(io, texname=texname)
+        return TexturePixmap(io, size=size, texname=texname)
     except (ValueError, ResourceNotFound) as e:
         log.warn("BlockTypePixmap: Failed to read texture %s: %r", texname, e)
 
