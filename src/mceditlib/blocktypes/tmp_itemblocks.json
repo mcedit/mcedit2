@@ -1,11 +1,4 @@
 {
-    "air": {
-        "id": 0,
-        "name": "Air",
-        "obtainable": false,
-        "maxdamage": 0,
-        "stacksize": 64
-    },
     "stone": {
         "id": 1,
         "name": ["Stone",
