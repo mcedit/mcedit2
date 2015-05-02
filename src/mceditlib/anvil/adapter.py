@@ -14,6 +14,7 @@ import zlib
 import time
 
 from mceditlib import nbt
+from mceditlib.anvil import entities
 from mceditlib.anvil.entities import PCEntityRef, PCTileEntityRef, ItemStackRef
 from mceditlib.anvil.worldfolder import AnvilWorldFolder
 from mceditlib.blocktypes import PCBlockTypeSet, BlockType, VERSION_1_8, VERSION_1_7
@@ -1002,7 +1003,7 @@ class AnvilPlayerRef(object):
     OnGround = nbtattr.NBTAttr('OnGround', nbt.TAG_Byte, 0)
     Dimension = nbtattr.NBTAttr('Dimension', nbt.TAG_Int, 0)
 
-    Inventory = nbtattr.NBTListAttr('Inventory', nbt.TAG_Compound)
+    Inventory = entities.SlottedInventoryAttr('Inventory')
 
     GAMETYPE_SURVIVAL = 0
     GAMETYPE_CREATIVE = 1
