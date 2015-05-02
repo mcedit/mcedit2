@@ -52,7 +52,6 @@ def ItemTypeIcon(itemType, editorSession, itemStack=None):
             return QtGui.QIcon(pixmap)
         except Exception as e:
             log.exception("Failed to load block texture for item icon %s: %s", itemType, e)
-            raise
             return None
     try:
         textureFile = editorSession.resourceLoader.openStream("assets/minecraft/textures/items/%s" % textureName)
