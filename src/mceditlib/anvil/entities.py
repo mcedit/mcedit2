@@ -190,6 +190,8 @@ class SlotsListProxy(nbtattr.NBTListProxy):
             if stack.Slot == slot:
                 return stack
 
+        return None
+
 
 class SlottedInventoryAttr(nbtattr.NBTCompoundListAttr):
     def __init__(self, name):
