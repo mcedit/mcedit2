@@ -980,6 +980,10 @@ class AnvilPlayerRef(object):
         self.rootTag = adapter.getPlayerTag(playerUUID)
         self.dirty = False
 
+    @property
+    def blockTypes(self):
+        return self.adapter.blocktypes
+
     UUID = nbtattr.NBTUUIDAttr()
 
     id = nbtattr.NBTAttr("id", nbt.TAG_String)
