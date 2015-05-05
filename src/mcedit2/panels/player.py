@@ -7,6 +7,7 @@ import uuid
 
 from PySide import QtGui
 from PySide.QtCore import Qt
+import itertools
 
 from mcedit2.command import SimpleRevisionCommand
 from mceditlib.util.lazyprop import weakrefprop
@@ -21,6 +22,14 @@ from mceditlib.exceptions import PlayerNotFound
 
 
 log = logging.getLogger(__name__)
+
+def playerSlotLayout():
+    layout = [(x, 0, 100+x) for x in range(4)]  # equipment
+    layout += [(x, y+1, x+9*y+9) for x, y in itertools.product(range(9), range(3))]  # inventory
+    layout += [(x, 4, x) for x in range(9)]  # hotbar
+    return layout
+
+PLAYER_SLOT_LAYOUT = playerSlotLayout()
 
 class PlayerPropertyChangeCommand(SimpleRevisionCommand):
     pass
@@ -39,7 +48,7 @@ class PlayerPanel(QtGui.QWidget):
 
         load_ui("panels/player.ui", baseinstance=self)
 
-        self.inventoryEditor = InventoryEditor()
+        self.inventoryEditor = InventoryEditor(PLAYER_SLOT_LAYOUT)
         self.inventoryGroupBox.setLayout(Row(self.inventoryEditor))
 
         self.movePlayerButton.clicked.connect(self.movePlayerToCamera)

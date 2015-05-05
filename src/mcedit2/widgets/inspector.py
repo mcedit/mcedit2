@@ -3,11 +3,21 @@
 """
 from __future__ import absolute_import, division, print_function
 import logging
+import traceback
 from PySide import QtGui
+from mcedit2.tileentities.chest import ChestEditorWidget, DispenserEditorWidget, HopperEditorWidget
 from mcedit2.util.load_ui import load_ui
 
 log = logging.getLogger(__name__)
 
+tileEntityEditorClasses = {
+    "Chest": ChestEditorWidget,
+    "Trap": DispenserEditorWidget,
+    "Hopper": HopperEditorWidget,
+}
+
+def registerInspectorWidget(ID, widgetClass):
+    tileEntityEditorClasses[ID] = widgetClass
 
 class InspectorWidget(QtGui.QWidget):
     def __init__(self, editorSession):
@@ -28,6 +38,8 @@ class InspectorWidget(QtGui.QWidget):
         self.entityNBTEditor.editorSession = self.editorSession
         self.entityNBTEditor.editMade.connect(self.editWasMade)
 
+        self.blockEditorWidget = None
+
         self.tileEntity = None
         self.entity = None
 
@@ -45,11 +57,34 @@ class InspectorWidget(QtGui.QWidget):
         self.blockXLabel.setText(str(x))
         self.blockYLabel.setText(str(y))
         self.blockZLabel.setText(str(z))
+
+        if self.blockEditorWidget:
+            self.blockTabWidget.removeTab(0)
+            self.blockEditorWidget = None
+
         self.tileEntity = self.editorSession.currentDimension.getTileEntity(pos)
+
         if self.tileEntity is not None:
+            editorClass = tileEntityEditorClasses.get(self.tileEntity.id)
+            if editorClass is not None:
+                try:
+                    self.blockEditorWidget = editorClass(self.editorSession, self.tileEntity)
+                except Exception as e:
+                    self.blockEditorWidget = QtGui.QLabel("Failed to load TileEntity editor:\n%s\n%s" % (
+                        e,
+                        traceback.format_exc(),
+                                                                                                        ))
+                    self.blockEditorWidget.displayName = "Error"
+
+                displayName = getattr(self.blockEditorWidget, 'displayName', self.tileEntity.id)
+
+                self.blockTabWidget.insertTab(0, self.blockEditorWidget, displayName)
+                self.blockTabWidget.setCurrentIndex(0)
+
             self.blockNBTEditor.setRootTag(self.tileEntity.raw_tag())
         else:
             self.blockNBTEditor.setRootTag(None)
+
         self.removeTileEntityButton.setEnabled(self.tileEntity is not None)
 
     def inspectEntity(self, entity):

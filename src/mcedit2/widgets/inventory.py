@@ -17,25 +17,28 @@ from mcedit2.widgets.nbttree.nbteditor import NBTEditorWidget
 log = logging.getLogger(__name__)
 
 
-class InventoryItemModel(QtCore.QAbstractListModel):
+class InventoryItemModel(QtCore.QAbstractItemModel):
     ItemIDRole = Qt.UserRole
     ItemRawIDRole = ItemIDRole + 1
     ItemIconRole = ItemRawIDRole + 1
     ItemDamageRole = ItemIconRole + 1
     ItemCountRole = ItemDamageRole + 1
 
-    def __init__(self, itemListRef, slotCount, editorSession):
+    def __init__(self, itemListRef, editorSession):
         super(InventoryItemModel, self).__init__()
         self.editorSession = editorSession
         self.itemListRef = itemListRef
-        self.slotCount = slotCount
         self.textureCache = {}
 
+    def index(self, slot, parentIndex=QtCore.QModelIndex()):
+        if parentIndex.isValid():
+            return QtCore.QModelIndex()
+        return self.createIndex(slot, 0)
 
     def rowCount(self, parent):
-        if parent.isValid():
-            return 0
-        return self.slotCount
+        # slot numbers are defined by the view's slotLayout
+        # maybe that should be the model's slotLayout instead
+        return 0
 
     def data(self, index, role):
         if not index.isValid():
@@ -45,7 +48,13 @@ class InventoryItemModel(QtCore.QAbstractListModel):
         itemStack = self.itemListRef.getItemInSlot(slot)
         if itemStack is None:
             return None
-        itemType = itemStack.itemType
+        try:
+            itemType = itemStack.itemType
+        except ValueError as e:  # itemType not mapped
+            return None
+        except KeyError as e:  # missing NBT tag?
+            log.exception("Error while reading item data: %r", e)
+            return None
 
         if role == self.ItemIconRole:
             return ItemTypeIcon(itemType, self.editorSession, itemStack)
@@ -138,12 +147,16 @@ class InventoryItemWidget(QtGui.QPushButton):
 
 
 class InventoryView(QtGui.QWidget):
-    def __init__(self, slotLayout):
+    def __init__(self, slotLayout, rows=None, columns=None):
         """
         slotLayout should be a list of (x, y, slotNumber) tuples.
 
+        rows and columns are optional. Pass them if you need the grid to be larger than the slotLayout.
+
         :param slotLayout:
-        :type slotLayout:
+        :type slotLayout: list[tuple(int, int, int)]
+        :type rows: int | None
+        :type columns: int | None
         :return:
         :rtype:
         """
@@ -151,6 +164,13 @@ class InventoryView(QtGui.QWidget):
         self.slotWidgets = {}
         gridLayout = QtGui.QGridLayout()
         self.setLayout(gridLayout)
+
+        # Add placeholders to stretch grid - QGridLayout has no setRow/ColumnCount
+        if rows:
+            gridLayout.addWidget(QtGui.QWidget(), rows-1, 0)
+        if columns:
+            gridLayout.addWidget(QtGui.QWidget(), 0, columns-1)
+
 
         def _makeClicked(slot):
             def _clicked():
@@ -179,7 +199,7 @@ class InventoryView(QtGui.QWidget):
 
     def updateItems(self):
         for slot in self.slots:
-            index = self.model.index(slot, 0)
+            index = self.model.index(slot)
             icon = index.data(InventoryItemModel.ItemIconRole)
             slotWidget = self.slotWidgets[slot]
             if icon is not None:
@@ -195,17 +215,23 @@ class InventoryView(QtGui.QWidget):
 
 
 class InventoryEditor(QtGui.QWidget):
-    def __init__(self):
+    def __init__(self, slotLayout, rows=None, columns=None):
+        """
+        slotLayout should be a list of (x, y, slotNumber) tuples.
+
+        rows and columns are optional. Pass them if you need the grid to be larger than the slotLayout.
+
+        :param slotLayout:
+        :type slotLayout: list[tuple(int, int, int)]
+        :type rows: int | None
+        :type columns: int | None
+        :return:
+        :rtype:
+        """
+
         super(InventoryEditor, self).__init__()
-        # xxx get layout from inventory ref? etc?
 
-        playerSlotLayout = [(x, 0, 100+x) for x in range(4)]  # equipment
-        playerSlotLayout += [(x, y+1, x+9*y+9) for x, y in itertools.product(range(9), range(3))]  # inventory
-        playerSlotLayout += [(x, 4, x) for x in range(9)]  # hotbar
-        playerSlotMax = 104
-        self.slotCount = playerSlotMax
-
-        self.inventoryView = InventoryView(playerSlotLayout)
+        self.inventoryView = InventoryView(slotLayout)
         self.inventoryView.slotClicked.connect(self.slotWasClicked)
 
         self.itemList = QtGui.QListView()
@@ -224,12 +250,13 @@ class InventoryEditor(QtGui.QWidget):
 
         self.itemNBTEditor = NBTEditorWidget()
 
+
         self.setLayout(Column(Row(self.inventoryView, self.itemList),
                               Row(QtGui.QLabel("Internal Name"), self.internalNameField,
                                   self.rawIDCheckbox, self.rawIDInput,
                                   QtGui.QLabel("Damage"), self.damageInput,
                                   QtGui.QLabel("Count"), self.countInput),
-                              self.itemNBTEditor))
+                              (self.itemNBTEditor, 1)))
 
         self.enableFields(False)
 
@@ -261,7 +288,7 @@ class InventoryEditor(QtGui.QWidget):
         if rawID != internalName:
             self.rawIDCheckbox.setEnabled(True)
             self.rawIDInput.setEnabled(True)
-            self.rawIDInput.setText(rawID)
+            self.rawIDInput.setText(str(rawID))
         else:
             self.rawIDCheckbox.setEnabled(False)
             self.rawIDInput.setEnabled(False)
@@ -302,7 +329,7 @@ class InventoryEditor(QtGui.QWidget):
         if self._editorSession is None or self._itemListRef is None:
             return
 
-        self.inventoryModel = InventoryItemModel(self._itemListRef, self.slotCount, self._editorSession)
+        self.inventoryModel = InventoryItemModel(self._itemListRef, self._editorSession)
         self.inventoryView.setModel(self.inventoryModel)
 
         self.itemListModel = ItemTypeListModel(self._editorSession)

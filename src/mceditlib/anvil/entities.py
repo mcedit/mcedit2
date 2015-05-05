@@ -212,8 +212,14 @@ class PCTileEntityChestRef(PCTileEntityRefBase):
         return self.Items.getItemInSlot(slot)
 
 _tileEntityClasses = {
-    "Chest": PCTileEntityChestRef
+    "Chest": PCTileEntityChestRef,
+    "Trap": PCTileEntityChestRef,
+    "Hopper": PCTileEntityChestRef,
 }
+
+def registerTileEntityRefClass(ID, refClass):
+    _tileEntityClasses[ID] = refClass
+
 """
 
     ItemStack usage:
