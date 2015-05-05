@@ -9,5 +9,22 @@
   {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=true,decayable=false,variant=jungle]", "biomeTintType": "foliage"},
   {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=true,decayable=true,variant=jungle]", "biomeTintType": "foliage"},
   {"internalName": "minecraft:tallgrass", "blockState": "minecraft:tallgrass[type=tall_grass]", "biomeTintType": "grass"},
-  {"internalName": "minecraft:tallgrass", "blockState": "minecraft:tallgrass[type=fern]", "biomeTintType": "grass"}
+  {"internalName": "minecraft:tallgrass", "blockState": "minecraft:tallgrass[type=fern]", "biomeTintType": "grass"},
+  {"internalName": "minecraft:chest", "blockState": "minecraft:chest[facing=north]", "renderType": 3, "forcedModel": "assets/minecraft/models/block/cube_all.json",
+    "forcedModelTextures": {
+      "#all": "assets/minecraft/textures/blocks/door_wood_lower.png"
+    }},
+  {"internalName": "minecraft:chest", "blockState": "minecraft:chest[facing=east]", "renderType": 3, "forcedModel": "assets/minecraft/models/block/cube_all.json",
+    "forcedModelTextures": {
+      "#all": "assets/minecraft/textures/blocks/door_wood_lower.png"
+    }},
+  {"internalName": "minecraft:chest", "blockState": "minecraft:chest[facing=south]", "renderType": 3, "forcedModel": "assets/minecraft/models/block/cube_all.json",
+    "forcedModelTextures": {
+      "#all": "assets/minecraft/textures/blocks/door_wood_lower.png"
+    }},
+  {"internalName": "minecraft:chest", "blockState": "minecraft:chest[facing=west]", "renderType": 3, "forcedModel": "assets/minecraft/models/block/cube_all.json",
+    "forcedModelTextures": {
+      "#all": "assets/minecraft/textures/blocks/door_wood_lower.png"
+    }}
+
 ]
