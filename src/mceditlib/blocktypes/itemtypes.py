@@ -163,6 +163,13 @@ class ItemTypeSet(object):
 
         return ItemType(ID, meta, self)
 
+    def addFMLIDMapping(self, internalName, ID):
+        item = {"internalName": internalName,
+                "name": internalName}
+        self.IDsByInternalName[internalName] = ID
+        self.itemJsons[ID] = item
+
+
 class PCItemTypeSet(ItemTypeSet):
     def __init__(self):
         super(PCItemTypeSet, self).__init__()

@@ -523,6 +523,8 @@ class AnvilWorldAdapter(object):
         if fml is None:
             return
 
+        itemTypes = blocktypes.itemTypes
+
         itemdata = fml.get('ItemData')  # MC 1.7
         if itemdata is not None:
             count = 0
@@ -531,38 +533,41 @@ class AnvilWorldAdapter(object):
             for entry in itemdata:
                 ID = entry['V'].value
                 name = entry['K'].value
-                if name[0] != u'\x01':  # 0x01 = blocks, 0x02 = items
-                    continue
-                name = name[1:]
+                magic, name = name[0], name[1:]
+                if magic == u'\x01':  # 0x01 = blocks
 
-                if not name.startswith("minecraft:"):
-                    # we load 1.8 block IDs and mappings by default
-                    # FML IDs should be allowed to override some of them for 1.8 blocks not in 1.7.
-                    count += 1
-                    replacedIDs.append(ID)
-                    fakeState = '[0]'
-                    nameAndState = name + fakeState
-                    log.debug("FML1.7: Adding %s = %d", name, ID)
-
-
-                    for vanillaMeta in range(15):
-                        # Remove existing Vanilla defs
-                        vanillaNameAndState = blocktypes.statesByID.get((ID, vanillaMeta))
-                        blocktypes.blockJsons.pop(vanillaNameAndState, None)
+                    if not name.startswith("minecraft:"):
+                        # we load 1.8 block IDs and mappings by default
+                        # FML IDs should be allowed to override some of them for 1.8 blocks not in 1.7.
+                        count += 1
+                        replacedIDs.append(ID)
+                        fakeState = '[0]'
+                        nameAndState = name + fakeState
+                        log.debug("FML1.7: Adding %s = %d", name, ID)
 
 
-                    blocktypes.IDsByState[nameAndState] = ID, 0
-                    blocktypes.statesByID[ID, 0] = nameAndState
-                    blocktypes.IDsByName[name] = ID
-                    blocktypes.namesByID[ID] = name
-                    blocktypes.defaultBlockstates[name] = fakeState
+                        for vanillaMeta in range(15):
+                            # Remove existing Vanilla defs
+                            vanillaNameAndState = blocktypes.statesByID.get((ID, vanillaMeta))
+                            blocktypes.blockJsons.pop(vanillaNameAndState, None)
 
-                    blocktypes.blockJsons[nameAndState] = {
-                        'displayName': name,
-                        'internalName': name,
-                        'blockState': '[0]',
-                        'unknown': True,
-                    }
+
+                        blocktypes.IDsByState[nameAndState] = ID, 0
+                        blocktypes.statesByID[ID, 0] = nameAndState
+                        blocktypes.IDsByName[name] = ID
+                        blocktypes.namesByID[ID] = name
+                        blocktypes.defaultBlockstates[name] = fakeState
+
+                        blocktypes.blockJsons[nameAndState] = {
+                            'displayName': name,
+                            'internalName': name,
+                            'blockState': '[0]',
+                            'unknown': True,
+                        }
+
+                if magic == u'\x02':  # 0x02 = items
+                    if not name.startswith("minecraft:"):
+                        itemTypes.addFMLIDMapping(name, ID)
 
             replacedIDsSet = set(replacedIDs)
             blocktypes.allBlocks[:] = [b for b in blocktypes if b.ID not in replacedIDsSet]
