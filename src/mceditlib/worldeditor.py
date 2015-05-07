@@ -59,9 +59,11 @@ class EntityListProxy(collections.MutableSequence):
         return self.refClass(getattr(self.chunk.chunkData, self.attrName)[key], self.chunk)
 
     def __setitem__(self, key, value):
-        if not isinstance(value, self.refClass):
-            raise ValueError("Not the expected ref class %r for list %r: %r", self.refClass, self.attrName, type(value))
-        getattr(self.chunk.chunkData, self.attrName)[key] = value.rootTag
+        tagList = getattr(self.chunk.chunkData, self.attrName)
+        if isinstance(key, slice):
+            tagList[key] = [v.rootTag for v in value]
+        else:
+            tagList[key] = value.rootTag
 
     def __delitem__(self, key):
         del getattr(self.chunk.chunkData, self.attrName)[key]
@@ -70,8 +72,6 @@ class EntityListProxy(collections.MutableSequence):
         return len(getattr(self.chunk.chunkData, self.attrName))
 
     def insert(self, index, value):
-        if not isinstance(value, self.refClass):
-            raise ValueError("Not the expected ref class %r for list %r: %r", self.refClass, self.attrName, type(value))
         getattr(self.chunk.chunkData, self.attrName).insert(index, value.rootTag)
 
 class WorldEditorChunk(object):
