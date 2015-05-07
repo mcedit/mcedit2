@@ -81,13 +81,16 @@ class InventoryItemModel(QtCore.QAbstractItemModel):
 
         if role == self.ItemIDRole:
             itemStack.id = value
-        if role == self.ItemRawIDRole:
+        elif role == self.ItemRawIDRole:
             itemStack.raw_id = int(value)
-        if role == self.ItemCountRole:
+        elif role == self.ItemCountRole:
             itemStack.Count = value
-        if role == self.ItemDamageRole:
+        elif role == self.ItemDamageRole:
             itemStack.Damage = value
+        else:
+            return
 
+        self.dataChanged.emit(index, index)
 
 
 class InventoryItemWidget(QtGui.QPushButton):
@@ -195,23 +198,31 @@ class InventoryView(QtGui.QWidget):
     def setModel(self, model):
         assert isinstance(model, InventoryItemModel)
         self.model = model
+        self.model.dataChanged.connect(self.dataChanged)
         self.updateItems()
+
+    def dataChanged(self, topLeft, bottomRight):
+        self.updateSlot(topLeft)
 
     def updateItems(self):
         for slot in self.slots:
             index = self.model.index(slot)
-            icon = index.data(InventoryItemModel.ItemIconRole)
-            slotWidget = self.slotWidgets[slot]
-            if icon is not None:
-                slotWidget.setIcon(icon)
-            else:
-                slotWidget.setIcon(InventoryItemWidget.BLANK)
+            self.updateSlot(index)
 
-            count = index.data(InventoryItemModel.ItemCountRole)
-            if count is None:
-                continue
+    def updateSlot(self, index):
+        slot = index.row()
+        icon = index.data(InventoryItemModel.ItemIconRole)
+        slotWidget = self.slotWidgets[slot]
+        if icon is not None:
+            slotWidget.setIcon(icon)
+        else:
+            slotWidget.setIcon(InventoryItemWidget.BLANK)
 
-            slotWidget.setCount(count)
+        count = index.data(InventoryItemModel.ItemCountRole)
+        if count is None:
+            return
+
+        slotWidget.setCount(count)
 
 
 class InventoryEditor(QtGui.QWidget):
@@ -240,16 +251,24 @@ class InventoryEditor(QtGui.QWidget):
         self.inventoryModel = None
 
         self.internalNameField = QtGui.QLineEdit()
+        self.internalNameField.textChanged.connect(self.internalNameChanged)
+
         self.rawIDInput = QtGui.QLineEdit()
         self.rawIDInput.setMaximumWidth(100)
+        self.rawIDInput.textChanged.connect(self.rawIDChanged)
 
         self.damageInput = QtGui.QSpinBox(minimum=-32768, maximum=32767)
+        self.damageInput.valueChanged.connect(self.damageChanged)
+
         self.countInput = QtGui.QSpinBox(minimum=-32768, maximum=32767)
+        self.countInput.valueChanged.connect(self.countChanged)
 
         self.rawIDCheckbox = QtGui.QCheckBox("Edit raw ID")
+        self.rawIDCheckbox.toggled.connect(self.rawIDInput.setEnabled)
 
         self.itemNBTEditor = NBTEditorWidget()
 
+        self.currentIndex = None
 
         self.setLayout(Column(Row(self.inventoryView, self.itemList),
                               Row(QtGui.QLabel("Internal Name"), self.internalNameField,
@@ -269,7 +288,7 @@ class InventoryEditor(QtGui.QWidget):
         self.itemNBTEditor.setEnabled(enabled)
 
     def slotWasClicked(self, slotNumber):
-        index = self.inventoryModel.index(slotNumber)
+        self.currentIndex = index = self.inventoryModel.index(slotNumber)
 
         internalName = index.data(InventoryItemModel.ItemIDRole)
         if internalName is None:
@@ -287,7 +306,7 @@ class InventoryEditor(QtGui.QWidget):
         rawID = index.data(InventoryItemModel.ItemRawIDRole)
         if rawID != internalName:
             self.rawIDCheckbox.setEnabled(True)
-            self.rawIDInput.setEnabled(True)
+            self.rawIDInput.setEnabled(self.rawIDCheckbox.isChecked())
             self.rawIDInput.setText(str(rawID))
         else:
             self.rawIDCheckbox.setEnabled(False)
@@ -302,6 +321,31 @@ class InventoryEditor(QtGui.QWidget):
         tag = self._itemListRef.getItemInSlot(slotNumber).rootTag
         assert isinstance(tag, nbt.TAG_Compound), "Tag is not a TAG_Compound, it's a %s (%s)" % (type(tag), tag)
         self.itemNBTEditor.setRootTag(tag)
+
+    def internalNameChanged(self, value):
+        if self.currentIndex is None:
+            return
+
+        self.inventoryModel.setData(self.currentIndex, value, InventoryItemModel.ItemIDRole)
+
+    def rawIDChanged(self, value):
+        if self.currentIndex is None:
+            return
+
+        self.inventoryModel.setData(self.currentIndex, value, InventoryItemModel.ItemRawIDRole)
+
+    def damageChanged(self, value):
+        if self.currentIndex is None:
+            return
+
+        self.inventoryModel.setData(self.currentIndex, value, InventoryItemModel.ItemDamageRole)
+
+    def countChanged(self, value):
+        if self.currentIndex is None:
+            return
+
+        self.inventoryModel.setData(self.currentIndex, value, InventoryItemModel.ItemCountRole)
+
 
 
     _editorSession = None
@@ -328,6 +372,9 @@ class InventoryEditor(QtGui.QWidget):
     def updateModels(self):
         if self._editorSession is None or self._itemListRef is None:
             return
+
+        self.currentIndex = None
+        self.enableFields(False)
 
         self.inventoryModel = InventoryItemModel(self._itemListRef, self._editorSession)
         self.inventoryView.setModel(self.inventoryModel)
