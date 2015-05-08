@@ -109,18 +109,19 @@ class ItemStackRef(nbtattr.NBTCompoundRef):
 
     @property
     def id(self):
-        if self.rootTag["id"].tagID == nbt.TAG_Short:
+        idTag = self.rootTag["id"]
+        if idTag.tagID == nbt.ID_SHORT:
             if self.blockTypes is None:
                 log.warn("No blocktypes available, returning id")
-                return self.rootTag["id"].value
+                return idTag.value
             try:
-                itemType = self.blockTypes.itemTypes[self.rootTag["id"].value]
+                itemType = self.blockTypes.itemTypes[idTag.value]
                 return itemType.internalName
             except KeyError:
-                log.warn("No ItemType defined for %s, returning id" % self.rootTag["id"].value)
-                return self.rootTag["id"].value
-
-        return self.rootTag["id"].value
+                log.warn("No ItemType defined for %s, returning id" % idTag.value)
+                return idTag.value
+        else:
+            return idTag.value
 
     @id.setter
     def id(self, value):
