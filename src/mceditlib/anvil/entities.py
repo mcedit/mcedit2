@@ -96,11 +96,17 @@ class PCTileEntityRefBase(object):
     def blockTypes(self):
         return self.chunk.blocktypes
 
+class NoParentError(RuntimeError):
+    """
+    Raised when setting the `id` of an ItemStack with no parent.
+    """
+
 class ItemStackRef(nbtattr.NBTCompoundRef):
     def __init__(self, rootTag=None, parent=None):
         if rootTag is None:
             rootTag = nbt.TAG_Compound()
             nbtattr.SetNBTDefaults(self)
+
         super(ItemStackRef, self).__init__(rootTag, parent)
 
     Damage = nbtattr.NBTAttr("Damage", nbt.TAG_Short, 0)
@@ -125,14 +131,32 @@ class ItemStackRef(nbtattr.NBTCompoundRef):
 
     @id.setter
     def id(self, value):
+        idTag = self.rootTag["id"]
         if isinstance(value, ItemType):
-            self.rootTag["id"] = nbt.TAG_String(value.internalName)
+            if idTag.tagID == nbt.ID_STRING:
+                idTag.value = value.internalName
+            else:
+                idTag.value = value.ID
             if value.meta is not None:
                 self.Damage = value.meta
         elif isinstance(value, int):
-            self.rootTag["id"] = nbt.TAG_Short(value)
+            if idTag.tagID == nbt.ID_SHORT:
+                self.rootTag["id"].value = value
+            elif idTag.tagID == nbt.ID_STRING:
+                if self.blockTypes is None:
+                    raise NoParentError("ItemStack must be parented to a world before assigning numeric IDs to an 1.8 ItemStack.")
+
+                itemType = self.blockTypes.itemTypes[value]
+                self.rootTag["id"].value = itemType.internalName
         elif isinstance(value, basestring):
-            self.rootTag["id"] = nbt.TAG_String(value)
+            if idTag.tagID == nbt.ID_STRING:
+                self.rootTag["id"].value = value
+            elif idTag.tagID == nbt.ID_SHORT:
+                if self.blockTypes is None:
+                    raise NoParentError("ItemStack must be parented to a world before assigning textual IDs to an 1.7 ItemStack.")
+
+                itemType = self.blockTypes.itemTypes[value]
+                self.rootTag["id"].value = itemType.ID
         else:
             raise TypeError("Invalid type for ItemStackRef.id: %r", type(value))
 
