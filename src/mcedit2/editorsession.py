@@ -780,6 +780,9 @@ class EditorSession(QtCore.QObject):
         self.editorTab.saveState()
         self.worldEditor.close()
         self.worldEditor = None
+
+        for panel in self.panels:
+            panel.close()
         return True
 
     # --- Inspector ---
