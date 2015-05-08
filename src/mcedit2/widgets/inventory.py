@@ -272,9 +272,9 @@ class InventoryEditor(QtGui.QWidget):
         self.internalNameField = QtGui.QLineEdit()
         self.internalNameField.textChanged.connect(self.internalNameChanged)
 
-        self.rawIDInput = QtGui.QLineEdit()
+        self.rawIDInput = QtGui.QSpinBox(minimum=-32768, maximum=32767)
         self.rawIDInput.setMaximumWidth(100)
-        self.rawIDInput.textChanged.connect(self.rawIDChanged)
+        self.rawIDInput.valueChanged.connect(self.rawIDChanged)
 
         self.damageInput = QtGui.QSpinBox(minimum=-32768, maximum=32767)
         self.damageInput.valueChanged.connect(self.damageChanged)
@@ -336,7 +336,7 @@ class InventoryEditor(QtGui.QWidget):
         if internalName is None:
             self.enableFields(False)
             self.internalNameField.setText("")
-            self.rawIDInput.setText("")
+            self.rawIDInput.setValue(0)
             self.damageInput.setValue(0)
             self.countInput.setValue(0)
             return
@@ -349,7 +349,7 @@ class InventoryEditor(QtGui.QWidget):
         if rawID != internalName:
             self.rawIDCheckbox.setEnabled(True)
             self.rawIDInput.setEnabled(self.rawIDCheckbox.isChecked())
-            self.rawIDInput.setText(str(rawID))
+            self.rawIDInput.setValue(rawID)
         else:
             self.rawIDCheckbox.setEnabled(False)
             self.rawIDInput.setEnabled(False)
