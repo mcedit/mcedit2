@@ -14,6 +14,7 @@ import itertools
 from mcedit2.widgets.itemtype_list import ItemTypeListModel, ItemTypeIcon, ICON_SIZE
 from mcedit2.widgets.layout import Row, Column
 from mcedit2.widgets.nbttree.nbteditor import NBTEditorWidget
+from mceditlib.blocktypes import VERSION_1_7, VERSION_1_8
 
 
 log = logging.getLogger(__name__)
@@ -304,6 +305,13 @@ class InventoryEditor(QtGui.QWidget):
         self.countInput.setEnabled(enabled)
         self.itemNBTEditor.setEnabled(enabled)
 
+    def showFieldsForVersion(self, version):
+        oneSeven = version == VERSION_1_7
+
+        self.rawIDCheckbox.setVisible(oneSeven)
+        self.rawIDInput.setVisible(oneSeven)
+
+
     editsDisabled = False
 
     @contextlib.contextmanager
@@ -318,6 +326,9 @@ class InventoryEditor(QtGui.QWidget):
 
     def _slotWasClicked(self, slotNumber):
         self.currentIndex = index = self.inventoryModel.index(slotNumber)
+
+        version = self._itemListRef.blockTypes.itemStackVersion
+        self.showFieldsForVersion(version)
 
         internalName = index.data(InventoryItemModel.ItemIDRole)
         if internalName is None:
