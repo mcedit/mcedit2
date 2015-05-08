@@ -2,6 +2,7 @@
     inventory
 """
 from __future__ import absolute_import, division, print_function
+import contextlib
 import logging
 from mcedit2.command import SimpleRevisionCommand
 from mceditlib import nbt
@@ -294,7 +295,19 @@ class InventoryEditor(QtGui.QWidget):
         self.countInput.setEnabled(enabled)
         self.itemNBTEditor.setEnabled(enabled)
 
+    editsDisabled = False
+
+    @contextlib.contextmanager
+    def disableEdits(self):
+        self.editsDisabled = True
+        yield
+        self.editsDisabled = False
+
     def slotWasClicked(self, slotNumber):
+        with self.disableEdits():
+            self._slotWasClicked(slotNumber)
+
+    def _slotWasClicked(self, slotNumber):
         self.currentIndex = index = self.inventoryModel.index(slotNumber)
 
         internalName = index.data(InventoryItemModel.ItemIDRole)
@@ -339,6 +352,8 @@ class InventoryEditor(QtGui.QWidget):
     def internalNameChanged(self, value):
         if self.currentIndex is None:
             return
+        if self.editsDisabled:
+            return
 
         command = InventoryEditCommand(self.editorSession, self.tr("Change item type"))
         with command.begin():
@@ -347,6 +362,8 @@ class InventoryEditor(QtGui.QWidget):
 
     def rawIDChanged(self, value):
         if self.currentIndex is None:
+            return
+        if self.editsDisabled:
             return
 
         command = InventoryEditCommand(self.editorSession, self.tr("Change item's raw ID"))
@@ -357,6 +374,8 @@ class InventoryEditor(QtGui.QWidget):
     def damageChanged(self, value):
         if self.currentIndex is None:
             return
+        if self.editsDisabled:
+            return
 
         command = InventoryEditCommand(self.editorSession, self.tr("Change item damage"))
         with command.begin():
@@ -366,13 +385,13 @@ class InventoryEditor(QtGui.QWidget):
     def countChanged(self, value):
         if self.currentIndex is None:
             return
+        if self.editsDisabled:
+            return
 
         command = InventoryEditCommand(self.editorSession, self.tr("Change item count"))
         with command.begin():
             self.inventoryModel.setData(self.currentIndex, value, InventoryItemModel.ItemCountRole)
         self.editorSession.pushCommand(command)
-
-
 
     _editorSession = None
     @property
