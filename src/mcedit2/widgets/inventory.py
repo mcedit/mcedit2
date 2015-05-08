@@ -323,11 +323,15 @@ class InventoryEditor(QtGui.QWidget):
         self.editsDisabled = False
 
     def slotWasClicked(self, slotNumber):
-        with self.disableEdits():
-            self._slotWasClicked(slotNumber)
+        self.currentIndex = self.inventoryModel.index(slotNumber)
+        self.updateFields()
 
-    def _slotWasClicked(self, slotNumber):
-        self.currentIndex = index = self.inventoryModel.index(slotNumber)
+    def updateFields(self):
+        with self.disableEdits():
+            self._updateFields()
+
+    def _updateFields(self):
+        index = self.currentIndex
 
         version = self._itemListRef.blockTypes.itemStackVersion
         self.showFieldsForVersion(version)
@@ -343,10 +347,14 @@ class InventoryEditor(QtGui.QWidget):
         else:
             self.enableFields(True)
 
-        self.internalNameField.setText(internalName)
+        if isinstance(internalName, basestring):
+            self.internalNameField.setText(internalName)
+        else:
+            self.internalNameField.setText("")
+            self.rawIDCheckbox.setChecked(True)
 
-        rawID = index.data(InventoryItemModel.ItemRawIDRole)
-        if rawID != internalName:
+        if self.inventoryRef.blockTypes.itemStackVersion == VERSION_1_7:
+            rawID = index.data(InventoryItemModel.ItemRawIDRole)
             self.rawIDCheckbox.setEnabled(True)
             self.rawIDInput.setEnabled(self.rawIDCheckbox.isChecked())
             self.rawIDInput.setValue(rawID)
@@ -360,7 +368,7 @@ class InventoryEditor(QtGui.QWidget):
         count = index.data(InventoryItemModel.ItemCountRole)
         self.countInput.setValue(count)
 
-        tagRef = self._itemListRef.getItemInSlot(slotNumber)
+        tagRef = self._itemListRef.getItemInSlot(index.row())
         self.itemNBTEditor.setRootTagRef(tagRef)
 
     def searchTextChanged(self, value):
@@ -467,11 +475,17 @@ class InventoryEditor(QtGui.QWidget):
 
         self.inventoryModel = InventoryItemModel(self._itemListRef, self._editorSession)
         self.inventoryView.setModel(self.inventoryModel)
+        self.inventoryModel.dataChanged.connect(self.dataWasChanged)
 
         self.itemListModel = ItemTypeListModel(self._editorSession)
         self.itemList.setModel(self.itemListModel)
 
         self.itemNBTEditor.editorSession = self._editorSession
+
+    def dataWasChanged(self, topLeft, bottomRight):
+        slot = topLeft.row()
+        if slot == self.currentIndex.row():
+            self.updateFields()
 
 class InventoryEditCommand(SimpleRevisionCommand):
     pass
