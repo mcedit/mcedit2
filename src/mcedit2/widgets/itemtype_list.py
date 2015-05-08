@@ -12,8 +12,12 @@ log = logging.getLogger(__name__)
 ICON_SIZE = 48
 
 class ItemTypeListModel(QtCore.QAbstractListModel):
+    InternalNameRole = Qt.UserRole
+    DamageRole = InternalNameRole + 1
+
     def __init__(self, editorSession):
         super(ItemTypeListModel, self).__init__()
+        assert editorSession is not None
         self.editorSession = editorSession
         self.itemTypes = self.editorSession.worldEditor.blocktypes.itemTypes
         self.allItems = sorted(self.itemTypes, key=lambda i: i.ID)
@@ -34,6 +38,10 @@ class ItemTypeListModel(QtCore.QAbstractListModel):
             return itemType.name
         if role == Qt.DecorationRole:
             return ItemTypeIcon(itemType, self.editorSession)
+        if role == self.InternalNameRole:
+            return itemType.internalName
+        if role == self.DamageRole:
+            return itemType.meta
 
 
 def ItemTypeIcon(itemType, editorSession, itemStack=None):
