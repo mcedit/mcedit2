@@ -248,6 +248,11 @@ class InventoryEditor(QtGui.QWidget):
 
         self.itemList = QtGui.QListView()
         self.itemList.setMinimumWidth(200)
+        self.itemListModel = None
+
+        self.itemListSearchBox = QtGui.QComboBox()
+        self.itemListSearchBox.textChanged.connect(self.searchTextChanged)
+        self.itemListSearchBox.setEditable(True)
 
         self.inventoryModel = None
 
@@ -271,7 +276,8 @@ class InventoryEditor(QtGui.QWidget):
 
         self.currentIndex = None
 
-        self.setLayout(Column(Row(self.inventoryView, self.itemList),
+        self.setLayout(Column(Row(self.inventoryView,
+                                  Column(self.itemListSearchBox, self.itemList)),
                               Row(QtGui.QLabel("Internal Name"), self.internalNameField,
                                   self.rawIDCheckbox, self.rawIDInput,
                                   QtGui.QLabel("Damage"), self.damageInput,
@@ -322,6 +328,13 @@ class InventoryEditor(QtGui.QWidget):
         tag = self._itemListRef.getItemInSlot(slotNumber).rootTag
         assert isinstance(tag, nbt.TAG_Compound), "Tag is not a TAG_Compound, it's a %s (%s)" % (type(tag), tag)
         self.itemNBTEditor.setRootTag(tag)
+
+    def searchTextChanged(self, value):
+        self.proxyModel = QtGui.QSortFilterProxyModel()
+        self.proxyModel.setSourceModel(self.itemListModel)
+        self.proxyModel.setFilterFixedString(value)
+        self.proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.itemList.setModel(self.proxyModel)
 
     def internalNameChanged(self, value):
         if self.currentIndex is None:
