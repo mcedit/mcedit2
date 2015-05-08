@@ -25,9 +25,7 @@ class NBTEditorWidget(QtGui.QWidget):
     undoCommandPrefixText = ""
     editorSession = weakrefprop()
     proxyModel = None
-    rootTag = None
-
-    editMade = QtCore.Signal()  # emitted to allow clients to mark the NBT tree's parent structure as dirty - xxx really??
+    rootTagRef = None
 
     def __init__(self, *args, **kwargs):
         super(NBTEditorWidget, self).__init__(*args, **kwargs)
@@ -55,16 +53,16 @@ class NBTEditorWidget(QtGui.QWidget):
         # self.nbtTypesMenu.addAction(NBTIcon(12), self.tr("Short Array"), self.addShortArray)
 
 
-    def setRootTag(self, rootTag, keepExpanded=False):
-        if rootTag is self.rootTag:
+    def setRootTagRef(self, rootTagRef, keepExpanded=False):
+        if rootTagRef is self.rootTagRef:
             return
-        self.rootTag = rootTag
-        if rootTag is None:
+        self.rootTagRef = rootTagRef
+        if rootTagRef is None:
             self.treeView.setModel(None)
             self.model = None
             return
 
-        self.model = NBTTreeModel(rootTag)
+        self.model = NBTTreeModel(rootTagRef.rootTag)
         expanded = []
         current = None
         if keepExpanded and self.proxyModel:
@@ -205,7 +203,7 @@ class NBTEditorWidget(QtGui.QWidget):
 
         command = NBTDataChangeCommand(self.editorSession, text)
         with command.begin():
-            self.editMade.emit()
+            self.rootTagRef.dirty = True
             self.editorSession.worldEditor.syncToDisk()
         self.editorSession.pushCommand(command)
 
@@ -215,7 +213,7 @@ class NBTEditorWidget(QtGui.QWidget):
 
         command = NBTDataChangeCommand(self.editorSession, text)
         with command.begin():
-            self.editMade.emit()
+            self.rootTagRef.dirty = True
             self.editorSession.worldEditor.syncToDisk()
         self.editorSession.pushCommand(command)
 
@@ -227,6 +225,9 @@ class NBTEditorWidget(QtGui.QWidget):
 
         command = NBTDataChangeCommand(self.editorSession, text)
         with command.begin():
-            self.editMade.emit()
+            self.rootTagRef.dirty = True
             self.editorSession.worldEditor.syncToDisk()
         self.editorSession.pushCommand(command)
+
+    def reload(self):
+        self.treeView.blah

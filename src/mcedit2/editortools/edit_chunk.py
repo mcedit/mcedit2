@@ -128,10 +128,10 @@ class ChunkTool(EditorTool):
     def updateNBTView(self):
         chunk = self.currentChunk
         if chunk is None:
-            self.toolWidget.nbtEditor.setRootTag(None)
+            self.toolWidget.nbtEditor.setRootTagRef(None)
             return
 
-        self.toolWidget.nbtEditor.setRootTag(chunk.rootTag)
+        self.toolWidget.nbtEditor.setRootTagRef(chunk)
 
         self.toolWidget.cxSpinBox.setValue(chunk.cx)
         self.toolWidget.czSpinBox.setValue(chunk.cz)

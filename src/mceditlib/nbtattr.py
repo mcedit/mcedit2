@@ -188,6 +188,9 @@ class NBTListProxy(collections.MutableSequence):
             tag = value
         self.parent.rootTag[self.tagName].insert(index, tag)
 
+    @property
+    def blockTypes(self):
+        return self.parent.blockTypes
 
 class NBTCompoundListAttr(object):
     """

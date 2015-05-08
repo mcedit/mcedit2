@@ -338,9 +338,8 @@ class InventoryEditor(QtGui.QWidget):
         count = index.data(InventoryItemModel.ItemCountRole)
         self.countInput.setValue(count)
 
-        tag = self._itemListRef.getItemInSlot(slotNumber).rootTag
-        assert isinstance(tag, nbt.TAG_Compound), "Tag is not a TAG_Compound, it's a %s (%s)" % (type(tag), tag)
-        self.itemNBTEditor.setRootTag(tag)
+        tagRef = self._itemListRef.getItemInSlot(slotNumber)
+        self.itemNBTEditor.setRootTagRef(tagRef)
 
     def searchTextChanged(self, value):
         self.proxyModel = QtGui.QSortFilterProxyModel()

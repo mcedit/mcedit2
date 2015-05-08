@@ -33,21 +33,13 @@ class InspectorWidget(QtGui.QWidget):
         self.editorSession = editorSession
 
         self.blockNBTEditor.editorSession = self.editorSession
-        self.blockNBTEditor.editMade.connect(self.editWasMade)
 
         self.entityNBTEditor.editorSession = self.editorSession
-        self.entityNBTEditor.editMade.connect(self.editWasMade)
 
         self.blockEditorWidget = None
 
         self.tileEntity = None
         self.entity = None
-
-    def editWasMade(self):
-        if self.entity and self.entity.chunk:
-            self.entity.chunk.dirty = True
-        if self.tileEntity and self.tileEntity.chunk:
-            self.tileEntity.chunk.dirty = True
 
     def inspectBlock(self, pos):
         self.entity = None
@@ -81,9 +73,9 @@ class InspectorWidget(QtGui.QWidget):
                 self.blockTabWidget.insertTab(0, self.blockEditorWidget, displayName)
                 self.blockTabWidget.setCurrentIndex(0)
 
-            self.blockNBTEditor.setRootTag(self.tileEntity.raw_tag())
+            self.blockNBTEditor.setRootTagRef(self.tileEntity)
         else:
-            self.blockNBTEditor.setRootTag(None)
+            self.blockNBTEditor.setRootTagRef(None)
 
         self.removeTileEntityButton.setEnabled(self.tileEntity is not None)
 
@@ -103,4 +95,4 @@ class InspectorWidget(QtGui.QWidget):
         self.entityYLabel.setText("%0.2f" % y)
         self.entityZLabel.setText("%0.2f" % z)
 
-        self.entityNBTEditor.setRootTag(entity.raw_tag())
+        self.entityNBTEditor.setRootTagRef(entity)

@@ -98,8 +98,6 @@ class PlayerPanel(QtGui.QWidget):
         self.initPropertiesWidget()
 
         self.nbtEditor.editorSession = self.editorSession
-        self.nbtEditor.editMade.connect(self.nbtEditWasMade)
-
 
         centerWidgetInScreen(self)
 
@@ -145,14 +143,11 @@ class PlayerPanel(QtGui.QWidget):
 
     def updateNBTTree(self):
         self.nbtEditor.undoCommandPrefixText = ("Player %s: " % self.selectedUUID) if self.selectedUUID else "Single-player: "
-        self.nbtEditor.setRootTag(self.selectedPlayer.rootTag if self.selectedPlayer else None)
+        self.nbtEditor.setRootTagRef(self.selectedPlayer)
 
     def updateInventory(self):
         self.inventoryEditor.editorSession = self.editorSession
         self.inventoryEditor.inventoryRef = self.selectedPlayer.Inventory
-
-    def nbtEditWasMade(self):
-        self.selectedPlayer.dirty = True
 
     def revisionDidChange(self):
         self.initPropertiesWidget()
