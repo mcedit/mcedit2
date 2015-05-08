@@ -141,7 +141,9 @@ class ItemTypeSet(object):
         Writing numeric IDs is discouraged. For clarity, use textual IDs and only pass numeric IDs when they are
         obtained from another source such as NBT structures.
 
-        If the item is not present in this set, raises KeyError.
+        If the itemtype is not present in this set, raises KeyError.
+
+        In contrast to BlockTypeSet, KeyError is always raised for unknown itemtypes.
 
         :param key:
         :type key:
