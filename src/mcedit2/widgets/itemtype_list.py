@@ -35,7 +35,7 @@ class ItemTypeListModel(QtCore.QAbstractListModel):
         row = index.row()
         itemType = self.allItems[row]
         if role == Qt.DisplayRole:
-            return itemType.name
+            return itemType.displayName
         if role == Qt.DecorationRole:
             return ItemTypeIcon(itemType, self.editorSession)
         if role == self.InternalNameRole:

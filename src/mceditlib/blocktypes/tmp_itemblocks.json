@@ -1,7 +1,7 @@
 {
     "stone": {
         "id": 1,
-        "name": ["Stone",
+        "displayName": ["Stone",
                  "Granite",
                  "Polished Granite",
                  "Diorite",
@@ -14,14 +14,14 @@
     },
     "grass": {
         "id": 2,
-        "name": "Grass Block",
+        "displayName": "Grass Block",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "dirt": {
         "id": 3,
-        "name": ["Dirt",
+        "displayName": ["Dirt",
                  "Coarse Dirt",
                  "Podzol"],
         "obtainable": true,
@@ -30,14 +30,14 @@
     },
     "cobblestone": {
         "id": 4,
-        "name": "Cobblestone",
+        "displayName": "Cobblestone",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "planks": {
         "id": 5,
-        "name": ["Oak Wood Planks",
+        "displayName": ["Oak Wood Planks",
                  "Spruce Wood Planks",
                  "Birch Wood Planks",
                  "Jungle Wood Planks",
@@ -49,7 +49,7 @@
     },
     "sapling": {
         "id": 6,
-        "name": ["Oak Sapling",
+        "displayName": ["Oak Sapling",
                  "Spruce Sapling",
                  "Birch Sapling",
                  "Jungle Sapling",
@@ -61,42 +61,42 @@
     },
     "bedrock": {
         "id": 7,
-        "name": "Bedrock",
+        "displayName": "Bedrock",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "flowing_water": {
         "id": 8,
-        "name": "Water",
+        "displayName": "Water",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "water": {
         "id": 9,
-        "name": "Water",
+        "displayName": "Water",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "flowing_lava": {
         "id": 10,
-        "name": "Lava",
+        "displayName": "Lava",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "lava": {
         "id": 11,
-        "name": "Lava",
+        "displayName": "Lava",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "sand": {
         "id": 12,
-        "name": ["Sand",
+        "displayName": ["Sand",
                  "Red Sand"],
         "obtainable": true,
         "maxdamage": 1,
@@ -104,35 +104,35 @@
     },
     "gravel": {
         "id": 13,
-        "name": "Gravel",
+        "displayName": "Gravel",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "gold_ore": {
         "id": 14,
-        "name": "Gold Ore",
+        "displayName": "Gold Ore",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "iron_ore": {
         "id": 15,
-        "name": "Iron Ore",
+        "displayName": "Iron Ore",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "coal_ore": {
         "id": 16,
-        "name": "Coal Ore",
+        "displayName": "Coal Ore",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "log": {
         "id": 17,
-        "name": ["Oak Wood",
+        "displayName": ["Oak Wood",
                  "Spruce Wood",
                  "Birch Wood",
                  "Jungle Wood"],
@@ -142,7 +142,7 @@
     },
     "leaves": {
         "id": 18,
-        "name": ["Oak Leaves",
+        "displayName": ["Oak Leaves",
                  "Spruce Leaves",
                  "Birch Leaves",
                  "Jungle Leaves"],
@@ -152,7 +152,7 @@
     },
     "sponge": {
         "id": 19,
-        "name": ["Sponge",
+        "displayName": ["Sponge",
                  "Wet Sponge"],
         "obtainable": true,
         "maxdamage": 1,
@@ -160,35 +160,35 @@
     },
     "glass": {
         "id": 20,
-        "name": "Glass",
+        "displayName": "Glass",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "lapis_ore": {
         "id": 21,
-        "name": "Lapis Lazuli Ore",
+        "displayName": "Lapis Lazuli Ore",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "lapis_block": {
         "id": 22,
-        "name": "Lapis Lazuli Block",
+        "displayName": "Lapis Lazuli Block",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "dispenser": {
         "id": 23,
-        "name": "Dispenser",
+        "displayName": "Dispenser",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "sandstone": {
         "id": 24,
-        "name": ["Sandstone",
+        "displayName": ["Sandstone",
                  "Chiseled Sandstone",
                  "Smooth Sandstone"],
         "obtainable": true,
@@ -197,49 +197,49 @@
     },
     "noteblock": {
         "id": 25,
-        "name": "Note Block",
+        "displayName": "Note Block",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "bed": {
         "id": 26,
-        "name": "Bed",
+        "displayName": "Bed",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "golden_rail": {
         "id": 27,
-        "name": "Powered Rail",
+        "displayName": "Powered Rail",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "detector_rail": {
         "id": 28,
-        "name": "Detector Rail",
+        "displayName": "Detector Rail",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "sticky_piston": {
         "id": 29,
-        "name": "Sticky Piston",
+        "displayName": "Sticky Piston",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "web": {
         "id": 30,
-        "name": "Cobweb",
+        "displayName": "Cobweb",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "tallgrass": {
         "id": 31,
-        "name": ["Shrub",
+        "displayName": ["Shrub",
                  "Grass",
                  "Fern"],
         "obtainable": true,
@@ -248,28 +248,28 @@
     },
     "deadbush": {
         "id": 32,
-        "name": "Dead Bush",
+        "displayName": "Dead Bush",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "piston": {
         "id": 33,
-        "name": "Piston",
+        "displayName": "Piston",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "piston_head": {
         "id": 34,
-        "name": "Piston Extension",
+        "displayName": "Piston Extension",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "wool": {
         "id": 35,
-        "name": ["White Wool",
+        "displayName": ["White Wool",
                  "Orange Wool",
                  "Magenta Wool",
                  "Light Blue Wool",
@@ -291,21 +291,21 @@
     },
     "piston_extension": {
         "id": 36,
-        "name": "Block moved by Piston",
+        "displayName": "Block moved by Piston",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "yellow_flower": {
         "id": 37,
-        "name": "Dandelion",
+        "displayName": "Dandelion",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "red_flower": {
         "id": 38,
-        "name": ["Poppy",
+        "displayName": ["Poppy",
                  "Blue Orchid",
                  "Allium",
                  "Azure Bluet",
@@ -320,42 +320,42 @@
     },
     "brown_mushroom": {
         "id": 39,
-        "name": "Brown Mushroom",
+        "displayName": "Brown Mushroom",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "red_mushroom": {
         "id": 40,
-        "name": "Red Mushroom",
+        "displayName": "Red Mushroom",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "gold_block": {
         "id": 41,
-        "name": "Block of Gold",
+        "displayName": "Block of Gold",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "iron_block": {
         "id": 42,
-        "name": "Block of Iron",
+        "displayName": "Block of Iron",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "double_stone_slab": {
         "id": 43,
-        "name": "Double Stone Slab",
+        "displayName": "Double Stone Slab",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "stone_slab": {
         "id": 44,
-        "name": ["Stone Slab",
+        "displayName": ["Stone Slab",
                  null,
                  "Sandstone Slab",
                  "Cobblestone Slab"],
@@ -365,357 +365,357 @@
     },
     "brick_block": {
         "id": 45,
-        "name": "Bricks",
+        "displayName": "Bricks",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "tnt": {
         "id": 46,
-        "name": "TNT",
+        "displayName": "TNT",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "bookshelf": {
         "id": 47,
-        "name": "Bookshelf",
+        "displayName": "Bookshelf",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "mossy_cobblestone": {
         "id": 48,
-        "name": "Moss Stone",
+        "displayName": "Moss Stone",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "obsidian": {
         "id": 49,
-        "name": "Obsidian",
+        "displayName": "Obsidian",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "torch": {
         "id": 50,
-        "name": "Torch",
+        "displayName": "Torch",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "fire": {
         "id": 51,
-        "name": "Fire",
+        "displayName": "Fire",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "mob_spawner": {
         "id": 52,
-        "name": "Monster Spawner",
+        "displayName": "Monster Spawner",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "oak_stairs": {
         "id": 53,
-        "name": "Oak Wood Stairs",
+        "displayName": "Oak Wood Stairs",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "chest": {
         "id": 54,
-        "name": "Chest",
+        "displayName": "Chest",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "redstone_wire": {
         "id": 55,
-        "name": "Redstone Wire",
+        "displayName": "Redstone Wire",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "diamond_ore": {
         "id": 56,
-        "name": "Diamond Ore",
+        "displayName": "Diamond Ore",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "diamond_block": {
         "id": 57,
-        "name": "Block of Diamond",
+        "displayName": "Block of Diamond",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "crafting_table": {
         "id": 58,
-        "name": "Crafting Table",
+        "displayName": "Crafting Table",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "wheat": {
         "id": 59,
-        "name": "Wheat",
+        "displayName": "Wheat",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "farmland": {
         "id": 60,
-        "name": "Farmland",
+        "displayName": "Farmland",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "furnace": {
         "id": 61,
-        "name": "Furnace",
+        "displayName": "Furnace",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "lit_furnace": {
         "id": 62,
-        "name": "Burning Furnace",
+        "displayName": "Burning Furnace",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "standing_sign": {
         "id": 63,
-        "name": "Sign",
+        "displayName": "Sign",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "wooden_door": {
         "id": 64,
-        "name": "Oak Door",
+        "displayName": "Oak Door",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "ladder": {
         "id": 65,
-        "name": "Ladder",
+        "displayName": "Ladder",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "rail": {
         "id": 66,
-        "name": "Rail",
+        "displayName": "Rail",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "stone_stairs": {
         "id": 67,
-        "name": "Cobblestone Stairs",
+        "displayName": "Cobblestone Stairs",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "wall_sign": {
         "id": 68,
-        "name": "Sign",
+        "displayName": "Sign",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "lever": {
         "id": 69,
-        "name": "Lever",
+        "displayName": "Lever",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "stone_pressure_plate": {
         "id": 70,
-        "name": "Stone Pressure Plate",
+        "displayName": "Stone Pressure Plate",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "iron_door": {
         "id": 71,
-        "name": "Iron Door",
+        "displayName": "Iron Door",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "wooden_pressure_plate": {
         "id": 72,
-        "name": "Wooden Pressure Plate",
+        "displayName": "Wooden Pressure Plate",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "redstone_ore": {
         "id": 73,
-        "name": "Redstone Ore",
+        "displayName": "Redstone Ore",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "lit_redstone_ore": {
         "id": 74,
-        "name": "Redstone Ore",
+        "displayName": "Redstone Ore",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "unlit_redstone_torch": {
         "id": 75,
-        "name": "Redstone Torch (inactive)",
+        "displayName": "Redstone Torch (inactive)",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "redstone_torch": {
         "id": 76,
-        "name": "Redstone Torch (active)",
+        "displayName": "Redstone Torch (active)",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "stone_button": {
         "id": 77,
-        "name": "Stone Button",
+        "displayName": "Stone Button",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "snow_layer": {
         "id": 78,
-        "name": "Snow",
+        "displayName": "Snow",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "ice": {
         "id": 79,
-        "name": "Ice",
+        "displayName": "Ice",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "snow": {
         "id": 80,
-        "name": "Snow",
+        "displayName": "Snow",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "cactus": {
         "id": 81,
-        "name": "Cactus",
+        "displayName": "Cactus",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "clay": {
         "id": 82,
-        "name": "Clay",
+        "displayName": "Clay",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "reeds": {
         "id": 83,
-        "name": "Sugar Cane",
+        "displayName": "Sugar Cane",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "jukebox": {
         "id": 84,
-        "name": "Jukebox",
+        "displayName": "Jukebox",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "fence": {
         "id": 85,
-        "name": "Fence",
+        "displayName": "Fence",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "pumpkin": {
         "id": 86,
-        "name": "Pumpkin",
+        "displayName": "Pumpkin",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "netherrack": {
         "id": 87,
-        "name": "Netherrack",
+        "displayName": "Netherrack",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "soul_sand": {
         "id": 88,
-        "name": "Soul Sand",
+        "displayName": "Soul Sand",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "glowstone": {
         "id": 89,
-        "name": "Glowstone",
+        "displayName": "Glowstone",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "portal": {
         "id": 90,
-        "name": "Portal",
+        "displayName": "Portal",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "lit_pumpkin": {
         "id": 91,
-        "name": "Jack o'Lantern",
+        "displayName": "Jack o'Lantern",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "cake": {
         "id": 92,
-        "name": "Cake",
+        "displayName": "Cake",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "unpowered_repeater": {
         "id": 93,
-        "name": "Redstone Repeater (inactive)",
+        "displayName": "Redstone Repeater (inactive)",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "powered_repeater": {
         "id": 94,
-        "name": "Redstone Repeater (active)",
+        "displayName": "Redstone Repeater (active)",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "stained_glass": {
         "id": 95,
-        "name": ["White Stained Glass",
+        "displayName": ["White Stained Glass",
                  "Orange Stained Glass",
                  "Magenta Stained Glass",
                  "Light Blue Stained Glass",
@@ -737,14 +737,14 @@
     },
     "trapdoor": {
         "id": 96,
-        "name": "Trapdoor",
+        "displayName": "Trapdoor",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "monster_egg": {
         "id": 97,
-        "name": ["Stone Monster Egg",
+        "displayName": ["Stone Monster Egg",
                  "Cobblestone Monster Egg",
                  "Stone Brick Monster Egg",
                  "Mossy Stone Brick Monster Egg",
@@ -756,7 +756,7 @@
     },
     "stonebrick": {
         "id": 98,
-        "name": ["Stone Bricks",
+        "displayName": ["Stone Bricks",
                  "Mossy Stone Bricks",
                  "Cracked Stone Bricks",
                  "Chiseled Stone Bricks"],
@@ -766,196 +766,196 @@
     },
     "brown_mushroom_block": {
         "id": 99,
-        "name": "Brown Mushroom (block)",
+        "displayName": "Brown Mushroom (block)",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "red_mushroom_block": {
         "id": 100,
-        "name": "Red Mushroom (block)",
+        "displayName": "Red Mushroom (block)",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "iron_bars": {
         "id": 101,
-        "name": "Iron Bars",
+        "displayName": "Iron Bars",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "glass_pane": {
         "id": 102,
-        "name": "Glass Pane",
+        "displayName": "Glass Pane",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "melon_block": {
         "id": 103,
-        "name": "Melon",
+        "displayName": "Melon",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "pumpkin_stem": {
         "id": 104,
-        "name": "Pumpkin Stem",
+        "displayName": "Pumpkin Stem",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "melon_stem": {
         "id": 105,
-        "name": "Melon Stem",
+        "displayName": "Melon Stem",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "vine": {
         "id": 106,
-        "name": "Vines",
+        "displayName": "Vines",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "fence_gate": {
         "id": 107,
-        "name": "Fence Gate",
+        "displayName": "Fence Gate",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "brick_stairs": {
         "id": 108,
-        "name": "Brick Stairs",
+        "displayName": "Brick Stairs",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "stone_brick_stairs": {
         "id": 109,
-        "name": "Stone Brick Stairs",
+        "displayName": "Stone Brick Stairs",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "mycelium": {
         "id": 110,
-        "name": "Mycelium",
+        "displayName": "Mycelium",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "waterlily": {
         "id": 111,
-        "name": "Lily Pad",
+        "displayName": "Lily Pad",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "nether_brick": {
         "id": 112,
-        "name": "Nether Brick",
+        "displayName": "Nether Brick",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "nether_brick_fence": {
         "id": 113,
-        "name": "Nether Brick Fence",
+        "displayName": "Nether Brick Fence",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "nether_brick_stairs": {
         "id": 114,
-        "name": "Nether Brick Stairs",
+        "displayName": "Nether Brick Stairs",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "nether_wart": {
         "id": 115,
-        "name": "Nether Wart",
+        "displayName": "Nether Wart",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "enchanting_table": {
         "id": 116,
-        "name": "Enchantment Table",
+        "displayName": "Enchantment Table",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "brewing_stand": {
         "id": 117,
-        "name": "Brewing Stand",
+        "displayName": "Brewing Stand",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "cauldron": {
         "id": 118,
-        "name": "Cauldron",
+        "displayName": "Cauldron",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "end_portal": {
         "id": 119,
-        "name": "End Portal",
+        "displayName": "End Portal",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "end_portal_frame": {
         "id": 120,
-        "name": "End Portal Block",
+        "displayName": "End Portal Block",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "end_stone": {
         "id": 121,
-        "name": "End Stone",
+        "displayName": "End Stone",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "dragon_egg": {
         "id": 122,
-        "name": "Dragon Egg",
+        "displayName": "Dragon Egg",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "redstone_lamp": {
         "id": 123,
-        "name": "Redstone Lamp (inactive)",
+        "displayName": "Redstone Lamp (inactive)",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "lit_redstone_lamp": {
         "id": 124,
-        "name": "Redstone Lamp (active)",
+        "displayName": "Redstone Lamp (active)",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "double_wooden_slab": {
         "id": 125,
-        "name": "Double Wooden Slab",
+        "displayName": "Double Wooden Slab",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "wooden_slab": {
         "id": 126,
-        "name": ["Oak Wood Slab",
+        "displayName": ["Oak Wood Slab",
                  "Spruce Wood Slab",
                  "Birch Wood Slab",
                  "Jungle Wood Slab",
@@ -967,91 +967,91 @@
     },
     "cocoa": {
         "id": 127,
-        "name": "Cocoa",
+        "displayName": "Cocoa",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "sandstone_stairs": {
         "id": 128,
-        "name": "Sandstone Stairs",
+        "displayName": "Sandstone Stairs",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "emerald_ore": {
         "id": 129,
-        "name": "Emerald Ore",
+        "displayName": "Emerald Ore",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "ender_chest": {
         "id": 130,
-        "name": "Ender Chest",
+        "displayName": "Ender Chest",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "tripwire_hook": {
         "id": 131,
-        "name": "Tripwire Hook",
+        "displayName": "Tripwire Hook",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "tripwire": {
         "id": 132,
-        "name": "Tripwire",
+        "displayName": "Tripwire",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "emerald_block": {
         "id": 133,
-        "name": "Block of Emerald",
+        "displayName": "Block of Emerald",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "spruce_stairs": {
         "id": 134,
-        "name": "Spruce Wood Stairs",
+        "displayName": "Spruce Wood Stairs",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "birch_stairs": {
         "id": 135,
-        "name": "Birch Wood Stairs",
+        "displayName": "Birch Wood Stairs",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "jungle_stairs": {
         "id": 136,
-        "name": "Jungle Wood Stairs",
+        "displayName": "Jungle Wood Stairs",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "command_block": {
         "id": 137,
-        "name": "Command Block",
+        "displayName": "Command Block",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "beacon": {
         "id": 138,
-        "name": "Beacon",
+        "displayName": "Beacon",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "cobblestone_wall": {
         "id": 139,
-        "name": ["Cobblestone Wall",
+        "displayName": ["Cobblestone Wall",
                  "Mossy Cobblestone Wall"],
         "obtainable": true,
         "maxdamage": 1,
@@ -1059,42 +1059,42 @@
     },
     "flower_pot": {
         "id": 140,
-        "name": "Flower Pot",
+        "displayName": "Flower Pot",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "carrots": {
         "id": 141,
-        "name": "Carrot",
+        "displayName": "Carrot",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "potatoes": {
         "id": 142,
-        "name": "Potato",
+        "displayName": "Potato",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "wooden_button": {
         "id": 143,
-        "name": "Wooden Button",
+        "displayName": "Wooden Button",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "skull": {
         "id": 144,
-        "name": "Mob Head",
+        "displayName": "Mob Head",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "anvil": {
         "id": 145,
-        "name": ["Anvil",
+        "displayName": ["Anvil",
                  "Slightly Damaged Anvil",
                  "Very Damaged Anvil"],
         "obtainable": true,
@@ -1103,98 +1103,98 @@
     },
     "trapped_chest": {
         "id": 146,
-        "name": "Trapped Chest",
+        "displayName": "Trapped Chest",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "light_weighted_pressure_plate": {
         "id": 147,
-        "name": "Weighted Pressure Plate",
+        "displayName": "Weighted Pressure Plate",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "heavy_weighted_pressure_plate": {
         "id": 148,
-        "name": "Weighted Pressure Plate",
+        "displayName": "Weighted Pressure Plate",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "unpowered_comparator": {
         "id": 149,
-        "name": "Redstone Comparator",
+        "displayName": "Redstone Comparator",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "powered_comparator": {
         "id": 150,
-        "name": "Redstone Comparator",
+        "displayName": "Redstone Comparator",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "daylight_detector": {
         "id": 151,
-        "name": "Daylight Sensor",
+        "displayName": "Daylight Sensor",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "redstone_block": {
         "id": 152,
-        "name": "Block of Redstone",
+        "displayName": "Block of Redstone",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "quartz_ore": {
         "id": 153,
-        "name": "Nether Quartz Ore",
+        "displayName": "Nether Quartz Ore",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "hopper": {
         "id": 154,
-        "name": "Hopper",
+        "displayName": "Hopper",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "quartz_block": {
         "id": 155,
-        "name": "Block of Quartz",
+        "displayName": "Block of Quartz",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "quartz_stairs": {
         "id": 156,
-        "name": "Quartz Stairs",
+        "displayName": "Quartz Stairs",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "activator_rail": {
         "id": 157,
-        "name": "Activator Rail",
+        "displayName": "Activator Rail",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "dropper": {
         "id": 158,
-        "name": "Dropper",
+        "displayName": "Dropper",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "stained_hardened_clay": {
         "id": 159,
-        "name": ["White Stained Clay",
+        "displayName": ["White Stained Clay",
                  "Orange Stained Clay",
                  "Magenta Stained Clay",
                  "Light Blue Stained Clay",
@@ -1216,7 +1216,7 @@
     },
     "stained_glass_pane": {
         "id": 160,
-        "name": ["White Stained Glass Pane",
+        "displayName": ["White Stained Glass Pane",
                  "Orange Stained Glass Pane",
                  "Magenta Stained Glass Pane",
                  "Light Blue Stained Glass Pane",
@@ -1238,7 +1238,7 @@
     },
     "leaves2": {
         "id": 161,
-        "name": ["Acacia Leaves",
+        "displayName": ["Acacia Leaves",
                  "Dark Oak Leaves"],
         "obtainable": true,
         "maxdamage": 1,
@@ -1246,7 +1246,7 @@
     },
     "log2": {
         "id": 162,
-        "name": ["Acacia Wood",
+        "displayName": ["Acacia Wood",
                  "Dark Oak Wood"],
         "obtainable": true,
         "maxdamage": 1,
@@ -1254,42 +1254,42 @@
     },
     "acacia_stairs": {
         "id": 163,
-        "name": "Acacia Wood Stairs",
+        "displayName": "Acacia Wood Stairs",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "dark_oak_stairs": {
         "id": 164,
-        "name": "Dark Oak Wood Stairs",
+        "displayName": "Dark Oak Wood Stairs",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "slime": {
         "id": 165,
-        "name": "Slime Block",
+        "displayName": "Slime Block",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "barrier": {
         "id": 166,
-        "name": "Barrier",
+        "displayName": "Barrier",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "iron_trapdoor": {
         "id": 167,
-        "name": "Iron Trapdoor",
+        "displayName": "Iron Trapdoor",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "prismarine": {
         "id": 168,
-        "name": ["Prismarine",
+        "displayName": ["Prismarine",
                  "Prismarine Bricks",
                  "Dark Prismarine"],
         "obtainable": true,
@@ -1298,21 +1298,21 @@
     },
     "sea_lantern": {
         "id": 169,
-        "name": "Sea Lantern",
+        "displayName": "Sea Lantern",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "hay_block": {
         "id": 170,
-        "name": "Hay Block",
+        "displayName": "Hay Block",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "carpet": {
         "id": 171,
-        "name": ["Carpet",
+        "displayName": ["Carpet",
                  "Orange Carpet",
                  "Magenta Carpet",
                  "Light Blue Carpet",
@@ -1334,28 +1334,28 @@
     },
     "hardened_clay": {
         "id": 172,
-        "name": "Hardened Clay",
+        "displayName": "Hardened Clay",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "coal_block": {
         "id": 173,
-        "name": "Block of Coal",
+        "displayName": "Block of Coal",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "packed_ice": {
         "id": 174,
-        "name": "Packed Ice",
+        "displayName": "Packed Ice",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "double_plant": {
         "id": 175,
-        "name": ["Sunflower",
+        "displayName": ["Sunflower",
                  "Lilac",
                  "Double Tallgrass",
                  "Lange Fern",
@@ -1367,28 +1367,28 @@
     },
     "standing_banner": {
         "id": 176,
-        "name": "Banner",
+        "displayName": "Banner",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "wall_banner": {
         "id": 177,
-        "name": "Banner",
+        "displayName": "Banner",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "daylight_detector_inverted": {
         "id": 178,
-        "name": "Inverted Daylight Sensor",
+        "displayName": "Inverted Daylight Sensor",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "red_sandstone": {
         "id": 179,
-        "name": ["Red Sandstone",
+        "displayName": ["Red Sandstone",
                  "Chiseled Red Sandstone",
                  "Smooth Red Sandstone"],
         "obtainable": true,
@@ -1397,126 +1397,126 @@
     },
     "red_sandstone_stairs": {
         "id": 180,
-        "name": "Red Sandstone Stairs",
+        "displayName": "Red Sandstone Stairs",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "double_stone_slab2": {
         "id": 181,
-        "name": "Double Red Sandstone Slab",
+        "displayName": "Double Red Sandstone Slab",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "stone_slab2": {
         "id": 182,
-        "name": "Red Sandstone Slab",
+        "displayName": "Red Sandstone Slab",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "spruce_fence_gate": {
         "id": 183,
-        "name": "Spruce Fence Gate",
+        "displayName": "Spruce Fence Gate",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "birch_fence_gate": {
         "id": 184,
-        "name": "Birch Fence Gate",
+        "displayName": "Birch Fence Gate",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "jungle_fence_gate": {
         "id": 185,
-        "name": "Jungle Fence Gate",
+        "displayName": "Jungle Fence Gate",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "dark_oak_fence_gate": {
         "id": 186,
-        "name": "Dark Oak Fence Gate",
+        "displayName": "Dark Oak Fence Gate",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "acacia_fence_gate": {
         "id": 187,
-        "name": "Acacia Fence Gate",
+        "displayName": "Acacia Fence Gate",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "spruce_fence": {
         "id": 188,
-        "name": "Spruce Fence",
+        "displayName": "Spruce Fence",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "birch_fence": {
         "id": 189,
-        "name": "Birch Fence",
+        "displayName": "Birch Fence",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "jungle_fence": {
         "id": 190,
-        "name": "Jungle Fence",
+        "displayName": "Jungle Fence",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "dark_oak_fence": {
         "id": 191,
-        "name": "Dark Oak Fence",
+        "displayName": "Dark Oak Fence",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "acacia_fence": {
         "id": 192,
-        "name": "Acacia Fence",
+        "displayName": "Acacia Fence",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 64
     },
     "spruce_door": {
         "id": 193,
-        "name": "Spruce Door",
+        "displayName": "Spruce Door",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "birch_door": {
         "id": 194,
-        "name": "Birch Door",
+        "displayName": "Birch Door",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "jungle_door": {
         "id": 195,
-        "name": "Jungle Door",
+        "displayName": "Jungle Door",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "acacia_door": {
         "id": 196,
-        "name": "Acacia Door",
+        "displayName": "Acacia Door",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64
     },
     "dark_oak_door": {
         "id": 197,
-        "name": "Dark Oak Door",
+        "displayName": "Dark Oak Door",
         "obtainable": false,
         "maxdamage": 0,
         "stacksize": 64

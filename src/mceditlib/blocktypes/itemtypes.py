@@ -73,7 +73,7 @@ class ItemTypeSet(object):
 
         retval = itemJson.get(attr)
 
-        if attr in ("name", "texture"):
+        if attr in ("displayName", "texture"):
             if isinstance(retval, list):
                 assert itemType.meta is not None, "ItemType %s: Got a list %s for attr %s but meta is None" % (
                     itemType.internalName, retval, attr
@@ -84,6 +84,12 @@ class ItemTypeSet(object):
                 return retval[itemType.meta]
 
         if retval is None:
+            if attr == "displayName":
+                try:
+                    return itemType.internalName
+                except AttributeError:
+                    return "Unknown item %d" % itemType.ID
+
             if attr not in self.defaults:
                 raise AttributeError(attr)
             retval = self.defaults[attr]
@@ -97,7 +103,8 @@ class ItemTypeSet(object):
             internalName = "minecraft:" + jsonName
             try:
                 ID = int(item["id"])
-                name = item["name"]
+                displayName = item["displayName"]
+
                 item["internalName"] = internalName
 
                 self.IDsByInternalName[internalName] = ID
@@ -105,9 +112,9 @@ class ItemTypeSet(object):
 
                 texture = item.get("texture")
 
-                if isinstance(name, list):
+                if isinstance(displayName, list):
                     # damage is meta value
-                    for meta, _ in enumerate(name):
+                    for meta, _ in enumerate(displayName):
                         self.allItems.append(ItemType(ID, meta, self))
 
                 elif isinstance(texture, list):

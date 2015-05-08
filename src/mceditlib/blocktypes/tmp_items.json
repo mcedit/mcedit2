@@ -1,7 +1,7 @@
 {
     "iron_shovel": {
         "id": 256,
-        "name": "Iron Shovel",
+        "displayName": "Iron Shovel",
         "texture": "iron_shovel.png",
         "obtainable": true,
         "maxdamage": 250,
@@ -9,7 +9,7 @@
     },
     "iron_pickaxe": {
         "id": 257,
-        "name": "Iron Pickaxe",
+        "displayName": "Iron Pickaxe",
         "texture": "iron_pickaxe.png",
         "obtainable": true,
         "maxdamage": 250,
@@ -17,7 +17,7 @@
     },
     "iron_axe": {
         "id": 258,
-        "name": "Iron Axe",
+        "displayName": "Iron Axe",
         "texture": "iron_axe.png",
         "obtainable": true,
         "maxdamage": 250,
@@ -25,7 +25,7 @@
     },
     "flint_and_steel": {
         "id": 259,
-        "name": "Flint and Steel",
+        "displayName": "Flint and Steel",
         "texture": "flint_and_steel.png",
         "obtainable": true,
         "maxdamage": 64,
@@ -33,7 +33,7 @@
     },
     "apple": {
         "id": 260,
-        "name": "Apple",
+        "displayName": "Apple",
         "texture": "apple.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -41,7 +41,7 @@
     },
     "bow": {
         "id": 261,
-        "name": "Bow",
+        "displayName": "Bow",
         "texture": "bow_standby.png",
         "obtainable": true,
         "maxdamage": 384,
@@ -49,7 +49,7 @@
     },
     "arrow": {
         "id": 262,
-        "name": "Arrow",
+        "displayName": "Arrow",
         "texture": "arrow.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -57,7 +57,7 @@
     },
     "coal": {
         "id": 263,
-        "name": ["Coal",
+        "displayName": ["Coal",
                  "Charcoal"],
         "texture": ["coal.png",
                     "charcoal.png"],
@@ -67,7 +67,7 @@
     },
     "diamond": {
         "id": 264,
-        "name": "Diamond",
+        "displayName": "Diamond",
         "texture": "diamond.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -75,7 +75,7 @@
     },
     "iron_ingot": {
         "id": 265,
-        "name": "Iron Ingot",
+        "displayName": "Iron Ingot",
         "texture": "iron_ingot.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -83,7 +83,7 @@
     },
     "gold_ingot": {
         "id": 266,
-        "name": "Gold Ingot",
+        "displayName": "Gold Ingot",
         "texture": "gold_ingot.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -91,7 +91,7 @@
     },
     "iron_sword": {
         "id": 267,
-        "name": "Iron Sword",
+        "displayName": "Iron Sword",
         "texture": "iron_sword.png",
         "obtainable": true,
         "maxdamage": 250,
@@ -99,7 +99,7 @@
     },
     "wooden_sword": {
         "id": 268,
-        "name": "Wooden Sword",
+        "displayName": "Wooden Sword",
         "texture": "wood_sword.png",
         "obtainable": true,
         "maxdamage": 59,
@@ -107,7 +107,7 @@
     },
     "wooden_shovel": {
         "id": 269,
-        "name": "Wooden Shovel",
+        "displayName": "Wooden Shovel",
         "texture": "wood_shovel.png",
         "obtainable": true,
         "maxdamage": 59,
@@ -115,7 +115,7 @@
     },
     "wooden_pickaxe": {
         "id": 270,
-        "name": "Wooden Pickaxe",
+        "displayName": "Wooden Pickaxe",
         "texture": "wood_pickaxe.png",
         "obtainable": true,
         "maxdamage": 59,
@@ -123,7 +123,7 @@
     },
     "wooden_axe": {
         "id": 271,
-        "name": "Wooden Axe",
+        "displayName": "Wooden Axe",
         "texture": "wood_axe.png",
         "obtainable": true,
         "maxdamage": 59,
@@ -131,7 +131,7 @@
     },
     "stone_sword": {
         "id": 272,
-        "name": "Stone Sword",
+        "displayName": "Stone Sword",
         "texture": "stone_sword.png",
         "obtainable": true,
         "maxdamage": 131,
@@ -139,7 +139,7 @@
     },
     "stone_shovel": {
         "id": 273,
-        "name": "Stone Shovel",
+        "displayName": "Stone Shovel",
         "texture": "stone_shovel.png",
         "obtainable": true,
         "maxdamage": 131,
@@ -147,7 +147,7 @@
     },
     "stone_pickaxe": {
         "id": 274,
-        "name": "Stone Pickaxe",
+        "displayName": "Stone Pickaxe",
         "texture": "stone_pickaxe.png",
         "obtainable": true,
         "maxdamage": 131,
@@ -155,7 +155,7 @@
     },
     "stone_axe": {
         "id": 275,
-        "name": "Stone Axe",
+        "displayName": "Stone Axe",
         "texture": "stone_axe.png",
         "obtainable": true,
         "maxdamage": 131,
@@ -163,7 +163,7 @@
     },
     "diamond_sword": {
         "id": 276,
-        "name": "Diamond Sword",
+        "displayName": "Diamond Sword",
         "texture": "diamond_sword.png",
         "obtainable": true,
         "maxdamage": 1561,
@@ -171,7 +171,7 @@
     },
     "diamond_shovel": {
         "id": 277,
-        "name": "Diamond Shovel",
+        "displayName": "Diamond Shovel",
         "texture": "diamond_shovel.png",
         "obtainable": true,
         "maxdamage": 1561,
@@ -179,7 +179,7 @@
     },
     "diamond_pickaxe": {
         "id": 278,
-        "name": "Diamond Pickaxe",
+        "displayName": "Diamond Pickaxe",
         "texture": "diamond_pickaxe.png",
         "obtainable": true,
         "maxdamage": 1561,
@@ -187,7 +187,7 @@
     },
     "diamond_axe": {
         "id": 279,
-        "name": "Diamond Axe",
+        "displayName": "Diamond Axe",
         "texture": "diamond_axe.png",
         "obtainable": true,
         "maxdamage": 1561,
@@ -195,7 +195,7 @@
     },
     "stick": {
         "id": 280,
-        "name": "Stick",
+        "displayName": "Stick",
         "texture": "stick.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -203,7 +203,7 @@
     },
     "bowl": {
         "id": 281,
-        "name": "Bowl",
+        "displayName": "Bowl",
         "texture": "bowl.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -211,7 +211,7 @@
     },
     "mushroom_stew": {
         "id": 282,
-        "name": "Mushroom Stew",
+        "displayName": "Mushroom Stew",
         "texture": "mushroom_stew.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -219,7 +219,7 @@
     },
     "golden_sword": {
         "id": 283,
-        "name": "Golden Sword",
+        "displayName": "Golden Sword",
         "texture": "gold_sword.png",
         "obtainable": true,
         "maxdamage": 32,
@@ -227,7 +227,7 @@
     },
     "golden_shovel": {
         "id": 284,
-        "name": "Golden Shovel",
+        "displayName": "Golden Shovel",
         "texture": "gold_shovel.png",
         "obtainable": true,
         "maxdamage": 32,
@@ -235,7 +235,7 @@
     },
     "golden_pickaxe": {
         "id": 285,
-        "name": "Golden Pickaxe",
+        "displayName": "Golden Pickaxe",
         "texture": "gold_pickaxe.png",
         "obtainable": true,
         "maxdamage": 32,
@@ -243,7 +243,7 @@
     },
     "golden_axe": {
         "id": 286,
-        "name": "Golden Axe",
+        "displayName": "Golden Axe",
         "texture": "gold_axe.png",
         "obtainable": true,
         "maxdamage": 32,
@@ -251,7 +251,7 @@
     },
     "string": {
         "id": 287,
-        "name": "String",
+        "displayName": "String",
         "texture": "string.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -259,7 +259,7 @@
     },
     "feather": {
         "id": 288,
-        "name": "Feather",
+        "displayName": "Feather",
         "texture": "feather.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -267,7 +267,7 @@
     },
     "gunpowder": {
         "id": 289,
-        "name": "Gunpowder",
+        "displayName": "Gunpowder",
         "texture": "gunpowder.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -275,7 +275,7 @@
     },
     "wooden_hoe": {
         "id": 290,
-        "name": "Wooden Hoe",
+        "displayName": "Wooden Hoe",
         "texture": "wood_hoe.png",
         "obtainable": true,
         "maxdamage": 59,
@@ -283,7 +283,7 @@
     },
     "stone_hoe": {
         "id": 291,
-        "name": "Stone Hoe",
+        "displayName": "Stone Hoe",
         "texture": "stone_hoe.png",
         "obtainable": true,
         "maxdamage": 131,
@@ -291,7 +291,7 @@
     },
     "iron_hoe": {
         "id": 292,
-        "name": "Iron Hoe",
+        "displayName": "Iron Hoe",
         "texture": "iron_hoe.png",
         "obtainable": true,
         "maxdamage": 250,
@@ -299,7 +299,7 @@
     },
     "diamond_hoe": {
         "id": 293,
-        "name": "Diamond Hoe",
+        "displayName": "Diamond Hoe",
         "texture": "diamond_hoe.png",
         "obtainable": true,
         "maxdamage": 1561,
@@ -307,7 +307,7 @@
     },
     "golden_hoe": {
         "id": 294,
-        "name": "Golden Hoe",
+        "displayName": "Golden Hoe",
         "texture": "gold_hoe.png",
         "obtainable": true,
         "maxdamage": 32,
@@ -315,7 +315,7 @@
     },
     "wheat_seeds": {
         "id": 295,
-        "name": "Seeds",
+        "displayName": "Seeds",
         "texture": "seeds_wheat.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -323,7 +323,7 @@
     },
     "wheat": {
         "id": 296,
-        "name": "Wheat",
+        "displayName": "Wheat",
         "texture": "wheat.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -331,7 +331,7 @@
     },
     "bread": {
         "id": 297,
-        "name": "Bread",
+        "displayName": "Bread",
         "texture": "bread.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -339,7 +339,7 @@
     },
     "leather_helmet": {
         "id": 298,
-        "name": "Leather Cap",
+        "displayName": "Leather Cap",
         "texture": "leather_helmet.png",
         "obtainable": true,
         "maxdamage": 55,
@@ -347,7 +347,7 @@
     },
     "leather_chestplate": {
         "id": 299,
-        "name": "Leather Tunic",
+        "displayName": "Leather Tunic",
         "texture": "leather_chestplate.png",
         "obtainable": true,
         "maxdamage": 80,
@@ -355,7 +355,7 @@
     },
     "leather_leggings": {
         "id": 300,
-        "name": "Leather Pants",
+        "displayName": "Leather Pants",
         "texture": "leather_leggings.png",
         "obtainable": true,
         "maxdamage": 75,
@@ -363,7 +363,7 @@
     },
     "leather_boots": {
         "id": 301,
-        "name": "Leather Boots",
+        "displayName": "Leather Boots",
         "texture": "leather_boots.png",
         "obtainable": true,
         "maxdamage": 65,
@@ -371,7 +371,7 @@
     },
     "chainmail_helmet": {
         "id": 302,
-        "name": "Chain Helmet",
+        "displayName": "Chain Helmet",
         "texture": "chainmail_helmet.png",
         "obtainable": true,
         "maxdamage": 165,
@@ -379,7 +379,7 @@
     },
     "chainmail_chestplate": {
         "id": 303,
-        "name": "Chain Tunic",
+        "displayName": "Chain Tunic",
         "texture": "chainmail_chestplate.png",
         "obtainable": true,
         "maxdamage": 240,
@@ -387,7 +387,7 @@
     },
     "chainmail_leggings": {
         "id": 304,
-        "name": "Chain Leggings",
+        "displayName": "Chain Leggings",
         "texture": "chainmail_leggings.png",
         "obtainable": true,
         "maxdamage": 225,
@@ -395,7 +395,7 @@
     },
     "chainmail_boots": {
         "id": 305,
-        "name": "Chain Boots",
+        "displayName": "Chain Boots",
         "texture": "chainmail_boots.png",
         "obtainable": true,
         "maxdamage": 195,
@@ -403,7 +403,7 @@
     },
     "iron_helmet": {
         "id": 306,
-        "name": "Iron Helmet",
+        "displayName": "Iron Helmet",
         "texture": "iron_helmet.png",
         "obtainable": true,
         "maxdamage": 165,
@@ -411,7 +411,7 @@
     },
     "iron_chestplate": {
         "id": 307,
-        "name": "Iron Chestplate",
+        "displayName": "Iron Chestplate",
         "texture": "iron_chestplate.png",
         "obtainable": true,
         "maxdamage": 240,
@@ -419,7 +419,7 @@
     },
     "iron_leggings": {
         "id": 308,
-        "name": "Iron Leggings",
+        "displayName": "Iron Leggings",
         "texture": "iron_leggings.png",
         "obtainable": true,
         "maxdamage": 225,
@@ -427,7 +427,7 @@
     },
     "iron_boots": {
         "id": 309,
-        "name": "Iron Boots",
+        "displayName": "Iron Boots",
         "texture": "iron_boots.png",
         "obtainable": true,
         "maxdamage": 195,
@@ -435,7 +435,7 @@
     },
     "diamond_helmet": {
         "id": 310,
-        "name": "Diamond Helmet",
+        "displayName": "Diamond Helmet",
         "texture": "diamond_helmet.png",
         "obtainable": true,
         "maxdamage": 363,
@@ -443,7 +443,7 @@
     },
     "diamond_chestplate": {
         "id": 311,
-        "name": "Diamond Chestplate",
+        "displayName": "Diamond Chestplate",
         "texture": "diamond_chestplate.png",
         "obtainable": true,
         "maxdamage": 528,
@@ -451,7 +451,7 @@
     },
     "diamond_leggings": {
         "id": 312,
-        "name": "Diamond Leggings",
+        "displayName": "Diamond Leggings",
         "texture": "diamond_leggings.png",
         "obtainable": true,
         "maxdamage": 495,
@@ -459,7 +459,7 @@
     },
     "diamond_boots": {
         "id": 313,
-        "name": "Diamond Boots",
+        "displayName": "Diamond Boots",
         "texture": "diamond_boots.png",
         "obtainable": true,
         "maxdamage": 429,
@@ -467,7 +467,7 @@
     },
     "golden_helmet": {
         "id": 314,
-        "name": "Golden Helmet",
+        "displayName": "Golden Helmet",
         "texture": "gold_helmet.png",
         "obtainable": true,
         "maxdamage": 77,
@@ -475,7 +475,7 @@
     },
     "golden_chestplate": {
         "id": 315,
-        "name": "Golden Chestplate",
+        "displayName": "Golden Chestplate",
         "texture": "gold_chestplate.png",
         "obtainable": true,
         "maxdamage": 112,
@@ -483,7 +483,7 @@
     },
     "golden_leggings": {
         "id": 316,
-        "name": "Golden Leggings",
+        "displayName": "Golden Leggings",
         "texture": "gold_leggings.png",
         "obtainable": true,
         "maxdamage": 105,
@@ -491,7 +491,7 @@
     },
     "golden_boots": {
         "id": 317,
-        "name": "Golden Boots",
+        "displayName": "Golden Boots",
         "texture": "gold_boots.png",
         "obtainable": true,
         "maxdamage": 91,
@@ -500,7 +500,7 @@
     },
     "flint": {
         "id": 318,
-        "name": "Flint",
+        "displayName": "Flint",
         "texture": "flint.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -508,7 +508,7 @@
     },
     "porkchop": {
         "id": 319,
-        "name": "Raw Porkchop",
+        "displayName": "Raw Porkchop",
         "texture": "porkchop_raw.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -516,7 +516,7 @@
     },
     "cooked_porkchop": {
         "id": 320,
-        "name": "Cooked Porkchop",
+        "displayName": "Cooked Porkchop",
         "texture": "porkchop_cooked.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -524,7 +524,7 @@
     },
     "painting": {
         "id": 321,
-        "name": "Painting",
+        "displayName": "Painting",
         "texture": "painting.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -532,7 +532,7 @@
     },
     "golden_apple": {
         "id": 322,
-        "name": "Golden Apple",
+        "displayName": "Golden Apple",
         "texture": "apple_golden.png",
         "obtainable": true,
         "maxdamage": 1,
@@ -540,7 +540,7 @@
     },
     "sign": {
         "id": 323,
-        "name": "Sign",
+        "displayName": "Sign",
         "texture": "sign.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -548,7 +548,7 @@
     },
     "wooden_door": {
         "id": 324,
-        "name": "Oak Door",
+        "displayName": "Oak Door",
         "texture": "door_wood.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -556,7 +556,7 @@
     },
     "bucket": {
         "id": 325,
-        "name": "Bucket",
+        "displayName": "Bucket",
         "texture": "bucket_empty.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -564,7 +564,7 @@
     },
     "water_bucket": {
         "id": 326,
-        "name": "Water Bucket",
+        "displayName": "Water Bucket",
         "texture": "bucket_water.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -572,7 +572,7 @@
     },
     "lava_bucket": {
         "id": 327,
-        "name": "Lava Bucket",
+        "displayName": "Lava Bucket",
         "texture": "bucket_lava.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -580,7 +580,7 @@
     },
     "minecart": {
         "id": 328,
-        "name": "Minecart",
+        "displayName": "Minecart",
         "texture": "minecart_normal.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -588,7 +588,7 @@
     },
     "saddle": {
         "id": 329,
-        "name": "Saddle",
+        "displayName": "Saddle",
         "texture": "saddle.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -596,7 +596,7 @@
     },
     "iron_door": {
         "id": 330,
-        "name": "Iron Door",
+        "displayName": "Iron Door",
         "texture": "door_iron.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -604,7 +604,7 @@
     },
     "redstone": {
         "id": 331,
-        "name": "Redstone",
+        "displayName": "Redstone",
         "texture": "redstone_dust.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -612,7 +612,7 @@
     },
     "snowball": {
         "id": 332,
-        "name": "Snowball",
+        "displayName": "Snowball",
         "texture": "snowball.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -620,7 +620,7 @@
     },
     "boat": {
         "id": 333,
-        "name": "Boat",
+        "displayName": "Boat",
         "texture": "boat.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -628,7 +628,7 @@
     },
     "leather": {
         "id": 334,
-        "name": "Leather",
+        "displayName": "Leather",
         "texture": "leather.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -636,7 +636,7 @@
     },
     "milk_bucket": {
         "id": 335,
-        "name": "Milk",
+        "displayName": "Milk",
         "texture": "bucket_milk.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -644,7 +644,7 @@
     },
     "brick": {
         "id": 336,
-        "name": "Brick",
+        "displayName": "Brick",
         "texture": "brick.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -652,7 +652,7 @@
     },
     "clay_ball": {
         "id": 337,
-        "name": "Clay",
+        "displayName": "Clay",
         "texture": "clay_ball.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -660,7 +660,7 @@
     },
     "reeds": {
         "id": 338,
-        "name": "Sugar Cane",
+        "displayName": "Sugar Cane",
         "texture": "reeds.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -668,7 +668,7 @@
     },
     "paper": {
         "id": 339,
-        "name": "Paper",
+        "displayName": "Paper",
         "texture": "paper.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -676,7 +676,7 @@
     },
     "book": {
         "id": 340,
-        "name": "Book",
+        "displayName": "Book",
         "texture": "book_normal.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -684,7 +684,7 @@
     },
     "slime_ball": {
         "id": 341,
-        "name": "Slimeball",
+        "displayName": "Slimeball",
         "texture": "slimeball.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -692,7 +692,7 @@
     },
     "chest_minecart": {
         "id": 342,
-        "name": "Minecart with Chest",
+        "displayName": "Minecart with Chest",
         "texture": "minecart_chest.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -700,7 +700,7 @@
     },
     "furnace_minecart": {
         "id": 343,
-        "name": "Minecart with Furnace",
+        "displayName": "Minecart with Furnace",
         "texture": "minecart_furnace.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -708,7 +708,7 @@
     },
     "egg": {
         "id": 344,
-        "name": "Egg",
+        "displayName": "Egg",
         "texture": "egg.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -716,7 +716,7 @@
     },
     "compass": {
         "id": 345,
-        "name": "Compass",
+        "displayName": "Compass",
         "texture": "compass.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -724,7 +724,7 @@
     },
     "fishing_rod": {
         "id": 346,
-        "name": "Fishing Rod",
+        "displayName": "Fishing Rod",
         "texture": "fishing_rod_uncast.png",
         "obtainable": true,
         "maxdamage": 64,
@@ -732,7 +732,7 @@
     },
     "clock": {
         "id": 347,
-        "name": "Clock",
+        "displayName": "Clock",
         "texture": "clock.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -740,7 +740,7 @@
     },
     "glowstone_dust": {
         "id": 348,
-        "name": "Glowstone Dust",
+        "displayName": "Glowstone Dust",
         "texture": "glowstone_dust.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -748,7 +748,7 @@
     },
     "fish": {
         "id": 349,
-        "name": ["Raw Fish",
+        "displayName": ["Raw Fish",
                  "Raw Salmon",
                  "Clownfish",
                  "Pufferfish"],
@@ -762,7 +762,7 @@
     },
     "cooked_fish": {
         "id": 350,
-        "name": ["Cooked Fish",
+        "displayName": ["Cooked Fish",
                  "Cooked Salmon"],
         "texture": ["fish_cod_cooked.png",
                     "fish_salmon_cooked.png"],
@@ -772,7 +772,7 @@
     },
     "dye": {
         "id": 351,
-        "name": ["Ink Sac",
+        "displayName": ["Ink Sac",
                  "Rose Red",
                  "Cactus Green",
                  "Cocoa Beans",
@@ -810,7 +810,7 @@
     },
     "bone": {
         "id": 352,
-        "name": "Bone",
+        "displayName": "Bone",
         "texture": "bone.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -818,7 +818,7 @@
     },
     "sugar": {
         "id": 353,
-        "name": "Sugar",
+        "displayName": "Sugar",
         "texture": "sugar.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -826,7 +826,7 @@
     },
     "cake": {
         "id": 354,
-        "name": "Cake",
+        "displayName": "Cake",
         "texture": "cake.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -834,7 +834,7 @@
     },
     "bed": {
         "id": 355,
-        "name": "Bed",
+        "displayName": "Bed",
         "texture": "bed.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -842,7 +842,7 @@
     },
     "repeater": {
         "id": 356,
-        "name": "Redstone Repeater",
+        "displayName": "Redstone Repeater",
         "texture": "repeater.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -850,7 +850,7 @@
     },
     "cookie": {
         "id": 357,
-        "name": "Cookie",
+        "displayName": "Cookie",
         "texture": "cookie.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -858,7 +858,7 @@
     },
     "filled_map": {
         "id": 358,
-        "name": "Map",
+        "displayName": "Map",
         "texture": "map_filled.png",
         "obtainable": true,
         "maxdamage": 32767,
@@ -866,7 +866,7 @@
     },
     "shears": {
         "id": 359,
-        "name": "Shears",
+        "displayName": "Shears",
         "texture": "shears.png",
         "obtainable": true,
         "maxdamage": 238,
@@ -874,7 +874,7 @@
     },
     "melon": {
         "id": 360,
-        "name": "Melon",
+        "displayName": "Melon",
         "texture": "melon.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -882,7 +882,7 @@
     },
     "pumpkin_seeds": {
         "id": 361,
-        "name": "Pumpkin Seeds",
+        "displayName": "Pumpkin Seeds",
         "texture": "seeds_pumpkin.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -890,7 +890,7 @@
     },
     "melon_seeds": {
         "id": 362,
-        "name": "Melon Seeds",
+        "displayName": "Melon Seeds",
         "texture": "seeds_melon.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -898,7 +898,7 @@
     },
     "beef": {
         "id": 363,
-        "name": "Raw Beef",
+        "displayName": "Raw Beef",
         "texture": "beef_raw.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -906,7 +906,7 @@
     },
     "cooked_beef": {
         "id": 364,
-        "name": "Steak",
+        "displayName": "Steak",
         "texture": "beef_cooked.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -914,7 +914,7 @@
     },
     "chicken": {
         "id": 365,
-        "name": "Raw Chicken",
+        "displayName": "Raw Chicken",
         "texture": "chicken_raw.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -922,7 +922,7 @@
     },
     "cooked_chicken": {
         "id": 366,
-        "name": "Cooked Chicken",
+        "displayName": "Cooked Chicken",
         "texture": "chicken_cooked.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -930,7 +930,7 @@
     },
     "rotten_flesh": {
         "id": 367,
-        "name": "Rotten Flesh",
+        "displayName": "Rotten Flesh",
         "texture": "rotten_flesh.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -938,7 +938,7 @@
     },
     "ender_pearl": {
         "id": 368,
-        "name": "Ender Pearl",
+        "displayName": "Ender Pearl",
         "texture": "ender_pearl.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -946,7 +946,7 @@
     },
     "blaze_rod": {
         "id": 369,
-        "name": "Blaze Rod",
+        "displayName": "Blaze Rod",
         "texture": "blaze_rod.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -954,7 +954,7 @@
     },
     "ghast_tear": {
         "id": 370,
-        "name": "Ghast Tear",
+        "displayName": "Ghast Tear",
         "texture": "ghast_tear.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -962,7 +962,7 @@
     },
     "gold_nugget": {
         "id": 371,
-        "name": "Gold Nugget",
+        "displayName": "Gold Nugget",
         "texture": "gold_nugget.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -970,7 +970,7 @@
     },
     "nether_wart": {
         "id": 372,
-        "name": "Nether Wart",
+        "displayName": "Nether Wart",
         "texture": "nether_wart.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -979,7 +979,7 @@
     "potion": {
         "_comment":"Datavalues not supported yet!",
         "id": 373,
-        "name": "Potion",
+        "displayName": "Potion",
         "texture": "potion_bottle_drinkable.png",
         "obtainable": true,
         "maxdamage": 32767,
@@ -987,7 +987,7 @@
     },
     "glass_bottle": {
         "id": 374,
-        "name": "Glass Bottle",
+        "displayName": "Glass Bottle",
         "texture": "potion_bottle_empty.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -995,7 +995,7 @@
     },
     "spider_eye": {
         "id": 375,
-        "name": "Spider Eye",
+        "displayName": "Spider Eye",
         "texture": "spider_eye.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1003,7 +1003,7 @@
     },
     "fermented_spider_eye": {
         "id": 376,
-        "name": "Fermented Spider Eye",
+        "displayName": "Fermented Spider Eye",
         "texture": "spider_eye_fermented.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1011,7 +1011,7 @@
     },
     "blaze_powder": {
         "id": 377,
-        "name": "Blaze Powder",
+        "displayName": "Blaze Powder",
         "texture": "blaze_powder.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1019,7 +1019,7 @@
     },
     "magma_cream": {
         "id": 378,
-        "name": "Magma Cream",
+        "displayName": "Magma Cream",
         "texture": "magma_cream.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1027,7 +1027,7 @@
     },
     "brewing_stand": {
         "id": 379,
-        "name": "Brewing Stand",
+        "displayName": "Brewing Stand",
         "texture": "brewing_stand.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1035,7 +1035,7 @@
     },
     "cauldron": {
         "id": 380,
-        "name": "Cauldron",
+        "displayName": "Cauldron",
         "texture": "cauldron.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1043,7 +1043,7 @@
     },
     "ender_eye": {
         "id": 381,
-        "name": "Eye of Ender",
+        "displayName": "Eye of Ender",
         "texture": "ender_eye.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1051,7 +1051,7 @@
     },
     "speckled_melon": {
         "id": 382,
-        "name": "Glistering Melon",
+        "displayName": "Glistering Melon",
         "texture": "melon_speckled.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1060,7 +1060,7 @@
     "spawn_egg": {
         "_comment2": "Datavalues not Supported yet!",
         "id": 383,
-        "name": "Spawn Egg",
+        "displayName": "Spawn Egg",
         "texture": "spawn_egg.png",
         "obtainable": true,
         "maxdamage": 120,
@@ -1068,7 +1068,7 @@
     },
     "experience_bottle": {
         "id": 384,
-        "name": "Bottle o' Enchanting",
+        "displayName": "Bottle o' Enchanting",
         "texture": "experience_bottle.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1076,7 +1076,7 @@
     },
     "fire_charge": {
         "id": 385,
-        "name": "Fire Charge",
+        "displayName": "Fire Charge",
         "texture": "fireball.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1084,7 +1084,7 @@
     },
     "writable_book": {
         "id": 386,
-        "name": "Book and Quill",
+        "displayName": "Book and Quill",
         "texture": "book_writable.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1092,7 +1092,7 @@
     },
     "written_book": {
         "id": 387,
-        "name": "Written Book",
+        "displayName": "Written Book",
         "texture": "book_written.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1100,7 +1100,7 @@
     },
     "emerald": {
         "id": 388,
-        "name": "Emerald",
+        "displayName": "Emerald",
         "texture": "emerald.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1108,7 +1108,7 @@
     },
     "item_frame": {
         "id": 389,
-        "name": "Item Frame",
+        "displayName": "Item Frame",
         "texture": "item_frame.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1116,7 +1116,7 @@
     },
     "flower_pot": {
         "id": 390,
-        "name": "Flower Pot",
+        "displayName": "Flower Pot",
         "texture": "flower_pot.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1124,7 +1124,7 @@
     },
     "carrot": {
         "id": 391,
-        "name": "Carrot",
+        "displayName": "Carrot",
         "texture": "carrot.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1132,7 +1132,7 @@
     },
     "potato": {
         "id": 392,
-        "name": "Potato",
+        "displayName": "Potato",
         "texture": "potato.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1140,7 +1140,7 @@
     },
     "baked_potato": {
         "id": 393,
-        "name": "Baked Potato",
+        "displayName": "Baked Potato",
         "texture": "potato_baked.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1148,7 +1148,7 @@
     },
     "poisonous_potato": {
         "id": 394,
-        "name": "Poisonous Potato",
+        "displayName": "Poisonous Potato",
         "texture": "potato_poisonous.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1156,7 +1156,7 @@
     },
     "map": {
         "id": 395,
-        "name": "Empty Map",
+        "displayName": "Empty Map",
         "texture": "map_empty.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1164,7 +1164,7 @@
     },
     "golden_carrot": {
         "id": 396,
-        "name": "Golden Carrot",
+        "displayName": "Golden Carrot",
         "texture": "carrot_golden.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1172,7 +1172,7 @@
     },
     "skull": {
         "id": 397,
-        "name": ["Skeleton Skull",
+        "displayName": ["Skeleton Skull",
                  "Wither Skeleton Skull",
                  "Zombie Head",
                  "Head",
@@ -1184,7 +1184,7 @@
     },
     "carrot_on_a_stick": {
         "id": 398,
-        "name": "Carrot on a Stick",
+        "displayName": "Carrot on a Stick",
         "texture": "carrot_on_a_stick.png",
         "obtainable": true,
         "maxdamage": 25,
@@ -1192,7 +1192,7 @@
     },
     "nether_star": {
         "id": 399,
-        "name": "Nether Star",
+        "displayName": "Nether Star",
         "texture": "nether_star.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1200,7 +1200,7 @@
     },
     "pumpkin_pie": {
         "id": 400,
-        "name": "Pumpkin Pie",
+        "displayName": "Pumpkin Pie",
         "texture": "pumpkin_pie.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1208,7 +1208,7 @@
     },
     "fireworks": {
         "id": 401,
-        "name": "Firework Rocket",
+        "displayName": "Firework Rocket",
         "texture": "fireworks.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1216,7 +1216,7 @@
     },
     "firework_charge": {
         "id": 402,
-        "name": "Firework Star",
+        "displayName": "Firework Star",
         "texture": "fireworks_charge.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1224,7 +1224,7 @@
     },
     "enchanted_book": {
         "id": 403,
-        "name": "Enchanted Book",
+        "displayName": "Enchanted Book",
         "texture": "book_enchanted.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1232,7 +1232,7 @@
     },
     "comparator": {
         "id": 404,
-        "name": "Redstone Comparator",
+        "displayName": "Redstone Comparator",
         "texture": "comparator.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1240,7 +1240,7 @@
     },
     "netherbrick": {
         "id": 405,
-        "name": "Nether Brick",
+        "displayName": "Nether Brick",
         "texture": "netherbrick.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1248,7 +1248,7 @@
     },
     "quartz": {
         "id": 406,
-        "name": "Nether Quartz",
+        "displayName": "Nether Quartz",
         "texture": "quartz.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1256,7 +1256,7 @@
     },
     "tnt_minecart": {
         "id": 407,
-        "name": "Minecart with TNT",
+        "displayName": "Minecart with TNT",
         "texture": "minecart_tnt.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1264,7 +1264,7 @@
     },
     "hopper_minecart": {
         "id": 408,
-        "name": "Minecart with Hopper",
+        "displayName": "Minecart with Hopper",
         "texture": "minecart_hopper.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1272,7 +1272,7 @@
     },
     "prismarine_shard": {
         "id": 409,
-        "name": "Prismarine Shard",
+        "displayName": "Prismarine Shard",
         "texture": "prismarine_shard.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1280,7 +1280,7 @@
     },
     "prismarine_crystals": {
         "id": 410,
-        "name": "Prismarine Crystals",
+        "displayName": "Prismarine Crystals",
         "texture": "prismarine_crystals.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1288,7 +1288,7 @@
     },
     "rabbit": {
         "id": 411,
-        "name": "Raw Rabbit",
+        "displayName": "Raw Rabbit",
         "texture": "rabbit_raw.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1296,7 +1296,7 @@
     },
     "cooked_rabbit": {
         "id": 412,
-        "name": "Cooked Rabbit",
+        "displayName": "Cooked Rabbit",
         "texture": "rabbit_cooked.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1304,7 +1304,7 @@
     },
     "rabbit_stew": {
         "id": 413,
-        "name": "Rabbit Stew",
+        "displayName": "Rabbit Stew",
         "texture": "rabbit_stew.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1312,7 +1312,7 @@
     },
     "rabbit_foot": {
         "id": 414,
-        "name": "Rabbit's Foot",
+        "displayName": "Rabbit's Foot",
         "texture": "rabbit_foot.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1320,7 +1320,7 @@
     },
     "rabbit_hide": {
         "id": 415,
-        "name": "Rabbit Hide",
+        "displayName": "Rabbit Hide",
         "texture": "rabbit_hide.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1328,7 +1328,7 @@
     },
     "armor_stand": {
         "id": 416,
-        "name": "Armor Stand",
+        "displayName": "Armor Stand",
         "texture": "wooden_armorstand.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1336,7 +1336,7 @@
     },
     "iron_horse_armor": {
         "id": 417,
-        "name": "Iron Horse Armor",
+        "displayName": "Iron Horse Armor",
         "texture": "iron_horse_armor.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1344,7 +1344,7 @@
     },
     "golden_horse_armor": {
         "id": 418,
-        "name": "Golden Horse Armor",
+        "displayName": "Golden Horse Armor",
         "texture": "gold_horse_armor.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1352,7 +1352,7 @@
     },
     "diamond_horse_armor": {
         "id": 419,
-        "name": "Diamond Horse Armor",
+        "displayName": "Diamond Horse Armor",
         "texture": "diamond_horse_armor.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1360,7 +1360,7 @@
     },
     "lead": {
         "id": 420,
-        "name": "Lead",
+        "displayName": "Lead",
         "texture": "lead.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1368,7 +1368,7 @@
     },
     "name_tag": {
         "id": 421,
-        "name": "Name Tag",
+        "displayName": "Name Tag",
         "texture": "name_tag.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1376,7 +1376,7 @@
     },
     "command_block_minecart": {
         "id": 422,
-        "name": "Minecart with Command Block",
+        "displayName": "Minecart with Command Block",
         "texture": "minecart_command_block.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1384,7 +1384,7 @@
     },
     "mutton": {
         "id": 423,
-        "name": "Raw Mutton",
+        "displayName": "Raw Mutton",
         "texture": "mutton_raw.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1392,7 +1392,7 @@
     },
     "cooked_mutton": {
         "id": 424,
-        "name": "Cooked Mutton",
+        "displayName": "Cooked Mutton",
         "texture": "mutton_cooked.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1400,7 +1400,7 @@
     },
     "banner": {
         "id": 425,
-        "name": ["Black Banner",
+        "displayName": ["Black Banner",
                  "Red Banner",
                  "Green Banner",
                  "Brown Banner",
@@ -1424,7 +1424,7 @@
     },
     "spruce_door": {
         "id": 427,
-        "name": "Spruce Door",
+        "displayName": "Spruce Door",
         "texture": "door_spruce.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1432,7 +1432,7 @@
     },
     "birch_door": {
         "id": 428,
-        "name": "Birch Door",
+        "displayName": "Birch Door",
         "texture": "door_birch.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1440,7 +1440,7 @@
     },
     "jungle_door": {
         "id": 429,
-        "name": "Jungle Door",
+        "displayName": "Jungle Door",
         "texture": "door_jungle.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1448,7 +1448,7 @@
     },
     "acacia_door": {
         "id": 430,
-        "name": "Acacia Door",
+        "displayName": "Acacia Door",
         "texture": "door_acacia.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1456,7 +1456,7 @@
     },
     "dark_oak_door": {
         "id": 431,
-        "name": "Dark Oak Door",
+        "displayName": "Dark Oak Door",
         "texture": "door_dark_oak.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1464,7 +1464,7 @@
     },
     "record_13": {
         "id": 432,
-        "name": "13 Disc",
+        "displayName": "13 Disc",
         "texture": "record_13.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1472,7 +1472,7 @@
     },
     "record_cat": {
         "id": 433,
-        "name": "cat Disc",
+        "displayName": "cat Disc",
         "texture": "record_cat.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1480,7 +1480,7 @@
     },
     "record_blocks": {
         "id": 434,
-        "name": "blocks Disc",
+        "displayName": "blocks Disc",
         "texture": "record_blocks.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1488,7 +1488,7 @@
     },
     "record_chirp": {
         "id": 435,
-        "name": "chirp Disc",
+        "displayName": "chirp Disc",
         "texture": "record_chirp.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1496,7 +1496,7 @@
     },
     "record_far": {
         "id": 436,
-        "name": "far Disc",
+        "displayName": "far Disc",
         "texture": "record_far.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1504,7 +1504,7 @@
     },
     "record_mall": {
         "id": 437,
-        "name": "mall Disc",
+        "displayName": "mall Disc",
         "texture": "record_mall.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1512,7 +1512,7 @@
     },
     "record_mellohi": {
         "id": 438,
-        "name": "mellohi Disc",
+        "displayName": "mellohi Disc",
         "texture": "record_mellohi.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1520,7 +1520,7 @@
     },
     "record_stal": {
         "id": 439,
-        "name": "stal Disc",
+        "displayName": "stal Disc",
         "texture": "record_stal.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1528,7 +1528,7 @@
     },
     "record_strad": {
         "id": 440,
-        "name": "strad Disc",
+        "displayName": "strad Disc",
         "texture": "record_strad.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1536,7 +1536,7 @@
     },
     "record_ward": {
         "id": 441,
-        "name": "ward Disc",
+        "displayName": "ward Disc",
         "texture": "record_ward.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1544,7 +1544,7 @@
     },
     "record_11": {
         "id": 442,
-        "name": "11 Disc",
+        "displayName": "11 Disc",
         "texture": "record_11.png",
         "obtainable": true,
         "maxdamage": 0,
@@ -1552,7 +1552,7 @@
     },
     "record_wait": {
         "id": 443,
-        "name": "wait Disc",
+        "displayName": "wait Disc",
         "texture": "record_wait.png",
         "obtainable": true,
         "maxdamage": 0,

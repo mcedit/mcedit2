@@ -26,6 +26,7 @@ class InventoryItemModel(QtCore.QAbstractItemModel):
     ItemIconRole = ItemRawIDRole + 1
     ItemDamageRole = ItemIconRole + 1
     ItemCountRole = ItemDamageRole + 1
+    ItemDisplayNameRole = ItemCountRole + 1
 
     def __init__(self, itemListRef, editorSession):
         super(InventoryItemModel, self).__init__()
@@ -53,7 +54,7 @@ class InventoryItemModel(QtCore.QAbstractItemModel):
         if itemStack is None:
             return None
 
-        if role == self.ItemIconRole:
+        if role in (self.ItemIconRole, self.ItemDisplayNameRole):
             try:
                 itemType = itemStack.itemType
             except ValueError as e:  # itemType not mapped
@@ -61,7 +62,11 @@ class InventoryItemModel(QtCore.QAbstractItemModel):
             except KeyError as e:  # missing NBT tag?
                 log.exception("Error while reading item data: %r", e)
                 return None
-            return ItemTypeIcon(itemType, self.editorSession, itemStack)
+            if role == self.ItemIconRole:
+                return ItemTypeIcon(itemType, self.editorSession, itemStack)
+
+            if role == self.ItemDisplayNameRole:
+                return itemType.displayName
 
         if role == self.ItemIDRole:
             return itemStack.id
@@ -289,8 +294,11 @@ class InventoryEditor(QtGui.QWidget):
 
         self.currentIndex = None
 
+        self.itemNameLabel = QtGui.QLabel()
+
         self.setLayout(Column(Row(self.inventoryView,
                                   Column(self.itemListSearchBox, self.itemList)),
+                              Row(QtGui.QLabel("Selected item:"), self.itemNameLabel, None),
                               Row(QtGui.QLabel("Internal Name"), self.internalNameField,
                                   self.rawIDCheckbox, self.rawIDInput,
                                   QtGui.QLabel("Damage"), self.damageInput,
@@ -370,6 +378,9 @@ class InventoryEditor(QtGui.QWidget):
 
         tagRef = self._itemListRef.getItemInSlot(index.row())
         self.itemNBTEditor.setRootTagRef(tagRef)
+
+        displayName = index.data(InventoryItemModel.ItemDisplayNameRole)
+        self.itemNameLabel.setText(displayName)
 
     def searchTextChanged(self, value):
         self.proxyModel = QtGui.QSortFilterProxyModel()
