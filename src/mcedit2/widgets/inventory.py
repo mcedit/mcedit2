@@ -105,6 +105,7 @@ class InventoryItemWidget(QtGui.QPushButton):
         self.countText = None
 
         self.setIconSize(QtCore.QSize(ICON_SIZE, ICON_SIZE))
+        self.setCheckable(True)
 
         if InventoryItemWidget.BLANK is None:
             pm = QtGui.QPixmap(ICON_SIZE, ICON_SIZE)
@@ -183,6 +184,8 @@ class InventoryView(QtGui.QWidget):
             return _clicked
 
         self.slots = []
+        self.buttonGroup = QtGui.QButtonGroup()
+
         for (x, y, slotNumber) in slotLayout:
             itemWidget = InventoryItemWidget(self, slotNumber)
             itemWidget._clicked = _makeClicked(slotNumber)
@@ -190,12 +193,18 @@ class InventoryView(QtGui.QWidget):
             gridLayout.addWidget(itemWidget, y, x)
             itemWidget.clicked.connect(itemWidget._clicked)
             self.slots.append(slotNumber)
+            self.buttonGroup.addButton(itemWidget)
 
         self.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
 
         self.model = None
 
+        self.slotClicked.connect(self.slotWasClicked)
+
     slotClicked = QtCore.Signal(int)
+
+    def slotWasClicked(self, slotNumber):
+        self.slotWidgets[slotNumber].setChecked(True)
 
     def setModel(self, model):
         assert isinstance(model, InventoryItemModel)
