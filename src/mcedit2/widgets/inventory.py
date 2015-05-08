@@ -52,15 +52,15 @@ class InventoryItemModel(QtCore.QAbstractItemModel):
         itemStack = self.itemListRef.getItemInSlot(slot)
         if itemStack is None:
             return None
-        try:
-            itemType = itemStack.itemType
-        except ValueError as e:  # itemType not mapped
-            return None
-        except KeyError as e:  # missing NBT tag?
-            log.exception("Error while reading item data: %r", e)
-            return None
 
         if role == self.ItemIconRole:
+            try:
+                itemType = itemStack.itemType
+            except ValueError as e:  # itemType not mapped
+                return None
+            except KeyError as e:  # missing NBT tag?
+                log.exception("Error while reading item data: %r", e)
+                return None
             return ItemTypeIcon(itemType, self.editorSession, itemStack)
 
         if role == self.ItemIDRole:
