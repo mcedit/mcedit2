@@ -24,7 +24,7 @@ class ItemType(_ItemType):
             names = " (%s (%s)" % (self.name, self.internalName)
         except:
             names = ""
-        return "<ItemType (%d:%d)%s>" % (self.ID, self.meta, names)
+        return "<ItemType (%d:%s)%s>" % (self.ID, self.meta, names)
 
     def __str__(self):
         return "%s (%s) [%s:%s]" % (self.name, self.internalName, self.ID, self.meta)
