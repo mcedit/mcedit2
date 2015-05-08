@@ -3,6 +3,7 @@
 """
 from __future__ import absolute_import, division, print_function
 import logging
+from mcedit2.command import SimpleRevisionCommand
 from mceditlib import nbt
 
 from PySide import QtGui, QtCore
@@ -326,25 +327,37 @@ class InventoryEditor(QtGui.QWidget):
         if self.currentIndex is None:
             return
 
-        self.inventoryModel.setData(self.currentIndex, value, InventoryItemModel.ItemIDRole)
+        command = InventoryEditCommand(self.editorSession, self.tr("Change item type"))
+        with command.begin():
+            self.inventoryModel.setData(self.currentIndex, value, InventoryItemModel.ItemIDRole)
+        self.editorSession.pushCommand(command)
 
     def rawIDChanged(self, value):
         if self.currentIndex is None:
             return
 
-        self.inventoryModel.setData(self.currentIndex, value, InventoryItemModel.ItemRawIDRole)
+        command = InventoryEditCommand(self.editorSession, self.tr("Change item's raw ID"))
+        with command.begin():
+            self.inventoryModel.setData(self.currentIndex, value, InventoryItemModel.ItemRawIDRole)
+        self.editorSession.pushCommand(command)
 
     def damageChanged(self, value):
         if self.currentIndex is None:
             return
 
-        self.inventoryModel.setData(self.currentIndex, value, InventoryItemModel.ItemDamageRole)
+        command = InventoryEditCommand(self.editorSession, self.tr("Change item damage"))
+        with command.begin():
+            self.inventoryModel.setData(self.currentIndex, value, InventoryItemModel.ItemDamageRole)
+        self.editorSession.pushCommand(command)
 
     def countChanged(self, value):
         if self.currentIndex is None:
             return
 
-        self.inventoryModel.setData(self.currentIndex, value, InventoryItemModel.ItemCountRole)
+        command = InventoryEditCommand(self.editorSession, self.tr("Change item count"))
+        with command.begin():
+            self.inventoryModel.setData(self.currentIndex, value, InventoryItemModel.ItemCountRole)
+        self.editorSession.pushCommand(command)
 
 
 
@@ -383,3 +396,6 @@ class InventoryEditor(QtGui.QWidget):
         self.itemList.setModel(self.itemListModel)
 
         self.itemNBTEditor.editorSession = self._editorSession
+
+class InventoryEditCommand(SimpleRevisionCommand):
+    pass
