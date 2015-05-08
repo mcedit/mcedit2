@@ -29,6 +29,7 @@ class InventoryItemModel(QtCore.QAbstractItemModel):
 
     def __init__(self, itemListRef, editorSession):
         super(InventoryItemModel, self).__init__()
+        assert editorSession is not None
         self.editorSession = editorSession
         self.itemListRef = itemListRef
         self.textureCache = {}
@@ -254,11 +255,12 @@ class InventoryEditor(QtGui.QWidget):
 
         super(InventoryEditor, self).__init__()
 
-        self.inventoryView = InventoryView(slotLayout)
+        self.inventoryView = InventoryView(slotLayout, rows, columns)
         self.inventoryView.slotClicked.connect(self.slotWasClicked)
 
         self.itemList = QtGui.QListView()
         self.itemList.setMinimumWidth(200)
+        self.itemList.clicked.connect(self.itemTypeChanged)
         self.itemListModel = None
 
         self.itemListSearchBox = QtGui.QComboBox()
@@ -367,6 +369,23 @@ class InventoryEditor(QtGui.QWidget):
         self.proxyModel.setFilterFixedString(value)
         self.proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
         self.itemList.setModel(self.proxyModel)
+
+    def itemTypeChanged(self, index):
+        if self.currentIndex is None or self.itemListModel is None:
+            return
+        if self.editsDisabled:
+            return
+
+        internalName = index.data(ItemTypeListModel.InternalNameRole)
+        damage = index.data(ItemTypeListModel.DamageRole)
+
+        command = InventoryEditCommand(self.editorSession, self.tr("Change item type"))
+        with command.begin():
+            self.inventoryModel.setData(self.currentIndex, internalName, InventoryItemModel.ItemIDRole)
+            if damage is not None:
+                self.inventoryModel.setData(self.currentIndex, damage, InventoryItemModel.ItemDamageRole)
+
+        self.editorSession.pushCommand(command)
 
     def internalNameChanged(self, value):
         if self.currentIndex is None:
