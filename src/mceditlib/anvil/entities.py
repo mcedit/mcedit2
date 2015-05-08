@@ -217,6 +217,15 @@ class SlotsListProxy(nbtattr.NBTListProxy):
 
         return None
 
+    def createItemInSlot(self, slot):
+        for stack in self:
+            if stack.Slot == slot:
+                raise KeyError("Slot %d already occupied." % slot)
+        ref = ItemStackRef(None, self)
+        ref.Slot = slot
+        self.append(ref.rootTag)
+        return ref
+
 
 class SlottedInventoryAttr(nbtattr.NBTCompoundListAttr):
     def __init__(self, name):
@@ -235,6 +244,9 @@ class PCTileEntityChestRef(PCTileEntityRefBase):
 
     def getItemInSlot(self, slot):
         return self.Items.getItemInSlot(slot)
+
+    def createItemInSlot(self, slot):
+        return self.Items.createItemInSlot(slot)
 
 _tileEntityClasses = {
     "Chest": PCTileEntityChestRef,
