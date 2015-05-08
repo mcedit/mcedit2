@@ -63,19 +63,6 @@
          </property>
         </widget>
        </item>
-       <item>
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="allPropertiesTab">
@@ -124,15 +111,15 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PropertyListWidget</class>
-   <extends>QTreeWidget</extends>
-   <header>propertylistwidget.h</header>
-  </customwidget>
-  <customwidget>
    <class>NBTEditorWidget</class>
    <extends>QWidget</extends>
    <header>nbteditorwidget.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PropertyListWidget</class>
+   <extends>QTreeWidget</extends>
+   <header>propertylistwidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
