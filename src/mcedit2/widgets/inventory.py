@@ -393,6 +393,12 @@ class InventoryEditor(QtGui.QWidget):
         if self.editsDisabled:
             return
 
+        if self.inventoryRef.blockTypes.itemStackVersion == VERSION_1_7:
+            try:
+                itemType = self.editorSession.worldEditor.blocktypes.itemTypes[value]
+            except KeyError:
+                return
+
         command = InventoryEditCommand(self.editorSession, self.tr("Change item type"))
         with command.begin():
             self.inventoryModel.setData(self.currentIndex, value, InventoryItemModel.ItemIDRole)
