@@ -231,7 +231,7 @@ cdef class BlockModels(object):
                 variantZrot = variantDict.get("z", 0)
 
             if modelDict is None:
-                log.info("No model found for %s", internalName)
+                log.debug("No model found for %s", internalName)
                 continue
 
             # model will either have an 'elements' key or a 'parent' key (maybe both).
