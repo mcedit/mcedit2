@@ -186,7 +186,6 @@ class SelectionTool(EditorTool):
         self.overlayNode = scenegraph.Node()
         self.faceHoverNode = SelectionFaceNode()
         self.selectionNode = SelectionScene()
-        self.selectionNode.dimension = editorSession.currentDimension  # xxx dimensionDidChange
         self.overlayNode.addChild(self.selectionNode)
         self.overlayNode.addChild(self.faceHoverNode)
 
@@ -196,6 +195,11 @@ class SelectionTool(EditorTool):
         self.overlayNode.addChild(self.boxHandleNode)
 
         self.newSelectionNode = None
+
+        editorSession.dimensionChanged.connect(self.dimensionDidChange)
+
+    def dimensionDidChange(self):
+        self.selectionNode.dimension = self.editorSession.currentDimension
 
     def shapeDidChange(self):
         if self.currentSelection is not None:
