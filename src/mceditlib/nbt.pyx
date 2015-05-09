@@ -937,6 +937,26 @@ def nested_string(tag, indent_string="  ", indent=0):
     return result
 
 def walk(tag, path=None):
+    """
+    Walk through an NBT tree and return each tag as a tuple of
+      (name, tag, path)
+
+    Name can either be the name of the tag as a unicode (for tags inside a Compound) or
+      the index of the tag as an int (for tags inside a List).
+
+    Path is a list of values, usable with the [] operator on list and compound
+     tags. Each value in path can be a unicode or an int. The name of the
+     returned tag is not in path.
+
+    Hmm, maybe name could just be collapsed into path?
+
+    :param tag:
+    :type tag:
+    :param path:
+    :type path:
+    :return:
+    :rtype:
+    """
     if path is None:
         path = []
     if tag.isCompound():
