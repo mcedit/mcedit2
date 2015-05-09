@@ -134,8 +134,11 @@ class BlockTypeSet(object):
 
         if attr == "blockState":
             return self._splitInternalName(nameAndState)[1]
+        try:
+            blockJson = self.blockJsons[nameAndState]
+        except KeyError:
+            return self.defaults[attr]
 
-        blockJson = self.blockJsons[nameAndState]
         if attr == "json":
             return blockJson
 
