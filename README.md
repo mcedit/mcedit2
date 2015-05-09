@@ -21,6 +21,7 @@ of Git.
 This is not needed if you already have MSVC 2008 (Visual Studio 9.0) or the Windows SDK 7.0 
 installed, but you probably don't so install it anyway.
 - Install virtualenv: `pip install virtualenv` (pip is now included with recent versions of Python)
+- Update to the latest setuptools to make sure Cython modules compile: `pip install -U setuptools`
 - Open a bash shell and `cd` to the folder containing the MCEdit sources.
 - Create a virtualenv using `virtualenv ENV`
 - Activate the virtualenv using `. ENV/scripts/activate`
