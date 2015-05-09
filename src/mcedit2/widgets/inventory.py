@@ -291,6 +291,7 @@ class InventoryEditor(QtGui.QWidget):
         self.rawIDCheckbox.toggled.connect(self.rawIDInput.setEnabled)
 
         self.itemNBTEditor = NBTEditorWidget()
+        self.itemNBTEditor.tagValueChanged.connect(self.tagValueDidChange)
 
         self.currentIndex = None
 
@@ -332,6 +333,9 @@ class InventoryEditor(QtGui.QWidget):
 
     def slotWasClicked(self, slotNumber):
         self.currentIndex = self.inventoryModel.index(slotNumber)
+        self.updateFields()
+
+    def tagValueDidChange(self, tagPath):
         self.updateFields()
 
     def updateFields(self):

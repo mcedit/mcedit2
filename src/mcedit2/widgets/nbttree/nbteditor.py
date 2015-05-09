@@ -9,7 +9,7 @@ from PySide.QtCore import Qt
 
 from mcedit2.command import SimpleRevisionCommand
 from mceditlib.util.lazyprop import weakrefprop
-from mcedit2.widgets.nbttree.nbttreemodel import NBTFilterProxyModel, NBTPathRole, NBTIcon, NBTTreeModel
+from mcedit2.widgets.nbttree.nbttreemodel import NBTFilterProxyModel, NBTIcon, NBTTreeModel
 from mcedit2.util.load_ui import registerCustomWidget
 from mcedit2.widgets.layout import Column
 
@@ -66,12 +66,12 @@ class NBTEditorWidget(QtGui.QWidget):
         expanded = []
         current = None
         if keepExpanded and self.proxyModel:
-            current = self.proxyModel.data(self.treeView.currentIndex(), NBTPathRole)
+            current = self.proxyModel.data(self.treeView.currentIndex(), NBTTreeModel.NBTPathRole)
             def addExpanded(parentIndex):
                 for row in range(self.proxyModel.rowCount(parentIndex)):
                     index = self.proxyModel.index(row, 0, parentIndex)
                     if self.treeView.isExpanded(index):
-                        expanded.append(self.proxyModel.data(index, NBTPathRole))
+                        expanded.append(self.proxyModel.data(index, NBTTreeModel.NBTPathRole))
                         addExpanded(index)
 
             addExpanded(QtCore.QModelIndex())
@@ -94,12 +94,12 @@ class NBTEditorWidget(QtGui.QWidget):
         if keepExpanded:
             for path in expanded:
                 matches = self.proxyModel.match(self.proxyModel.index(0, 0, QtCore.QModelIndex()),
-                                                NBTPathRole, path, flags=Qt.MatchExactly | Qt.MatchRecursive)
+                                                NBTTreeModel.NBTPathRole, path, flags=Qt.MatchExactly | Qt.MatchRecursive)
                 for i in matches:
                     self.treeView.setExpanded(i, True)
             if current is not None:
                 matches = self.proxyModel.match(self.proxyModel.index(0, 0, QtCore.QModelIndex()),
-                                                NBTPathRole, current, flags=Qt.MatchExactly | Qt.MatchRecursive)
+                                                NBTTreeModel.NBTPathRole, current, flags=Qt.MatchExactly | Qt.MatchRecursive)
                 if len(matches):
                     self.treeView.setCurrentIndex(matches[0])
         else:
@@ -206,6 +206,7 @@ class NBTEditorWidget(QtGui.QWidget):
             self.rootTagRef.dirty = True
             self.editorSession.worldEditor.syncToDisk()
         self.editorSession.pushCommand(command)
+        self.tagValueChanged.emit(index.data(NBTTreeModel.NBTPathRole))
 
     def rowsDidInsert(self, index):
         name = self.tagNameForUndo(index.parent())
@@ -229,5 +230,6 @@ class NBTEditorWidget(QtGui.QWidget):
             self.editorSession.worldEditor.syncToDisk()
         self.editorSession.pushCommand(command)
 
-    def reload(self):
-        self.treeView.blah
+    tagValueChanged = QtCore.Signal(list)
+    tagAdded = QtCore.Signal(list)
+    tagRemoved = QtCore.Signal(list)

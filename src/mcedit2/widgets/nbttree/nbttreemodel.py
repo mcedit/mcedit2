@@ -28,8 +28,6 @@ _iconTypes = [
     "array.png", # 12 - shortarray
 ]
 
-NBTPathRole = QtCore.Qt.UserRole + 1
-
 def NBTIcon(type):
     icon = _nbtIcons.get(type)
     if icon:
@@ -276,6 +274,9 @@ class NBTTreeItem(object):
         return self.parentItem.nbtPath(self)
 
 class NBTTreeModel(QtCore.QAbstractItemModel):
+
+    NBTPathRole = QtCore.Qt.UserRole + 1
+
     def __init__(self, rootTag, parent=None):
         super(NBTTreeModel, self).__init__(parent)
 
@@ -323,7 +324,7 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
         if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
             return item.data(column)
 
-        if role == NBTPathRole:
+        if role == self.NBTPathRole:
             return item.nbtPath()
 
     # --- Structure ---
