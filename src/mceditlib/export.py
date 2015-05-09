@@ -12,7 +12,6 @@ from mceditlib.block_copy import copyBlocksIter
 from mceditlib.schematic import createSchematic
 from mceditlib.selection import BoundingBox
 from mceditlib.util import exhaust
-from mceditlib.worldeditor import WorldEditor
 
 log = logging.getLogger(__name__)
 
@@ -34,51 +33,65 @@ def extractSchematicFromIter(sourceDim, box, entities=True):
 
     yield editor
 
-
-def extractZipSchematicFrom(sourceLevel, box, zipfilename=None, entities=True):
-    return exhaust(extractZipSchematicFromIter(sourceLevel, box, zipfilename, entities))
-
-
-def extractZipSchematicFromIter(sourceLevel, box, zipfilename=None, entities=True):
-    # converts classic blocks to alpha
-    # probably should only apply to alpha levels
-
-    if zipfilename is None:
-        zipfilename = tempfile.mktemp("zipschematic.zip")
-    atexit.register(shutil.rmtree, zipfilename, True)
-
-    p = adjustExtractionParameters(sourceLevel, box)
-    if p is None:
-        return
-    sourceBox, destPoint = p
-
-    destPoint = (0, 0, 0)
-
-    tempSchematic = mceditlib.schematic.ZipSchematic(zipfilename, create=True)
-    tempSchematic.blocktypes = sourceLevel.blocktypes
-
-    for i in copyBlocksIter(tempSchematic, sourceLevel, sourceBox, destPoint, entities=entities, create=True, biomes=True):
-        yield i
-
-    tempSchematic.Width, tempSchematic.Height, tempSchematic.Length = sourceBox.size
-    tempSchematic.saveChanges()  # lights not needed for this format - crashes minecraft though
-    yield tempSchematic
-
-
-def extractAnySchematic(level, box):
-    return exhaust(level.extractAnySchematicIter(box))
-
-
-def extractAnySchematicIter(level, box):
-    if box.chunkCount < mceditlib.schematic.ZipSchematic.loadedChunkLimit:
-        for i in level.extractSchematicIter(box):
-            yield i
-    else:
-        for i in level.extractZipSchematicIter(box):
-            yield i
+#
+# def extractZipSchematicFrom(sourceLevel, box, zipfilename=None, entities=True):
+#     return exhaust(extractZipSchematicFromIter(sourceLevel, box, zipfilename, entities))
+#
+#
+# def extractZipSchematicFromIter(sourceLevel, box, zipfilename=None, entities=True):
+#     # converts classic blocks to alpha
+#     # probably should only apply to alpha levels
+#
+#     if zipfilename is None:
+#         zipfilename = tempfile.mktemp("zipschematic.zip")
+#     atexit.register(shutil.rmtree, zipfilename, True)
+#
+#     p = adjustExtractionParameters(sourceLevel, box)
+#     if p is None:
+#         return
+#     sourceBox, destPoint = p
+#
+#     destPoint = (0, 0, 0)
+#
+#     tempSchematic = ZipSchematic(zipfilename, create=True)
+#     tempSchematic.blocktypes = sourceLevel.blocktypes
+#
+#     for i in copyBlocksIter(tempSchematic, sourceLevel, sourceBox, destPoint, entities=entities, create=True, biomes=True):
+#         yield i
+#
+#     tempSchematic.Width, tempSchematic.Height, tempSchematic.Length = sourceBox.size
+#     tempSchematic.saveChanges()  # lights not needed for this format - crashes minecraft though
+#     yield tempSchematic
+#
+#
+# def extractAnySchematic(level, box):
+#     return exhaust(level.extractAnySchematicIter(box))
+#
+#
+# def extractAnySchematicIter(level, box):
+#     if box.chunkCount < ZipSchematic.loadedChunkLimit:
+#         for i in level.extractSchematicIter(box):
+#             yield i
+#     else:
+#         for i in level.extractZipSchematicIter(box):
+#             yield i
 
 
 def adjustExtractionParameters(dim, box):
+    """
+    Shrink `box` to fit within the bounds of `dim` and return the shrunken
+    box and the new destination point within the extracted schematic.
+
+    Should not be needed as copyBlocks should just skip those chunk sections
+    that are not present or outside of `dim`'s bounds.
+
+    :param dim:
+    :type dim:
+    :param box:
+    :type box:
+    :return:
+    :rtype:
+    """
     x, y, z = box.origin
     w, h, l = box.size
     destX = destY = destZ = 0
