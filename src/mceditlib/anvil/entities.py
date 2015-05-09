@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 from mceditlib import nbt
+from mceditlib.blocktypes import VERSION_1_7, VERSION_1_8
 from mceditlib.blocktypes.itemtypes import ItemType
 from mceditlib.geometry import Vector
 from mceditlib import nbtattr
@@ -96,10 +97,39 @@ class PCTileEntityRefBase(object):
     def blockTypes(self):
         return self.chunk.blocktypes
 
+
+def convertStackTo17(stack, blocktypes):
+    if stack["id"].tagID == nbt.ID_STRING:
+        stack["id"] = nbt.TAG_Short(blocktypes.itemTypes.internalNamesByID[stack["id"].value])
+
+
+def convertStackTo18(stack, blocktypes):
+    if stack["id"].tagID == nbt.ID_SHORT:
+        stack["id"] = nbt.TAG_Short(blocktypes.itemTypes[stack["id"].value].ID)
+
+
+def convertAllStacks(tags, blocktypes, version):
+    if version == VERSION_1_7:
+        convertStack = convertStackTo17
+    elif version == VERSION_1_8:
+        convertStack = convertStackTo18
+    else:
+        raise ValueError("Unknown item stack version %d" % version)
+
+    for tag in tags:
+        if ItemStackRef.tagIsItemStack(tag):
+            convertStack(tag)
+        if tag.tagID == nbt.ID_COMPOUND:
+            convertAllStacks(tag.itervalues(), blocktypes, version)
+        if tag.tagID == nbt.ID_LIST and tag.list_type in (nbt.ID_LIST, nbt.ID_COMPOUND):
+            convertAllStacks(tag, blocktypes, version)
+
+
 class NoParentError(RuntimeError):
     """
     Raised when setting the `id` of an ItemStack with no parent.
     """
+
 
 class ItemStackRef(nbtattr.NBTCompoundRef):
     def __init__(self, rootTag=None, parent=None):

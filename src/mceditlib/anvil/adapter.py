@@ -251,29 +251,6 @@ class AnvilChunkData(object):
 
         log.debug(u"Saving chunk: {0}".format(self))
 
-        # log.debug("Converting ItemStacks")
-
-        # if self.blocktypes.itemStackVersion == VERSION_1_7:
-        #     def convertStack(stack):
-        #         if stack["id"].tagID == nbt.ID_STRING:
-        #             stack["id"] = nbt.TAG_Short(self.blocktypes.itemTypes.internalNamesByID[stack["id"].value])
-        # elif self.blocktypes.itemStackVersion == VERSION_1_8:
-        #     def convertStack(stack):
-        #         if stack["id"].tagID == nbt.ID_SHORT:
-        #             stack["id"] = nbt.TAG_Short(self.blocktypes.itemTypes[stack["id"].value].ID)
-        #
-        # def convertAllStacks(tags):
-        #     for tag in tags:
-        #         if ItemStackRef.tagIsItemStack(tag):
-        #             convertStack(tag)
-        #         if tag.tagID == nbt.ID_COMPOUND:
-        #             convertAllStacks(tag.itervalues())
-        #         if tag.tagID == nbt.ID_LIST and tag.list_type in (nbt.ID_LIST, nbt.ID_COMPOUND):
-        #             convertAllStacks(tag)
-        #
-        # convertAllStacks(self.Entities)
-        # convertAllStacks(self.TileEntities)
-
         chunkTag = self.rootTag.copy()
 
         sections = nbt.TAG_List()
