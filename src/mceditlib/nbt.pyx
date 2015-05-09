@@ -935,3 +935,18 @@ def nested_string(tag, indent_string="  ", indent=0):
         result += "%s(%r)" % (tag.__class__.__name__, tag.value)
 
     return result
+
+def walk(tag, path=None):
+    if path is None:
+        path = []
+    if tag.isCompound():
+        for name, subtag in tag.iteritems():
+            yield (name, subtag, path)
+            for result in walk(subtag, path + [name]):
+                yield result
+
+    if tag.isList():
+        for i, subtag in enumerate(tag):
+            yield (i, subtag, path)
+            for result in walk(subtag, path + [i]):
+                yield result

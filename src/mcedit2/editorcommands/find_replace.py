@@ -493,7 +493,7 @@ class FindReplaceNBT(QtCore.QObject):
 
                 tag = entity.raw_tag()
 
-                for name, subtag, path in walkNBT(tag):
+                for name, subtag, path in nbt.walk(tag):
                     result = _findTag(name, subtag, path)
                     if result:
                         name, path, value = result
@@ -527,7 +527,7 @@ class FindReplaceNBT(QtCore.QObject):
                     continue
 
                 tag = tileEntity.raw_tag()
-                for name, subtag, path in walkNBT(tag):
+                for name, subtag, path in nbt.walk(tag):
                     result = _findTag(name, subtag, path)
                     if result:
                         name, path, value = result
@@ -647,20 +647,6 @@ class FindReplaceNBT(QtCore.QObject):
     def replaceSelected(self):
         pass
 
-def walkNBT(tag, path=None):
-    if path is None:
-        path = []
-    if tag.isCompound():
-        for name, subtag in tag.iteritems():
-            yield (name, subtag, path)
-            for result in walkNBT(subtag, path + [name]):
-                yield result
-
-    if tag.isList():
-        for i, subtag in enumerate(tag):
-            yield (i, subtag, path)
-            for result in walkNBT(subtag, path + [i]):
-                yield result
 
 
 class FindReplaceDialog(QtGui.QDialog):
