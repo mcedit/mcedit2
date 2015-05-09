@@ -3,7 +3,6 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
-import os
 
 from PySide import QtGui, QtCore
 import numpy
@@ -13,18 +12,20 @@ from mcedit2.command import SimplePerformCommand
 from mcedit2.rendering import worldscene, scenegraph
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.util.load_ui import load_ui, registerCustomWidget
-from mcedit2.util.resources import resourcePath
 from mcedit2.util.settings import Settings
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
-from mcedit2.widgets import flowlayout
-from mceditlib.geometry import BoundingBox, Vector
+from mcedit2.widgets.blockpicker import BlockTypeButton
+from mcedit2.widgets.layout import Row, Column
+from mceditlib.anvil.biome_types import BiomeTypes
+from mceditlib.geometry import Vector
+from mceditlib.selection import ShapedSelection, BoundingBox
 from mceditlib.util import exhaust
 
 
 log = logging.getLogger(__name__)
 
-BrushModeSetting = Settings().getOption("editortools/brush/mode")
+BrushModeSetting = Settings().getOption("editortools/brush/mode", default="fill")
 BrushShapeSetting = Settings().getOption("editortools/brush/shape")
 BrushSizeSetting = Settings().getOption("editortools/brush/size")
 
@@ -46,7 +47,6 @@ class BrushCommand(SimplePerformCommand):
         self.points = points
 
         self.brushSize = options['brushSize']
-        self.blockInfo = options['blockInfo']
         self.brushStyle = options['brushStyle']
         self.brushMode = options['brushMode']
         self.setText("%s %s Brush" % (self.brushMode.name, self.brushStyle.ID))
@@ -64,9 +64,6 @@ class BrushCommand(SimplePerformCommand):
     def hollow(self):
         return self.options.get('brushHollow', False)
 
-    def brushBoxForPoint(self, point):
-        return self.brushMode.brushBoundingBox(point, self.options)
-
     def perform(self):
         if len(self.points) > 10:
             showProgress("Performing brush...", self._perform(), cancel=True)
@@ -77,7 +74,7 @@ class BrushCommand(SimplePerformCommand):
         yield 0, len(self.points), "Applying {0} brush...".format(self.brushMode.name)
         try:
             #xxx combine selections
-            selections = [BrushSelection(self.brushBoxForPoint(point), self.brushStyle) for point in self.points]
+            selections = [ShapedSelection(self.brushMode.brushBoxForPoint(point, self.options), self.brushStyle.shapeFunc) for point in self.points]
             self.brushMode.applyToSelections(self, selections)
         except NotImplementedError:
             for i, point in enumerate(self.points):
@@ -91,8 +88,8 @@ class BrushCommand(SimplePerformCommand):
         self.performed = True
 
 
-class BrushMode(object):
-    options = []
+class BrushMode(QtCore.QObject):
+    optionsWidget = None
 
     def brushBoundingBox(self, center, options={}):
         # Return a box of size options['brushSize'] centered around point.
@@ -110,7 +107,6 @@ class BrushMode(object):
         """
         raise NotImplementedError
 
-
     def applyToSelections(self, command, selections):
         """
         Called by BrushCommand to apply this brush mode to the given selection. Selection is generated
@@ -118,172 +114,132 @@ class BrushMode(object):
         """
         raise NotImplementedError
 
+    def createOptionsWidget(self, brushTool):
+        return None
 
-    def applyToChunkSlices(self, op, chunk, slices, brushBox, brushBoxThisChunk):
-        raise NotImplementedError
-
-    def createOptionsPanel(self, tool):
-        pass
-
+    def createCursorLevel(self, brushTool):
+        return None
 
 class Fill(BrushMode):
-    name = "Fill"
-    #
-    #def createOptions(self, panel, tool):
-    #    col = [
-    #        panel.modeStyleGrid,
-    #        panel.hollowRow,
-    #        panel.noiseInput,
-    #        panel.brushSizeRows,
-    #        panel.blockButton,
-    #    ]
-    #    return col
+    name = "fill"
+
+    def __init__(self):
+        super(Fill, self).__init__()
+        self.displayName = self.tr("Fill")
+
+    def createOptionsWidget(self, brushTool):
+        if self.optionsWidget:
+            return self.optionsWidget
+
+        self.optionsWidget = QtGui.QWidget()
+        label = QtGui.QLabel(self.tr("Fill Block:"))
+        self.blockTypeButton = BlockTypeButton()
+        self.blockTypeButton.editorSession = brushTool.editorSession
+        self.blockTypeButton.block = brushTool.editorSession.worldEditor.blocktypes['minecraft:stone']
+        self.blockTypeButton.blocksChanged.connect(brushTool.updateCursor)
+
+        self.optionsWidget.setLayout(Column(
+            Row(label, self.blockTypeButton, margin=0),
+            None, margin=0))
+        return self.optionsWidget
+
+    def getOptions(self):
+        return {'blockInfo': self.blockTypeButton.block}
 
     def applyToSelections(self, command, selections):
         """
 
         :type command: BrushCommand
         """
-        fill = command.editorSession.currentDimension.fillBlocksIter(selections[0], command.blockInfo)
+        fill = command.editorSession.currentDimension.fillBlocksIter(selections[0], command.options['blockInfo'])
         showProgress("Applying brush...", fill)
 
+    def brushBoxForPoint(self, point, options):
+        return self.brushBoundingBox(point, options)
+
+    def createCursorLevel(self, brushTool):
+        selection = ShapedSelection(self.brushBoxForPoint((0, 0, 0), brushTool.options), brushTool.brushStyle.shapeFunc)
+        cursorLevel = MaskLevel(selection,
+                                self.blockTypeButton.block,
+                                brushTool.editorSession.worldEditor.blocktypes)
+        return cursorLevel
+
+class Biome(BrushMode):
+    name = "biome"
+
+    def __init__(self, *args, **kwargs):
+        super(Biome, self).__init__(*args, **kwargs)
+        self.displayName = self.tr("Biome")
+
+    def getOptions(self):
+        return {'biomeID': self.biomeTypeBox.itemData(self.biomeTypeBox.currentIndex())}
+
+    def createOptionsWidget(self, brushTool):
+        if self.optionsWidget:
+            return self.optionsWidget
+
+        self.optionsWidget = QtGui.QWidget()
+        label = QtGui.QLabel(self.tr("Fill Biome:"))
+        self.biomeTypeBox = QtGui.QComboBox()
+        self.biomeTypes = BiomeTypes()
+        for biome in self.biomeTypes.types.values():
+            self.biomeTypeBox.addItem(biome.name, biome.ID)
+
+        self.biomeTypeBox.activated.connect(brushTool.updateCursor)
+        self.optionsWidget.setLayout(Column(Row(label, self.biomeTypeBox, margin=0), None, margin=0))
+        return self.optionsWidget
+
+    def applyToSelections(self, command, selections):
+        """
+
+        :type command: BrushCommand
+        """
+        #task = command.editorSession.currentDimension.fillBlocksIter(selections[0], command.blockInfo)
+        #showProgress("Applying brush...", task)
+        selection = selections[0]
+        biomeID = command.options['biomeID']
+        for x, _, z in selection.positions:
+            command.editorSession.currentDimension.setBiomeID(x, z, biomeID)
+
+    def brushBoxForPoint(self, point, options):
+        x, y, z = options['brushSize']
+        options['brushSize'] = x, 1, z
+
+        return self.brushBoundingBox(point, options)
+
+    def createCursorLevel(self, brushTool):
+        box = self.brushBoxForPoint((0, 0, 0), brushTool.options)
+
+        selection = ShapedSelection(box, brushTool.brushStyle.shapeFunc)
+        cursorLevel = MaskLevel(selection,
+                                brushTool.editorSession.worldEditor.blocktypes["minecraft:grass"],
+                                brushTool.editorSession.worldEditor.blocktypes,
+                                biomeID=self.getOptions()['biomeID'])
+        return cursorLevel
+
 class BrushModes(object):
-    allModes = (Fill(),)
-
-
-class BrushSelection(BoundingBox):
-    def __init__(self, box, style, chance=100, hollow=False):
-        """
-
-
-        :type style: Style
-        :type box: BoundingBox
-        """
-        super(BrushSelection, self).__init__(box.origin, box.size)
-        self.style = style
-        self.chance = chance
-        self.hollow = hollow
-
-    def box_mask(self, box):
-        return createBrushMask(self, self.style, box, self.chance, self.hollow)
-
-
-def createBrushMask(brushBox, style, requestedBox, chance=100, hollow=False):
-    """
-    Return a boolean array for a brush with the given shape and style.
-    If 'offset' and 'box' are given, then the brush is offset into the world
-    and only the part of the world contained in box is returned as an array
-    """
-
-    origin, shape = brushBox.origin, brushBox.size
-
-    if chance < 100 or hollow:
-        requestedBox = requestedBox.expand(1)
-
-    # we are returning indices for a Blocks array, so swap axes to YZX
-    outputShape = requestedBox.size
-    outputShape = (outputShape[1], outputShape[2], outputShape[0])
-
-    shape = shape[1], shape[2], shape[0]
-    origin = numpy.array(origin) - numpy.array(requestedBox.origin)
-    origin = origin[[1, 2, 0]]
-
-    inds = numpy.indices(outputShape, dtype=numpy.float32)
-    halfshape = numpy.array([(i >> 1) - ((i & 1 == 0) and 0.5 or 0) for i in shape])
-
-    blockCenters = inds - halfshape[:, None, None, None]
-    blockCenters -= origin[:, None, None, None]
-
-    # odd diameter means measure from the center of the block at 0,0,0 to each block center
-    # even diameter means measure from the 0,0,0 grid point to each block center
-
-    # if diameter & 1 == 0: blockCenters += 0.5
-    shape = numpy.array(shape, dtype='float32')
-
-    mask = style.maskFromCoords(blockCenters, shape)
-
-    if (chance < 100 or hollow) and max(shape) > 1:
-        threshold = chance / 100.0
-        exposedBlockMask = numpy.ones(shape=outputShape, dtype='bool')
-        exposedBlockMask[:] = mask
-        submask = mask[1:-1, 1:-1, 1:-1]
-        exposedBlockSubMask = exposedBlockMask[1:-1, 1:-1, 1:-1]
-        exposedBlockSubMask[:] = False
-
-        for dim in (0, 1, 2):
-            slices = [slice(1, -1), slice(1, -1), slice(1, -1)]
-            slices[dim] = slice(None, -2)
-            exposedBlockSubMask |= (submask & (mask[slices] != submask))
-            slices[dim] = slice(2, None)
-            exposedBlockSubMask |= (submask & (mask[slices] != submask))
-
-        if hollow:
-            mask[~exposedBlockMask] = False
-        if chance < 100:
-            rmask = numpy.random.random(mask.shape) < threshold
-
-            mask[exposedBlockMask] = rmask[exposedBlockMask]
-
-    if chance < 100 or hollow:
-        return mask[1:-1, 1:-1, 1:-1]
-    else:
-        return mask
+    # load from plugins here
+    fill = Fill()
+    biome = Biome()
+    allModes = [fill, biome]
+    modesByName = {mode.name: mode for mode in allModes}
 
 
 class Style(object):
-    pass
-
-
-class Round(Style):
-    ID = "Round"
-    icon = "brush_round.png"
-
-    def maskFromCoords(self, blockCenters, shape):
-        blockCenters *= blockCenters
-        shape /= 2
-        shape *= shape
-
-        blockCenters /= shape[:, None, None, None]
-        distances = sum(blockCenters, 0)
-        return distances < 1
-
-
-class Square(Style):
-    ID = "Square"
-    icon = "brush_square.png"
-
-    def maskFromCoords(self, blockCenters, shape):
-        blockCenters /= shape[:, None, None, None]  # XXXXXX USING DIVIDE FOR A RECTANGLE
-
-        distances = numpy.absolute(blockCenters).max(0)
-        return distances < .5
-
-
-class Diamond(Style):
-    ID = "Diamond"
-    icon = "brush_diamond.png"
-
-    def maskFromCoords(self, blockCenters, shape):
-        blockCenters = numpy.abs(blockCenters)
-        shape /= 2
-        blockCenters /= shape[:, None, None, None]
-        distances = numpy.sum(blockCenters, 0)
-        return distances < 1
-
-
-class BrushStyles(object):
-    allStyles = (Round(), Square(), Diamond())
+    ID = NotImplemented
+    icon = NotImplemented
+    shapeFunc = NotImplemented
 
 
 NULL_ID = 255  # xxx
 
 
 class MaskLevel(object):
-    def __init__(self, selection, fillBlock, blocktypes):
+    def __init__(self, selection, fillBlock, blocktypes, biomeID=None):
         """
         Level emulator to be used for rendering brushes and selections.
 
-        :type selection: BrushSelection
+        :type selection: mceditlib.selection.ShapedSelection
         :param selection:
         :param fillBlock:
         :param blocktypes:
@@ -293,13 +249,14 @@ class MaskLevel(object):
         self.blocktypes = blocktypes
         self.sectionCache = {}
         self.fillBlock = fillBlock
+        self.biomeID = biomeID
         self.filename = "Temporary Level (%s %s %s)" % (selection, fillBlock, blocktypes)
 
     def chunkPositions(self):
         return self.bounds.chunkPositions()
 
     def getChunk(self, cx, cz, create=False):
-        return FakeBrushChunk(self, cx, cz)
+        return FakeBrushChunk(self, cx, cz, self.biomeID)
 
     def containsChunk(self, cx, cz):
         return self.bounds.containsChunk(cx, cz)
@@ -315,7 +272,7 @@ class FakeBrushChunk(object):
     Entities = ()
     TileEntities = ()
 
-    def __init__(self, world, cx, cz):
+    def __init__(self, world, cx, cz, biomeID=None):
         """
 
         :type world: MaskLevel
@@ -323,6 +280,9 @@ class FakeBrushChunk(object):
         self.dimension = world
         self.cx = cx
         self.cz = cz
+        self.Biomes = numpy.zeros((16, 16), numpy.uint8)
+        if biomeID:
+            self.Biomes[:] = biomeID
 
     @property
     def blocktypes(self):
@@ -359,15 +319,14 @@ class FakeBrushChunk(object):
             section = FakeBrushSection()
             section.Y = y
             if fillBlock.ID:
-                section.Blocks = numpy.array([0, fillBlock.ID])[mask.astype(numpy.uint8)]
-                section.Data = numpy.array([0, fillBlock.blockData])[mask.astype(numpy.uint8)]
+                section.Blocks = numpy.array([0, fillBlock.ID], dtype=numpy.uint16)[mask.astype(numpy.uint8)]
+                section.Data = numpy.array([0, fillBlock.meta], dtype=numpy.uint8)[mask.astype(numpy.uint8)]
             else:
                 section.Blocks = numpy.array([0, NULL_ID])[mask.astype(numpy.uint8)]
 
             sectionCache[cx, y, cz] = section
 
         return section
-
 
 class BrushTool(EditorTool):
     name = "Brush"
@@ -378,30 +337,28 @@ class BrushTool(EditorTool):
         super(BrushTool, self).__init__(editorSession, *args, **kwargs)
         self.toolWidget = load_ui("editortools/brush.ui")
 
+        BrushModeSetting.connectAndCall(self.modeSettingChanged)
+
         self.cursorWorldScene = None
         self.cursorNode = scenegraph.TranslateNode()
 
-        self.toolWidget.xSpinBox.valueChanged.connect(self.setX)
-        self.toolWidget.ySpinBox.valueChanged.connect(self.setY)
-        self.toolWidget.zSpinBox.valueChanged.connect(self.setZ)
+        self.toolWidget.xSpinSlider.setMinimum(1)
+        self.toolWidget.ySpinSlider.setMinimum(1)
+        self.toolWidget.zSpinSlider.setMinimum(1)
 
-        self.toolWidget.xSlider.valueChanged.connect(self.setX)
-        self.toolWidget.ySlider.valueChanged.connect(self.setY)
-        self.toolWidget.zSlider.valueChanged.connect(self.setZ)
-
-        self.toolWidget.blockTypeInput.editorSession = editorSession
-        self.toolWidget.blockTypeInput.block = editorSession.worldEditor.blocktypes["minecraft:stone"]
-        self.toolWidget.blockTypeInput.blocksChanged.connect(self.setBlocktypes)
+        self.toolWidget.xSpinSlider.valueChanged.connect(self.setX)
+        self.toolWidget.ySpinSlider.valueChanged.connect(self.setY)
+        self.toolWidget.zSpinSlider.valueChanged.connect(self.setZ)
 
         self.toolWidget.brushShapeInput.shapeChanged.connect(self.updateCursor)
 
-        self.fillBlock = editorSession.worldEditor.blocktypes.Stone
+        self.fillBlock = editorSession.worldEditor.blocktypes["stone"]
 
         self.brushSize = BrushSizeSetting.value(QtGui.QVector3D(5, 5, 5)).toTuple()  # calls updateCursor
 
-        self.toolWidget.xSpinBox.setValue(self.brushSize[0])
-        self.toolWidget.ySpinBox.setValue(self.brushSize[1])
-        self.toolWidget.zSpinBox.setValue(self.brushSize[2])
+        self.toolWidget.xSpinSlider.setValue(self.brushSize[0])
+        self.toolWidget.ySpinSlider.setValue(self.brushSize[1])
+        self.toolWidget.zSpinSlider.setValue(self.brushSize[2])
 
     _brushSize = (0, 0, 0)
     @property
@@ -418,22 +375,16 @@ class BrushTool(EditorTool):
         x, y, z = self.brushSize
         x = float(val)
         self.brushSize = x, y, z
-        self.toolWidget.xSlider.setValue(val)
-        self.toolWidget.xSpinBox.setValue(val)
 
     def setY(self, val):
         x, y, z = self.brushSize
         y = float(val)
         self.brushSize = x, y, z
-        self.toolWidget.ySlider.setValue(val)
-        self.toolWidget.ySpinBox.setValue(val)
 
     def setZ(self, val):
         x, y, z = self.brushSize
         z = float(val)
         self.brushSize = x, y, z
-        self.toolWidget.zSlider.setValue(val)
-        self.toolWidget.zSpinBox.setValue(val)
 
     def setBlocktypes(self, types):
         if len(types) == 0:
@@ -444,45 +395,43 @@ class BrushTool(EditorTool):
 
     def mousePress(self, event):
         pos = event.blockPosition
+        pos += event.blockFace.vector
         command = BrushCommand(self.editorSession, [pos], self.options)
         self.editorSession.pushCommand(command)
 
     def mouseMove(self, event):
-        #box = self.brushBoxForPoint(event.blockPosition)
         if event.blockPosition:
-            self.cursorNode.translateOffset = event.blockPosition
-
+            self.cursorNode.translateOffset = event.blockPosition + event.blockFace.vector
 
     @property
     def options(self):
-        return {'brushSize': self.brushSize,
-                'blockInfo': self.fillBlock,
-                'brushStyle': self.brushStyle,
-                'brushMode': self.brushMode}
+        options = {'brushSize': self.brushSize,
+                   'brushStyle': self.brushStyle,
+                   'brushMode': self.brushMode}
+        options.update(self.brushMode.getOptions())
+        return options
 
-    @property
-    def brushMode(self):
-        return self.toolWidget.brushModeInput.currentMode()
+    def modeSettingChanged(self, value):
+        self.brushMode = BrushModes.modesByName[value]
+        stack = self.toolWidget.modeOptionsStack
+        while stack.count():
+            stack.removeWidget(stack.widget(0))
+        widget = self.brushMode.createOptionsWidget(self)
+        if widget:
+            stack.addWidget(widget)
+
 
     @property
     def brushStyle(self):
         return self.toolWidget.brushShapeInput.currentShape
 
-    def brushBoxForPoint(self, point):
-        return self.brushMode.brushBoundingBox(point, self.options)
-
-    def brushSelectionForCursor(self):
-        return BrushSelection(self.brushBoxForPoint((0, 0, 0)), self.brushStyle)
-
     def updateCursor(self):
-        log.info("Updating brush cursor: %s %s", self.brushStyle, self.brushSelectionForCursor())
+        log.info("Updating brush cursor")
         if self.cursorWorldScene:
             self.brushLoader.timer.stop()
             self.cursorNode.removeChild(self.cursorWorldScene)
 
-        cursorLevel = MaskLevel(self.brushSelectionForCursor(),
-                                self.fillBlock,
-                                self.editorSession.worldEditor.blocktypes)
+        cursorLevel = self.brushMode.createCursorLevel(self)
 
         self.cursorWorldScene = worldscene.WorldScene(cursorLevel, self.editorSession.textureAtlas)
         self.cursorWorldScene.depthOffsetNode.depthOffset = DepthOffset.PreviewRenderer
@@ -493,59 +442,19 @@ class BrushTool(EditorTool):
 
 
 @registerCustomWidget
-class BrushShapeWidget(QtGui.QWidget):
-    def __init__(self, *args, **kwargs):
-        super(BrushShapeWidget, self).__init__(*args, **kwargs)
-        buttons = self.buttons = []
-        layout = flowlayout.FlowLayout()
-        buttonGroup = QtGui.QButtonGroup()
-
-        iconBase = resourcePath("mcedit2/ui/editortools/images")
-        for shape in BrushStyles.allStyles:
-            filename = os.path.join(iconBase, shape.icon)
-            assert os.path.exists(filename), "%r does not exist" % filename
-            icon = QtGui.QIcon(filename)
-            if icon is None:
-                raise ValueError("Failed to read shape icon file %s" % filename)
-            def _handler(shape):
-                def handler():
-                    self.currentShape = shape
-                    BrushShapeSetting.setValue(shape.ID)
-                    self.shapeChanged.emit()
-                return handler
-            action = QtGui.QAction(icon, shape.ID, self, triggered=_handler(shape))
-            button = QtGui.QToolButton()
-            button.setCheckable(True)
-            button.setDefaultAction(action)
-            button.setIconSize(QtCore.QSize(32, 32))
-            buttons.append(button)
-            layout.addWidget(button)
-            buttonGroup.addButton(button)
-
-        self.setLayout(layout)
-        currentID = BrushShapeSetting.value(BrushStyles.allStyles[0].ID)
-        shapesByID = {shape.ID:shape for shape in BrushStyles.allStyles}
-
-        self.currentShape = shapesByID.get(currentID, BrushStyles.allStyles[0])
-
-    shapeChanged = QtCore.Signal()
-
-@registerCustomWidget
 class BrushModeWidget(QtGui.QComboBox):
     def __init__(self, *args, **kwargs):
         super(BrushModeWidget, self).__init__(*args, **kwargs)
 
         for mode in BrushModes.allModes:
-            self.addItem(mode.name, mode)
+            self.addItem(mode.displayName, mode.name)
 
-        currentID = BrushModeSetting.value(BrushModes.allModes[0].name)
-        indexesByID = {s.name: i for (i, s) in enumerate(BrushModes.allModes)}
-        idx = indexesByID.get(currentID, 0)
-        self.setCurrentIndex(idx)
+        currentID = BrushModeSetting.value()
+        currentIndex = self.findData(currentID)
+        if currentIndex == -1:
+            currentIndex = 0
+        self.setCurrentIndex(currentIndex)
         self.currentIndexChanged.connect(self.indexDidChange)
 
-    def currentMode(self):
-        return self.itemData(self.currentIndex())
-
     def indexDidChange(self):
-        BrushModeSetting.setValue(self.currentMode().name)
+        BrushModeSetting.setValue(self.itemData(self.currentIndex()))

@@ -7,12 +7,16 @@ import logging
 
 from PySide import QtGui
 
-from mcedit2.rendering import worldscene, scenegraph, rendergraph
+from mcedit2.rendering import worldscene, scenegraph
 from mcedit2.util import profiler
 from mcedit2.widgets.layout import Column, Row
+from mcedit2.worldview.viewcontrols import ViewControls
 from mcedit2.worldview.worldruler import WorldViewRulerGrid
-from mcedit2.worldview.worldview import WorldView, ViewMouseAction, MoveViewMouseAction, findBlockFace
-from mceditlib.geometry import BoundingBox, Vector
+from mcedit2.worldview.worldview import WorldView
+from mcedit2.worldview.viewaction import ViewAction, MoveViewMouseAction
+from mceditlib import faces
+from mceditlib.geometry import Vector
+from mceditlib.selection import BoundingBox
 
 
 log = logging.getLogger(__name__)
@@ -31,6 +35,7 @@ def RecenterButton(view):
 
 
 def CutawayWorldViewFrame(dimension, textureAtlas, geometryCache, sharedGLWidget):
+    viewFrame = QtGui.QWidget()
     view = CutawayWorldView(dimension, textureAtlas, geometryCache, sharedGLWidget)
 
     grid = WorldViewRulerGrid(view)
@@ -62,13 +67,15 @@ def CutawayWorldViewFrame(dimension, textureAtlas, geometryCache, sharedGLWidget
 
     view.viewportMoved.connect(updateDepthLabel)
     view.__updateDepthLabel = updateDepthLabel
-    buttonBar = Row(None, depthLabel, x, y, z, RecenterButton(view))
 
-    widget = QtGui.QWidget()
-    widget.setLayout(Column(buttonBar, (grid, 1)))
-    widget.worldView = view
+    viewFrame.viewControls = ViewControls(view)
 
-    return widget
+    buttonBar = Row(None, depthLabel, x, y, z, RecenterButton(view), viewFrame.viewControls.getShowHideButton())
+
+    viewFrame.setLayout(Column(buttonBar, (grid, 1)))
+    viewFrame.worldView = view
+
+    return viewFrame
 
 
 class SlicedWorldScene(scenegraph.Node):
@@ -78,6 +85,11 @@ class SlicedWorldScene(scenegraph.Node):
         self.dimension = dimension
         self.textureAtlas = textureAtlas
         self.dim = 0
+
+    def setTextureAtlas(self, textureAtlas):
+        self.textureAtlas = textureAtlas
+        for scene in self.sliceScenes.itervalues():
+            scene.setTextureAtlas(scene)
 
     depthLimit = 0  # Number of depths to display
     advancedDepthLimit = 4  # Additional depths to calculate and cache
@@ -152,6 +164,10 @@ class SlicedWorldScene(scenegraph.Node):
         for mesh in self.sliceScenes.values():
             mesh.invalidateChunk(*c)
 
+    def setVisibleLayers(self, layerNames):
+        for scene in self.sliceScenes.itervalues():
+            scene.setVisibleLayers(layerNames)
+
 
 class CutawayWorldView(WorldView):
     def __init__(self, *a, **kw):
@@ -159,9 +175,10 @@ class CutawayWorldView(WorldView):
         WorldView.__init__(self, *a, **kw)
         self.axis = axis
         self.viewportMoved.connect(self.updateMeshPos)
-        self.mouseActions.extend((
+        self.viewActions.extend((
             MoveViewMouseAction(),
-            CutawaySliceWheelAction()
+            CutawaySliceUpAction(),
+            CutawaySliceDownAction(),
         ))
 
     def createWorldScene(self):
@@ -264,21 +281,36 @@ class CutawayWorldView(WorldView):
         ray = self.rayAtPosition(x, y)
 
         event.point = self.slicedPoint(x, y)
-        blockPos, face = findBlockFace(self.dimension, event.point)
+        blockPos = event.point.intfloor()
 
         self.mouseBlockPos = event.blockPosition = blockPos
-        self.mouseBlockFace = event.blockFace = face
+        vec = [0, 0, 0]
+        vec[self.dim] = 1
+        self.mouseBlockFace = event.blockFace = faces.Face.fromVector(vec)
         self.mouseRay = event.ray = ray
         event.view = self
 
 
-class CutawaySliceWheelAction(ViewMouseAction):
-    def wheelEvent(self, event):
-        delta = event.delta()
-        if delta == 0:
-            return
+class CutawaySliceUpAction(ViewAction):
+    settingsKey = "worldview.cutaway.slice_up"
+    button = ViewAction.WHEEL_UP
+    labelText = "Slice Up"
+    acceptsMouseWheel = True
 
+    def buttonPressEvent(self, event):
         p = list(event.view.centerPoint)
-        p[event.view.dim] += delta / abs(delta)
+        p[event.view.dim] += 1
+
+        event.view.centerPoint = p
+
+class CutawaySliceDownAction(ViewAction):
+    settingsKey = "worldview.cutaway.slice_down"
+    button = ViewAction.WHEEL_DOWN
+    labelText = "Slice Down"
+    acceptsMouseWheel = True
+
+    def buttonPressEvent(self, event):
+        p = list(event.view.centerPoint)
+        p[event.view.dim] -= 1
 
         event.view.centerPoint = p

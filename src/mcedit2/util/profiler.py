@@ -8,11 +8,13 @@ import logging
 import time
 import datetime
 import functools
-from mcedit2.util.lazyprop import lazyprop
+
+from mceditlib.util.lazyprop import lazyprop
+
 
 log = logging.getLogger(__name__)
 
-ENABLE_PROFILER = False
+ENABLE_PROFILER = True
 
 class Profiler(object):
     sampleLimit = 100000
@@ -54,7 +56,6 @@ class Profiler(object):
         finally:
             self.exit()
 
-        #@functools.wraps
     def function(self, name):
         def _decorate(func):
             log.debug("Decorating %s with %s", func, name)

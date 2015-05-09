@@ -15,157 +15,21 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,0,0,0,0">
-     <item row="2" column="0">
-      <widget class="QLabel" name="label_5">
-       <property name="text">
-        <string>Mode:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1" colspan="2">
-      <widget class="BrushModeWidget" name="brushModeInput" native="true"/>
-     </item>
-     <item row="4" column="0">
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>Width:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="1">
-      <widget class="QSpinBox" name="xSpinBox">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>1024</number>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="2">
-      <widget class="QSlider" name="xSlider">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>80</number>
-       </property>
-       <property name="singleStep">
-        <number>1</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="invertedControls">
-        <bool>false</bool>
-       </property>
-       <property name="tickPosition">
-        <enum>QSlider::NoTicks</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="label_3">
-       <property name="text">
-        <string>Height:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="QSpinBox" name="ySpinBox">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>1024</number>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="2">
-      <widget class="QSlider" name="ySlider">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>80</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0">
-      <widget class="QLabel" name="label_4">
-       <property name="text">
-        <string>Length:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="1">
-      <widget class="QSpinBox" name="zSpinBox">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>1024</number>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="2">
-      <widget class="QSlider" name="zSlider">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>80</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="0">
-      <widget class="QLabel" name="label_7">
-       <property name="text">
-        <string>Hover:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="1">
-      <widget class="QSpinBox" name="hoverSpinBox">
-       <property name="minimum">
-        <number>-1024</number>
-       </property>
-       <property name="maximum">
-        <number>1024</number>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="2">
-      <widget class="QSlider" name="hoverSlider">
-       <property name="minimum">
-        <number>-80</number>
-       </property>
-       <property name="maximum">
-        <number>80</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="8" column="0">
-      <widget class="QLabel" name="label_6">
-       <property name="text">
-        <string>Block:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="8" column="1" colspan="2">
-      <widget class="BlockTypeButton" name="blockTypeInput" native="true">
+    <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,0,0,0">
+     <item row="7" column="1" colspan="2">
+      <widget class="SpinSlider" name="hoverSpinSlider" native="true">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1" colspan="2">
+      <widget class="SpinSlider" name="xSpinSlider" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -179,8 +43,59 @@
        </property>
       </widget>
      </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Length:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>Hover:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1" colspan="2">
+      <widget class="BrushModeWidget" name="brushModeInput" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <horstretch>1</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Mode:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Height:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Width:</string>
+       </property>
+      </widget>
+     </item>
      <item row="1" column="0" colspan="3">
       <widget class="QScrollArea" name="scrollArea">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="frameShape">
         <enum>QFrame::StyledPanel</enum>
        </property>
@@ -207,7 +122,13 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="BrushShapeWidget" name="brushShapeInput" native="true">
+          <widget class="ShapeWidget" name="brushShapeInput" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="minimumSize">
             <size>
              <width>40</width>
@@ -220,15 +141,41 @@
        </widget>
       </widget>
      </item>
+     <item row="5" column="1" colspan="2">
+      <widget class="SpinSlider" name="ySpinSlider" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1" colspan="2">
+      <widget class="SpinSlider" name="zSpinSlider" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
-    <widget class="QWidget" name="widget" native="true">
+    <widget class="QStackedWidget" name="modeOptionsStack">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
        <horstretch>0</horstretch>
-       <verstretch>1</verstretch>
+       <verstretch>0</verstretch>
       </sizepolicy>
+     </property>
+     <property name="lineWidth">
+      <number>0</number>
+     </property>
+     <property name="currentIndex">
+      <number>-1</number>
      </property>
     </widget>
    </item>
@@ -242,15 +189,15 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>BrushShapeWidget</class>
+   <class>ShapeWidget</class>
    <extends>QWidget</extends>
-   <header>brushshapewidget.h</header>
+   <header>shapewidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>BlockTypeButton</class>
+   <class>SpinSlider</class>
    <extends>QWidget</extends>
-   <header>blocktypebutton.h</header>
+   <header>spinslider.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

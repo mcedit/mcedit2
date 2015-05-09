@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from PySide import QtGui
+from PySide.QtCore import Qt
 
 
 def _Box(box, *a):
@@ -14,6 +15,8 @@ def _Box(box, *a):
             box.addLayout(*arg)
         if isinstance(item, QtGui.QWidget):
             box.addWidget(*arg)
+        if isinstance(item, (int, float)):
+            box.addSpacing(item)
         if item is None:
             box.addStretch()
 
@@ -21,13 +24,13 @@ def _Box(box, *a):
 
 def Row(*a, **kw):
     """
-    :rtype: QHBoxLayout
+    :rtype: QtGui.QHBoxLayout
     """
     margin = kw.pop('margin', None)
     box = QtGui.QHBoxLayout(**kw)
-    if margin:
-        box.setContentsMargins((margin,) * 4)
     _Box(box, *a)
+    if margin is not None:
+        box.setContentsMargins(margin, margin, margin, margin)
     return box
 
 
@@ -37,9 +40,9 @@ def Column(*a, **kw):
     """
     margin = kw.pop('margin', None)
     box = QtGui.QVBoxLayout(**kw)
-    if margin:
-        box.setContentsMargins((margin,) * 4)
     _Box(box, *a)
+    if margin is not None:
+        box.setContentsMargins(margin, margin, margin, margin)
     return box
 
 def setWidgetError(widget, exc):

@@ -18,8 +18,7 @@ class RemoveEntitiesOperation(Operation):
         """
         ents = []
         for ref in chunk.Entities:
-            if ref.Position not in self.selection:
+            if ref.Position in self.selection:
                 ents.append(ref)
 
-        chunk.Entities[:] = ents
-        chunk.dirty = True
+        chunk.removeEntities(ents)

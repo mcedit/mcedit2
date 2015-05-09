@@ -6,16 +6,12 @@
 """
 from datetime import datetime
 import logging
-from mceditlib.geometry import SectionBox, BoundingBox
+from mceditlib.selection import BoundingBox, SectionBox
 
 log = logging.getLogger(__name__)
 
 import numpy
 import mceditlib.blocktypes as blocktypes
-
-
-def convertBlocks(destLevel, sourceLevel, blocks, blockData):
-    return blocktypes.convertBlocks(destLevel.blocktypes, sourceLevel.blocktypes, blocks, blockData)
 
 def sourceMaskFunc(blocksToCopy):
     if blocksToCopy is not None:
@@ -33,12 +29,12 @@ def sourceMaskFunc(blocksToCopy):
     return unmaskedSourceMask
 
 
-def copyBlocksIter(destLevel, sourceLevel, sourceSelection, destinationPoint, blocksToCopy=None, entities=True, create=False, biomes=False):
+def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocksToCopy=None, entities=True, create=False, biomes=False):
     """
-    Copy blocks and entities from the `sourceBox` area of `sourceLevel` to `destLevel` starting at `destinationPoint`.
+    Copy blocks and entities from the `sourceBox` area of `sourceDim` to `destDim` starting at `destinationPoint`.
 
-    :param sourceLevel: ISectionWorld
-    :param destLevel: ISectionWorld
+    :param sourceDim: WorldEditorDimension
+    :param destDim: WorldEditorDimension
 
     Optional parameters:
       - `blocksToCopy`: list of blockIDs to copy.
@@ -56,8 +52,10 @@ def copyBlocksIter(destLevel, sourceLevel, sourceSelection, destinationPoint, bl
     destBox = BoundingBox(destinationPoint, sourceSelection.size)
     chunkCount = destBox.chunkCount
     i = 0
-    e = 0
-    t = 0
+    entitiesCopied = 0
+    tileEntitiesCopied = 0
+    entitiesSeen = 0
+    tileEntitiesSeen = 0
 
     makeSourceMask = sourceMaskFunc(blocksToCopy)
 
@@ -70,13 +68,14 @@ def copyBlocksIter(destLevel, sourceLevel, sourceSelection, destinationPoint, bl
     #          Use slices and mask to copy Blocks and Data
     #   Copy entities and tile entities from this chunk.
     sourceBiomeMask = None
+    convertBlocks = blocktypes.blocktypeConverter(destDim.blocktypes, sourceDim.blocktypes)
 
     for sourceCpos in sourceSelection.chunkPositions():
         # Visit each chunk
-        if not sourceLevel.containsChunk(*sourceCpos):
+        if not sourceDim.containsChunk(*sourceCpos):
             continue
 
-        sourceChunk = sourceLevel.getChunk(*sourceCpos)
+        sourceChunk = sourceDim.getChunk(*sourceCpos)
 
         i += 1
         yield (i, chunkCount)
@@ -111,9 +110,9 @@ def copyBlocksIter(destLevel, sourceLevel, sourceSelection, destinationPoint, bl
             destBox = BoundingBox(sectionBox.origin + copyOffset, sectionBox.size)
 
             for destCpos in destBox.chunkPositions():
-                if not create and not destLevel.containsChunk(*destCpos):
+                if not create and not destDim.containsChunk(*destCpos):
                     continue
-                destChunk = destLevel.getChunk(*destCpos, create=True)
+                destChunk = destDim.getChunk(*destCpos, create=True)
 
                 for destCy in destBox.sectionPositions(*destCpos):
                     # Compute slices for source and dest arrays
@@ -127,7 +126,7 @@ def copyBlocksIter(destLevel, sourceLevel, sourceSelection, destinationPoint, bl
                         continue
 
                     # Recompute destSectionBox and intersect using the shape of destSection.Blocks
-                    # after destChunk is loaded to work with odd shaped FakeChunks XXXXXXXXXXXX
+                    # after destChunk is loaded to work with odd shaped FakeChunkDatas XXXXXXXXXXXX
                     destSectionBox = SectionBox(destCpos[0], destCy, destCpos[1], destSection)
                     intersect = destSectionBox.intersect(destBox)
                     if intersect.volume == 0:
@@ -151,7 +150,7 @@ def copyBlocksIter(destLevel, sourceLevel, sourceSelection, destinationPoint, bl
                     sourceMaskPart = sourceMask[sourceSlices]
 
                     # Convert blocks
-                    convertedSourceBlocks, convertedSourceData = convertBlocks(destLevel, sourceLevel, sourceBlocks, sourceData)
+                    convertedSourceBlocks, convertedSourceData = convertBlocks(sourceBlocks, sourceData)
 
                     # Write blocks
                     destSection.Blocks[destSlices][sourceMaskPart] = convertedSourceBlocks[sourceMaskPart]
@@ -164,22 +163,26 @@ def copyBlocksIter(destLevel, sourceLevel, sourceSelection, destinationPoint, bl
             bx, bz = sourceBiomeMask.nonzero()
             wbx = bx + (sourceCpos[0] << 4)
             wbz = bz + (sourceCpos[1] << 4)
-            destLevel.setBlocks(wbx, 1, wbz, Biomes=sourceBiomes[bx, bz])
+            destDim.setBlocks(wbx, 1, wbz, Biomes=sourceBiomes[bx, bz])
 
         # Copy entities and tile entities
         if entities:
+            entitiesSeen += len(sourceChunk.Entities)
             for entity in sourceChunk.Entities:
                 if entity.Position in sourceSelection:
+                    entitiesCopied += 1
                     newEntity = entity.copyWithOffset(copyOffset)
-                    destLevel.addEntity(newEntity)
+                    destDim.addEntity(newEntity)
 
+        tileEntitiesSeen += len(sourceChunk.TileEntities)
         for tileEntity in sourceChunk.TileEntities:
             if tileEntity.Position in sourceSelection:
+                tileEntitiesCopied += 1
                 newEntity = tileEntity.copyWithOffset(copyOffset)
-                destLevel.addTileEntity(newEntity)
+                destDim.addTileEntity(newEntity)
 
     log.info("Duration: {0}".format(datetime.now() - startTime))
-    log.info("Copied {0} entities and {1} tile entities".format(e, t))
+    log.info("Copied %d/%d entities and %d/%d tile entities", entitiesCopied, entitiesSeen, tileEntitiesCopied, tileEntitiesSeen)
 
 
 

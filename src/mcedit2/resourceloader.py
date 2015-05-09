@@ -4,9 +4,12 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 import zipfile
+import re
 
 log = logging.getLogger(__name__)
 
+class ResourceNotFound(KeyError):
+    pass
 
 class ResourceLoader(object):
     def __init__(self):
@@ -14,11 +17,13 @@ class ResourceLoader(object):
         self.zipFiles = []
 
     def addZipFile(self, zipPath):
-        self.zipFiles.append(zipfile.ZipFile(zipPath))
+        try:
+            zf = zipfile.ZipFile(zipPath)
+        except zipfile.BadZipfile as e:
+            raise IOError("Could not read %s as a zip file." % zipPath)
+        self.zipFiles.append(zf)
 
     def openStream(self, path):
-        path = "assets/minecraft/%s" % path
-
         for zipFile in self.zipFiles:
             try:
                 stream = zipFile.open(path)
@@ -26,6 +31,22 @@ class ResourceLoader(object):
             except KeyError:  # Not found in zip file
                 continue
         else:
-            raise KeyError("Resource %s not found in search path", path)
+            raise ResourceNotFound("Resource %s not found in search path" % path)
 
         return stream
+
+    def blockModelPaths(self):
+        for zf in self.zipFiles:
+            for name in zf.namelist():
+                if name.startswith("assets/minecraft/models/block"):
+                    yield name
+
+    def blockTexturePaths(self):
+        seen = set()
+        for zf in self.zipFiles:
+            for name in zf.namelist():
+                if name in seen:
+                    continue
+                seen.add(name)
+                if re.match(r'assets/\w+/textures/blocks/.*\.png$', name):
+                    yield zf.filename, name

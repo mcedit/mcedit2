@@ -4,44 +4,63 @@ Created on Jul 22, 2011
 @author: Rio
 '''
 from __future__ import absolute_import
-import atexit
-from contextlib import closing
+from collections import defaultdict
 import os
-import shutil
-import tempfile
-import zipfile
-from logging import getLogger
 
-from numpy import array, swapaxes, uint8, zeros
+from logging import getLogger
+import itertools
+
+from numpy import swapaxes, uint8, zeros
 import numpy
 
-from mceditlib.anvil.adapter import AnvilWorldAdapter
-from mceditlib.anvil.entities import PCEntityRef
-from mceditlib.anvil.entities import PCTileEntityRef
-from mceditlib.exceptions import PlayerNotFound
-from mceditlib.geometry import BoundingBox
-from mceditlib.levelbase import FakeChunkedLevelAdapter
-from mceditlib.blocktypes import pc_blocktypes, BlockTypeSet, blocktypes_named
+from mceditlib.anvil.adapter import VERSION_1_7, VERSION_1_8
+from mceditlib.anvil.entities import PCEntityRef, PCTileEntityRef, \
+    ItemStackRef
+from mceditlib.exceptions import PlayerNotFound, LevelFormatError
+from mceditlib.selection import BoundingBox
+from mceditlib.fakechunklevel import FakeChunkedLevelAdapter, FakeChunkData
+from mceditlib.blocktypes import BlockTypeSet, PCBlockTypeSet
 from mceditlib import nbt
 
 log = getLogger(__name__)
 
+
+blocktypeClassesByName = {"Alpha": PCBlockTypeSet}
+
 def createSchematic(shape, blocktypes='Alpha'):
     from mceditlib.worldeditor import WorldEditor
 
-    adapter = SchematicFileAdapter(shape, blocktypes)
+    adapter = SchematicFileAdapter(shape=shape, blocktypes=blocktypes)
     editor = WorldEditor(adapter=adapter)
     return editor
+
+def blockIDMapping(blocktypes):
+    mapping = nbt.TAG_Compound()
+    for name, ID in blocktypes.IDsByName.iteritems():
+        mapping[str(ID)] = nbt.TAG_String(name)
+
+    return mapping
+
+def itemIDMapping(blocktypes):
+    mapping = nbt.TAG_Compound()
+    for name, ID in blocktypes.itemTypes.IDsByInternalName.iteritems():
+        mapping[str(ID)] = nbt.TAG_String(name)
+    return mapping
+
+class SchematicChunkData(FakeChunkData):
+    def addEntity(self, entity):
+        self.dimension.addEntity(entity)
+
+    def addTileEntity(self, tileEntity):
+        self.dimension.addTileEntity(tileEntity)
 
 class SchematicFileAdapter(FakeChunkedLevelAdapter):
     """
 
     """
-    blocktypes = pc_blocktypes
-
     # XXX use abstract entity ref or select correct ref for contained level format
-    EntityRef = PCEntityRef
-    TileEntityRef = PCTileEntityRef
+
+    ChunkDataClass = SchematicChunkData
 
     def __init__(self, shape=None, filename=None, blocktypes='Alpha', readonly=False, resume=False):
         """
@@ -61,6 +80,9 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
         :rtype: SchematicFileAdapter
 
         """
+        self.EntityRef = PCEntityRef
+        self.TileEntityRef = PCTileEntityRef
+
         if filename is None and shape is None:
             raise ValueError("shape or filename required to create %s" % self.__class__.__name__)
 
@@ -74,8 +96,8 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
             self.filename = None
             rootTag = None
 
-        if blocktypes in blocktypes_named:
-            self.blocktypes = blocktypes_named[blocktypes]
+        if blocktypes in blocktypeClassesByName:
+            self.blocktypes = blocktypeClassesByName[blocktypes]()
         else:
             assert(isinstance(blocktypes, BlockTypeSet))
             self.blocktypes = blocktypes
@@ -83,7 +105,7 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
         if rootTag:
             self.rootTag = rootTag
             if "Materials" in rootTag:
-                self.blocktypes = blocktypes_named[self.Materials]
+                self.blocktypes = blocktypeClassesByName[self.Materials]()
             else:
                 rootTag["Materials"] = nbt.TAG_String(self.blocktypes.name)
 
@@ -124,6 +146,37 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
             if "Biomes" in self.rootTag:
                 self.rootTag["Biomes"].value.shape = (l, w)
 
+            # If BlockIDs is present, it contains an ID->internalName mapping
+            # from the source level's FML tag.
+
+            if "BlockIDs" in self.rootTag:
+                self.blocktypes.addBlockIDsFromSchematicTag(self.rootTag["BlockIDs"])
+
+            # If itemStackVersion is present, it was exported from MCEdit 2.0.
+            # Its value is either 17 or 18, the values of the version constants.
+            # ItemIDs will also be present.
+
+            # If itemStackVersion is not present, this schematic was exported from
+            # WorldEdit or MCEdit 1.0. The itemStackVersion cannot be determined
+            # without searching the entities for an itemStack and checking
+            # the type of its `id` tag. If no itemStacks are found, the
+            # version defaults to 1.8 which does not need an ItemIDs tag.
+
+
+            if "itemStackVersion" in self.rootTag:
+                itemStackVersion = self.rootTag["itemStackVersion"].value
+                if itemStackVersion not in (VERSION_1_7, VERSION_1_8):
+                    raise LevelFormatError("Unknown item stack version %d" % itemStackVersion)
+                if itemStackVersion == VERSION_1_7:
+                    itemIDs = self.rootTag.get("ItemIDs")
+                    if itemIDs is not None:
+                        self.blocktypes.addItemIDsFromSchematicTag(itemIDs)
+
+                self.blocktypes.itemStackVersion = itemStackVersion
+            else:
+                self.blocktypes.itemStackVersion = self.getItemStackVersionFromEntities()
+
+
         else:
             rootTag = nbt.TAG_Compound(name="Schematic")
             rootTag["Height"] = nbt.TAG_Short(shape[1])
@@ -133,6 +186,8 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
             rootTag["Entities"] = nbt.TAG_List()
             rootTag["TileEntities"] = nbt.TAG_List()
             rootTag["Materials"] = nbt.TAG_String(self.blocktypes.name)
+            rootTag["itemStackVersion"] = nbt.TAG_Byte(self.blocktypes.itemStackVersion)
+
 
             self._Blocks = zeros((shape[1], shape[2], shape[0]), 'uint16')
             rootTag["Data"] = nbt.TAG_Byte_Array(zeros((shape[1], shape[2], shape[0]), uint8))
@@ -141,7 +196,12 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
 
             self.rootTag = rootTag
 
-        #expand blocks and data to chunk edges
+            self.rootTag["BlockIDs"] = blockIDMapping(blocktypes)
+            itemMapping = itemIDMapping(blocktypes)
+            if itemMapping is not None:
+                self.rootTag["ItemIDs"] = itemMapping  # Only present for Forge 1.7
+
+        # Expand blocks and data to chunk edges
         h16 = (self.Height + 15) & ~0xf
         l16 = (self.Length + 15) & ~0xf
         w16 = (self.Width + 15) & ~0xf
@@ -156,9 +216,43 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
 
         self.rootTag["Data"].value &= 0xF  # discard high bits
 
-        self.Entities = [self.EntityRef(tag) for tag in self.rootTag["Entities"]]
-        self.TileEntities = [self.EntityRef(tag) for tag in self.rootTag["TileEntities"]]
+        self.entitiesByChunk = defaultdict(list)
+        for tag in self.rootTag["Entities"]:
+            ref = self.EntityRef(tag)
+            pos = ref.Position
+            cx, cy, cz = pos.chunkPos()
+            self.entitiesByChunk[cx, cz].append(tag)
 
+        self.tileEntitiesByChunk = defaultdict(list)
+        for tag in self.rootTag["TileEntities"]:
+            ref = self.TileEntityRef(tag)
+            pos = ref.Position
+            cx, cy, cz = pos.chunkPos()
+            self.tileEntitiesByChunk[cx, cz].append(tag)
+
+    def getItemStackVersionFromEntities(self):
+        for name, tag, path in nbt.walk(
+                itertools.chain(self.rootTag["Entities"],
+                                self.rootTag["TileEntities"])):
+            if ItemStackRef.tagIsItemStack(tag):
+                if tag["id"].tagID == nbt.ID_STRING:
+                    return VERSION_1_8
+                if tag["id"].tagID == nbt.ID_SHORT:
+                    return VERSION_1_7
+
+        # No itemstacks - use version 1.8 since ItemIDs won't need to
+        # be added to the root tag.
+        return VERSION_1_8
+
+
+    def fakeEntitiesForChunk(self, cx, cz):
+        return self.entitiesByChunk[cx, cz], self.tileEntitiesByChunk[cx, cz]
+
+    def syncToDisk(self):
+        """
+        Ugh... reimplement this class in a way that uses a RevisionHistory?
+        """
+        pass
 
     def saveChanges(self):
         return self.saveToFile(self.filename)
@@ -190,6 +284,24 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
             # Save only the even bytes, now that they contain the odd bytes in their lower bits.
             packed_add = packed_add[0::2]
             self.rootTag["AddBlocks"] = nbt.TAG_Byte_Array(packed_add)
+
+        entities = []
+        for e in self.entitiesByChunk.values():
+            entities.extend(e)
+
+        tileEntities = []
+        for te in self.tileEntitiesByChunk.values():
+            tileEntities.extend(te)
+
+        self.rootTag["Entities"] = nbt.TAG_List(entities)
+        self.rootTag["TileEntities"] = nbt.TAG_List(tileEntities)
+
+        log.info("Saving schematic %s with %d blocks, %d Entities and %d TileEntities",
+                 os.path.basename(filename),
+                 self.rootTag["Blocks"].value.size,
+                 len(self.rootTag["Entities"]),
+                 len(self.rootTag["TileEntities"]),
+                 )
 
         with open(filename, 'wb') as chunkfh:
             self.rootTag.save(chunkfh)
@@ -427,135 +539,12 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
             return 0
         return self.Data[x, z, y]
 
-    @classmethod
-    def chestWithItemID(cls, itemID, count=64, damage=0):
-        """ Creates a chest with a stack of 'itemID' in each slot.
-        Optionally specify the count of items in each stack. Pass a negative
-        value for damage to create unnaturally sturdy tools. """
-        rootTag = nbt.TAG_Compound()
-        invTag = nbt.TAG_List()
-        rootTag["Inventory"] = invTag
-        for slot in range(9, 36):
-            itemTag = nbt.TAG_Compound()
-            itemTag["Slot"] = nbt.TAG_Byte(slot)
-            itemTag["Count"] = nbt.TAG_Byte(count)
-            itemTag["id"] = nbt.TAG_Short(itemID)
-            itemTag["Damage"] = nbt.TAG_Short(damage)
-            invTag.append(itemTag)
-
-        chest = INVEditChest(rootTag, "")
-
-        return chest
-
     def readChunk(self, cx, cz, dimName, create=False):
         chunk = super(SchematicFileAdapter, self).readChunk(cx, cz, dimName, create)
         if "Biomes" in self.rootTag:
             x = cx << 4
             z = cz << 4
-            chunk.Biomes = self.Biomes[x:x + 16, z:z + 16]
+            chunk.Biomes = numpy.zeros((16, 16), dtype=numpy.uint8)
+            srcBiomes = self.Biomes[x:x + 16, z:z + 16]
+            chunk.Biomes[0:srcBiomes.shape[0], 0:srcBiomes.shape[1]] = srcBiomes
         return chunk
-
-
-class INVEditChest(FakeChunkedLevelAdapter):
-    Width = 1
-    Height = 1
-    Length = 1
-    Blocks = None
-    Data = array([[[0]]], 'uint8')
-    Entities = nbt.TAG_List()
-    Materials = pc_blocktypes
-
-    @classmethod
-    def _isTagLevel(cls, rootTag):
-        return "Inventory" in rootTag
-
-    def __init__(self, filename):
-        self.filename = filename
-        rootTag = nbt.load(filename)
-        self.Blocks = array([[[pc_blocktypes.Chest.ID]]], 'uint8')
-        for item in list(rootTag["Inventory"]):
-            slot = item["Slot"].value
-            if slot < 9 or slot >= 36:
-                rootTag["Inventory"].remove(item)
-            else:
-                item["Slot"].value -= 9  # adjust for different chest slot indexes
-
-        self.rootTag = rootTag
-
-    @property
-    def TileEntities(self):
-        chestTag = nbt.TAG_Compound()
-        chestTag["id"] = nbt.TAG_String("Chest")
-        chestTag["Items"] = nbt.TAG_List(self.rootTag["Inventory"])
-        chestTag["x"] = nbt.TAG_Int(0)
-        chestTag["y"] = nbt.TAG_Int(0)
-        chestTag["z"] = nbt.TAG_Int(0)
-
-        return nbt.TAG_List([chestTag], name="TileEntities")
-
-
-class ZipSchematic (AnvilWorldAdapter):
-    def __init__(self, filename, create=False):
-        raise NotImplementedError("No adapter for zipped world/schematic files yet!!!")
-        self.zipfilename = filename
-
-        tempdir = tempfile.mktemp("schematic")
-        if create is False:
-            zf = zipfile.ZipFile(filename)
-            zf.extractall(tempdir)
-            zf.close()
-
-        super(ZipSchematic, self).__init__(tempdir, create)
-        atexit.register(shutil.rmtree, self.worldFolder.filename, True)
-
-
-        try:
-            schematicDat = nbt.load(self.worldFolder.getFilePath("schematic.dat"))
-
-            self.Width = schematicDat['Width'].value
-            self.Height = schematicDat['Height'].value
-            self.Length = schematicDat['Length'].value
-
-            if "Materials" in schematicDat:
-                self.blocktypes = blocktypes_named[schematicDat["Materials"].value]
-
-        except Exception as e:
-            print "Exception reading schematic.dat, skipping: {0!r}".format(e)
-            self.Width = 0
-            self.Length = 0
-
-    def __del__(self):
-        shutil.rmtree(self.worldFolder.filename, True)
-
-    def saveChanges(self):
-        self.saveToFile(self.zipfilename)
-
-    def saveToFile(self, filename):
-        super(ZipSchematic, self).saveChanges()
-        schematicDat = nbt.TAG_Compound()
-        schematicDat.name = "Mega Schematic"
-
-        schematicDat["Width"] = nbt.TAG_Int(self.size[0])
-        schematicDat["Height"] = nbt.TAG_Int(self.size[1])
-        schematicDat["Length"] = nbt.TAG_Int(self.size[2])
-        schematicDat["Materials"] = nbt.TAG_String(self.blocktypes.name)
-
-        schematicDat.save(self.worldFolder.getFilePath("schematic.dat"))
-
-        basedir = self.worldFolder.filename
-        assert os.path.isdir(basedir)
-        with closing(zipfile.ZipFile(filename, "w", zipfile.ZIP_STORED)) as z:
-            for root, dirs, files in os.walk(basedir):
-                # NOTE: ignore empty directories
-                for fn in files:
-                    absfn = os.path.join(root, fn)
-                    zfn = absfn[len(basedir) + len(os.sep):]  # XXX: relative path
-                    z.write(absfn, zfn)
-
-    def getWorldBounds(self):
-        return BoundingBox((0, 0, 0), (self.Width, self.Height, self.Length))
-
-    @classmethod
-    def canOpenFile(cls, filename):
-        return zipfile.is_zipfile(filename)
-

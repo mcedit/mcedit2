@@ -1,6 +1,6 @@
 from mceditlib.export import extractSchematicFrom
 from mceditlib.schematic import SchematicFile
-from mceditlib.geometry import BoundingBox
+from mceditlib.selection import BoundingBox
 from mceditlib.worldeditor import WorldEditor
 from templevel import TempLevel
 

@@ -18,15 +18,16 @@ from mcedit2.rendering import worldscene, loadablechunks, sky, compass
 from mcedit2.rendering.chunknode import ChunkNode
 from mcedit2.rendering.frustum import Frustum
 from mcedit2.rendering.geometrycache import GeometryCache
+from mcedit2.rendering.layers import Layer
 from mcedit2.rendering.textureatlas import TextureAtlas
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 from mcedit2.rendering import scenegraph, rendergraph
 from mcedit2.util import profiler, raycast
-from mcedit2.util.glutils import gl
+from mcedit2.util.settings import Settings
 from mcedit2.widgets.infopanel import InfoPanel
-from mceditlib import faces, exceptions, blocktypes
-from mceditlib.geometry import Vector, Ray, rayIntersectsBox
-from mceditlib.exceptions import LevelFormatError
+from mceditlib import faces, exceptions
+from mceditlib.geometry import Vector, Ray
+from mceditlib.exceptions import LevelFormatError, ChunkNotPresent
 from mceditlib.util import displayName
 
 
@@ -66,13 +67,13 @@ class WorldView(QGLWidget):
     and one isometric view.
 
     """
-    viewportMoved = QtCore.Signal(tuple)
+    viewportMoved = QtCore.Signal(QtGui.QWidget)
     cursorMoved = QtCore.Signal(QtGui.QMouseEvent)
 
     mouseBlockPos = Vector(0, 0, 0)
     mouseBlockFace = faces.FaceYIncreasing
 
-    def __init__(self, dimension, textureAtlas, geometryCache=None, sharedGLWidget=None):
+    def __init__(self, dimension, textureAtlas=None, geometryCache=None, sharedGLWidget=None):
         """
 
         :param dimension:
@@ -88,9 +89,15 @@ class WorldView(QGLWidget):
         """
         QGLWidget.__init__(self, shareWidget=sharedGLWidget)
         self.setSizePolicy(QtGui.QSizePolicy.Policy.Expanding, QtGui.QSizePolicy.Policy.Expanding)
-        self.dimension = dimension
+        self.setFocusPolicy(Qt.ClickFocus)
+
+        self.layerToggleGroup = LayerToggleGroup()
+        self.layerToggleGroup.layerToggled.connect(self.setLayerVisible)
+
+        self.dimension = None
         self.worldScene = None
         self.loadableChunksNode = None
+        self.textureAtlas = None
 
         self.mouseRay = Ray(Vector(0, 1, 0), Vector(0, -1, 0))
 
@@ -103,9 +110,10 @@ class WorldView(QGLWidget):
         self.compassOrthoNode = scenegraph.OrthoNode((1, float(self.height()) / self.width()))
         self.compassOrthoNode.addChild(self.compassNode)
 
-        self.mouseActions = []
+        self.viewActions = []
+        self.pressedKeys = set()
 
-        self.textureAtlas = textureAtlas
+        self.setTextureAtlas(textureAtlas)
 
         if geometryCache is None and sharedGLWidget is not None:
             geometryCache = sharedGLWidget.geometryCache
@@ -113,25 +121,56 @@ class WorldView(QGLWidget):
             geometryCache = GeometryCache()
         self.geometryCache = geometryCache
 
-        self.matrixNode = scenegraph.MatrixNode()
-        self._updateMatrices()
-
+        self.matrixNode = None
         self.overlayNode = scenegraph.Node()
 
-        self.sceneGraph = self.createSceneGraph()
-        self.renderGraph = rendergraph.createRenderNode(self.sceneGraph)
+        self.sceneGraph = None
+        self.renderGraph = None
 
         self.frameSamples = deque(maxlen=500)
         self.frameSamples.append(time.time())
 
         self.cursorNode = None
 
+        self.setDimension(dimension)
+
+    def setDimension(self, dimension):
+        """
+
+        :param dimension:
+        :type dimension: WorldEditorDimension
+        :return:
+        :rtype:
+        """
+        log.info("Changing %s to dimension %s", self, dimension)
+        self.dimension = dimension
+        self.makeCurrent()
+        if self.renderGraph:
+            self.renderGraph.destroy()
+        self.sceneGraph = self.createSceneGraph()
+        self.renderGraph = rendergraph.createRenderNode(self.sceneGraph)
+        self.resetLoadOrder()
+        self.update()
+
+    def setTextureAtlas(self, textureAtlas):
+        self.textureAtlas = textureAtlas
+        self.makeCurrent()
+        textureAtlas.load()
+        if self.worldScene:
+            self.worldScene.setTextureAtlas(textureAtlas)
+        self.resetLoadOrder()
+
     def destroy(self):
-        self.worldScene.discardAllChunks()
+        self.makeCurrent()
+        self.renderGraph.destroy()
         super(WorldView, self).destroy()
 
     def __str__(self):
-        return "%s(%r)" % (self.__class__.__name__, displayName(self.dimension.worldEditor.filename))
+        if self.dimension:
+            dimName = displayName(self.dimension.worldEditor.filename) + ": " + self.dimension.dimName
+        else:
+            dimName = "None"
+        return "%s(%r)" % (self.__class__.__name__, dimName)
 
     def createCompass(self):
         return compass.CompassNode()
@@ -142,10 +181,16 @@ class WorldView(QGLWidget):
     def createSceneGraph(self):
         sceneGraph = scenegraph.Node()
         self.worldScene = self.createWorldScene()
+        self.worldScene.setVisibleLayers(self.layerToggleGroup.getVisibleLayers())
 
         clearNode = scenegraph.ClearNode()
         skyNode = sky.SkyNode()
         self.loadableChunksNode = loadablechunks.LoadableChunksNode(self.dimension)
+
+        self.matrixNode = scenegraph.MatrixNode()
+        self._updateMatrices()
+
+
 
         self.matrixNode.addChild(self.loadableChunksNode)
         self.matrixNode.addChild(self.worldScene)
@@ -155,6 +200,8 @@ class WorldView(QGLWidget):
         sceneGraph.addChild(skyNode)
         sceneGraph.addChild(self.matrixNode)
         sceneGraph.addChild(self.compassOrthoNode)
+        if self.cursorNode:
+            self.matrixNode.addChild(self.cursorNode)
 
         return sceneGraph
 
@@ -167,8 +214,8 @@ class WorldView(QGLWidget):
     def setToolCursor(self, cursorNode):
         if self.cursorNode:
             self.matrixNode.removeChild(self.cursorNode)
+        self.cursorNode = cursorNode
         if cursorNode:
-            self.cursorNode = cursorNode
             self.matrixNode.addChild(cursorNode)
 
     def setToolOverlays(self, overlayNodes):
@@ -258,12 +305,14 @@ class WorldView(QGLWidget):
 
     @centerPoint.setter
     def centerPoint(self, value):
-        self._centerPoint = Vector(*value)
-        self._updateMatrices()
-        log.debug("update(): centerPoint %s %s", self, value)
-        self.update()
-        self.resetLoadOrder()
-        self.viewportMoved.emit(self)
+        value = Vector(*value)
+        if value != self._centerPoint:
+            self._centerPoint = value
+            self._updateMatrices()
+            log.debug("update(): centerPoint %s %s", self, value)
+            self.update()
+            self.resetLoadOrder()
+            self.viewportMoved.emit(self)
 
     scaleChanged = QtCore.Signal(float)
 
@@ -282,11 +331,12 @@ class WorldView(QGLWidget):
         self.scaleChanged.emit(value)
         self.viewportMoved.emit(self)
 
-    def centerOnPoint(self, pos):
+    def centerOnPoint(self, pos, distance=None):
         """Center the view on the given position"""
         # delta = self.viewCenter() - self.centerPoint
         # self.centerPoint = pos - delta
         self.centerPoint = pos
+        self.update()
 
     def viewCenter(self):
         """Return the world position at the center of the view."""
@@ -313,58 +363,112 @@ class WorldView(QGLWidget):
 
     dragStart = None
 
-    @profiler.function
+    def keyPressEvent(self, event):
+        self.augmentKeyEvent(event)
+        self.pressedKeys.add(event.key())
+        for action in self.viewActions:
+            if action.matchKeyEvent(event):
+                action.keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        self.augmentKeyEvent(event)
+        self.pressedKeys.discard(event.key())
+        for action in self.viewActions:
+            if action.matchKeyEvent(event):
+                action.keyReleaseEvent(event)
+
     def mousePressEvent(self, event):
         self.augmentMouseEvent(event)
-        for action in self.mouseActions:
+        for action in self.viewActions:
             if action.button & event.button():
                 if action.modifiers & event.modifiers() or action.modifiers == event.modifiers():
-                    action.mousePressEvent(event)
+                    if not action.key or action.key in self.pressedKeys:
+                        action.mousePressEvent(event)
 
-    @profiler.function
     def mouseMoveEvent(self, event):
         self.cursorMoved.emit(event)
         self.update()
         self.augmentMouseEvent(event)
-        for action in self.mouseActions:
-            if action.button == event.buttons() or action.button & event.buttons():
+        for action in self.viewActions:
+            if not action.button or action.button == event.buttons() or action.button & event.buttons():
                 # Important! mouseMove checks event.buttons(), press and release check event.button()
                 if action.modifiers & event.modifiers() or action.modifiers == event.modifiers():
-                    action.mouseMoveEvent(event)
+                    if not action.key or action.key in self.pressedKeys:
+                        action.mouseMoveEvent(event)
 
-    @profiler.function
     def mouseReleaseEvent(self, event):
         self.augmentMouseEvent(event)
-        for action in self.mouseActions:
+        for action in self.viewActions:
             if action.button & event.button():
                 if action.modifiers & event.modifiers() or action.modifiers == event.modifiers():
-                    action.mouseReleaseEvent(event)
+                    if not action.key or action.key in self.pressedKeys:
+                        action.mouseReleaseEvent(event)
+
+    wheelPos = 0
 
     def wheelEvent(self, event):
         self.augmentMouseEvent(event)
-        for action in self.mouseActions:
-            if action.modifiers & event.modifiers() or action.modifiers == event.modifiers():
-                action.wheelEvent(event)
+        for action in self.viewActions:
+            if action.acceptsMouseWheel and ((action.modifiers & event.modifiers()) or action.modifiers == event.modifiers()):
+                self.wheelPos += event.delta()
+                # event.delta reports eighths of a degree. a standard wheel tick is 15 degrees, or 120 eighths.
+                # keep count of wheel position and emit an event for each 15 degrees turned.
+                # xxx will we ever need sub-click precision for wheel events?
+                clicks = 0
+                while self.wheelPos >= 120:
+                    self.wheelPos -= 120
+                    clicks += 1
+                while self.wheelPos <= -120:
+                    self.wheelPos += 120
+                    clicks -= 1
+
+                if action.button == action.WHEEL_UP and clicks < 0:
+                    for i in range(abs(clicks)):
+                        action.keyPressEvent(event)
+
+                if action.button == action.WHEEL_DOWN and clicks > 0:
+                    for i in range(clicks):
+                        action.keyPressEvent(event)
+
 
     def augmentMouseEvent(self, event):
-        mousePos = event.x(), event.y()
-        ray = self.rayAtPosition(*mousePos)
+        x, y = event.x(), event.y()
+        return self.augmentEvent(x, y, event)
+
+    def augmentKeyEvent(self, event):
+        globalPos = QtGui.QCursor.pos()
+        mousePos = self.mapFromGlobal(globalPos)
+        x = mousePos.x()
+        y = mousePos.y()
+
+        # xxx fake position of mouse event -- need to use mcedit internal event object already
+        event.x = lambda: x
+        event.y = lambda: y
+
+        return self.augmentEvent(x, y, event)
+
+    @profiler.function
+    def augmentEvent(self, x, y, event):
+        ray = self.rayAtPosition(x, y)
 
         event.ray = ray
         event.view = self
 
         try:
-            result = raycast.rayCastInBounds(ray, self.dimension)
+            result = raycast.rayCastInBounds(ray, self.dimension, maxDistance=2000)
             position, face = result
 
         except (raycast.MaxDistanceError, ValueError):
-            GL.glReadBuffer(GL.GL_BACK)
-            pixel = GL.glReadPixels(mousePos[0], self.height() - mousePos[1], 1, 1, GL.GL_DEPTH_COMPONENT, GL.GL_FLOAT)
-            depth = -1 + 2 * pixel[0, 0]
-            p = self.pointsAtPositions((mousePos[0], mousePos[1], depth))[0]
-
-            face = faces.FaceYIncreasing
-            position = p.intfloor()
+            # GL.glReadBuffer(GL.GL_BACK)
+            # pixel = GL.glReadPixels(x, self.height() - y, 1, 1, GL.GL_DEPTH_COMPONENT, GL.GL_FLOAT)
+            # depth = -1 + 2 * pixel[0, 0]
+            # p = self.pointsAtPositions((x, y, depth))[0]
+            #
+            # face = faces.FaceYIncreasing
+            # position = p.intfloor()
+            defaultDistance = 20
+            position = (ray.point + ray.vector * defaultDistance).intfloor()
+            face = faces.FaceUp
 
         self.mouseBlockPos = event.blockPosition = position
         self.mouseBlockFace = event.blockFace = face
@@ -372,6 +476,7 @@ class WorldView(QGLWidget):
 
     maxFPS = 30
 
+    @profiler.function
     def glDraw(self, *args, **kwargs):
         frameInterval = 1.0 / self.maxFPS
         if time.time() - self.frameSamples[-1] < frameInterval:
@@ -402,11 +507,14 @@ class WorldView(QGLWidget):
         Parameters:
             x and y are coordinates local to this QWidget
 
-        Returns a Ray
+        :rtype: Ray
         """
 
         p0, p1 = self.pointsAtPositions((x, y, 0.0), (x, y, 0.1))
         return Ray(p0, (p1 - p0).normalize())
+
+    def rayAtCenter(self):
+        return self.rayAtPosition(self.width()/2, self.height()/2)
 
     def pointsAtPositions(self, *screenPoints):
         w = float(self.width())
@@ -448,7 +556,7 @@ class WorldView(QGLWidget):
 
     def makeChunkIter(self):
         x, y, z = self.viewCenter()
-        return iterateChunks(x, z, 1 + max(self.width() * self.scale, self.height() * self.scale) // 16)
+        return iterateChunks(x, z, 1 + max(self.width() * self.scale, self.height() * self.scale) // 32)
 
     def requestChunk(self):
         if self._chunkIter is None:
@@ -499,146 +607,18 @@ class WorldView(QGLWidget):
         self.worldScene.invalidateChunk(cx, cz)
         self.resetLoadOrder()
 
+    def setLayerVisible(self, layerName, visible):
+        self.worldScene.setLayerVisible(layerName, visible)
+        self.resetLoadOrder()
 
-def boxFaceUnderCursor(box, mouseRay):
-    """
-    Find the nearest face of the given bounding box that intersects with the given mouse ray
-    and return (point, face)
-    """
-    nearPoint, mouseVector = mouseRay
-
-    intersections = rayIntersectsBox(box, mouseRay)
-    if intersections is None:
-        return None, None
-
-    point, face = intersections[0]
-
-    # if the point is near the edge of the face, and the edge is facing away,
-    # return the away-facing face
-
-    dim = face.dimension
-
-    dim1 = (dim + 1) % 3
-    dim2 = (dim + 2) % 3
-
-    # determine if a click was within self.edge_factor of the edge of a selection box side. if so, click through
-    # to the opposite side
-    edge_factor = 0.1
-
-    for d in dim1, dim2:
-        if not isinstance(d, int):
-            assert False
-        edge_width = box.size[d] * edge_factor
-        faceNormal = [0, 0, 0]
-        cameraBehind = False
-
-        if point[d] - box.origin[d] < edge_width:
-            faceNormal[d] = -1
-            cameraBehind = nearPoint[d] - box.origin[d] > 0
-        if point[d] - box.maximum[d] > -edge_width:
-            faceNormal[d] = 1
-            cameraBehind = nearPoint[d] - box.maximum[d] < 0
-
-        if numpy.dot(faceNormal, mouseVector) > 0 or cameraBehind:
-            # the face adjacent to the clicked edge faces away from the cam
-            # xxxx this is where to allow iso views in face-on angles to grab edges
-            # xxxx also change face highlight node to highlight this area
-            return intersections[1] if len(intersections) > 1 else intersections[0]
-
-    return point, face
-
-
-def findBlockFace(level, point):
-    """
-    Examines the level at the given point and finds which exposed face of the block
-    should be highlighted. It finds the side of the block that the floating-point coordinate
-    is nearest to and then checks nearby blocks to see if that face is exposed. If not, it returns
-    the exposed face it thinks is most appropriate for the given point.
-
-    Returns a (pos, Face) pair or None if one couldn't be found"""
-
-    direction = [0, 0, 0]
-
-    try:
-        blockPosition = list(point.intfloor())
-    except ValueError:
-        return None  # catch NaNs
-    blockPosition[1] = max(0, blockPosition[1])
-
-    # Compute a vector pointing from the center of the block to the point
-    # on its surface.
-
-    faceVector = ((point[0] - (blockPosition[0] + 0.5)),
-                  (point[1] - (blockPosition[1] + 0.5)),
-                  (point[2] - (blockPosition[2] + 0.5))
-    )
-
-    av = map(abs, faceVector)
-
-    longAxis = av.index(max(av))
-    delta = faceVector[longAxis]
-    if delta < 0:
-        direction[longAxis] = -1
-    else:
-        direction[longAxis] = 1
-
-    # Find a list of all directions in which this block has an exposed face
-    # In this case we only check whether the block IDs are different. This could be improved.
-    potentialOffsets = []
-
-    try:
-        block = level.getBlockID(*blockPosition)
-    except (EnvironmentError, exceptions.LevelFormatError):
-        return Vector(*blockPosition), faces.FaceYIncreasing
-
-    if block == blocktypes.pc_blocktypes.SnowLayer.ID:
-        potentialOffsets.append((0, 1, 0))
-    else:
-        for face, offsets in faces.faceDirections:
-            point = map(lambda a, b: a + b, blockPosition, offsets)
-            try:
-                neighborBlock = level.getBlockID(*point)
-                if block != neighborBlock:
-                    potentialOffsets.append(offsets)
-            except (EnvironmentError, exceptions.LevelFormatError):
-                pass
-
-    # If the computed direction doesn't have an exposed face, check each component of the original
-    # face vector to see if the corresponding face is exposed
-    for i in range(2):
-        if tuple(direction) not in potentialOffsets:
-            av[longAxis] = 0
-            longAxis = av.index(max(av))
-            direction = [0, 0, 0]
-            delta = faceVector[longAxis]
-            if delta < 0:
-                direction[longAxis] = -1
-            else:
-                direction[longAxis] = 1
-
-    if tuple(direction) not in potentialOffsets:
-        if len(potentialOffsets):
-            direction = potentialOffsets[0]
-        else:
-            # use the top face as a fallback
-            direction = [0, 1, 0]
-
-    direction = tuple(direction)
-    for face, d in faces.faceDirections:
-        if direction == d:
-            break
-
-    return Vector(*blockPosition), face
-
-
-def iterateChunks(x, z, diameter):
+def iterateChunks(x, z, radius):
     """
     Yields a list of chunk positions starting from the center and going outward in a square spiral pattern.
 
     :param x: center block position
     :param z: center block position
-    :param diameter: diameter, in chunks
-    :type diameter: int
+    :param radius: radius, in chunks
+    :type radius: int
     :return:
     :rtype:
     """
@@ -659,7 +639,7 @@ def iterateChunks(x, z, diameter):
             yield (cx, cz)
 
         step += 1
-        if step > diameter:
+        if step > radius * 2:
             raise StopIteration
 
         dir = -dir
@@ -766,166 +746,55 @@ class WorldCursorInfo(InfoPanel):
                 #log.info("HeightMap (%s:%s): \n%s", cPos, (ix, iz), chunk.HeightMap)
                 desc += "\tHeightMap(%s:%s): %d" % (cPos, (ix, iz), chunk.HeightMap[iz, ix])
 
-            desc += "\tName: %s" % dim.blocktypes[result.Blocks[0], result.Data[0]].englishName
+            desc += "\tName: %s" % dim.blocktypes[result.Blocks[0], result.Data[0]].displayName
             return desc
-
+        except ChunkNotPresent:
+            return "Chunk not present."
         except (EnvironmentError, LevelFormatError) as e:
             return "Error describing block: %r" % e
         except Exception as e:
             log.exception("Error describing block: %r", e)
             return "Error describing block: %r" % e
 
+LayerToggleOptions = Settings().getNamespace("layertoggleoptions")
 
-class ViewMouseAction(object):
-    button = Qt.NoButton
-    modifiers = Qt.NoModifier
-    labelText = "Unknown Action"
-    hidden = False  # Hide from configuration
+class LayerToggleGroup(QtCore.QObject):
+    def __init__(self, *args, **kwargs):
+        super(LayerToggleGroup, self).__init__(*args, **kwargs)
+        self.actions = {}
+        self.actionGroup = QtGui.QActionGroup(self)
+        self.actionGroup.setExclusive(False)
+        self.options = {}
+        for layer in Layer.AllLayers:
+            option = LayerToggleOptions.getOption("%s_visible" % layer, bool, True)
+            self.options[layer] = option
 
-    def __init__(self, button=None):
-        """
-        An action that can be bound to a mouse button click, drag, or movement in a WorldView.
+            action = QtGui.QAction(layer, self)
+            action.setCheckable(True)
+            action.setChecked(option.value())
+            log.info("LAYER %s VISIBLE %s", layer, option.value())
+            action.layerName = layer
+            self.actions[layer] = action
+            self.actionGroup.addAction(action)
 
-        """
-        if button is not None:
-            self.button = button
+        self.actionGroup.triggered.connect(self.actionTriggered)
 
-    def mouseMoveEvent(self, event):
-        """
+        self.menu = QtGui.QMenu()
 
-        :type event: QtGui.QMouseEvent
-        """
+        for layer in Layer.AllLayers:
+            self.menu.addAction(self.actions[layer])
 
-    def mousePressEvent(self, event):
-        """
+    def actionTriggered(self, action):
+        checked = action.isChecked()
+        log.info("Set layer %s to %s", action.layerName, checked)
+        self.options[action.layerName].setValue(checked)
+        self.layerToggled.emit(action.layerName, checked)
 
-        :type event: QtGui.QMouseEvent
-        """
+    layerToggled = QtCore.Signal(str, bool)
 
-    def mouseReleaseEvent(self, event):
-        """
+    def getVisibleLayers(self):
+        return [layer for layer in self.actions if self.actions[layer].isChecked()]
 
-        :type event: QtGui.QMouseEvent
-        """
-
-    def wheelEvent(self, event):
-        """
-
-        :type event: QtGui.QMouseEvent
-        """
-
-class UseToolMouseAction(ViewMouseAction):
-    button = Qt.LeftButton
-    labelText = "Use Tool (Don't change!)"
-    hidden = True
-
-    def __init__(self, editor, button=None):
-        super(UseToolMouseAction, self).__init__(button)
-        self.editor = editor
-
-    def mousePressEvent(self, event):
-        self.editor.viewMousePress(event)
-        event.view.update()
-
-    def mouseMoveEvent(self, event):
-        self.editor.viewMouseDrag(event)
-        event.view.update()
-
-    def mouseReleaseEvent(self, event):
-        self.editor.viewMouseRelease(event)
-        event.view.update()
-
-class TrackingMouseAction(ViewMouseAction):
-    button = Qt.NoButton
-    hidden = True
-
-    labelText = "Mouse Tracking (Don't change!)"
-
-    def __init__(self, editor, button=None):
-        super(TrackingMouseAction, self).__init__(button)
-        self.editor = editor
-
-    def mouseMoveEvent(self, event):
-        self.editor.viewMouseMove(event)
-
-class MoveViewMouseAction(ViewMouseAction):
-    button = Qt.RightButton
-    labelText = "Pan View"
-
-    def mousePressEvent(self, event):
-        x, y = event.x(), event.y()
-        self.dragStart = event.view.unprojectAtHeight(x, y, 0)
-        self.startOffset = event.view.centerPoint
-        log.debug("Drag start %s", self.dragStart)
-
-        event.view.update()
-
-    def mouseMoveEvent(self, event):
-        x = event.x()
-        y = event.y()
-        log.debug("mouseMoveEvent %s", (x, y))
-
-        if self.dragStart:
-            d = event.view.unprojectAtHeight(x, y, 0) - self.dragStart
-            event.view.centerPoint -= d
-            log.debug("Drag continue delta %s", d)
-
-            event.view.update()
-
-    def mouseReleaseEvent(self, event):
-        x, y = event.x(), event.y()
-        self.dragStart = None
-        log.debug("Drag end")
-
-        event.view.update()
-
-
-class ZoomWheelAction(ViewMouseAction):
-    _zooms = None
-    labelText = "Zoom View"
-    maxScale = 16.
-    minScale = 1. / 64
-
-    @property
-    def zooms(self):
-        if self._zooms:
-            return self._zooms
-        zooms = []
-        _i = self.minScale
-        while _i < self.maxScale:
-            zooms.append(_i)
-            _i *= 2.0
-
-        self._zooms = zooms
-        return zooms
-
-    def wheelEvent(self, event):
-        d = event.delta()
-        mousePos = (event.x(), event.y())
-
-        if d < 0:
-            i = self.zooms.index(event.view.scale)
-            if i < len(self.zooms) - 1:
-                self.zoom(event.view, self.zooms[i + 1], mousePos)
-        elif d > 0:
-            i = self.zooms.index(event.view.scale)
-            if i > 0:
-                self.zoom(event.view, self.zooms[i - 1], mousePos)
-
-    def zoom(self, view, scale, (mx, my)):
-
-        # Get mouse position in world coordinates
-        worldPos = view.unprojectAtHeight(mx, my, 0)
-
-        if scale != view.scale:
-            view.scale = scale
-
-            # Get the new position under the mouse, find its distance from the old position,
-            # and shift the centerPoint by that amount.
-
-            newWorldPos = view.unprojectAtHeight(mx, my, 0)
-            delta = newWorldPos - worldPos
-            view.centerPoint = view.centerPoint - delta
-
-            log.debug("zoom offset %s, pos %s, delta %s, scale %s", view.centerPoint, (mx, my), delta, view.scale)
-
+    def setVisibleLayers(self, layers):
+        for layer in self.actions:
+            self.actions[layer].setChecked(layer in layers)

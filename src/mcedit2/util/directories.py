@@ -8,7 +8,7 @@ def getUserFilesDirectory():
     else:
         script = sys.argv[0]
         if exe.endswith("python") or exe.endswith("python.exe"):
-            folder = os.path.dirname(script)
+            folder = os.path.dirname(os.path.dirname(os.path.dirname(script)))  # from src/mcedit, ../../
         else:
             folder = os.path.dirname(exe)
 
@@ -18,4 +18,5 @@ def getUserFilesDirectory():
         os.makedirs(dataDir)
     return dataDir
 
-
+def getUserSchematicsDirectory():
+    return os.path.join(getUserFilesDirectory(), "schematics")

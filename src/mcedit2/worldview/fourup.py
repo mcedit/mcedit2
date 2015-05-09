@@ -40,12 +40,12 @@ class FourUpWorldView(QtGui.QWidget):
         self.isoView = IsoWorldView(*args, **kwargs)
         self.allViews = [self.xView, self.yView, self.zView, self.isoView]
 
-        self.xView.viewportMoved.connect(self.subViewMoved(self.xView))
-        self.yView.viewportMoved.connect(self.subViewMoved(self.yView))
-        self.zView.viewportMoved.connect(self.subViewMoved(self.zView))
-        self.isoView.viewportMoved.connect(self.subViewMoved(self.isoView))
+        self.xView.viewportMoved.connect(self.subViewMoved)
+        self.yView.viewportMoved.connect(self.subViewMoved)
+        self.zView.viewportMoved.connect(self.subViewMoved)
+        self.isoView.viewportMoved.connect(self.subViewMoved)
 
-        self.mouseActions = []
+        self.viewActions = []
 
         for view in self.allViews:
             #view.viewportMoved.connect(lambda:self.centerOnView(view))
@@ -106,20 +106,17 @@ class FourUpWorldView(QtGui.QWidget):
 
 
     def subViewMoved(self, view):
-        def _moved():
-            blocked = [view.blockSignals(True) for view in self.allViews]
-            self.centerOnPoint(view.viewCenter())
-            for b, view in zip(blocked, self.allViews):
-                view.blockSignals(b)
+        blocked = [view.blockSignals(True) for view in self.allViews]
+        self.centerOnPoint(view.viewCenter())
+        for b, view in zip(blocked, self.allViews):
+            view.blockSignals(b)
 
-            self.viewportMoved.emit(self.centerPoint)
-
-        return _moved
+        self.viewportMoved.emit(self)
 
     def viewCenter(self):
         return self.xView.viewCenter()
 
-    def centerOnPoint(self, point):
+    def centerOnPoint(self, point, distance=None):
         for view in self.allViews:
             view.centerOnPoint(point)
 

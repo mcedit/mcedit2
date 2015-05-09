@@ -40,16 +40,17 @@ class ObjectInspector(QtGui.QFrame):
                                    self.editorButton,
                                    self.backButton,
                                    self.reloadButton), 0),
-                               (Row(QtGui.QLabel("Object: "),
+                              (Row(QtGui.QLabel("Object: "),
                                    (self.inputBox, 1)), 0),
                               (self.treeWidget, 5)))
+
         self.inputBox.textChanged.connect(self.textDidChange)
         self.forwardHistory = []
         objectName = settings.Settings().value("objectinspector/objectname", self.objectName)
         self.history = settings.Settings().jsonValue("objectinspector/history", [objectName])
-        self.goToObject(objectName)
         self.historyLimit = 20
 
+        self.goToObject(objectName)
     def close(self, *args, **kwargs):
         super(ObjectInspector, self).close(*args, **kwargs)
         settings.Settings().setValue("objectinspector/treewidget/geometry", self.treeWidget.saveGeometry())
@@ -88,27 +89,29 @@ class ObjectInspector(QtGui.QFrame):
             QtCore.QTimer.singleShot(1000, lambda: (self._goToObject(text, history))) #try again later
             return
 
-        try:
-            obj = eval(text)
+        self.objectName = text
+        self.updateTree()
+        if history:
+            if self.history[-1] != self.objectName:
+                log.info("Adding %s to history", self.objectName)
+                self.history.append(self.objectName)
+                self.history = self.history[:self.historyLimit]
+                self.forwardHistory = []
+                settings.Settings().setJsonValue("objectinspector/history", self.history)
 
+        settings.Settings().setValue("objectinspector/objectname", text)
+
+    def getObject(self):
+        from mcedit2 import editorapp
+        try:
+            obj = eval(self.objectName, {'editorapp': editorapp}, {})
         except Exception as e:
             obj = e
-            history = False
 
-        if obj is not None:
-            if history:
-                if self.history[-1] != self.objectName:
-                    log.info("Adding %s to history", self.objectName)
-                    self.history.append(self.objectName)
-                    self.history = self.history[:self.historyLimit]
-                    self.forwardHistory = []
-                    settings.Settings().setJsonValue("objectinspector/history", self.history)
+        if obj is None:
+            log.info("%s did not resolve to an object.", self.objectName)
 
-            self.objectName = text
-            self.object = obj
-            settings.Settings().setValue("objectinspector/objectname", text)
-        else:
-            log.info("%s did not resolve to an object.", text)
+        return obj
 
     def updateTree(self):
         def addObjectDict(obj, node, levels):
@@ -136,7 +139,7 @@ class ObjectInspector(QtGui.QFrame):
         collectionLimit = 20
         tw = self.treeWidget
         tw.clear()
-        obj = self.object
+        obj = self.getObject()
         if obj is None:
             rootNode = QtGui.QTreeWidgetItem([self.objectName, "[dead]", "Dead object"])
             tw.addTopLevelItem(rootNode)
@@ -156,22 +159,6 @@ class ObjectInspector(QtGui.QFrame):
 
     rootObjectName = "editorapp.MCEditApp.app"
     objectName = rootObjectName
-    _object = None
-
-    @property
-    def object(self):
-        if self._object is None:
-            from mcedit2 import editorapp
-            self._object = weakref.ref(editorapp.MCEditApp.app)
-        return self._object()
-
-    @object.setter
-    def object(self, value):
-        try:
-            self._object = weakref.ref(value)
-        except TypeError:
-            self._object = lambda: value
-        self.updateTree()
 
     def itemDoubleClicked(self, item):
         self.goToObject(item.objectName)

@@ -16,7 +16,8 @@ import sys, os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('..')) # Folder containing mceditlib
+sys.path.insert(0, os.path.abspath('..'))  # Folder containing mceditlib
+sys.path.insert(0, os.path.abspath('extensions'))  # extensions
 
 # -- General configuration -----------------------------------------------------
 
@@ -25,7 +26,7 @@ sys.path.insert(0, os.path.abspath('..')) # Folder containing mceditlib
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinx_nounderscore']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

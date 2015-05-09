@@ -4,15 +4,23 @@ import os
 
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
+from mcedit2.rendering.blockmodels import BlockModels
 
 from mcedit2 import editortools
 from mcedit2.command import SimpleRevisionCommand
+from mcedit2.editorcommands.fill import fillCommand
+from mcedit2.editorcommands.find_replace import FindReplaceDialog
+from mcedit2.editortools.select import SelectCommand
+from mcedit2.panels.player import PlayerPanel
 from mcedit2.util.dialogs import NotImplementedYet
-from mcedit2.util.resources import resourcePath
+from mcedit2.util.directories import getUserSchematicsDirectory
+from mceditlib.util.lazyprop import weakrefprop
+from mcedit2.util.raycast import rayCastInBounds
 from mcedit2.util.showprogress import showProgress
-from mcedit2.worldview.worldview import UseToolMouseAction, TrackingMouseAction
-from mceditlib import util
-from mcedit2.rendering import chunkloader, blockmeshes, scenegraph
+from mcedit2.util.undostack import MCEUndoStack
+from mcedit2.widgets.inspector import InspectorWidget
+from mcedit2.worldview.viewaction import UseToolMouseAction, TrackingMouseAction
+from mcedit2.rendering import chunkloader, scenegraph
 from mcedit2.rendering.geometrycache import GeometryCache
 from mcedit2.rendering.textureatlas import TextureAtlas
 from mcedit2.widgets.layout import Column, Row
@@ -21,39 +29,104 @@ from mcedit2.worldview.camera import CameraWorldViewFrame
 from mcedit2.worldview.cutaway import CutawayWorldViewFrame
 from mcedit2.worldview.minimap import MinimapWorldView
 from mcedit2.worldview.overhead import OverheadWorldViewFrame
+from mceditlib import util
+from mceditlib.anvil.biome_types import BiomeTypes
 from mceditlib.geometry import Vector
+from mceditlib.operations import ComposeOperations
+from mceditlib.operations.entity import RemoveEntitiesOperation
+from mceditlib.selection import BoundingBox
 from mceditlib.exceptions import PlayerNotFound
 from mceditlib.revisionhistory import UndoFolderExists
 from mceditlib.worldeditor import WorldEditor
+from mceditlib.blocktypes import BlockType
 
 
 log = logging.getLogger(__name__)
 """
-    An EditorSession is a world currently opened for editing, the state of the editor including the current
-    selection box, the editor tab containing its viewports, its command history, a separate instance of each editor
-    tool (why?), and the ChunkLoader that coordinates loading chunks into its viewports.
-    """
+An EditorSession is a world currently opened for editing, the state of the editor including the current
+selection box, the editor tab containing its viewports, its command history, a separate instance of each editor
+tool (why?), and the ChunkLoader that coordinates loading chunks into its viewports.
+"""
+
+class PendingImport(object):
+    def __init__(self, schematic, pos, text):
+        self.text = text
+        self.pos = pos
+        self.schematic = schematic
+
+    def __repr__(self):
+        return "%s(%r, %r)" % (self.__class__.__name__, self.schematic, self.pos)
+
+    @property
+    def bounds(self):
+        return BoundingBox(self.pos, self.schematic.getDimension().bounds.size)
+
+class PasteImportCommand(QtGui.QUndoCommand):
+    def __init__(self, editorSession, pendingImport, text, *args, **kwargs):
+        super(PasteImportCommand, self).__init__(*args, **kwargs)
+        self.setText(text)
+        self.editorSession = editorSession
+        self.pendingImport = pendingImport
+
+    def undo(self):
+        self.editorSession.moveTool.removePendingImport(self.pendingImport)
+
+    def redo(self):
+        self.editorSession.moveTool.addPendingImport(self.pendingImport)
+        self.editorSession.chooseTool("Move")
 
 class EditorSession(QtCore.QObject):
-    def __init__(self, filename, versionInfo, readonly=False):
+    def __init__(self, filename, resourceLoader, configuredBlocks, readonly=False, progressCallback=None):
+        """
+
+        :param filename:
+        :type filename: str
+        :param resourceLoader:
+        :type resourceLoader: mcedit2.resourceloader.ResourceLoader
+        :param configuredBlocks:
+        :type configuredBlocks: dict???
+        :param readonly:
+        :type readonly: bool
+        :param progressCallback:
+        :type progressCallback: callable
+        :return:
+        :rtype:
+        """
+        from mcedit2 import __version__ as v
+
+        progressMax = 8  # fixme
+        if progressCallback is None:
+            def progress(status):
+                pass
+        else:
+
+            def progress(status):
+                progressCallback(progress.progressCount, progressMax, status)
+                progress.progressCount += 1
+
+            progress.progressCount = 0
+
         QtCore.QObject.__init__(self)
-        self.undoStack = QtGui.QUndoStack()
+        self.undoStack = MCEUndoStack()
 
         self.filename = filename
         self.dockWidgets = []
         self.undoBlock = None
         self.currentTool = None
         self.dirty = False
+        self.configuredBlocks = None
+
         self.copiedSchematic = None
-        self.versionInfo = versionInfo
+        """:type : WorldEditor"""
 
         # --- Open world editor ---
         try:
+            progress("Creating WorldEditor...")
             self.worldEditor = WorldEditor(filename, readonly=readonly)
         except UndoFolderExists:
             msgBox = QtGui.QMessageBox()
             msgBox.setIcon(QtGui.QMessageBox.Warning)
-            msgBox.setWindowTitle(self.tr("MCEdit tech demo"))
+            msgBox.setWindowTitle(self.tr("MCEdit %(version)s") % {"version": v})
             msgBox.setText(self.tr("This world was not properly closed by MCEdit."))
             msgBox.setInformativeText(self.tr(
                 "MCEdit may have crashed. An undo history was found for this world. You may try to resume editing "
@@ -71,68 +144,201 @@ class EditorSession(QtCore.QObject):
                 raise IOError("Uh-oh")
 
         self.worldEditor.requireRevisions()
-        self.currentDimension = self.worldEditor.getDimension()
-        self.loader = chunkloader.ChunkLoader(self.currentDimension)
+        self.currentDimension = None
 
-        self.loader.chunkCompleted.connect(self.chunkDidComplete)
-        self.loader.allChunksDone.connect(lambda: self.editorTab.currentView().update())
+        progress("Creating menus...")
+
+        # --- Menus ---
+
+        self.menus = []
+
+        # - Edit -
+
+        self.menuEdit = QtGui.QMenu(self.tr("Edit"))
+        self.menuEdit.setObjectName("menuEdit")
+
+        self.actionCut = QtGui.QAction(self.tr("Cut"), self, triggered=self.cut, enabled=False)
+        self.actionCut.setShortcut(QtGui.QKeySequence.Cut)
+        self.actionCut.setObjectName("actionCut")
+
+        self.actionCopy = QtGui.QAction(self.tr("Copy"), self, triggered=self.copy, enabled=False)
+        self.actionCopy.setShortcut(QtGui.QKeySequence.Copy)
+        self.actionCopy.setObjectName("actionCopy")
+
+        self.actionPaste = QtGui.QAction(self.tr("Paste"), self, triggered=self.paste, enabled=False)
+        self.actionPaste.setShortcut(QtGui.QKeySequence.Paste)
+        self.actionPaste.setObjectName("actionPaste")
+
+        self.actionPaste_Blocks = QtGui.QAction(self.tr("Paste Blocks"), self, triggered=self.pasteBlocks, enabled=False)
+        self.actionPaste_Blocks.setShortcut(QtGui.QKeySequence("Ctrl+Shift+V"))
+        self.actionPaste_Blocks.setObjectName("actionPaste_Blocks")
+
+        self.actionPaste_Entities = QtGui.QAction(self.tr("Paste Entities"), self, triggered=self.pasteEntities, enabled=False)
+        self.actionPaste_Entities.setShortcut(QtGui.QKeySequence("Ctrl+Alt+V"))
+        self.actionPaste_Entities.setObjectName("actionPaste_Entities")
+
+        self.actionClear = QtGui.QAction(self.tr("Delete"), self, triggered=self.deleteSelection, enabled=False)
+        self.actionClear.setShortcut(QtGui.QKeySequence.Delete)
+        self.actionClear.setObjectName("actionClear")
+
+        self.actionDeleteBlocks = QtGui.QAction(self.tr("Delete Blocks"), self, triggered=self.deleteBlocks, enabled=False)
+        self.actionDeleteBlocks.setShortcut(QtGui.QKeySequence("Shift+Del"))
+        self.actionDeleteBlocks.setObjectName("actionDeleteBlocks")
+
+        self.actionDeleteEntities = QtGui.QAction(self.tr("Delete Entities"), self, triggered=self.deleteEntities, enabled=False)
+        self.actionDeleteEntities.setShortcut(QtGui.QKeySequence("Shift+Alt+Del"))
+        self.actionDeleteEntities.setObjectName("actionDeleteEntities")
+
+        self.actionFill = QtGui.QAction(self.tr("Fill"), self, triggered=self.fill, enabled=False)
+        self.actionFill.setShortcut(QtGui.QKeySequence("Shift+Ctrl+F"))
+        self.actionFill.setObjectName("actionFill")
+
+        self.actionFindReplace = QtGui.QAction(self.tr("Find/Replace"), self, triggered=self.findReplace, enabled=True)
+        self.actionFindReplace.setShortcut(QtGui.QKeySequence.Find)
+        self.actionFindReplace.setObjectName("actionFindReplace")
+
+        undoAction = self.undoStack.createUndoAction(self.menuEdit)
+        undoAction.setShortcut(QtGui.QKeySequence.Undo)
+        redoAction = self.undoStack.createRedoAction(self.menuEdit)
+        redoAction.setShortcut(QtGui.QKeySequence.Redo)
+
+        self.menuEdit.addAction(undoAction)
+        self.menuEdit.addAction(redoAction)
+        self.menuEdit.addSeparator()
+        self.menuEdit.addAction(self.actionCut)
+        self.menuEdit.addAction(self.actionCopy)
+        self.menuEdit.addAction(self.actionPaste)
+        self.menuEdit.addAction(self.actionPaste_Blocks)
+        self.menuEdit.addAction(self.actionPaste_Entities)
+        self.menuEdit.addSeparator()
+        self.menuEdit.addAction(self.actionClear)
+        self.menuEdit.addAction(self.actionDeleteBlocks)
+        self.menuEdit.addAction(self.actionDeleteEntities)
+        self.menuEdit.addSeparator()
+        self.menuEdit.addAction(self.actionFill)
+        self.menuEdit.addSeparator()
+        self.menuEdit.addAction(self.actionFindReplace)
+
+        self.menus.append(self.menuEdit)
+
+        # - Select -
+
+        self.menuSelect = QtGui.QMenu(self.tr("Select"))
+
+        self.actionSelectAll = QtGui.QAction(self.tr("Select All"), self, triggered=self.selectAll)
+        self.actionSelectAll.setShortcut(QtGui.QKeySequence.SelectAll)
+        self.menuSelect.addAction(self.actionSelectAll)
+
+        self.actionDeselect = QtGui.QAction(self.tr("Deselect"), self, triggered=self.deselect)
+        self.actionDeselect.setShortcut(QtGui.QKeySequence("Ctrl+D"))
+        self.menuSelect.addAction(self.actionDeselect)
+
+        self.menus.append(self.menuSelect)
+
+        # - Import/Export -
+
+        self.menuImportExport = QtGui.QMenu(self.tr("Import/Export"))
+
+        self.actionExport = QtGui.QAction(self.tr("Export"), self, triggered=self.export)
+        self.actionExport.setShortcut(QtGui.QKeySequence("Ctrl+Shift+E"))
+        self.menuImportExport.addAction(self.actionExport)
+
+        self.actionImport = QtGui.QAction(self.tr("Import"), self, triggered=self.import_)
+        self.actionImport.setShortcut(QtGui.QKeySequence("Ctrl+Shift+D"))
+        self.menuImportExport.addAction(self.actionImport)
+
+        self.actionImport = QtGui.QAction(self.tr("Show Exports Library"), self,
+                                          triggered=QtGui.qApp.libraryDockWidget.toggleViewAction().trigger)
+
+        self.actionImport.setShortcut(QtGui.QKeySequence("Ctrl+Shift+L"))
+        self.menuImportExport.addAction(self.actionImport)
+
+        self.menus.append(self.menuImportExport)
 
         # --- Resources ---
 
-        i, v, p = self.versionInfo
-        self.resourceLoader = i.getResourceLoader(v, p)
+        self.resourceLoader = resourceLoader
         self.geometryCache = GeometryCache()
-        self.textureAtlas = TextureAtlas(self.worldEditor, self.resourceLoader, blockmeshes.getExtraTextureNames())
+
+        progress("Loading textures and models...")
+        self.setConfiguredBlocks(configuredBlocks)  # Must be called after resourceLoader is in place
 
         self.editorOverlay = scenegraph.Node()
 
+        self.biomeTypes = BiomeTypes()
+
+        # --- Panels ---
+        progress("Loading panels...")
+
+        self.playerPanel = PlayerPanel(self)
+        self.panels = [self.playerPanel]
+
         # --- Tools ---
-        def PickToolAction(tool):
-            name = tool.name
-            iconName = tool.iconName
-            if iconName:
-                iconPath = resourcePath("mcedit2/assets/mcedit2/toolicons/%s.png" % iconName)
-                if not os.path.exists(iconPath):
-                    log.error("Tool icon %s not found", iconPath)
-                    icon = None
-                else:
-                    icon = QtGui.QIcon(iconPath)
-            else:
-                icon = None
 
-            def _triggered():
-                self.chooseTool(name)
-
-            action = QtGui.QAction(
-                self.tr(name),
-                self,
-                shortcut=self.toolShortcut(name),
-                triggered=_triggered,
-                checkable=True,
-                icon=icon,
-                )
-            action.toolName = name
-            action._triggered = _triggered  # Needed because connecting _triggered doesn't increase its refcount
-
-            self.toolActionGroup.addAction(action)
-            return action
+        progress("Loading tools...")
 
         self.toolClasses = list(editortools.ToolClasses())
         self.toolActionGroup = QtGui.QActionGroup(self)
-        self.toolActions = [PickToolAction(cls) for cls in self.toolClasses]
+        self.tools = [cls(self) for cls in self.toolClasses]
+        self.toolActions = [tool.pickToolAction() for tool in self.tools]
         self.actionsByName = {action.toolName: action for action in self.toolActions}
-        self.tools = {cls.name: cls(self) for cls in self.toolClasses}
+        for tool in self.tools:
+            tool.toolPicked.connect(self.chooseTool)
+        for action in self.toolActions:
+            self.toolActionGroup.addAction(action)
 
-        self.selectionTool = self.tools["Select"]
+        self.selectionTool = self.getTool("Select")
+        self.moveTool = self.getTool("Move")
+
+        # --- Dimensions ---
+
+        def _dimChanged(f):
+            def _changed():
+                self.gotoDimension(f)
+            return _changed
+
+
+        dimButton = self.changeDimensionButton = QtGui.QToolButton()
+        dimButton.setText(self.dimensionMenuLabel(""))
+        dimAction = self.changeDimensionAction = QtGui.QWidgetAction(self)
+        dimAction.setDefaultWidget(dimButton)
+        dimMenu = self.dimensionsMenu = QtGui.QMenu()
+
+        for dimName in self.worldEditor.listDimensions():
+            displayName = self.dimensionDisplayName(dimName)
+            action = dimMenu.addAction(displayName)
+            action._changed = _dimChanged(dimName)
+            action.triggered.connect(action._changed)
+
+        dimButton.setMenu(dimMenu)
+        dimButton.setPopupMode(dimButton.InstantPopup)
+
+        progress("Loading overworld dimension")
+        self.gotoDimension("")
 
         # --- Editor stuff ---
-        self.editorTab = EditorTab(self)
-        self.toolChanged.connect(self.editorTab.toolDidChange)
+        progress("Creating EditorTab...")
 
-        self.undoStack.indexChanged.connect(lambda: self.editorTab.currentView().update())
+        self.editorTab = EditorTab(self)
+        self.toolChanged.connect(self.toolDidChange)
+
+        self.undoStack.indexChanged.connect(self.undoIndexChanged)
+
+        self.findReplaceDialog = FindReplaceDialog(self)
+        for resultsWidget in self.findReplaceDialog.resultsWidgets:
+            self.dockWidgets.append((Qt.BottomDockWidgetArea, resultsWidget))
+
+        self.inspectorWidget = InspectorWidget(self)
+        self.inspectorDockWidget = QtGui.QDockWidget(self.tr("Inspector"), objectName="inspector")
+        self.inspectorDockWidget.setWidget(self.inspectorWidget)
+        self.inspectorDockWidget.hide()
+        self.dockWidgets.append((Qt.RightDockWidgetArea, self.inspectorDockWidget))
 
         if len(self.toolActions):
             self.toolActions[0].trigger()  # Must be called after toolChanged is connected to editorTab
+
+        if hasattr(progress, 'progressCount') and progress.progressCount != progressMax:
+            log.info("Update progressMax to %d, please.", progress.progressCount)
 
     def dispose(self):
         if self.textureAtlas:
@@ -144,50 +350,147 @@ class EditorSession(QtCore.QObject):
         if self.worldEditor:
             self.worldEditor.close()
             self.worldEditor = None
+    # Connecting these signals to the EditorTab creates a circular reference through
+    # the Qt objects, preventing the EditorSession from being destroyed
+
+    def focusWorldView(self):
+        self.editorTab.currentView().setFocus()
+
+    def updateView(self):
+        self.editorTab.currentView().update()
+
+    def toolDidChange(self, tool):
+        self.editorTab.toolDidChange(tool)
+
+    # --- Block config ---
+
+    # Emitted when configuredBlocks is changed. TextureAtlas and BlockModels will also have changed.
+    configuredBlocksChanged = QtCore.Signal()
+
+    def setConfiguredBlocks(self, configuredBlocks):
+        blocktypes = self.worldEditor.blocktypes
+        if self.configuredBlocks is not None:
+            # Remove all previously configured blocks
+            deadJsons = []
+            for json in blocktypes.blockJsons:
+                if '__configured__' in json:
+                    deadJsons.append(json)
+
+            deadIDs = set((j['internalName'], j['meta']) for j in deadJsons)
+            blocktypes.allBlocks[:] = [
+                bt for bt in blocktypes.allBlocks
+                if (bt.internalName, bt.meta) not in deadIDs
+            ]
+
+            for json in deadJsons:
+                internalName = json['internalName']
+                fakeState = json['blockState']
+                blocktypes.blockJsons.remove(json)
+                ID = blocktypes.IDsByName[internalName]
+
+                del blocktypes.IDsByState[internalName + fakeState]
+                del blocktypes.statesByID[ID, json['meta']]
+
+        for blockDef in configuredBlocks:
+            internalName = blockDef.internalName
+            if internalName not in blocktypes.IDsByName:
+                # no ID mapped to this name, skip
+                continue
+
+            if blockDef.meta == 0:
+                blockType = blocktypes[internalName]
+                blockJson = blockType.json
+            else:
+                # not automatically created by FML mapping loader
+                ID = blocktypes.IDsByName[internalName]
+                fakeState = '[%d]' % blockDef.meta
+                nameAndState = internalName + fakeState
+                blocktypes.blockJsons[nameAndState] = {
+                    'displayName': internalName,
+                    'internalName': internalName,
+                    'blockState': fakeState,
+                    'unknown': False,
+                    'meta': blockDef.meta,
+                }
+                blockType = BlockType(ID, blockDef.meta, blocktypes)
+                blocktypes.allBlocks.append(blockType)
+                blocktypes.IDsByState[nameAndState] = ID, blockDef.meta
+                blocktypes.statesByID[ID, blockDef.meta] = nameAndState
+
+                blockJson = blockType.json
+
+            blockJson['forcedModel'] = blockDef.modelPath
+            blockJson['forcedModelTextures'] = blockDef.modelTextures
+            blockJson['forcedModelRotation'] = blockDef.modelRotations
+            blockJson['forcedRotationFlags'] = blockDef.rotationFlags
+            blockJson['__configured__'] = True
+
+
+        self.configuredBlocks = configuredBlocks
+
+        self.blockModels = BlockModels(self.worldEditor.blocktypes, self.resourceLoader)
+        self.textureAtlas = TextureAtlas(self.worldEditor, self.resourceLoader, self.blockModels)
+
+        self.configuredBlocksChanged.emit()
+
+    # --- Selection ---
+
+    selectionChanged = QtCore.Signal(BoundingBox)
+    _currentSelection = None
 
     @property
-    def selectionBox(self):
-        return self.selectionTool.currentSelection
+    def currentSelection(self):
+        return self._currentSelection
 
-    @selectionBox.setter
-    def selectionBox(self, value):
-        self.selectionTool.currentSelection = value
+    @currentSelection.setter
+    def currentSelection(self, box):
+        self._currentSelection = box
+        self.enableSelectionCommands(box is not None and box.volume != 0)
+        self.selectionChanged.emit(box)
+
+    def enableSelectionCommands(self, enable):
+        self.actionCut.setEnabled(enable)
+        self.actionCopy.setEnabled(enable)
+        self.actionPaste.setEnabled(enable)
+        self.actionPaste_Blocks.setEnabled(enable)
+        self.actionPaste_Entities.setEnabled(enable)
+        self.actionClear.setEnabled(enable)
+        self.actionDeleteBlocks.setEnabled(enable)
+        self.actionDeleteEntities.setEnabled(enable)
+        self.actionFill.setEnabled(enable)
+        self.actionExport.setEnabled(enable)
 
     # --- Menu commands ---
 
+    # - World -
+
     def save(self):
+        self.undoStack.clearUndoBlock()
         self.worldEditor.saveChanges()
         self.dirty = False
 
-    def undo(self):
-        self.undoStack.undo()
-
-    def redo(self):
-        self.undoStack.redo()
+    # - Edit -
 
     def cut(self):
         command = SimpleRevisionCommand(self, "Cut")
         with command.begin():
-            task = self.currentDimension.exportSchematicIter(self.selectionBox)
+            task = self.currentDimension.exportSchematicIter(self.currentSelection)
             self.copiedSchematic = showProgress("Cutting...", task)
-            task = self.currentDimension.fillBlocksIter(self.selectionBox, "air")
+            task = self.currentDimension.fillBlocksIter(self.currentSelection, "air")
             showProgress("Cutting...", task)
         self.undoStack.push(command)
 
     def copy(self):
-        task = self.currentDimension.exportSchematicIter(self.selectionBox)
+        task = self.currentDimension.exportSchematicIter(self.currentSelection)
         self.copiedSchematic = showProgress("Copying...", task)
 
     def paste(self):
         if self.copiedSchematic is None:
             return
-
-        moveTool = self.tools["Move"]
-        if moveTool is self.currentTool:
-            moveTool.completeMove()
-        moveTool.movingSchematic = self.copiedSchematic
-        moveTool.movePosition = self.editorTab.currentView().viewCenter()
-        self.chooseTool("Move")
+        view = self.editorTab.currentView()
+        imp = PendingImport(self.copiedSchematic, view.mouseBlockPos, self.tr("<Pasted Object>"))
+        command = PasteImportCommand(self, imp, "Paste")
+        self.undoStack.push(command)
 
     def pasteBlocks(self):
         NotImplementedYet()
@@ -195,54 +498,156 @@ class EditorSession(QtCore.QObject):
     def pasteEntities(self):
         NotImplementedYet()
 
+    def findReplace(self):
+        self.findReplaceDialog.exec_()
+
+    def deleteSelection(self):
+        command = SimpleRevisionCommand(self, "Delete")
+        with command.begin():
+            fillTask = self.currentDimension.fillBlocksIter(self.currentSelection, "air")
+            entitiesTask = RemoveEntitiesOperation(self.currentDimension, self.currentSelection)
+            task = ComposeOperations(fillTask, entitiesTask)
+            showProgress("Deleting...", task)
+        self.pushCommand(command)
+
+    def deleteBlocks(self):
+        command = SimpleRevisionCommand(self, "Delete Blocks")
+        with command.begin():
+            fillTask = self.currentDimension.fillBlocksIter(self.currentSelection, "air")
+            showProgress("Deleting...", fillTask)
+        self.pushCommand(command)
+
+    def deleteEntities(self):
+        command = SimpleRevisionCommand(self, "Delete Entities")
+        with command.begin():
+            entitiesTask = RemoveEntitiesOperation(self.currentDimension, self.currentSelection)
+            showProgress("Deleting...", entitiesTask)
+        self.pushCommand(command)
+
+    def fill(self):
+        fillCommand(self)
+
+    # - Select -
+
+    def selectAll(self):
+        command = SelectCommand(self, self.currentDimension.bounds, self.tr("Select All"))
+        self.pushCommand(command)
+
+    def deselect(self):
+        command = SelectCommand(self, None)
+        command.setText(self.tr("Deselect"))
+        self.pushCommand(command)
+
+    # - Dimensions -
+
+    dimensionChanged = QtCore.Signal(object)
+
+
+    _dimDisplayNames = {"": "Overworld",
+                       "DIM-1": "Nether",
+                       "DIM1": "The End",
+                       }
+
+    def dimensionDisplayName(self, dimName):
+        return self._dimDisplayNames.get(dimName, dimName)
+
+    def dimensionMenuLabel(self, dimName):
+        return self.tr("Dimension: %s" % self.dimensionDisplayName(dimName))
+
+    def gotoDimension(self, dimName):
+        dim = self.worldEditor.getDimension(dimName)
+        if dim is self.currentDimension:
+            return
+        log.info("Going to dimension %s", dimName)
+        self.changeDimensionButton.setText(self.dimensionMenuLabel(dimName))
+        self.currentDimension = dim
+        self.loader = chunkloader.ChunkLoader(self.currentDimension)
+
+        self.loader.chunkCompleted.connect(self.chunkDidComplete)
+        self.loader.allChunksDone.connect(self.updateView)
+
+        self.dimensionChanged.emit(dim)
+
+
+    # - Import/export -
+
+    def import_(self):
+        # prompt for a file to import
+        startingDir = Settings().value("import_dialog/starting_dir", getUserSchematicsDirectory())
+        result = QtGui.QFileDialog.getOpenFileName(QtGui.qApp.mainWindow, self.tr("Import"),
+                                                   startingDir,
+                                                   "All files (*.*)")
+        if result:
+            filename = result[0]
+            if filename:
+                self.importSchematic(filename)
+
+    def export(self):
+        # prompt for filename and format. maybe use custom browser to save to export library??
+        startingDir = Settings().value("import_dialog/starting_dir", getUserSchematicsDirectory())
+        result = QtGui.QFileDialog.getSaveFileName(QtGui.qApp.mainWindow,
+                                                   self.tr("Export Schematic"),
+                                                   startingDir,
+                                                   "Schematic files (*.schematic)")
+
+        if result:
+            filename = result[0]
+            if filename:
+                task = self.currentDimension.exportSchematicIter(self.currentSelection)
+                schematic = showProgress("Copying...", task)
+                schematic.saveToFile(filename)
+
+    # --- Library support ---
+
+    def importSchematic(self, filename):
+        schematic = WorldEditor(filename, readonly=True)
+        ray = self.editorTab.currentView().rayAtCenter()
+        pos, face = rayCastInBounds(ray, self.currentDimension)
+        if pos is None:
+            pos = ray.point
+
+        name = os.path.basename(filename)
+        imp = PendingImport(schematic, pos, name)
+        command = PasteImportCommand(self, imp, "Import %s" % name)
+        self.undoStack.push(command)
+
     # --- Undo support ---
+
+    revisionChanged = QtCore.Signal(int)
+
+    def undoIndexChanged(self, index):
+        self.editorTab.currentView().update()
 
     def pushCommand(self, command):
         self.undoStack.push(command)
 
     def setUndoBlock(self, callback):
-        """
-        Set a function to be called before the next time beginUndo is called. Some tools may need to call beginUndo,
-        then interact with the user for a time before calling commitUndo, or they may need to use multiple undo
-        revisions for a single operation with freedom given to the user between revisions. This ensures that
-        the interactive operation will be completed or aborted before the next command begins its undo revision.
-
-        User actions that only change the editor state will not call beginUndo, and their QUndoCommand may end up
-        before the interrupted command in the history.
-
-        :param callback: Function to call
-        :type callback: callable
-        """
-        assert not self.undoBlock, "Cannot add multiple undo blocks (yet)"
-        self.undoBlock = callback
+        self.undoStack.setUndoBlock(callback)
 
     def removeUndoBlock(self, callback):
-        if self.undoBlock:
-            if callback != self.undoBlock:  # can't use 'is' for func ptrs, why?
-                raise ValueError("Trying to remove an undoBlock that is not set, had %r and asked to remove %r",
-                                 self.undoBlock, callback)
-            self.undoBlock = None
+        self.undoStack.removeUndoBlock(callback)
 
     def beginUndo(self):
-        if self.undoBlock:
-            callback = self.undoBlock
-            self.undoBlock = None
-            callback()
-
+        self.undoStack.clearUndoBlock()
         self.dirty = True
         self.worldEditor.beginUndo()
 
     def commitUndo(self):
         self.worldEditor.commitUndo()
+        self.revisionChanged.emit(self.worldEditor.currentRevision)
 
     def undoForward(self):
         self.worldEditor.redo()
+        self.revisionChanged.emit(self.worldEditor.currentRevision)
 
     def undoBackward(self):
         self.worldEditor.undo()
+        self.revisionChanged.emit(self.worldEditor.currentRevision)
 
     def gotoRevision(self, index):
-        self.worldEditor.gotoRevision(index)
+        if index != self.currentRevision:
+            self.worldEditor.gotoRevision(index)
+            self.revisionChanged.emit(self.worldEditor.currentRevision)
 
     @property
     def currentRevision(self):
@@ -255,8 +660,17 @@ class EditorSession(QtCore.QObject):
         #  buffer read for that, now what?
         try:
             player = self.worldEditor.getPlayer()
-            center = Vector(*player.Position)
-            log.info("Centering on single-player player.")
+            center = Vector(*player.Position) + (0, 1.8, 0)
+            dimNo = player.Dimension
+            dimName = self.worldEditor.dimNameFromNumber(dimNo)
+            log.info("Setting view angle to single-player player's view in dimension %s.", dimName)
+            rotation = player.Rotation
+            if dimName:
+                self.gotoDimension(dimName)
+            try:
+                self.editorTab.currentView().yawPitch = rotation
+            except AttributeError:
+                pass
         except PlayerNotFound:
             try:
                 center = self.worldEditor.worldSpawnPosition()
@@ -266,7 +680,7 @@ class EditorSession(QtCore.QObject):
                 center = self.currentDimension.bounds.origin + (self.currentDimension.bounds.size * 0.5)
 
         self.editorTab.miniMap.centerOnPoint(center)
-        self.editorTab.currentView().centerOnPoint(center)
+        self.editorTab.currentView().centerOnPoint(center, distance=0)
 
     # --- Tools ---
 
@@ -277,9 +691,14 @@ class EditorSession(QtCore.QObject):
         }
         return toolShortcuts.get(name, "")
 
+    def getTool(self, name):
+        for t in self.tools:
+            if t.name == name:
+                return t
+
     def chooseTool(self, name):
         oldTool = self.currentTool
-        self.currentTool = self.tools[name]
+        self.currentTool = self.getTool(name)
         if oldTool is not self.currentTool:
             if oldTool:
                 oldTool.toolInactive()
@@ -291,7 +710,7 @@ class EditorSession(QtCore.QObject):
 
     def chunkDidComplete(self):
         from mcedit2 import editorapp
-        editorapp.MCEditApp.app.updateStatusLabel(None, None, self.loader.cps, self.editorTab.currentView().fps)
+        editorapp.MCEditApp.app.updateStatusLabel(None, None, None, self.loader.cps, self.editorTab.currentView().fps)
 
     def updateStatusFromEvent(self, event):
         from mcedit2 import editorapp
@@ -299,9 +718,17 @@ class EditorSession(QtCore.QObject):
             id = self.currentDimension.getBlockID(*event.blockPosition)
             data = self.currentDimension.getBlockData(*event.blockPosition)
             block = self.worldEditor.blocktypes[id, data]
-            editorapp.MCEditApp.app.updateStatusLabel(event.blockPosition, block.englishName, self.loader.cps, event.view.fps)
+            biomeID = self.currentDimension.getBiomeID(event.blockPosition[0], event.blockPosition[2])
+            biome = self.biomeTypes.types.get(biomeID)
+            if biome is not None:
+                biomeName = biome.name
+            else:
+                biomeName = "Unknown biome"
+
+            biomeText = "%s (%d)" % (biomeName, biomeID)
+            editorapp.MCEditApp.app.updateStatusLabel(event.blockPosition, block, biomeText, self.loader.cps, event.view.fps)
         else:
-            editorapp.MCEditApp.app.updateStatusLabel('(N/A)', "", self.loader.cps, event.view.fps)
+            editorapp.MCEditApp.app.updateStatusLabel('(N/A)', None, None, self.loader.cps, event.view.fps)
 
     def viewMousePress(self, event):
         self.updateStatusFromEvent(event)
@@ -353,7 +780,40 @@ class EditorSession(QtCore.QObject):
         self.editorTab.saveState()
         self.worldEditor.close()
         self.worldEditor = None
+
+        for panel in self.panels:
+            panel.close()
         return True
+
+    # --- Inspector ---
+
+    def inspectBlock(self, pos):
+        self.inspectorDockWidget.show()
+        self.inspectorWidget.inspectBlock(pos)
+
+    def inspectEntity(self, entity):
+        self.inspectorDockWidget.show()
+        self.inspectorWidget.inspectEntity(entity)
+
+    # --- Zooming ---
+
+    def zoomAndInspectBlock(self, pos):
+        self.zoomToPoint(pos)
+        self.inspectBlock(pos)
+
+    def zoomAndInspectEntity(self, entity):
+        self.zoomToPoint(entity.Position)
+        self.inspectEntity(entity)
+
+    def zoomToPoint(self, point):
+        self.editorTab.currentView().centerOnPoint(point, 15)
+
+    # --- Blocktype handling ---
+
+    def unknownBlocks(self):
+        for blocktype in self.worldEditor.blocktypes:
+            if blocktype.unknown:
+                yield blocktype.internalName
 
 class EditorTab(QtGui.QWidget):
     """
@@ -364,11 +824,15 @@ class EditorTab(QtGui.QWidget):
         """
 
         :type editorSession: mcedit2.editorsession.EditorSession
+        :rtype: EditorTab
         """
         settings = Settings()
 
         QtGui.QWidget.__init__(self)
+        self.setContentsMargins(0, 0, 0, 0)
+
         self.editorSession = editorSession
+        self.editorSession.dimensionChanged.connect(self.dimensionDidChange)
         self.debugLastCenters = []
 
         self.viewButtonGroup = QtGui.QButtonGroup(self)
@@ -390,7 +854,6 @@ class EditorTab(QtGui.QWidget):
             self.viewButtons[name] = button
 
         self.viewStack = QtGui.QStackedWidget()
-
 
         self.miniMap = MinimapWorldView(editorSession.currentDimension, editorSession.textureAtlas, editorSession.geometryCache)
         self.miniMapDockWidget = QtGui.QDockWidget("Minimap", objectName="MinimapWidget", floating=True)
@@ -423,22 +886,21 @@ class EditorTab(QtGui.QWidget):
 
         self.cameraViewFrame = CameraWorldViewFrame(editorSession.currentDimension, editorSession.textureAtlas, editorSession.geometryCache, self.miniMap)
         self.cameraViewFrame.worldView.viewID = "Cam"
+        self.cameraView = self.cameraViewFrame.worldView
         self._addView(self.cameraViewFrame)
-        #
-        # self.isoViewFrame = IsoWorldViewFrame(editorSession.currentDimension, editorSession.textureAtlas, editorSession.geometryCache, self.miniMap)
-        # self.isoViewFrame.worldView.viewID = "Iso"
-        # self._addView(self.isoViewFrame)
 
         self.viewStack.currentChanged.connect(self._viewChanged)
         self.viewChanged.connect(self.viewDidChange)
 
         self.setLayout(Column(self.viewButtonToolbar,
-                              Row(self.viewStack, margin=0)))
+                              Row(self.viewStack, margin=0), margin=0))
 
         currentViewName = settings.value("mainwindow/currentview", "Cam")
         if currentViewName not in self.viewButtons:
             currentViewName = "Cam"
         self.viewButtons[currentViewName].click()
+
+        self.editorSession.configuredBlocksChanged.connect(self.configuredBlocksDidChange)
 
     def destroy(self):
         self.editorSession = None
@@ -446,15 +908,24 @@ class EditorTab(QtGui.QWidget):
             view.destroy()
 
         super(EditorTab, self).destroy()
+    editorSession = weakrefprop()
+
+    def configuredBlocksDidChange(self):
+        for view in self.views:
+            view.setTextureAtlas(self.editorSession.textureAtlas)
+
+    def dimensionDidChange(self, dim):
+        for view in self.views:
+            view.setDimension(dim)
+            self.editorSession.loader.addClient(view)
 
     def toolDidChange(self, tool):
         if tool.toolWidget:
             self.toolOptionsArea.takeWidget()  # setWidget gives ownership to the scroll area
             self.toolOptionsArea.setWidget(tool.toolWidget)
             self.toolOptionsDockWidget.setWindowTitle(self.tr(tool.name) + self.tr(" Tool Options"))
-        if tool.cursorNode:
-            log.info("Setting cursor %r for tool %r on view %r", tool.cursorNode, tool, self.currentView())
-            self.currentView().setToolCursor(tool.cursorNode)
+        log.info("Setting cursor %r for tool %r on view %r", tool.cursorNode, tool, self.currentView())
+        self.currentView().setToolCursor(tool.cursorNode)
 
     def saveState(self):
         pass
@@ -471,32 +942,31 @@ class EditorTab(QtGui.QWidget):
             view.setToolCursor(self.editorSession.currentTool.cursorNode)
 
         overlayNodes = [tool.overlayNode
-                        for tool in self.editorSession.tools.itervalues()
+                        for tool in self.editorSession.tools
                         if tool.overlayNode is not None]
 
         overlayNodes.insert(0, self.editorSession.editorOverlay)
         view.setToolOverlays(overlayNodes)
+        view.setFocus()
 
 
     def viewOffsetChanged(self, view):
-        def _offsetChanged(offset):
-            self.miniMap.centerOnPoint(view.viewCenter())
-            self.miniMap.currentViewMatrixChanged(view)
-        return _offsetChanged
+        self.miniMap.centerOnPoint(view.viewCenter())
+        self.miniMap.currentViewMatrixChanged(view)
 
     def _addView(self, frame):
-        self.views.append(frame)
+        self.views.append(frame.worldView)
         frame.stackIndex = self.viewStack.addWidget(frame)
-        frame.worldView.viewportMoved.connect(self.viewOffsetChanged(frame.worldView))
-        frame.worldView.mouseActions.extend([
-            UseToolMouseAction(self.editorSession),
-            TrackingMouseAction(self.editorSession)
+        frame.worldView.viewportMoved.connect(self.viewOffsetChanged)
+        frame.worldView.viewActions.extend([
+            UseToolMouseAction(self),
+            TrackingMouseAction(self)
         ])
 
     def currentView(self):
         """
 
-        :rtype: WorldView
+        :rtype: mcedit2.worldview.worldview.WorldView
         """
         return self.viewStack.currentWidget().worldView
 

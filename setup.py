@@ -1,16 +1,21 @@
 from setuptools import setup
 from Cython.Build import cythonize
 
+# Output annotated .html
+import Cython.Compiler.Options
+Cython.Compiler.Options.annotate = True
+
 import numpy
 
-version = '0.1'
+with file("version.txt") as f:
+    version = f.read().strip()
 
 install_requires = [
     # -*- Extra requirements: -*-
     "numpy",
 ]
 
-ext_modules = cythonize("src/mceditlib/nbt.pyx")
+mceditlib_ext_modules = cythonize("src/mceditlib/nbt.pyx")
 
 setup(name='mceditlib',
       version=version,
@@ -33,17 +38,19 @@ setup(name='mceditlib',
       license='MIT License',
       packages=["mceditlib"],
       package_dir={'': 'src'},
-      ext_modules=ext_modules,
+      ext_modules=mceditlib_ext_modules,
       include_dirs=numpy.get_include(),
       include_package_data=True,
       zip_safe=False,
       install_requires=install_requires,
-      entry_points="""
-      # -*- Entry points: -*-
-      [console_scripts]
-      mce.py=mceditlib.mce:main
-      """,
       )
+
+mcedit2_ext_modules = cythonize(
+    [
+        "src/mcedit2/rendering/blockmodels.pyx",
+        "src/mcedit2/rendering/modelmesh.pyx",
+    ]
+    )
 
 setup(name='mcedit2',
       version=version,
@@ -68,6 +75,7 @@ setup(name='mcedit2',
       license='MIT License',
       packages=["mcedit2"],
       package_dir={'': 'src'},
+      ext_modules=mcedit2_ext_modules,
       include_dirs=numpy.get_include(),
       include_package_data=True,
       zip_safe=False,
@@ -75,6 +83,6 @@ setup(name='mcedit2',
       entry_points="""
       # -*- Entry points: -*-
       [console_scripts]
-      mcedit2.py=mcedit2.main:main
+      mcedit2=mcedit2.main:main
       """,
       )

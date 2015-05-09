@@ -58,37 +58,37 @@ cdef PyTypeObject * StringO = PycStringIO.OutputType
 
 # Tag IDs
 
-cdef char _TAG_END = 0
-cdef char _TAG_BYTE = 1
-cdef char _TAG_SHORT = 2
-cdef char _TAG_INT = 3
-cdef char _TAG_LONG = 4
-cdef char _TAG_FLOAT = 5
-cdef char _TAG_DOUBLE = 6
-cdef char _TAG_BYTE_ARRAY = 7
-cdef char _TAG_STRING = 8
-cdef char _TAG_LIST = 9
-cdef char _TAG_COMPOUND = 10
-cdef char _TAG_INT_ARRAY = 11
-cdef char _TAG_SHORT_ARRAY = 12
-cdef char _TAG_MAX = 13
+cdef char _ID_END = 0
+cdef char _ID_BYTE = 1
+cdef char _ID_SHORT = 2
+cdef char _ID_INT = 3
+cdef char _ID_LONG = 4
+cdef char _ID_FLOAT = 5
+cdef char _ID_DOUBLE = 6
+cdef char _ID_BYTE_ARRAY = 7
+cdef char _ID_STRING = 8
+cdef char _ID_LIST = 9
+cdef char _ID_COMPOUND = 10
+cdef char _ID_INT_ARRAY = 11
+cdef char _ID_SHORT_ARRAY = 12
+cdef char _ID_MAX = 13
 
 # Make IDs python visible
 
-TAG_END = _TAG_END
-TAG_BYTE = _TAG_BYTE
-TAG_SHORT = _TAG_SHORT
-TAG_INT = _TAG_INT
-TAG_LONG = _TAG_LONG
-TAG_FLOAT = _TAG_FLOAT
-TAG_DOUBLE = _TAG_DOUBLE
-TAG_BYTE_ARRAY = _TAG_BYTE_ARRAY
-TAG_STRING = _TAG_STRING
-TAG_LIST = _TAG_LIST
-TAG_COMPOUND = _TAG_COMPOUND
-TAG_INT_ARRAY = _TAG_INT_ARRAY
-TAG_SHORT_ARRAY = _TAG_SHORT_ARRAY
-TAG_MAX = _TAG_MAX
+ID_END = _ID_END
+ID_BYTE = _ID_BYTE
+ID_SHORT = _ID_SHORT
+ID_INT = _ID_INT
+ID_LONG = _ID_LONG
+ID_FLOAT = _ID_FLOAT
+ID_DOUBLE = _ID_DOUBLE
+ID_BYTE_ARRAY = _ID_BYTE_ARRAY
+ID_STRING = _ID_STRING
+ID_LIST = _ID_LIST
+ID_COMPOUND = _ID_COMPOUND
+ID_INT_ARRAY = _ID_INT_ARRAY
+ID_SHORT_ARRAY = _ID_SHORT_ARRAY
+ID_MAX = _ID_MAX
 
 class NBTFormatError (ValueError):
     """Indicates the NBT format is invalid."""
@@ -118,7 +118,7 @@ cdef class TAG_Value:
     cdef public char tagID
 
     def __repr__(self):
-        return "<%s name=\"%s\" value=%r>" % (self.__class__.__name__, self.name, self.value)
+        return "<%s name=%r value=%r>" % (self.__class__.__name__, self.name, self.value)
 
     def __str__(self):
         return nested_string(self)
@@ -149,6 +149,13 @@ cdef class TAG_Value:
     def copy(self):
         return self.__class__(self.value, self.name)
 
+    def isList(self):
+        return False
+
+    def isCompound(self):
+        return False
+
+
 cdef class TAG_Byte(TAG_Value):
     cdef public char value
 
@@ -158,7 +165,7 @@ cdef class TAG_Byte(TAG_Value):
     def __init__(self, char value=0, name=""):
         self.value = value
         self.name = name
-        self.tagID = _TAG_BYTE
+        self.tagID = _ID_BYTE
 
 
 cdef class TAG_Short(TAG_Value):
@@ -170,7 +177,7 @@ cdef class TAG_Short(TAG_Value):
     def __init__(self, short value=0, name=""):
         self.value = value
         self.name = name
-        self.tagID = _TAG_SHORT
+        self.tagID = _ID_SHORT
 
 
 cdef class TAG_Int(TAG_Value):
@@ -182,7 +189,7 @@ cdef class TAG_Int(TAG_Value):
     def __init__(self, int value=0, name=""):
         self.value = value
         self.name = name
-        self.tagID = _TAG_INT
+        self.tagID = _ID_INT
 
 
 cdef class TAG_Long(TAG_Value):
@@ -194,7 +201,7 @@ cdef class TAG_Long(TAG_Value):
     def __init__(self, long long value=0, name=""):
         self.value = value
         self.name = name
-        self.tagID = _TAG_LONG
+        self.tagID = _ID_LONG
 
 
 cdef class TAG_Float(TAG_Value):
@@ -206,7 +213,7 @@ cdef class TAG_Float(TAG_Value):
     def __init__(self, float value=0., name=""):
         self.value = value
         self.name = name
-        self.tagID = _TAG_FLOAT
+        self.tagID = _ID_FLOAT
 
 
 cdef class TAG_Double(TAG_Value):
@@ -218,7 +225,7 @@ cdef class TAG_Double(TAG_Value):
     def __init__(self, double value=0., name=""):
         self.value = value
         self.name = name
-        self.tagID = _TAG_DOUBLE
+        self.tagID = _ID_DOUBLE
 
 
 cdef class TAG_Byte_Array(TAG_Value):
@@ -231,13 +238,13 @@ cdef class TAG_Byte_Array(TAG_Value):
 
         self.value = value
         self.name = name
-        self.tagID = _TAG_BYTE_ARRAY
+        self.tagID = _ID_BYTE_ARRAY
 
     cdef void save_value(self, buf):
         save_array(self.value, buf, 1)
 
     def __repr__(self):
-        return "<%s name=%s length=%d>" % (self.__class__.__name__, self.name, len(self.value))
+        return "<%s name=%r length=%d>" % (self.__class__.__name__, self.name, len(self.value))
 
     def __richcmp__(self, other, type):
         if type == 2: # __eq__
@@ -259,13 +266,13 @@ cdef class TAG_Int_Array(TAG_Value):
 
         self.value = value
         self.name = name
-        self.tagID = _TAG_INT_ARRAY
+        self.tagID = _ID_INT_ARRAY
 
     cdef void save_value(self, buf):
         save_array(self.value, buf, 4)
 
     def __repr__(self):
-        return "<%s name=%s length=%d>" % (self.__class__.__name__, len(self.value))
+        return "<%s name=%r length=%d>" % (self.__class__.__name__, self.name, len(self.value))
 
     def __richcmp__(self, other, type):
         if type == 2: # __eq__
@@ -287,13 +294,13 @@ cdef class TAG_Short_Array(TAG_Value):
 
         self.value = value
         self.name = name
-        self.tagID = _TAG_SHORT_ARRAY
+        self.tagID = _ID_SHORT_ARRAY
 
     cdef void save_value(self, buf):
         save_array(self.value, buf, 2)
 
     def __repr__(self):
-        return "<%s name=%s length=%d>" % (self.__class__.__name__, len(self.value))
+        return "<%s name=%r length=%d>" % (self.__class__.__name__, self.name, len(self.value))
 
     def __richcmp__(self, other, type):
         if type == 2: # __eq__
@@ -311,7 +318,7 @@ cdef class TAG_String(TAG_Value):
     def __init__(self, value="", name=""):
         self.value = value
         self.name = name
-        self.tagID = _TAG_STRING
+        self.tagID = _ID_STRING
 
     property value:
         def __get__(self):
@@ -330,11 +337,11 @@ cdef class _TAG_List(TAG_Value):
     cdef public list value
     cdef public char list_type
 
-    def __init__(self, value=None, name="", list_type=_TAG_BYTE):
+    def __init__(self, value=None, name="", list_type=_ID_BYTE):
         self.value = []
         self.name = name
         self.list_type = list_type
-        self.tagID = _TAG_LIST
+        self.tagID = _ID_LIST
         if value:
             self.list_type = value[0].tagID
             for tag in value:
@@ -343,7 +350,7 @@ cdef class _TAG_List(TAG_Value):
 
 
     def __repr__(self):
-        return "<%s name='%s' list_type=%r length=%d>" % (self.__class__.__name__, self.name,
+        return "<%s name=%r list_type=%r length=%d>" % (self.__class__.__name__, self.name,
                                                           tag_classes[self.list_type],
                                                           len(self))
 
@@ -398,6 +405,13 @@ cdef class _TAG_List(TAG_Value):
                                                                                                    list_type))
             save_tag_value(subtag, buf)
 
+    def isList(self):
+        return True
+
+    @property
+    def tagClass(self):
+        return tag_classes[self.list_type]
+
 
 class TAG_List(_TAG_List, collections.MutableSequence):
     pass
@@ -414,7 +428,7 @@ cdef class _TAG_Compound(TAG_Value):
                 name = ""
         self.value = value or []
         self.name = name
-        self.tagID = _TAG_COMPOUND
+        self.tagID = _ID_COMPOUND
 
     def copy(self):
         return TAG_Compound([tag.copy() for tag in self.value], self.name)
@@ -453,7 +467,7 @@ cdef class _TAG_Compound(TAG_Value):
         return len(self.value)
 
     def __repr__(self):
-        return "<%s name='%s' keys=%r>" % (str(self.__class__.__name__), self.name, self.keys())
+        return "<%s name=%r keys=%r>" % (str(self.__class__.__name__), self.name, self.keys())
 
     def add(self, TAG_Value tag):
         if not tag._name:
@@ -470,7 +484,7 @@ cdef class _TAG_Compound(TAG_Value):
             save_tag_id(subtag.tagID, buf)
             save_tag_name(subtag, buf)
             save_tag_value(subtag, buf)
-        save_tag_id(_TAG_END, buf)
+        save_tag_id(_ID_END, buf)
 
     def save(self, filename_or_buf=None, compressed=True):
         """
@@ -497,6 +511,9 @@ cdef class _TAG_Compound(TAG_Value):
             f.write(data)
         else:
             filename_or_buf.write(data)
+
+    def isCompound(self):
+        return True
 
 class TAG_Compound(_TAG_Compound, collections.MutableMapping):
     pass
@@ -543,7 +560,7 @@ def load(filename="", buf=None):
 
     cdef unsigned int * magic_no = <unsigned int *> ctx.buffer
 
-    if ctx.buffer[0] != _TAG_COMPOUND:
+    if ctx.buffer[0] != _ID_COMPOUND:
         raise NBTFormatError('Not an NBT file with a root TAG_Compound '
                              '(file starts with "%4s" (0x%08x)' % (ctx.buffer, magic_no[0]))
     name = load_name(ctx)
@@ -579,7 +596,7 @@ cdef char * read(load_ctx self, size_t s) except NULL:
 cdef TAG_Byte load_byte(load_ctx ctx):
     cdef TAG_Byte tag = TAG_Byte.__new__(TAG_Byte)
     tag.value = read(ctx, 1)[0]
-    tag.tagID = _TAG_BYTE
+    tag.tagID = _ID_BYTE
     return tag
 
 
@@ -588,7 +605,7 @@ cdef TAG_Short load_short(load_ctx ctx):
     cdef TAG_Short tag = TAG_Short.__new__(TAG_Short)
     tag.value = ptr[0]
     swab(&tag.value, 2)
-    tag.tagID = _TAG_SHORT
+    tag.tagID = _ID_SHORT
     return tag
 
 
@@ -597,7 +614,7 @@ cdef TAG_Int load_int(load_ctx ctx):
     cdef TAG_Int tag = TAG_Int.__new__(TAG_Int)
     tag.value = (ptr[0])
     swab(&tag.value, 4)
-    tag.tagID = _TAG_INT
+    tag.tagID = _ID_INT
     return tag
 
 
@@ -606,7 +623,7 @@ cdef TAG_Long load_long(load_ctx ctx):
     cdef TAG_Long tag = TAG_Long.__new__(TAG_Long)
     tag.value = ptr[0]
     swab(&tag.value, 8)
-    tag.tagID = _TAG_LONG
+    tag.tagID = _ID_LONG
     return tag
 
 
@@ -615,7 +632,7 @@ cdef TAG_Float load_float(load_ctx ctx):
     cdef TAG_Float tag = TAG_Float.__new__(TAG_Float)
     tag.value = ptr[0]
     swab(&tag.value, 4)
-    tag.tagID = _TAG_FLOAT
+    tag.tagID = _ID_FLOAT
     return tag
 
 
@@ -624,7 +641,7 @@ cdef TAG_Double load_double(load_ctx ctx):
     cdef TAG_Double tag = TAG_Double.__new__(TAG_Double)
     tag.value = ptr[0]
     swab(&tag.value, 8)
-    tag.tagID = _TAG_DOUBLE
+    tag.tagID = _ID_DOUBLE
     return tag
 
 
@@ -637,7 +654,7 @@ cdef load_compound(load_ctx ctx):
     cdef TAG_Value tag
     while True:
         tagID = read(ctx, 1)[0]
-        if tagID == _TAG_END:
+        if tagID == _ID_END:
             break
         else:
             root_tag.value.append(load_named(ctx, tagID))
@@ -736,40 +753,40 @@ cdef TAG_Int_Array load_int_array(load_ctx ctx):
 # --- Identify tag type and load tag ---
 
 cdef load_tag(char tagID, load_ctx ctx):
-    if tagID == _TAG_BYTE:
+    if tagID == _ID_BYTE:
         return load_byte(ctx)
 
-    if tagID == _TAG_SHORT:
+    if tagID == _ID_SHORT:
         return load_short(ctx)
 
-    if tagID == _TAG_INT:
+    if tagID == _ID_INT:
         return load_int(ctx)
 
-    if tagID == _TAG_LONG:
+    if tagID == _ID_LONG:
         return load_long(ctx)
 
-    if tagID == _TAG_FLOAT:
+    if tagID == _ID_FLOAT:
         return load_float(ctx)
 
-    if tagID == _TAG_DOUBLE:
+    if tagID == _ID_DOUBLE:
         return load_double(ctx)
 
-    if tagID == _TAG_BYTE_ARRAY:
+    if tagID == _ID_BYTE_ARRAY:
         return load_byte_array(ctx)
 
-    if tagID == _TAG_STRING:
+    if tagID == _ID_STRING:
         return TAG_String(load_string(ctx))
 
-    if tagID == _TAG_LIST:
+    if tagID == _ID_LIST:
         return load_list(ctx)
 
-    if tagID == _TAG_COMPOUND:
+    if tagID == _ID_COMPOUND:
         return load_compound(ctx)
 
-    if tagID == _TAG_INT_ARRAY:
+    if tagID == _ID_INT_ARRAY:
         return load_int_array(ctx)
 
-    if tagID == _TAG_SHORT_ARRAY:
+    if tagID == _ID_SHORT_ARRAY:
         return load_short_array(ctx)
 
 
@@ -851,40 +868,40 @@ cdef void save_double(double value, object buf):
 
 cdef void save_tag_value(TAG_Value tag, object buf):
     cdef char tagID = tag.tagID
-    if tagID == _TAG_BYTE:
+    if tagID == _ID_BYTE:
         (<TAG_Byte> tag).save_value(buf)
 
-    if tagID == _TAG_SHORT:
+    if tagID == _ID_SHORT:
         (<TAG_Short> tag).save_value(buf)
 
-    if tagID == _TAG_INT:
+    if tagID == _ID_INT:
         (<TAG_Int> tag).save_value(buf)
 
-    if tagID == _TAG_LONG:
+    if tagID == _ID_LONG:
         (<TAG_Long> tag).save_value(buf)
 
-    if tagID == _TAG_FLOAT:
+    if tagID == _ID_FLOAT:
         (<TAG_Float> tag).save_value(buf)
 
-    if tagID == _TAG_DOUBLE:
+    if tagID == _ID_DOUBLE:
         (<TAG_Double> tag).save_value(buf)
 
-    if tagID == _TAG_BYTE_ARRAY:
+    if tagID == _ID_BYTE_ARRAY:
         (<TAG_Byte_Array> tag).save_value(buf)
 
-    if tagID == _TAG_STRING:
+    if tagID == _ID_STRING:
         (<TAG_String> tag).save_value(buf)
 
-    if tagID == _TAG_LIST:
+    if tagID == _ID_LIST:
         (<_TAG_List> tag).save_value(buf)
 
-    if tagID == _TAG_COMPOUND:
+    if tagID == _ID_COMPOUND:
         (<_TAG_Compound> tag).save_value(buf)
 
-    if tagID == _TAG_INT_ARRAY:
+    if tagID == _ID_INT_ARRAY:
         (<TAG_Int_Array> tag).save_value(buf)
 
-    if tagID == _TAG_SHORT_ARRAY:
+    if tagID == _ID_SHORT_ARRAY:
         (<TAG_Short_Array> tag).save_value(buf)
 
 
@@ -898,7 +915,7 @@ tag_classes = {TAG().tagID: TAG for TAG in (TAG_Byte, TAG_Short, TAG_Int, TAG_Lo
 def nested_string(tag, indent_string="  ", indent=0):
     result = ""
 
-    if tag.tagID == _TAG_COMPOUND:
+    if tag.tagID == _ID_COMPOUND:
         result += 'TAG_Compound({\n'
         indent += 1
         for key, value in tag.iteritems():
@@ -906,7 +923,7 @@ def nested_string(tag, indent_string="  ", indent=0):
         indent -= 1
         result += indent_string * indent + '})'
 
-    elif tag.tagID == _TAG_LIST:
+    elif tag.tagID == _ID_LIST:
         result += 'TAG_List([\n'
         indent += 1
         for index, value in enumerate(tag):
@@ -918,3 +935,38 @@ def nested_string(tag, indent_string="  ", indent=0):
         result += "%s(%r)" % (tag.__class__.__name__, tag.value)
 
     return result
+
+def walk(tag, path=None):
+    """
+    Walk through an NBT tree and return each tag as a tuple of
+      (name, tag, path)
+
+    Name can either be the name of the tag as a unicode (for tags inside a Compound) or
+      the index of the tag as an int (for tags inside a List).
+
+    Path is a list of values, usable with the [] operator on list and compound
+     tags. Each value in path can be a unicode or an int. The name of the
+     returned tag is not in path.
+
+    Hmm, maybe name could just be collapsed into path?
+
+    :param tag:
+    :type tag:
+    :param path:
+    :type path:
+    :return:
+    :rtype:
+    """
+    if path is None:
+        path = []
+    if tag.isCompound():
+        for name, subtag in tag.iteritems():
+            yield (name, subtag, path)
+            for result in walk(subtag, path + [name]):
+                yield result
+
+    if tag.isList():
+        for i, subtag in enumerate(tag):
+            yield (i, subtag, path)
+            for result in walk(subtag, path + [i]):
+                yield result

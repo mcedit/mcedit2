@@ -14,12 +14,15 @@ import zlib
 import time
 
 from mceditlib import nbt
-from mceditlib.anvil.entities import PCEntityRef, PCTileEntityRef
+from mceditlib.anvil import entities
+from mceditlib.anvil.entities import PCEntityRef, PCTileEntityRef, ItemStackRef
 from mceditlib.anvil.worldfolder import AnvilWorldFolder
-from mceditlib.blocktypes import pc_blocktypes
-from mceditlib.geometry import Vector, BoundingBox
+from mceditlib.blocktypes import PCBlockTypeSet, BlockType, VERSION_1_8, VERSION_1_7
+from mceditlib.geometry import Vector
+from mceditlib.nbt import NBTFormatError
+from mceditlib.selection import BoundingBox
 from mceditlib import nbtattr
-from mceditlib.exceptions import PlayerNotFound
+from mceditlib.exceptions import PlayerNotFound, ChunkNotPresent
 from mceditlib.revisionhistory import RevisionHistory
 
 
@@ -82,20 +85,21 @@ def inflate(data):
 
 
 def sanitizeBlocks(section, blocktypes):
-    # change grass to dirt where needed so Minecraft doesn't flip out and die
-    grass = section.Blocks == blocktypes.Grass.ID
-    grass |= section.Blocks == blocktypes.Dirt.ID
-    badgrass = grass[1:, :, :] & grass[:-1, :, :]
-
-    section.Blocks[:-1, :, :][badgrass] = blocktypes.Dirt.ID
-
-    # remove any thin snow layers immediately above other thin snow layers.
-    # minecraft doesn't flip out, but it's almost never intended
-    if hasattr(blocktypes, "SnowLayer"):
-        snowlayer = section.Blocks == blocktypes.SnowLayer.ID
-        badsnow = snowlayer[:, :, 1:] & snowlayer[:, :, :-1]
-
-        section.Blocks[:, :, 1:][badsnow] = 0
+    return
+    # # change grass to dirt where needed so Minecraft doesn't flip out and die
+    # grass = section.Blocks == blocktypes.Grass.ID
+    # grass |= section.Blocks == blocktypes.Dirt.ID
+    # badgrass = grass[1:, :, :] & grass[:-1, :, :]
+    #
+    # section.Blocks[:-1, :, :][badgrass] = blocktypes.Dirt.ID
+    #
+    # # remove any thin snow layers immediately above other thin snow layers.
+    # # minecraft doesn't flip out, but it's almost never intended
+    # if hasattr(blocktypes, "SnowLayer"):
+    #     snowlayer = section.Blocks == blocktypes.SnowLayer.ID
+    #     badsnow = snowlayer[:, :, 1:] & snowlayer[:, :, :-1]
+    #
+    #     section.Blocks[:, :, 1:][badsnow] = 0
 
 # --- Sections and chunks ---
 
@@ -107,7 +111,7 @@ class AnvilSection(object):
     4-bit arrays are unpacked to byte arrays to make them work with numpy's array routines.
 
     To create the full 12-bit block ID, the Blocks array is extended to 16 bits and the Add array is merged into
-    the Blocks array.
+    the high bits of the Blocks array.
 
     :ivar Y: section's Y value [0..(world.Height+15) >> 4]
     :ivar Blocks: Block IDs [0..4095]
@@ -210,10 +214,8 @@ class AnvilChunkData(object):
             levelTag["Biomes"] = nbt.TAG_Byte_Array(numpy.empty((16, 16), 'uint8'))
             levelTag["Biomes"].value[:] = -1
 
-        self.Entities = [PCEntityRef(tag) for tag in self.rootTag["Level"]["Entities"]]
-        del self.rootTag["Level"]["Entities"]
-        self.TileEntities = [PCTileEntityRef(tag) for tag in self.rootTag["Level"]["TileEntities"]]
-        del self.rootTag["Level"]["TileEntities"]
+        if "TileTicks" not in levelTag:
+            levelTag["TileTicks"] = nbt.TAG_List()
 
     def _create(self):
         chunkTag = nbt.TAG_Compound()
@@ -231,9 +233,9 @@ class AnvilChunkData(object):
 
         levelTag["Entities"] = nbt.TAG_List()
         levelTag["TileEntities"] = nbt.TAG_List()
+        levelTag["TileTicks"] = nbt.TAG_List()
 
         self.rootTag = chunkTag
-
         self.dirty = True
 
     def _load(self, rootTag):
@@ -248,7 +250,8 @@ class AnvilChunkData(object):
         """ does not recalculate any data or light """
 
         log.debug(u"Saving chunk: {0}".format(self))
-        tag = self.rootTag.copy()
+
+        chunkTag = self.rootTag.copy()
 
         sections = nbt.TAG_List()
         for _, section in self._sections.iteritems():
@@ -261,12 +264,13 @@ class AnvilChunkData(object):
             sanitizeBlocks(section, self.adapter.blocktypes)
             sections.append(section.buildNBTTag())
 
-        tag["Level"]["Sections"] = sections
-        tag["Level"]["Entities"] = nbt.TAG_List([ref.rootTag for ref in self.Entities])
-        tag["Level"]["TileEntities"] = nbt.TAG_List([ref.rootTag for ref in self.TileEntities])
+        chunkTag["Level"]["Sections"] = sections
+
+        if len(self.TileTicks) == 0:
+            del chunkTag["Level"]["TileTicks"]
 
         log.debug(u"Saved chunk {0}".format(self))
-        return tag
+        return chunkTag
 
     def sectionPositions(self):
         return self._sections.keys()
@@ -307,6 +311,18 @@ class AnvilChunkData(object):
         return self.adapter.blocktypes
 
     @property
+    def Entities(self):
+        return self.rootTag["Level"]["Entities"]
+
+    @property
+    def TileEntities(self):
+        return self.rootTag["Level"]["TileEntities"]
+
+    @property
+    def TileTicks(self):
+        return self.rootTag["Level"]["TileTicks"]
+
+    @property
     def Biomes(self):
         return self.rootTag["Level"]["Biomes"].value.reshape((16, 16))
 
@@ -314,7 +330,6 @@ class AnvilChunkData(object):
     def HeightMap(self):
         # z, x order in save file
         return self.rootTag["Level"]["HeightMap"].value.reshape((16, 16))
-
 
     @property
     def TerrainPopulated(self):
@@ -335,6 +350,7 @@ class AnvilWorldMetadata(object):
     def __init__(self, metadataTag):
         self.metadataTag = metadataTag
         self.rootTag = metadataTag["Data"]
+        self.dirty = False
 
     # --- NBT Tag variables ---
 
@@ -358,6 +374,18 @@ class AnvilWorldMetadata(object):
         for name, val in zip(("SpawnX", "SpawnY", "SpawnZ"), pos):
             self.rootTag[name] = nbt.TAG_Int(val)
 
+    def is1_8World(self):
+        # Minecraft 1.8 adds a dozen tags to level.dat/Data. These tags are removed if
+        # the world is played in 1.7 (and all of the items are removed too!)
+        # Use some of these tags to decide whether to use 1.7 format ItemStacks or 1.8 format ones.
+        # In 1.8, the stack's "id" is a string, but in 1.7 it is an int.
+        tags = (t in self.rootTag for t in (
+            'BorderCenterX', 'BorderCenterZ',
+            'BorderDamagePerBlock',
+            'BorderSafeZone',
+            'BorderSize'
+        ))
+        return any(tags)
 
 class AnvilWorldAdapter(object):
     """
@@ -369,10 +397,7 @@ class AnvilWorldAdapter(object):
 
     minHeight = 0
     maxHeight = 256
-    blocktypes = pc_blocktypes
-
-    EntityRef = PCEntityRef
-    TileEntityRef = PCTileEntityRef
+    hasLights = True
 
     def __init__(self, filename=None, create=False, readonly=False, resume=None):
         """
@@ -394,6 +419,9 @@ class AnvilWorldAdapter(object):
         :rtype: AnvilWorldAdapter
         """
         self.lockTime = 0
+
+        self.EntityRef = PCEntityRef
+        self.TileEntityRef = PCTileEntityRef
 
         assert not (create and readonly)
 
@@ -430,27 +458,102 @@ class AnvilWorldAdapter(object):
             self.selectedRevision.writeFile("level.dat", self.metadata.metadataTag.save())
 
         else:
-            try:
-                metadataTag = nbt.load(buf=self.selectedRevision.readFile("level.dat"))
-                self.metadata = AnvilWorldMetadata(metadataTag)
-            except (EnvironmentError, zlib.error) as e:
-                log.info("Error loading level.dat, trying level.dat_old ({0})".format(e))
-                try:
-                    metadataTag = nbt.load(buf=self.selectedRevision.readFile("level.dat_old"))
-                    self.metadata = AnvilWorldMetadata(metadataTag)
-                    log.info("level.dat restored from backup.")
-                    self.saveChanges()
-                except Exception as e:
-                    traceback.print_exc()
-                    log.info("%r while loading level.dat_old. Initializing with defaults.", e)
-                    self._createMetadataTag()
+            self.loadMetadata()
 
-        assert self.metadata.version == VERSION_ANVIL, "Pre-Anvil world formats are not supported (for now)"
+
 
     def __repr__(self):
         return "AnvilWorldAdapter(%r)" % self.filename
 
     # --- Create, save, close ---
+
+    def loadMetadata(self):
+        try:
+            metadataTag = nbt.load(buf=self.selectedRevision.readFile("level.dat"))
+            self.metadata = AnvilWorldMetadata(metadataTag)
+            self.loadBlockMapping()
+        except (EnvironmentError, zlib.error, NBTFormatError) as e:
+            log.info("Error loading level.dat, trying level.dat_old ({0})".format(e))
+            try:
+                metadataTag = nbt.load(buf=self.selectedRevision.readFile("level.dat_old"))
+                self.metadata = AnvilWorldMetadata(metadataTag)
+                self.metadata.dirty = True
+                log.info("level.dat restored from backup.")
+            except Exception as e:
+                traceback.print_exc()
+                log.info("%r while loading level.dat_old. Initializing with defaults.", e)
+                self._createMetadataTag()
+
+        assert self.metadata.version == VERSION_ANVIL, "Pre-Anvil world formats are not supported (for now)"
+
+    def loadBlockMapping(self):
+        if self.metadata.is1_8World():
+            itemStackVersion = VERSION_1_8
+        else:
+            itemStackVersion = VERSION_1_7
+
+        blocktypes = PCBlockTypeSet(itemStackVersion)
+        self.blocktypes = blocktypes
+
+        metadataTag = self.metadata.metadataTag
+        fml = metadataTag.get('FML')
+        if fml is None:
+            return
+
+        itemTypes = blocktypes.itemTypes
+
+        itemdata = fml.get('ItemData')  # MC 1.7
+        if itemdata is not None:
+            count = 0
+            log.info("Adding block IDs from FML for MC 1.7")
+            replacedIDs = []
+            for entry in itemdata:
+                ID = entry['V'].value
+                name = entry['K'].value
+                magic, name = name[0], name[1:]
+                if magic == u'\x01':  # 0x01 = blocks
+
+                    if not name.startswith("minecraft:"):
+                        # we load 1.8 block IDs and mappings by default
+                        # FML IDs should be allowed to override some of them for 1.8 blocks not in 1.7.
+                        count += 1
+                        replacedIDs.append(ID)
+                        fakeState = '[0]'
+                        nameAndState = name + fakeState
+                        log.debug("FML1.7: Adding %s = %d", name, ID)
+
+
+                        for vanillaMeta in range(15):
+                            # Remove existing Vanilla defs
+                            vanillaNameAndState = blocktypes.statesByID.get((ID, vanillaMeta))
+                            blocktypes.blockJsons.pop(vanillaNameAndState, None)
+
+
+                        blocktypes.IDsByState[nameAndState] = ID, 0
+                        blocktypes.statesByID[ID, 0] = nameAndState
+                        blocktypes.IDsByName[name] = ID
+                        blocktypes.namesByID[ID] = name
+                        blocktypes.defaultBlockstates[name] = fakeState
+
+                        blocktypes.blockJsons[nameAndState] = {
+                            'displayName': name,
+                            'internalName': name,
+                            'blockState': '[0]',
+                            'unknown': True,
+                        }
+
+                if magic == u'\x02':  # 0x02 = items
+                    if not name.startswith("minecraft:"):
+                        itemTypes.addFMLIDMapping(name, ID)
+
+            replacedIDsSet = set(replacedIDs)
+            blocktypes.allBlocks[:] = [b for b in blocktypes if b.ID not in replacedIDsSet]
+            blocktypes.allBlocks.extend(BlockType(newID, 0, blocktypes) for newID in replacedIDs)
+
+            blocktypes.allBlocks.sort()
+            log.info("Added %d blocks.", count)
+
+
 
     def _createMetadataTag(self, random_seed=None):
         """
@@ -487,7 +590,9 @@ class AnvilWorldAdapter(object):
         :return:
         :rtype:
         """
-        self.selectedRevision.writeFile("level.dat", self.metadata.metadataTag.save())
+        if self.metadata.dirty:
+            self.selectedRevision.writeFile("level.dat", self.metadata.metadataTag.save())
+            self.metadata.dirty = False
 
     def saveChanges(self):
         """
@@ -578,6 +683,7 @@ class AnvilWorldAdapter(object):
         newRevision = self.revisionHistory.getRevision(index)
         changes = self.revisionHistory.getRevisionChanges(self.selectedRevision, newRevision)
         self.selectedRevision = newRevision
+        self.loadMetadata()
         return changes
 
     def listRevisions(self):
@@ -714,7 +820,8 @@ class AnvilWorldAdapter(object):
             chunkTag = nbt.load(buf=data)
             log.debug("_getChunkData: Chunk %s loaded (%s bytes)", (cx, cz), len(data))
             chunkData = AnvilChunkData(self, cx, cz, dimName, chunkTag)
-
+        except ChunkNotPresent:
+            raise
         except (KeyError, IndexError, zlib.error) as e:  # Missing nbt keys, lists too short, decompression failure
             raise AnvilChunkFormatError("Error loading chunk: %r" % e)
 
@@ -801,7 +908,7 @@ class AnvilWorldAdapter(object):
     def savePlayerTag(self, tag, playerUUID):
         if playerUUID == "":
             # sync metadata?
-            return
+            self.metadata.dirty = True
         else:
             self.selectedRevision.writeFile("playerdata/%s.dat" % playerUUID, tag.save())
 
@@ -841,7 +948,7 @@ class AnvilWorldAdapter(object):
         return self.getPlayer(playerUUID)
 
 
-class PlayerAbilitiesAttrs(nbtattr.CompoundAttrs):
+class PlayerAbilitiesRef(nbtattr.NBTCompoundRef):
     mayBuild = nbtattr.NBTAttr('mayBuild', nbt.TAG_Byte, 0)
     instabuild = nbtattr.NBTAttr('instabuild', nbt.TAG_Byte, 0)
     flying = nbtattr.NBTAttr('flying', nbt.TAG_Byte, 0)
@@ -855,15 +962,12 @@ class AnvilPlayerRef(object):
         self.adapter = adapter
         self.rootTag = adapter.getPlayerTag(playerUUID)
         self.dirty = False
-    #
-    # @property
-    # def rootTag(self):
-    #     if self.playerTag is None or self.playerTag() is None:
-    #         tag = self.adapter.getPlayerTag(self.playerName)
-    #         self.playerTag = weakref.ref(tag)
-    #
-    #         return tag
-    #     return self.playerTag()
+
+    @property
+    def blockTypes(self):
+        return self.adapter.blocktypes
+
+    UUID = nbtattr.NBTUUIDAttr()
 
     id = nbtattr.NBTAttr("id", nbt.TAG_String)
     Position = nbtattr.NBTVectorAttr("Pos", nbt.TAG_Double)
@@ -879,16 +983,16 @@ class AnvilPlayerRef(object):
     Score = nbtattr.NBTAttr('Score', nbt.TAG_Int, 0)
     FallDistance = nbtattr.NBTAttr('FallDistance', nbt.TAG_Float, 0)
     OnGround = nbtattr.NBTAttr('OnGround', nbt.TAG_Byte, 0)
-    Dimension = nbtattr.NBTAttr('OnGround', nbt.TAG_Int, 0)
+    Dimension = nbtattr.NBTAttr('Dimension', nbt.TAG_Int, 0)
 
-    Inventory = nbtattr.NBTListAttr('Inventory', nbt.TAG_Compound)
+    Inventory = entities.SlottedInventoryAttr('Inventory')
 
     GAMETYPE_SURVIVAL = 0
     GAMETYPE_CREATIVE = 1
     GAMETYPE_ADVENTURE = 2
     GameType = nbtattr.NBTAttr('playerGameType', nbt.TAG_Int, GAMETYPE_SURVIVAL)
 
-    abilities = nbtattr.NBTCompoundAttr("abilities", PlayerAbilitiesAttrs)
+    abilities = nbtattr.NBTCompoundAttr("abilities", PlayerAbilitiesRef)
 
     def setAbilities(self, gametype):
         # Assumes GAMETYPE_CREATIVE is the only mode with these abilities set,
@@ -920,6 +1024,7 @@ class AnvilPlayerRef(object):
     def save(self):
         if self.dirty:
             self.adapter.savePlayerTag(self.rootTag, self.playerUUID)
+            self.dirty = False
 
     _dimNames = {
         -1:"DIM-1",
@@ -931,7 +1036,7 @@ class AnvilPlayerRef(object):
 
     @property
     def dimName(self):
-        return self._dimNames[self.Dimension]
+        return self._dimNames.get(self.Dimension, "Unknown dimension %s" % self.Dimension)  # xxx ask adapter
 
     @dimName.setter
     def dimName(self, name):

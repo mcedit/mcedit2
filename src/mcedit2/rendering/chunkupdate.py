@@ -5,30 +5,68 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 
 import numpy
+from mcedit2.rendering.modelmesh import BlockModelMesh
 
 from mcedit2.rendering import layers
-from mcedit2.rendering.blockmeshes import getRendererClasses
-from mcedit2.rendering.blockmeshes.entitymesh import TileEntityMesh, MonsterRenderer, ItemRenderer
-from mcedit2.rendering.blockmeshes.lowdetail import LowDetailBlockMesh, OverheadBlockMesh
-from mcedit2.rendering.blockmeshes.terrainpop import TerrainPopulatedRenderer
-from mcedit2.rendering.blockmeshes.tileticks import TileTicksRenderer
+from mcedit2.rendering.chunkmeshes.entitymesh import TileEntityMesh, MonsterRenderer, ItemRenderer
+from mcedit2.rendering.chunkmeshes.lowdetail import LowDetailBlockMesh, OverheadBlockMesh
+from mcedit2.rendering.chunkmeshes.terrainpop import TerrainPopulatedRenderer
+from mcedit2.rendering.chunkmeshes.tileticks import TileTicksRenderer
 from mcedit2.util import profiler
-from mcedit2.util.lazyprop import lazyprop
+from mceditlib.util.lazyprop import lazyprop
 from mceditlib import faces
 from mceditlib import exceptions
-from mceditlib.geometry import SectionBox, BoundingBox
+from mceditlib.selection import BoundingBox, SectionBox
 
 
 log = logging.getLogger(__name__)
 
 
+class ChunkRenderInfo(object):
+    maxlod = 2
+    minlod = 0
+
+    def __init__(self, worldScene, chunkPosition):
+        """
+
+        :param worldScene:
+        :type worldScene: mcedit2.rendering.worldscene.WorldScene
+        :param chunkPosition:
+        :type chunkPosition: (int, int)
+        :return:
+        :rtype:
+        """
+        super(ChunkRenderInfo, self).__init__()
+        self.worldScene = worldScene
+        self.detailLevel = worldScene.minlod
+        self.invalidLayers = set(layers.Layer.AllLayers)
+        self.renderedLayers = set()
+
+        self.chunkPosition = chunkPosition
+        self.bufferSize = 0
+        self.vertexNodes = []
+        cx, cz = chunkPosition
+        self.translateOffset = (cx << 4, 0, cz << 4)
+
+    def getChunkVertexNodes(self):
+        return iter(self.vertexNodes)
+
+    @property
+    def visibleLayers(self):
+        return self.worldScene.visibleLayers #xxxx
+
+    @property
+    def layersToRender(self):
+        return len(self.invalidLayers) + len(self.visibleLayers - self.renderedLayers)
+
+
 class ChunkUpdate(object):
     def __init__(self, updateTask, chunkInfo, chunk):
         """
-        :type updateTask: SceneUpdateTask
-        :type chunkInfo: mcedit2.rendering.chunknode.ChunkRenderInfo
+        :type updateTask: mcedit2.rendering.worldscene.SceneUpdateTask
+        :type chunkInfo: mcedit2.rendering.chunkupdate.ChunkRenderInfo
         :type chunk: AnvilChunk
-
+        :rtype: ChunkUpdate
         """
         self.updateTask = updateTask
         self.chunkInfo = chunkInfo
@@ -91,69 +129,69 @@ class ChunkUpdate(object):
         OverheadBlockMesh,
     ]
 
+    @profiler.iterator("ChunkUpdate")
     def __iter__(self):
 
         chunkInfo = self.chunkInfo
-        if 0 == len(chunkInfo.invalidLayers):
+        if 0 == chunkInfo.layersToRender:
             yield
             return
 
-        existingBlockVertexNodes = sum([list(node.children) for node in chunkInfo.getChunkVertexNodes()], [])
+        for _ in self.buildChunkMeshes():
+            yield _
+
+        highDetailBlocks = []
+
+        if chunkInfo.detailLevel == 0 and layers.Layer.Blocks in chunkInfo.invalidLayers:
+            for _ in self.buildSectionMeshes(highDetailBlocks):
+                yield
+
+        self.blockMeshes.extend(highDetailBlocks)
+        chunkInfo.invalidLayers.clear()
+
+        raise StopIteration
+
+    @profiler.iterator
+    def buildChunkMeshes(self):
+        """
+        Rebuild the meshes which render the entire chunk from top to bottom
+
+        :return:
+        :rtype:
+        """
+        chunkInfo = self.chunkInfo
         blockMeshes = self.blockMeshes
 
-        # Recalculate the classes which render the entire chunk from top to bottom
         for cls in self.wholeChunkMeshClasses:
             if chunkInfo.detailLevel not in cls.detailLevels:
                 #log.info("%s (%s) not in detail levels (%s)", cls.__name__, self.chunkMeshGroup.detailLevel, cls.detailLevels)
                 continue
             if cls.layer not in chunkInfo.visibleLayers:
                 continue
-            if cls.layer not in chunkInfo.invalidLayers:
-                for vertexNode in existingBlockVertexNodes:
-                    if vertexNode.meshClass is cls:  # xxxxx
-                        blockMeshes.append(existingBlockVertexNodes[cls])
-
+            if cls.layer not in chunkInfo.invalidLayers and cls.layer in chunkInfo.renderedLayers:
                 continue
 
             chunkMesh = cls(self)
             chunkMesh.detailLevel = chunkMesh.detailLevel
 
             name = cls.__name__
-            worker = chunkMesh.makeChunkVertices(self.chunk, chunkInfo.worldScene.bounds)
-            for _ in profiler.iterate(worker, name):
-                yield
+            try:
+                worker = chunkMesh.makeChunkVertices(self.chunk, chunkInfo.worldScene.bounds)
+                for _ in profiler.iterate(worker, name):
+                    yield
+            except Exception as e:
+                log.exception("Failed rendering for mesh class %s: %s", cls, e)
+                continue
 
             blockMeshes.append(chunkMesh)
             chunkMesh.chunkUpdate = None
 
-        #log.info("Calculated %d full-chunk meshes for chunk %s", len(blockMeshes), chunkNode.chunkPosition)
-
-        highDetailBlocks = []
-
-        # Recalculate section block meshes if needed, otherwise retain them
-        if chunkInfo.detailLevel == 0 and layers.Layer.Blocks in chunkInfo.invalidLayers:
-            #log.info("Recalculating chunk %s (%s)", chunkNode.chunkPosition, chunkNode)
-            for _ in self.calcSectionFaces(highDetailBlocks):
-                yield
-
-        blockMeshes.extend(highDetailBlocks)
-
-        #log.info("Calculated %d meshes for chunk %s", len(highDetailBlocks), chunkNode.chunkPosition)
-        # else:
-        #     highDetailBlocks.extend(mesh
-        #                             for mesh in chunkNode.blockMeshes
-        #                             if type(mesh) not in self.chunkMeshClasses)
-
-        # Add the layer renderers
-
-        # time.sleep(0.5) #xxxxxxxxxxxxx
-        raise StopIteration
-
-
-    def calcSectionFaces(self, blockMeshes):  # ForChunk(self, chunkPosition = (0,0), level = None, alpha = 1.0):
+    @profiler.iterator
+    def buildSectionMeshes(self, blockMeshes):
         """
-        Creates a SectionUpdate instance for each section found in this ChunkUpdate's chunk and iterates it.
+        Rebuild the section meshes.
 
+        Creates a SectionUpdate instance for each section found in this ChunkUpdate's chunk and iterates it.
         Returns an iterator.
         """
         chunk = self.chunk
@@ -188,15 +226,15 @@ class SectionUpdate(object):
         """
         self.chunkUpdate = chunkUpdate
         self.chunkSection = chunkSection
+        self.cy = chunkSection.Y
         self.y = chunkSection.Y << 4
 
         self.blockMeshes = blockMeshes
-        self.renderType = self.blocktypes.renderType
-        IDs = getRendererClasses().keys()
-        lookup = numpy.zeros((256,), bool)
-        lookup[IDs] = True
-        okayIDs = lookup[self.renderType[1:]]
-        self.renderType[1:][~okayIDs] = 0
+        # new rendertypes:
+        # 0: ??
+        # 1. lava/water
+        # 2: item?
+        # 3: block model
 
 
 
@@ -210,6 +248,21 @@ class SectionUpdate(object):
 
     @lazyprop
     def areaBlocks(self):
+        return self.areaBlocksOrData("Blocks")
+
+    @lazyprop
+    def areaData(self):
+        return self.areaBlocksOrData("Data")
+
+    @lazyprop
+    def areaBiomes(self):
+        chunkWidth, chunkLength, chunkHeight = self.chunkSection.Blocks.shape
+        areaBiomes = numpy.zeros((chunkWidth+2, chunkLength+2), numpy.uint8)
+        # need neighbors later to blend biome colors
+        areaBiomes[1:-1, 1:-1] = self.chunkUpdate.chunk.Biomes
+        return areaBiomes
+
+    def areaBlocksOrData(self, arrayName):
         """
         Return the blocks in an 18-wide cube centered on this section. Only retrieves blocks from the
         6 sections neighboring this one along a major axis, so the corners are empty. That's fine since they
@@ -223,7 +276,7 @@ class SectionUpdate(object):
         chunkWidth, chunkLength, chunkHeight = self.chunkSection.Blocks.shape
         cy = self.chunkSection.Y
 
-        areaBlocks = numpy.empty((chunkWidth + 2, chunkLength + 2, chunkHeight + 2), numpy.uint16)
+        areaBlocks = numpy.empty((chunkWidth + 2, chunkLength + 2, chunkHeight + 2), numpy.uint16 if arrayName == "Blocks" else numpy.uint8)
         areaBlocks[(0, -1), :, :] = 0
         areaBlocks[:, (0, -1)] = 0
         areaBlocks[:, :, (0, -1)] = 0
@@ -239,36 +292,36 @@ class SectionUpdate(object):
             if mask is None:
                 return areaBlocks
 
-        areaBlocks[1:-1, 1:-1, 1:-1] = self.chunkSection.Blocks
+        areaBlocks[1:-1, 1:-1, 1:-1] = getattr(self.chunkSection, arrayName)
         neighboringChunks = self.chunkUpdate.neighboringChunks
 
         if faces.FaceXDecreasing in neighboringChunks:
             ncs = neighboringChunks[faces.FaceXDecreasing].getSection(cy)
             if ncs:
-                areaBlocks[1:-1, 1:-1, :1] = ncs.Blocks[:, :, -1:]
+                areaBlocks[1:-1, 1:-1, :1] = getattr(ncs, arrayName)[:, :, -1:]
 
         if faces.FaceXIncreasing in neighboringChunks:
             ncs = neighboringChunks[faces.FaceXIncreasing].getSection(cy)
             if ncs:
-                areaBlocks[1:-1, 1:-1, -1:] = ncs.Blocks[:, :, :1]
+                areaBlocks[1:-1, 1:-1, -1:] = getattr(ncs, arrayName)[:, :, :1]
 
         if faces.FaceZDecreasing in neighboringChunks:
             ncs = neighboringChunks[faces.FaceZDecreasing].getSection(cy)
             if ncs:
-                areaBlocks[1:-1, :1, 1:-1] = ncs.Blocks[:chunkWidth, -1:, :chunkHeight]
+                areaBlocks[1:-1, :1, 1:-1] = getattr(ncs, arrayName)[:chunkWidth, -1:, :chunkHeight]
 
         if faces.FaceZIncreasing in neighboringChunks:
             ncs = neighboringChunks[faces.FaceZIncreasing].getSection(cy)
             if ncs:
-                areaBlocks[1:-1, -1:, 1:-1] = ncs.Blocks[:chunkWidth, :1, :chunkHeight]
+                areaBlocks[1:-1, -1:, 1:-1] = getattr(ncs, arrayName)[:chunkWidth, :1, :chunkHeight]
 
         aboveSection = chunk.getSection(self.chunkSection.Y + 1)
         if aboveSection:
-            areaBlocks[-1:, 1:-1, 1:-1] = aboveSection.Blocks[:1, :, :]
+            areaBlocks[-1:, 1:-1, 1:-1] = getattr(aboveSection, arrayName)[:1, :, :]
 
         belowSection = chunk.getSection(self.chunkSection.Y - 1)
         if belowSection:
-            areaBlocks[:1, 1:-1, 1:-1] = belowSection.Blocks[-1:, :, :]
+            areaBlocks[:1, 1:-1, 1:-1] = getattr(belowSection, arrayName)[-1:, :, :]
 
 
         if mask is not None:
@@ -280,10 +333,17 @@ class SectionUpdate(object):
     def blocktypes(self):
         return self.chunkUpdate.chunk.blocktypes
 
-    @lazyprop
-    def blockRenderTypes(self):
-        blockRenderTypes = self.renderType[self.Blocks]
-        return blockRenderTypes
+    @property
+    def renderType(self):
+        return self.chunkUpdate.updateTask.renderType
+
+    @property
+    def biomeTemp(self):
+        return self.chunkUpdate.updateTask.biomeTemp
+
+    @property
+    def biomeRain(self):
+        return self.chunkUpdate.updateTask.biomeRain
 
     @lazyprop
     def exposedBlockMasks(self):
@@ -380,50 +440,17 @@ class SectionUpdate(object):
     def Data(self):
         return self.chunkSection.Data
 
-    @property
-    def lookupTextures(self):
-        return self.chunkUpdate.updateTask.lookupTextures
-
     @profiler.iterator("SectionUpdate")
     def __iter__(self):
-        renderTypeCounts = numpy.bincount(self.blockRenderTypes.ravel())
-
         cx, cz = self.chunkUpdate.chunk.chunkPosition
-        cache = self.chunkUpdate.chunkInfo.worldScene.geometryCache
 
         sectionBounds = SectionBox(cx, self.y, cz)
         bounds = self.chunkUpdate.chunkInfo.worldScene.bounds
         if bounds:
             sectionBounds = sectionBounds.intersect(bounds)
 
-        for renderType, blockMeshClass in self.chunkUpdate.updateTask.blockMeshClasses.iteritems():
-            if renderType >= len(renderTypeCounts) or renderTypeCounts[renderType] == 0:
-                continue
-
-            blockMesh = cache.get((cx, cz, self.y, sectionBounds, renderType))
-            if blockMesh is not None:
-                #blockMesh = blockMeshClass.fromCachedData(self, cachedData)
-                self.blockMeshes.append(blockMesh)
-                #blockMesh.blocktypes = self.blocktypes
-                #blockMesh.y = self.y
-                log.debug("Block mesh %s (type %s) cached.", (cx, cz, self.y), renderType)
-            else:
-
-                blockMesh = blockMeshClass(self)
-                blockMesh.blocktypes = self.blocktypes
-                blockMesh.y = self.y
-                worker = blockMesh.makeVertices()
-                name = blockMeshClass.__name__
-
-                for _ in profiler.iterate(worker, name):
-                    yield
-                self.blockMeshes.append(blockMesh)
-                blockMesh.sectionUpdate = None
-                for vertexArray in blockMesh.vertexArrays:
-                    vertexArray.vertex[..., 1] += self.y
-
-                cache[cx, cz, self.y, renderType] = blockMesh
-
-            yield
-
-
+        modelMesh = BlockModelMesh(self)
+        with profiler.context("BlockModelMesh"):
+            modelMesh.createVertexArrays()
+        self.blockMeshes.append(modelMesh)
+        yield

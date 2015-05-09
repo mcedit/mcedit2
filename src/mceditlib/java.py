@@ -17,7 +17,7 @@ import re
 from numpy import fromstring
 
 from mceditlib import blocktypes
-from mceditlib.levelbase import FakeChunkedLevelAdapter
+from mceditlib.fakechunklevel import FakeChunkedLevelAdapter
 
 log = getLogger(__name__)
 

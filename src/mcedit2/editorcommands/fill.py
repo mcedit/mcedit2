@@ -19,6 +19,7 @@ class FillCommandWidget(QtGui.QDialog):
         self.blockTypeInput.block = "minecraft:stone"
 
 _fillWidget = None
+
 def getFillWidget(editorSession):
     global _fillWidget
     if _fillWidget is None:
@@ -31,7 +32,7 @@ def fillCommand(editorSession):
 
     :type editorSession: mcedit2.editorsession.EditorSession
     """
-    box = editorSession.selectionBox
+    box = editorSession.currentSelection
     if box is None or box.volume == 0:
         return
 

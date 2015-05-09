@@ -5,10 +5,13 @@ from __future__ import absolute_import, division, print_function
 import logging
 
 from PySide import QtGui, QtCore
+from PySide.QtCore import Qt
+from mcedit2.editorsession import PendingImport
 
 from mcedit2.editortools import EditorTool
 from mcedit2.command import SimpleRevisionCommand
-from mcedit2.editortools.select import SelectionBoxNode, SelectionFaceNode
+from mcedit2.editortools.select import SelectionFaceNode
+from mcedit2.rendering.selection import SelectionBoxNode, SelectionFaceNode, boxFaceUnderCursor
 from mcedit2.rendering import scenegraph
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.worldscene import WorldScene
@@ -16,10 +19,64 @@ from mcedit2.util.load_ui import load_ui
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
 from mcedit2.widgets.layout import Column
-from mcedit2.worldview.worldview import boxFaceUnderCursor
-from mceditlib.geometry import BoundingBox, Vector
+from mceditlib.geometry import Vector
+from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
+
+class MoveSelectionCommand(SimpleRevisionCommand):
+    def __init__(self, moveTool, pendingImport, text=None, *args, **kwargs):
+        if text is None:
+            text = moveTool.tr("Move Selected Object")
+        super(MoveSelectionCommand, self).__init__(moveTool.editorSession, text, *args, **kwargs)
+        self.pendingImport = pendingImport
+        self.moveTool = moveTool
+
+    def undo(self):
+        super(MoveSelectionCommand, self).undo()
+        self.moveTool.currentImport = None
+        self.moveTool.removePendingImport(self.pendingImport)
+        self.moveTool.editorSession.chooseTool("Select")
+
+    def redo(self):
+        self.moveTool.currentImport = self.pendingImport
+        self.moveTool.addPendingImport(self.pendingImport)
+        self.moveTool.editorSession.chooseTool("Move")
+        super(MoveSelectionCommand, self).redo()
+
+
+class MoveOffsetCommand(QtGui.QUndoCommand):
+
+    def __init__(self, moveTool, oldPoint, newPoint):
+        super(MoveOffsetCommand, self).__init__()
+        self.setText(moveTool.tr("Move Object"))
+        self.newPoint = newPoint
+        self.oldPoint = oldPoint
+        self.moveTool = moveTool
+
+    def undo(self):
+        self.moveTool.movePosition = self.oldPoint
+
+    def redo(self):
+        self.moveTool.movePosition = self.newPoint
+
+class MoveFinishCommand(SimpleRevisionCommand):
+    def __init__(self, moveTool, pendingImport, *args, **kwargs):
+        super(MoveFinishCommand, self).__init__(moveTool.editorSession, moveTool.tr("Finish Move"), *args, **kwargs)
+        self.pendingImport = pendingImport
+        self.moveTool = moveTool
+
+    def undo(self):
+        super(MoveFinishCommand, self).undo()
+        self.moveTool.addPendingImport(self.pendingImport)
+        self.editorSession.currentSelection = self.previousSelection
+        self.editorSession.chooseTool("Move")
+
+    def redo(self):
+        super(MoveFinishCommand, self).redo()
+        self.previousSelection = self.editorSession.currentSelection
+        self.editorSession.currentSelection = BoundingBox(self.pendingImport.pos, self.pendingImport.bounds.size)
+        self.moveTool.removePendingImport(self.pendingImport)
 
 
 class CoordinateWidget(QtGui.QWidget):
@@ -63,6 +120,46 @@ class CoordinateWidget(QtGui.QWidget):
         x, y, z = self.point
         self.point = Vector(x, y, value)
 
+class PendingImportNode(scenegraph.TranslateNode):
+    def __init__(self, pendingImport, textureAtlas):
+        super(PendingImportNode, self).__init__()
+        self.pendingImport = pendingImport
+        self.pos = pendingImport.pos
+
+        dim = pendingImport.schematic.getDimension()
+
+        self.worldScene = WorldScene(dim, textureAtlas)
+        self.worldScene.depthOffsetNode.depthOffset = DepthOffset.PreviewRenderer
+        self.addChild(self.worldScene)
+
+        self.outlineNode = SelectionBoxNode()
+        self.outlineNode.filled = False
+        self.outlineNode.selectionBox = dim.bounds
+        self.addChild(self.outlineNode)
+
+        self.faceHoverNode = SelectionFaceNode()
+        self.faceHoverNode.selectionBox = dim.bounds
+        self.addChild(self.faceHoverNode)
+
+        self.loader = WorldLoader(self.worldScene)
+        self.loader.timer.start()
+
+    @property
+    def pos(self):
+        return self.translateOffset
+
+    @pos.setter
+    def pos(self, value):
+        self.translateOffset = value
+
+    def hoverFace(self, face):
+        if face is not None:
+            self.faceHoverNode.color = 0.3, 1, 1
+            self.faceHoverNode.visible = True
+
+            self.faceHoverNode.face = face
+        else:
+            self.faceHoverNode.visible = False
 
 class MoveTool(EditorTool):
     iconName = "move"
@@ -71,41 +168,36 @@ class MoveTool(EditorTool):
     def __init__(self, editorSession, *args, **kwargs):
         super(MoveTool, self).__init__(editorSession, *args, **kwargs)
         self.overlayNode = scenegraph.Node()
-        self.translateNode = scenegraph.TranslateNode()
-        self.overlayNode.addChild(self.translateNode)
 
-        self.sceneHolderNode = scenegraph.Node()
-        self.translateNode.addChild(self.sceneHolderNode)
-
-        self.outlineNode = SelectionBoxNode()
-        self.outlineNode.color = .9, 1., 1.
-        self.translateNode.addChild(self.outlineNode)
-
-        self.faceHoverNode = SelectionFaceNode()
-        self.translateNode.addChild(self.faceHoverNode)
-
-        self.movingWorldScene = None
         self.loader = None
-        self.currentCommand = None
         self.dragStartFace = None
         self.dragStartPoint = None
 
+        self.pendingImports = []
+
+        self.pendingImportNodes = {}
+
         self.toolWidget = QtGui.QWidget()
+
+        self.importsListWidget = QtGui.QListView()
+        self.importsListModel = QtGui.QStandardItemModel()
+        self.importsListWidget.setModel(self.importsListModel)
+        self.importsListWidget.clicked.connect(self.listClicked)
+        self.importsListWidget.doubleClicked.connect(self.listDoubleClicked)
+
         self.pointInput = CoordinateWidget()
         self.pointInput.pointChanged.connect(self.pointInputChanged)
         confirmButton = QtGui.QPushButton("Confirm")  # xxxx should be in worldview
-        confirmButton.clicked.connect(self.completeMove)
-        self.toolWidget.setLayout(Column(self.pointInput,
+        confirmButton.clicked.connect(self.confirmImport)
+        self.toolWidget.setLayout(Column(self.importsListWidget,
+                                         self.pointInput,
                                          confirmButton,
                                          None))
 
-        self.movePosition = None
-
-    _movePosition = None
 
     @property
     def movePosition(self):
-        return self._movePosition
+        return None if self.currentImport is None else self.currentImport.pos
 
     @movePosition.setter
     def movePosition(self, value):
@@ -117,57 +209,68 @@ class MoveTool(EditorTool):
         self.pointInputChanged(value)
 
     def pointInputChanged(self, value):
-        self._movePosition = value
         if value is not None:
-            self.translateNode.visible = True
-            self.translateNode.translateOffset = value
-        else:
-            self.translateNode.visible = False
+            self.currentImport.pos = value
+            self.currentImportNode.pos = value
 
-    _movingSchematic = None
+    # --- Pending imports ---
+
+    def addPendingImport(self, pendingImport):
+        self.pendingImports.append(pendingImport)
+        item = QtGui.QStandardItem()
+        item.setEditable(False)
+        item.setText(pendingImport.text)
+        item.setData(pendingImport, Qt.UserRole)
+        self.importsListModel.appendRow(item)
+        self.importsListWidget.setCurrentIndex(self.importsListModel.index(self.importsListModel.rowCount()-1, 0))
+        node = self.pendingImportNodes[pendingImport] = PendingImportNode(pendingImport, self.editorSession.textureAtlas)
+        self.overlayNode.addChild(node)
+        self.currentImport = pendingImport
+
+    def removePendingImport(self, pendingImport):
+        index = self.pendingImports.index(pendingImport)
+        self.pendingImports.remove(pendingImport)
+        self.importsListModel.removeRows(index, 1)
+        self.currentImport = self.pendingImports[-1] if len(self.pendingImports) else None
+        node = self.pendingImportNodes.pop(pendingImport)
+        if node:
+            self.overlayNode.removeChild(node)
+
+    def doMoveOffsetCommand(self, oldPoint, newPoint):
+        if newPoint != oldPoint:
+            command = MoveOffsetCommand(self, oldPoint, newPoint)
+            self.editorSession.pushCommand(command)
+
+    def listClicked(self, index):
+        item = self.importsListModel.itemFromIndex(index)
+        pendingImport = item.data(Qt.UserRole)
+        self.currentImport = pendingImport
+
+    def listDoubleClicked(self, index):
+        item = self.importsListModel.itemFromIndex(index)
+        pendingImport = item.data(Qt.UserRole)
+        self.editorSession.editorTab.currentView().centerOnPoint(pendingImport.bounds.center)
+
+    _currentImport = None
 
     @property
-    def movingSchematic(self):
-        return self._movingSchematic
+    def currentImport(self):
+        return self._currentImport
 
-    @movingSchematic.setter
-    def movingSchematic(self, value):
-        oldVal = self._movingSchematic
-        self._movingSchematic = value
-        if oldVal is not value:
-            self.updateOverlay()
+    @currentImport.setter
+    def currentImport(self, value):
+        self._currentImport = value
         self.pointInput.setEnabled(value is not None)
+        for node in self.pendingImportNodes.itervalues():
+            node.outlineNode.wireColor = (.2, 1., .2, .5) if node.pendingImport is value else (1, 1, 1, .3)
 
-
-    def updateOverlay(self):
-        if self.movingSchematic is None:
-            log.info("updateOverlay: Nothing to display")
-            if self.movingWorldScene:
-                self.sceneHolderNode.removeChild(self.movingWorldScene)
-                self.movingWorldScene = None
-            self.outlineNode.visible = False
-
-
-        log.info("Updating move schematic scene: %s", self.movingSchematic)
-        if self.movingWorldScene:
-            self.loader.timer.stop()
-            self.sceneHolderNode.removeChild(self.movingWorldScene)
-        if self.movingSchematic:
-            dim = self.movingSchematic.getDimension()
-            self.movingWorldScene = WorldScene(dim, self.editorSession.textureAtlas)
-            # xxx assumes import is same blocktypes as world, find atlas for imported object
-            self.outlineNode.selectionBox = dim.bounds
-            self.outlineNode.filled = False
-            self.outlineNode.visible = True
-
-            self.movingWorldScene.depthOffsetNode.depthOffset = DepthOffset.PreviewRenderer
-            self.sceneHolderNode.addChild(self.movingWorldScene)
-            self.loader = WorldLoader(self.movingWorldScene)
-            self.loader.timer.start()
+    @property
+    def currentImportNode(self):
+        return self.pendingImportNodes.get(self.currentImport)
 
     @property
     def schematicBox(self):
-        box = self.movingSchematic.getDimension().bounds
+        box = self.currentImport.schematic.getDimension().bounds
         return BoundingBox(self.movePosition, box.size)
 
     # --- Mouse events ---
@@ -185,25 +288,20 @@ class MoveTool(EditorTool):
 
     def mouseMove(self, event):
         # Hilite face cursor is over
-        if self.movingSchematic is None:
+        if self.currentImport is None:
             return
 
-        point, face = boxFaceUnderCursor(self.schematicBox, event.ray)
-        if face is not None:
-            self.faceHoverNode.color = (0.3, 1, 1)
-            self.faceHoverNode.visible = True
-
-            self.faceHoverNode.face = face
-            self.faceHoverNode.selectionBox = self.movingSchematic.getDimension().bounds
-        else:
-            self.faceHoverNode.visible = False
+        node = self.currentImportNode
+        if node:
+            point, face = boxFaceUnderCursor(self.schematicBox, event.ray)
+            node.hoverFace(face)
 
         # Highlight face of box to move along, or else axis pointers to grab and drag?
         pass
 
     def mouseDrag(self, event):
         # Move box using face or axis pointers
-        if self.movingSchematic is None:
+        if self.currentImport is None:
             return
         if self.dragStartFace is None:
             return
@@ -219,7 +317,7 @@ class MoveTool(EditorTool):
 
 
         # begin drag
-        if self.movingSchematic is not None:
+        if self.currentImport is not None:
             point, face = boxFaceUnderCursor(self.schematicBox, event.ray)
             self.dragStartFace = face
             self.dragStartPoint = point
@@ -229,51 +327,42 @@ class MoveTool(EditorTool):
         # Don't paste cut selection in yet. Wait for tool switch or "Confirm" button press. Begin new revision
         # for paste operation, paste stored world, store revision after paste (should be previously stored revision
         # +2), commit MoveCommand to undo history.
-        pass
+        if self.currentImport is not None:
+            self.doMoveOffsetCommand(self.dragStartMovePosition, self.movePosition)
 
     def toolActive(self):
         self.editorSession.selectionTool.hideSelectionWalls = True
-        if self.currentCommand is None and self.movingSchematic is None:
+        if self.currentImport is None:
             # Need to cut out selection
             # xxxx for huge selections, don't cut, just do everything at the end?
-            if self.editorSession.selectionBox is None:
+            if self.editorSession.currentSelection is None:
                 return
-            export = self.editorSession.currentDimension.exportSchematicIter(self.editorSession.selectionBox)
-            self.movingSchematic = showProgress("Lifting...", export)
-            self.movePosition = self.editorSession.selectionBox.origin
+            export = self.editorSession.currentDimension.exportSchematicIter(self.editorSession.currentSelection)
+            schematic = showProgress("Copying...", export)
+            pos = self.editorSession.currentSelection.origin
+            pendingImport = PendingImport(schematic, pos, self.tr("<Moved Object>"))
+            moveCommand = MoveSelectionCommand(self, pendingImport)
 
-            self.currentCommand = SimpleRevisionCommand(self.editorSession, self.tr("Move"))
-            self.currentCommand.previousRevision = self.editorSession.currentRevision
-            self.editorSession.beginUndo()
-            fill = self.editorSession.currentDimension.fillBlocksIter(self.editorSession.selectionBox, "air")
-            showProgress("Lifting...", fill)
-            self.editorSession.commitUndo()
-            self.editorSession.setUndoBlock(self.completeMove)
+            with moveCommand.begin():
+                fill = self.editorSession.currentDimension.fillBlocksIter(self.editorSession.currentSelection, "air")
+                showProgress("Clearing...", fill)
+
+            self.editorSession.pushCommand(moveCommand)
 
     def toolInactive(self):
         self.editorSession.selectionTool.hideSelectionWalls = False
-        if self.movingSchematic is not None:
-            self.completeMove()
-            self.movingSchematic = None
 
-        self.outlineNode.visible = False
-        self.faceHoverNode.visible = False
+        for node in self.pendingImportNodes.itervalues():
+            node.hoverFace(None)
 
-    def completeMove(self):
-        if self.movingSchematic is None:
+    def confirmImport(self):
+        if self.currentImport is None:
             return
 
-        if self.currentCommand is None:
-            self.currentCommand = SimpleRevisionCommand(self.editorSession, self.tr("Paste"))
-            self.currentCommand.previousRevision = self.editorSession.currentRevision
+        command = MoveFinishCommand(self, self.currentImport)
 
-        self.editorSession.removeUndoBlock(self.completeMove)
-        self.editorSession.beginUndo()
-        task = self.editorSession.currentDimension.importSchematicIter(self.movingSchematic, self.movePosition)
-        showProgress(self.tr("Pasting..."), task)
-        self.editorSession.commitUndo()
+        with command.begin():
+            task = self.editorSession.currentDimension.importSchematicIter(self.currentImport.schematic, self.currentImport.pos)
+            showProgress(self.tr("Pasting..."), task)
 
-        self.currentCommand.currentRevision = self.editorSession.worldEditor.currentRevision
-        self.editorSession.pushCommand(self.currentCommand)
-        self.currentCommand = None
-        self.movingSchematic = None
+        self.editorSession.pushCommand(command)

@@ -12,10 +12,7 @@ Contents:
     :maxdepth: 2
 
     mceditlib
-    formats
-    storage
-    support
-    mce
+    mcedit2
 
 Indices and tables
 ==================

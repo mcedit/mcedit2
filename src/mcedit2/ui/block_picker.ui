@@ -19,7 +19,7 @@
   <property name="windowTitle">
    <string>Choose Block</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1,0">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
@@ -48,6 +48,12 @@
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <widget class="BlockTypeListWidget" name="listWidget">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>1</verstretch>
+        </sizepolicy>
+       </property>
        <property name="palette">
         <palette>
          <active>
@@ -133,96 +139,43 @@
    </item>
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="3" column="1">
-      <widget class="QLabel" name="brightnessLabel">
-       <property name="text">
-        <string>Brightness: x</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="2">
-      <widget class="QLabel" name="rendertypeLabel">
-       <property name="text">
-        <string>RenderType</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="3" rowspan="2">
+     <item row="2" column="1" rowspan="2">
       <widget class="QPushButton" name="cancelButton">
        <property name="text">
         <string>Cancel</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1" rowspan="2">
-      <widget class="QLabel" name="opacityLabel">
-       <property name="text">
-        <string>Opacity: x</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="3" rowspan="2">
+     <item row="0" column="1" rowspan="2">
       <widget class="QPushButton" name="selectButton">
        <property name="text">
         <string>Select</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="2" rowspan="2">
-      <widget class="QLabel" name="internalNameLabel">
-       <property name="enabled">
-        <bool>false</bool>
+     <item row="4" column="1">
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
        </property>
-       <property name="text">
-        <string>minecraft:xxxxx</string>
+       <property name="sizeType">
+        <enum>QSizePolicy::Expanding</enum>
        </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
        </property>
-      </widget>
+      </spacer>
      </item>
-     <item row="0" column="1">
-      <widget class="QLabel" name="nameLabel">
-       <property name="text">
-        <string>BlockName</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="2">
-      <widget class="QLabel" name="idLabel">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>(xx:xx)</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0" rowspan="4">
-      <widget class="QLabel" name="blockThumb">
+     <item row="0" column="0" rowspan="5">
+      <widget class="BlockTypesItemWidget" name="selectedBlockTypesWidget" native="true">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>48</width>
-         <height>48</height>
-        </size>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
@@ -235,6 +188,12 @@
    <class>BlockTypeListWidget</class>
    <extends>QListWidget</extends>
    <header>blocktypelistwidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>BlockTypesItemWidget</class>
+   <extends>QWidget</extends>
+   <header>blocktypesitemwidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <tabstops>

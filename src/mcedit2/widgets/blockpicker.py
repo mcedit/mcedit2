@@ -2,145 +2,58 @@
     blockpicker
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
-from PySide import QtGui, QtCore
 import logging
+import re
+
+from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
-from PySide.QtGui import QPixmap
+
 from mcedit2.util.load_ui import registerCustomWidget, load_ui
 from mcedit2.widgets.blocktype_list import BlockTypePixmap
 from mcedit2.widgets.layout import Row, Column
-from mcedit2.worldview.iso import IsoWorldView
+#from mcedit2.worldview.iso import IsoWorldView
 from mceditlib.blocktypes import BlockType
-from mceditlib.schematic import SchematicFileAdapter
-from mceditlib.worldeditor import WorldEditor
+#from mceditlib.schematic import createSchematic
 
 log = logging.getLogger(__name__)
+#
+# @registerCustomWidget
+# class BlockThumbView(QtGui.QWidget):
+#     def __init__(self, *a, **kw):
+#         super(BlockThumbView, self).__init__(minimumWidth=48, minimumHeight=48, *a, **kw)
+#         self.worldView = None
+#
+#     _textureAtlas = None
+#     @property
+#     def textureAtlas(self):
+#         return self._textureAtlas
+#
+#     @textureAtlas.setter
+#     def textureAtlas(self, textureAtlas):
+#         self._textureAtlas = textureAtlas
+#         self.updateView()
+#
+#     _block = None
+#     @property
+#     def block(self):
+#         return self._block
+#
+#     @block.setter
+#     def block(self, value):
+#         self._block = value
+#         self.updateView()
+#
+#     def updateView(self):
+#         if None in (self.block, self.textureAtlas):
+#             return
+#
+#         editor = createSchematic((1, 1, 1), blocktypes=self.textureAtlas.blocktypes)
+#         dim = editor.getDimension()
+#         dim.setBlocks(0, 0, 0, self.block)
+#         self.worldView = IsoWorldView(dim, self.textureAtlas, sharedGLWidget=self.editorSession.editorTab.miniMap)
+#
+#         self.setLayout(Row(self.worldView))
 
-@registerCustomWidget
-class BlockThumbView(QtGui.QWidget):
-    def __init__(self, *a, **kw):
-        super(BlockThumbView, self).__init__(minimumWidth=48, minimumHeight=48, *a, **kw)
-        self.worldView = None
-
-    _editorSession = None
-    @property
-    def editorSession(self):
-        return self._editorSession
-
-    @editorSession.setter
-    def editorSession(self, editorSession):
-        self._editorSession = editorSession
-        self.updateView()
-
-    _block = None
-    @property
-    def block(self):
-        return self._block
-
-    @block.setter
-    def block(self, value):
-        self._block = value
-        self.updateView()
-
-    def updateView(self):
-        if None in (self.block, self.editorSession):
-            return
-
-        blockworld = SchematicFileAdapter((1, 1, 1), blocktypes=self.editorSession.worldEditor.blocktypes)
-        editor = WorldEditor(adapter=blockworld)
-        dim = editor.getDimension()
-        dim.setBlocks(0, 0, 0, self.block)
-        self.worldView = IsoWorldView(dim, self.editorSession.textureAtlas, sharedGLWidget=self.editorSession.editorTab.miniMap)
-
-        self.setLayout(Row(self.worldView))
-#
-#class BlockTypeItemDelegate(QtGui.QStyledItemDelegate):
-#    def __init__(self, model, listView, *args, **kwargs):
-#        """
-#
-#        :type listView: QListView
-#        """
-#        super(BlockTypeItemDelegate, self).__init__(*args, **kwargs)
-#        self.listView = listView
-#        self.model = model
-#        self.textureAtlas = model.editor.textureAtlas
-#
-#    def xpaint(self, painter, option, index):
-#        """
-#
-#        :type painter: QtGui.QPainter
-#        :type option: QStyleOptionViewItem
-#        :type index: QModelIndex
-#        """
-#        #super(BlockTypeItemDelegate, self).paint(painter, option, index)
-#        QtGui.QStyledItemDelegate.paint(self, painter, option, index)
-#        #self.listWidget.style().drawPrimitive(QtGui.QStyle.PE_PanelItemViewItem, option, painter, None)
-#        return
-#
-#        if False and option.state & QtGui.QStyle.State_Enabled:
-#            widget = BlockTypesItemWidget(self.listView.model().data(index, role=Qt.UserRole), self.textureAtlas)
-#            widget.setGeometry(option.rect)
-#            widget.setMinimumSize(self.model.baseSize)
-#            widget.setBackgroundRole(QtGui.QPalette.NoRole)
-#            widget.setAutoFillBackground(False)
-#            #painter.drawRoundedRect(option.rect, 0, 0)
-#            img = QPixmap(option.rect.size())
-#            img.fill(QtGui.QColor(0, 0, 0, 0))
-#            #log.info("Paint: Active")
-#
-#            widget.render(img, renderFlags=widget.DrawChildren)
-#
-#            #if option.state & QtGui.QStyle.State_Selected:
-#            #    brush = option.palette.highlight()
-#            #    painter.fillRect(option.rect, brush)
-#
-#            painter.drawPixmap(option.rect.topLeft(), img)
-#            #style = self.listWidget.style()
-#            #style.drawPrimitive(style.PE_PanelItemViewItem, option, painter, widget)
-#            #style.drawControl(style.CE_ItemViewItem, option, painter)
-#
-#
-#
-#    def sizeHint(self, option, index):
-#        return QtCore.QSize(self.listView.width(), self.model.baseSize.height())
-#
-#_widgetWidth = 400
-#
-#class BlockTypeSetModel(QtCore.QAbstractListModel):
-#
-#    def __init__(self, editor, *args, **kwargs):
-#        super(BlockTypeSetModel, self).__init__(*args, **kwargs)
-#        self.allBlocks = list(editor.world.blocktypes)
-#        self.editor = editor
-#        widget = BlockTypesItemWidget(editor.world.blocktypes.Stone, editor.textureAtlas)
-#        self.baseSize = QtCore.QSize(widget.sizeHint().width(), widget.sizeHint().height())
-#
-#    def rowCount(self, parent=QtCore.QModelIndex()):
-#        return len(self.allBlocks)
-#
-#    def data(self, index, role=Qt.DisplayRole):
-#        if role == Qt.DisplayRole:
-#            return self.allBlocks[index.row()].englishName
-#            #return self.makeIcon(index)
-#        elif role == Qt.UserRole:
-#            return self.allBlocks[index.row()]
-#        else:
-#            return None
-#
-#    def makeIcon(self, index):
-#        widget = BlockTypesItemWidget(self.data(index, role=Qt.UserRole), self.editor.textureAtlas)
-#        widget.setMinimumSize(self.baseSize)
-#        widget.setBackgroundRole(QtGui.QPalette.NoRole)
-#        widget.setAutoFillBackground(False)
-#        #painter.drawRoundedRect(option.rect, 0, 0)
-#        img = QPixmap(self.baseSize)
-#        img.fill(QtGui.QColor(0, 0, 0, 0))
-#        #log.info("Paint: Active")
-#
-#        widget.render(img, renderFlags=widget.DrawChildren)
-#        return img
-#        #icon = QtGui.QIcon(img)
-#        #return icon
 
 class BlockTypeIcon(QtGui.QLabel):
     def __init__(self, block, textureAtlas, *args, **kwargs):
@@ -149,42 +62,88 @@ class BlockTypeIcon(QtGui.QLabel):
         self.setMinimumSize(32, 32)
         self.setPixmap(pixmap)
 
+
+@registerCustomWidget
 class BlockTypesItemWidget(QtGui.QWidget):
-    def __init__(self, blocks, textureAtlas):
-        super(BlockTypesItemWidget, self).__init__()
+    def __init__(self, parent=None, blocks=None, textureAtlas=None):
+        super(BlockTypesItemWidget, self).__init__(parent)
+        self.childWidgets = []
+        self.mainLayout = None
+        self.blocks = blocks
+        self.textureAtlas = textureAtlas
+        self.setLayout(Column())
+        self.updateContents()
+
+    def setBlocks(self, blocks):
+        if blocks != self.blocks:
+            self.blocks = blocks
+            self.updateContents()
+
+    def setTextureAtlas(self, textureAtlas):
+        if textureAtlas != self.textureAtlas:
+            self.textureAtlas = textureAtlas
+            self.updateContents()
+
+    def updateContents(self):
+        if self.blocks is None or self.textureAtlas is None:
+            return
+
+        for child in self.childWidgets:
+            child.setParent(None)
+        self.childWidgets = []
+        if self.mainLayout:
+            self.layout().takeAt(0)
+        blocks = self.blocks
+        textureAtlas = self.textureAtlas
+
+        if len(blocks) == 0:
+            return
+
         if len(blocks) == 1:
             block = blocks[0]
-            self.blockIcon = BlockTypeIcon(block, textureAtlas)
+            blockIcon = BlockTypeIcon(block, textureAtlas)
+            self.childWidgets.append(blockIcon)
 
-            nameLabel = QtGui.QLabel(block.englishName)
+            nameLabel = QtGui.QLabel(block.displayName)
+            self.childWidgets.append(nameLabel)
 
-            internalNameLimit = 40
-            internalName = block.internalName
+            internalNameLimit = 60
+            internalName = block.internalName + block.blockState
             if len(internalName) > internalNameLimit:
-                internalName = block.internalName[:internalNameLimit-3]+"..."
+                internalName = internalName[:internalNameLimit-3]+"..."
 
-            internalNameLabel = QtGui.QLabel("(%d:%d) %s" % (block.ID, block.blockData, internalName), enabled=False)
+            internalNameLabel = QtGui.QLabel("(%d:%d) %s" % (block.ID, block.meta, internalName), enabled=False)
+            self.childWidgets.append(internalNameLabel)
 
             parentTypeLabel = QtGui.QLabel("")
-            if block.blockData != 0:
-                parentBlock = block.blocktypeSet[block.ID, 0]
-                if parentBlock.englishName != block.englishName:
-                    parentTypeLabel.setText("<font color='blue'>%s</font>" % parentBlock.englishName)
+            self.childWidgets.append(parentTypeLabel)
+
+            if block.meta != 0:
+                try:
+                    parentBlock = block.blocktypeSet[block.internalName]
+                    if parentBlock.displayName != block.displayName:
+                        parentTypeLabel.setText("<font color='blue'>%s</font>" % parentBlock.displayName)
+                except KeyError:  # no parent block; parent block is not meta=0; block was ID:meta typed in
+                    pass
 
             labelsColumn = Column(Row(nameLabel, None, parentTypeLabel),
                                   internalNameLabel)
 
-            row = Row(self.blockIcon, (labelsColumn, 1))
-            self.setLayout(row)
+            self.mainLayout = Row(blockIcon, (labelsColumn, 1))
+            self.layout().addLayout(self.mainLayout)
 
             # row.setSizeConstraint(QtGui.QLayout.SetFixedSize)
         else:
             frame = QtGui.QFrame()
-            frame.setMinimumSize(64, 64)
-            iconLimit = 16
+            self.childWidgets.append(frame)
+            vSpace = 4
+            frameHeight = 64
+            frame.setMinimumSize(64, frameHeight)
+            iconLimit = int((frameHeight - 32) / vSpace) + 1
 
             blocksToIcon = blocks[:iconLimit]
             icons = [BlockTypeIcon(b, textureAtlas) for b in blocksToIcon]
+            self.childWidgets.extend(icons)
             x = 0
             y = 0
             for i, icon in enumerate(icons):
@@ -196,26 +155,263 @@ class BlockTypesItemWidget(QtGui.QWidget):
                 x += 18
                 if i % 2:
                     x -= 32
-                y += 4
-
+                y += vSpace
 
             nameLimit = 6
             remaining = len(blocks) - nameLimit
             blocksToName = blocks[:nameLimit]
-            iconNames = ", ".join(b.englishName for b in blocksToName)
+            iconNames = ", ".join(b.displayName for b in blocksToName)
             if remaining > 0:
                 iconNames += " and %d more..." % remaining
-            self.setLayout(Row(frame, QtGui.QLabel(iconNames, wordWrap=True)))
 
-        self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Minimum)
-        self.adjustSize()
+            namesLabel = QtGui.QLabel(iconNames, wordWrap=True)
+            self.childWidgets.append(namesLabel)
+
+            self.mainLayout = Row(frame, (Column(namesLabel, None), 1))
+            self.layout().addLayout(self.mainLayout)
+
+        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+
+
+class BlockTypeListFilterModel(QtGui.QSortFilterProxyModel):
+    def __init__(self, sourceModel):
+        super(BlockTypeListFilterModel, self).__init__()
+        self.setSourceModel(sourceModel)
+        self.setFilterKeyColumn(0)
+        self.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.searchID = None
+        self.searchMeta = None
+
+    def setSearchString(self, val):
+        self.searchID = None
+        self.searchMeta = None
+        self.setFilterRegExp(val)
+
+    def setSearchIdMeta(self, ID, meta):
+        self.searchID = ID
+        self.searchMeta = meta
+        self.setFilterRegExp(None)
+
+    def filterAcceptsRow(self, row, parentIndex):
+        if self.searchID is None:
+            return super(BlockTypeListFilterModel, self).filterAcceptsRow(row, parentIndex)
+        else:
+            child = self.sourceModel().index(row, 0, parentIndex)
+            ID, meta = child.data(Qt.UserRole)
+            return ID == self.searchID and meta == self.searchMeta
+
+    @property
+    def textureAtlas(self):
+        return self.sourceModel().textureAtlas
+
+    @property
+    def blocktypes(self):
+        return self.sourceModel().blocktypes
+
+
+class SelectedBlockTypesProxyModel(QtGui.QSortFilterProxyModel):
+    def __init__(self, sourceModel):
+        super(SelectedBlockTypesProxyModel, self).__init__()
+        self.setSourceModel(sourceModel)
+        self._selectedBlocks = []
+
+    def filterAcceptsRow(self, row, parentIndex):
+        child = self.sourceModel().index(row, 0, parentIndex)
+        ID, meta = child.data(Qt.UserRole)
+        return (ID, meta) in self._selectedBlocks
+
+    def addBlocks(self, blocks):
+        for block in blocks:
+            self._selectedBlocks.append((block.ID, block.meta))
+        self.reset()
+
+    def removeBlocks(self, blocks):
+        for block in blocks:
+            self._selectedBlocks.remove((block.ID, block.meta))
+        self.reset()
+
+    def selectedBlocks(self):
+        return [self.sourceModel().blocktypes[ID, meta] for ID, meta in self._selectedBlocks]
+
+    def setSelectedBlocks(self, blocks):
+        self._selectedBlocks = [(block.ID, block.meta) for block in blocks]
+        self.reset()
+
+    @property
+    def textureAtlas(self):
+        return self.sourceModel().textureAtlas
+
+    @property
+    def blocktypes(self):
+        return self.sourceModel().blocktypes
+
+
+class BlockTypeListModel(QtCore.QAbstractListModel):
+    def __init__(self, textureAtlas):
+        super(BlockTypeListModel, self).__init__()
+        self.textureAtlas = textureAtlas
+        self.blocktypesList = list(self.blocktypes)
+        self.customBlocks = []
+
+    @property
+    def blocktypes(self):
+        return self.textureAtlas.blocktypes
+
+    def rowCount(self, index):
+        return len(self.blocktypes) + len(self.customBlocks)
+
+    def data(self, index, role):
+        row = index.row()
+        if row >= len(self.blocktypes):
+            block = self.customBlocks[row - len(self.blocktypes)]
+        else:
+            block = self.blocktypesList[index.row()]
+
+        if role == Qt.DisplayRole:
+            return block.displayName
+        if role == Qt.UserRole:
+            return block.ID, block.meta
+
+    def addCustomBlock(self, block):
+        if block in self.customBlocks:
+            return
+        index = len(self.blocktypes) + len(self.customBlocks)
+        self.beginInsertRows(QtCore.QModelIndex(), index, index)
+        self.customBlocks.append(block)
+        self.endInsertRows()
+
+    def removeCustomBlocks(self):
+        self.beginRemoveRows(QtCore.QModelIndex(),
+                             len(self.blocktypes),
+                             len(self.blocktypes) + len(self.customBlocks) - 1)
+        self.customBlocks = []
+        self.endRemoveRows()
+
+
+class BlockTypeListItemDelegate(QtGui.QAbstractItemDelegate):
+    def __init__(self):
+        super(BlockTypeListItemDelegate, self).__init__()
+        self.itemWidget = BlockTypesItemWidget()
+
+    def paint(self, painter, option, index):
+        """
+
+        :param painter:
+        :type painter: QtGui.QPainter
+        :param option:
+        :type option:
+        :param index:
+        :type index:
+        :return:
+        :rtype:
+        """
+        model = index.model()
+        ID, meta = index.data(Qt.UserRole)
+        block = model.blocktypes[ID, meta]
+        if option.state & QtGui.QStyle.State_Selected:
+            painter.fillRect(option.rect, option.palette.highlight())
+        self.itemWidget.setGeometry(option.rect)
+        self.itemWidget.setBlocks([block])
+        self.itemWidget.setTextureAtlas(model.textureAtlas)
+        self.itemWidget.render(painter,
+                               painter.deviceTransform().map(option.rect.topLeft()),  # QTBUG-26694
+                               renderFlags=QtGui.QWidget.DrawChildren)
+
+    def sizeHint(self, option, index):
+        # log.info("Getting sizeHint for block list widget item")
+        # model = index.model()
+        # block = index.data()
+        # self.itemWidget.blocks = [block]
+        # self.itemWidget.textureAtlas = model.textureAtlas
+        return QtCore.QSize(200, 72)
+
 
 @registerCustomWidget
-class BlockTypeListWidget(QtGui.QListWidget):
+class BlockTypeListWidget(QtGui.QListView):
 
     def __init__(self, *args, **kwargs):
         super(BlockTypeListWidget, self).__init__(*args, **kwargs)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.setItemDelegate(BlockTypeListItemDelegate())
+
+    blockSelectionChanged = QtCore.Signal(list, list)
+
+    def selectionChanged(self, selected, deselected):
+        model = self.model()
+        if model is None:
+            return
+        selectedBlocks = [model.blocktypes[tuple(model.data(index, Qt.UserRole))] for index in selected.indexes()]
+        deselectedBlocks = [model.blocktypes[tuple(model.data(index, Qt.UserRole))] for index in deselected.indexes()]
+
+        self.blockSelectionChanged.emit(selectedBlocks, deselectedBlocks)
+
+    def selectedBlocks(self):
+        model = self.model()
+        if model is None:
+            return
+        selectionModel = self.selectionModel()
+
+        return [model.blocktypes[tuple(model.data(index, Qt.UserRole))]
+                for index in selectionModel.selectedIndexes()]
+
+    def setSelectedBlocks(self, blocks):
+        model = self.model()
+        if model is None:
+            return []
+
+        selectionModel = self.selectionModel()
+        selectionModel.clear()
+
+        root = QtCore.QModelIndex()
+        keySet = {(block.ID, block.meta) for block in blocks}
+        for row in range(model.rowCount()):
+            index = model.index(row, 0, root)
+            key = tuple(model.data(index, Qt.UserRole))
+            if key in keySet:
+                selectionModel.select(index, QtGui.QItemSelectionModel.Select)
+
+    def clearSelection(self):
+        self.selectionModel().clear()
+
+
+class BlockTypePicker(QtGui.QDialog):
+    def __init__(self, multipleSelect=False):
+        super(BlockTypePicker, self).__init__()
+
+        self.multipleSelect = multipleSelect
+        if self.multipleSelect:
+            load_ui("block_picker_multiple.ui", baseinstance=self)
+        else:
+            load_ui("block_picker.ui", baseinstance=self)
+
+        self.selectButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+        self.searchField.editTextChanged.connect(self.setSearchString)
+        self.listWidget.blockSelectionChanged.connect(self.selectionDidChange)
+
+        if not self.multipleSelect:
+            self.listWidget.doubleClicked.connect(self.accept)
+        else:
+            self.listWidget.multipleSelect = True
+
+        self.setSizeGripEnabled(True)
+        self.listModel = None
+        self.filterModel = None
+        self.selectedTypesModel = None
+
+    def exec_(self):
+        self.searchField.setFocus()
+        return super(BlockTypePicker, self).exec_()
+
+    def selectionDidChange(self, selectedBlocks, deselectedBlocks):
+        if self.multipleSelect:
+            self.selectedTypesModel.addBlocks(selectedBlocks)
+            self.selectedTypesModel.removeBlocks(deselectedBlocks)
+        else:
+            self.selectedTypesModel.setSelectedBlocks(selectedBlocks[:1])
+        blocks = self.selectedTypesModel.selectedBlocks()
+
+        self.selectedBlockTypesWidget.setBlocks(blocks)
 
     _textureAtlas = None
 
@@ -224,101 +420,85 @@ class BlockTypeListWidget(QtGui.QListWidget):
         return self._textureAtlas
 
     @textureAtlas.setter
-    def textureAtlas(self, value):
-        oldVal = self._textureAtlas
-        self._textureAtlas = value
-        if oldVal != value:
-            self.updateList()
+    def textureAtlas(self, textureAtlas):
+        """
 
-    _blocktypes = None
+        :type textureAtlas: mcedit2.rendering.textureatlas.TextureAtlas
+        """
+        self._textureAtlas = textureAtlas
+        self.updatePicker()
 
     @property
     def blocktypes(self):
-        return self._blocktypes
+        return self.textureAtlas.blocktypes
 
-    @blocktypes.setter
-    def blocktypes(self, value):
-        oldVal = self._blocktypes
-        self._blocktypes = value
-        if oldVal != value:
-            self.updateList()
+    def updatePicker(self):
+        if self.textureAtlas is not None:
+            log.info("Updating blocktype list widget (multiple=%s) for %s",
+                     self.multipleSelect, self.blocktypes)
 
-    _searchValue = None
+            self.selectedBlockTypesWidget.setTextureAtlas(self.textureAtlas)
 
-    def setSearchString(self, val):
-        self._searchValue = val
-        for item in self.findItems("", Qt.MatchContains):
-            item.setHidden(val.lower() not in item.block.englishName.lower())
+            self.listModel = BlockTypeListModel(self.textureAtlas)
+            self.filterModel = BlockTypeListFilterModel(self.listModel)
+            self.listWidget.setModel(self.filterModel)
+            self.selectedTypesModel = SelectedBlockTypesProxyModel(self.listModel)
+            if self.multipleSelect:
+                self.selectedBlockList.setModel(self.selectedTypesModel)
 
-    def updateList(self):
-        if self.textureAtlas is None:
-            return
-        if self.blocktypes is None:
-            return
-
-        self.clear()
-
-        for block in self.blocktypes:
-            if self._searchValue:
-                for s in block.englishName, block.internalName:
-                    if self._searchValue not in s:
-                        continue
-
-            item = QtGui.QListWidgetItem()
-            itemWidget = BlockTypesItemWidget([block], self.textureAtlas)
-            item.setSizeHint(itemWidget.sizeHint())
-            item.block = block
-            item.widget = itemWidget
-
-            self.addItem(item)
-            self.setItemWidget(item, itemWidget)
-
-        self.setMinimumWidth(self.sizeHintForColumn(0)+self.autoScrollMargin())
-
-
-class BlockTypePicker(QtGui.QDialog):
-    def __init__(self, *args, **kwargs):
-        super(BlockTypePicker, self).__init__(*args, **kwargs)
-        self._editorSession = None
-
-        load_ui("block_picker.ui", baseinstance=self)
-        self.selectButton.clicked.connect(self.accept)
-        self.cancelButton.clicked.connect(self.reject)
-        self.searchField.editTextChanged.connect(self.setSearchString)
-        assert isinstance(self.listWidget, QtGui.QListWidget)
-        self.listWidget.itemSelectionChanged.connect(self.selectionDidChange)
-        self.listWidget.doubleClicked.connect(self.accept)
-        self.setSizeGripEnabled(True)
-
-    def selectionDidChange(self):
-        if not self.multipleSelect:
-            if len(self.selectedBlocks):
-                block = self.selectedBlocks[0]
-                self.nameLabel.setText("%s" % block.englishName)
-                self.internalNameLabel.setText("(%d:%d) %s" % (block.ID, block.blockData, block.internalName))
-                self.brightnessLabel.setText("Brightness: %d" % block.brightness)
-                self.opacityLabel.setText("Opacity: %d" % block.opacity)
-                self.rendertypeLabel.setText("Render: %d" % block.renderType)
-                pixmap = BlockTypePixmap(block, self.editorSession.textureAtlas)
-                self.blockThumb.setPixmap(pixmap)
-            else:
-                self.nameLabel.setText("")
-                self.idLabel.setText("")
-                self.internalNameLabel.setText("")
-                self.brightnessLabel.setText("")
-                self.opacityLabel.setText("")
-                self.rendertypeLabel.setText("")
+            self.searchField.clearEditText()
 
     @property
-    def multipleSelect(self):
-        return self.listWidget.selectionMode() == self.listWidget.MultiSelection
+    def selectedBlocks(self):
+        return self.selectedTypesModel.selectedBlocks()
 
-    @multipleSelect.setter
-    def multipleSelect(self, value):
-        if value:
-            self.listWidget.setSelectionMode(self.listWidget.MultiSelection)
+    @selectedBlocks.setter
+    def selectedBlocks(self, val):
+        self.listWidget.setSelectedBlocks(val)
+        self.selectedTypesModel.setSelectedBlocks(val)
+
+    def setSearchString(self, val):
+        # Changing the filterModel's search settings clears listWidget's selection
+        # So we have to work around it by disconnecting from the selection change, and then
+        # restoring the selection after changing the settings.
+
+        self.listWidget.blockSelectionChanged.disconnect(self.selectionDidChange)
+        selectedBlocks = self.selectedBlocks
+
+        match = re.match(r'([0-9]+)(?::([0-9]+))?', val)
+        if match:
+            ID = int(match.group(1))
+            meta = int(match.group(2) or 0)
+
+            block = self.blocktypes[ID, meta]
+            if block not in self.blocktypes:
+                log.info("Adding custom block %s", block)
+                self.listModel.addCustomBlock(block)
+
+            self.filterModel.setSearchIdMeta(ID, meta)
         else:
-            self.listWidget.setSelectionMode(self.listWidget.SingleSelection)
+            self.filterModel.setSearchString(val)
+
+        self.listWidget.blockSelectionChanged.connect(self.selectionDidChange)
+        self.selectedBlocks = selectedBlocks
+
+
+@registerCustomWidget
+class BlockTypeButton(QtGui.QPushButton):
+    def __init__(self, *args, **kwargs):
+        self.multipleSelect = kwargs.pop('multipleSelect', False)
+        super(BlockTypeButton, self).__init__(*args, **kwargs)
+
+        self._blocks = []
+        self.clicked.connect(self.showPicker)
+        self.picker = BlockTypePicker(self.multipleSelect)
+        self.setLayout(QtGui.QStackedLayout())
+        self._viewWidget = None
+        self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
+
+    blocksChanged = QtCore.Signal(list)
+
+    _editorSession = None
 
     @property
     def editorSession(self):
@@ -328,77 +508,15 @@ class BlockTypePicker(QtGui.QDialog):
     def editorSession(self, editorSession):
         """
 
-        :type editorSession: EditorSession
+        :type editorSession: mcedit2.editorsession.EditorSession
         """
         self._editorSession = editorSession
-        if self.editorSession:
-            self.listWidget.textureAtlas = self.editorSession.textureAtlas
-            self.listWidget.blocktypes = self.editorSession.worldEditor.blocktypes
+        self.picker.textureAtlas = editorSession.textureAtlas
+        editorSession.configuredBlocksChanged.connect(self.configuredBlocksDidChange)
+        self.updateView()
 
-    @property
-    def selectedBlocks(self):
-        return [i.block for i in self.listWidget.selectedItems()]
-
-    @selectedBlocks.setter
-    def selectedBlocks(self, val):
-        self.listWidget.clearSelection()
-        found = False
-        for item in self.listWidget.findItems("", Qt.MatchContains):
-            if item.block in val:
-                if self.multipleSelect:
-                    self.listWidget.setCurrentItem(item, QtGui.QItemSelectionModel.Current)
-                else:
-                    self.listWidget.setCurrentItem(item)
-                found = True
-        if found:
-            self.selectionDidChange()
-
-    def setSearchString(self, val):
-        self.listWidget.setSearchString(val)
-
-_sharedPicker = None
-
-def getBlockTypePicker():
-    global _sharedPicker
-    if _sharedPicker is None:
-        _sharedPicker = BlockTypePicker()
-    return _sharedPicker
-
-@registerCustomWidget
-class BlockTypeButton(QtGui.QPushButton):
-    def __init__(self, *args, **kwargs):
-        super(BlockTypeButton, self).__init__(*args, **kwargs)
-        self._blocks = []
-        self.clicked.connect(self.showPicker)
-        self.picker = getBlockTypePicker()
-        self.setLayout(QtGui.QStackedLayout())
-        self._viewWidget = None
-        self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Minimum)
-
-    blocksChanged = QtCore.Signal(list)
-
-    @property
-    def multipleSelect(self):
-        return self.picker.multipleSelect
-
-    @multipleSelect.setter
-    def multipleSelect(self, value):
-        self.picker.multipleSelect = value
-
-    _editor = None
-
-    @property
-    def editorSession(self):
-        return self._editor
-
-    @editorSession.setter
-    def editorSession(self, editorSession):
-        """
-
-        :type editorSession: EditorSession
-        """
-        self._editor = editorSession
-        self.picker.editorSession = editorSession
+    def configuredBlocksDidChange(self):
+        self.picker.textureAtlas = self.editorSession.textureAtlas
         self.updateView()
 
     def updateView(self):
@@ -408,7 +526,7 @@ class BlockTypeButton(QtGui.QPushButton):
             layout = self.layout()
             if self._viewWidget:
                 layout.removeWidget(self._viewWidget)
-            self._viewWidget = BlockTypesItemWidget(self.blocks, self.editorSession.textureAtlas)
+            self._viewWidget = BlockTypesItemWidget(self, self.blocks, self.editorSession.textureAtlas)
             layout.addWidget(self._viewWidget)
 
             assert isinstance(layout, QtGui.QLayout)
@@ -428,14 +546,15 @@ class BlockTypeButton(QtGui.QPushButton):
 
     @blocks.setter
     def blocks(self, value):
-        value = [self.editorSession.worldEditor.blocktypes[block]
+        value = [self.editorSession.blocktypes[block]
                  if not isinstance(block, BlockType)
                  else block
                  for block in value]
 
-        if self._blocks != value:
-            self.blocksChanged.emit(value)
+        old = self._blocks
         self._blocks = value
+        if old != value:
+            self.blocksChanged.emit(value)
         self.updateView()
 
     def showPicker(self):

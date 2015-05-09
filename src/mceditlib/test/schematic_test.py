@@ -4,7 +4,7 @@ import unittest
 from mceditlib.worldeditor import WorldEditor
 from templevel import TempLevel, mktemp
 from mceditlib.schematic import SchematicFileAdapter, createSchematic
-from mceditlib.geometry import BoundingBox
+from mceditlib.selection import BoundingBox
 
 __author__ = 'Rio'
 
@@ -19,8 +19,8 @@ class TestSchematics(unittest.TestCase):
 
         size = (64, 64, 64)
         temp = mktemp("testcreate.schematic")
-        schematic = SchematicFileAdapter(shape=size, filename=temp, blocktypes='Classic')
-        editor = WorldEditor(adapter=schematic)
+        editor = createSchematic(shape=size, blocktypes='Classic')
+        editor.filename = temp
         dim = editor.getDimension()
         level = self.schematicLevel
 
@@ -33,8 +33,7 @@ class TestSchematics(unittest.TestCase):
         schematic.saveChanges()
 
         schem = WorldEditor("test_files/Station.schematic")
-        tempSchematic = SchematicFileAdapter(shape=(1, 1, 3))
-        tempEditor = WorldEditor(adapter=tempSchematic)
+        tempEditor = createSchematic(shape=(1, 1, 3))
         tempDim = tempEditor.getDimension()
         tempDim.copyBlocks(schem, BoundingBox((0, 0, 0), (1, 1, 3)), (0, 0, 0))
 

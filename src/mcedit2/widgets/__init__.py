@@ -8,5 +8,8 @@ import blockpicker
 import blocktype_list
 import infopanel
 import log_view
-import nbttreeview
 import objectinspector
+import shapewidget
+import nbttree
+
+from propertylist import PropertyListWidget

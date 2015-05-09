@@ -56,7 +56,11 @@ def win32_appdata():
 def matchEntityTags(ref, kw):
     tag = ref.rootTag  # xxx getattr ref?
     for k in kw:
-        if tag[k].value != kw[k]:
+        if k == 'UUID':
+            value = ref.UUID
+        else:
+            value = tag[k].value
+        if value != kw[k]:
             return False
 
     return True

@@ -5,45 +5,26 @@
 """
 
 from collections import namedtuple
+import pkg_resources
+import csv
 
-_BiomeType = namedtuple("BiomeType", "name temperature rainfall r g b")
+_BiomeType = namedtuple("BiomeType", "ID name temperature rainfall")
 
 class BiomeType(_BiomeType):
-    @property
-    def watercolor(self):
-        return self.r, self.g, self.b
+    pass
 
-#
-# http://github.com/overviewer/Minecraft-Overviewer
-# overviewer-core/src/primitives/overlay-biomes.c
 
-biome_types = [
-    # 0
-    BiomeType("Ocean", 0.5, 0.5, 255, 255, 255),
-    BiomeType("Plains", 0.8, 0.4, 255, 255, 255),
-    BiomeType("Desert", 2.0, 0.0, 255, 255, 255),
-    BiomeType("Extreme Hills", 0.2, 0.3, 255, 255, 255),
-    BiomeType("Forest", 0.7, 0.8, 255, 255, 255),
-    # 5
-    BiomeType("Taiga", 0.05, 0.8, 255, 255, 255),
-    BiomeType("Swampland", 0.8, 0.9, 205, 128, 255),
-    BiomeType("River", 0.5, 0.5, 255, 255, 255),
-    BiomeType("Hell", 2.0, 0.0, 255, 255, 255),
-    BiomeType("Sky", 0.5, 0.5, 255, 255, 255),
-    # 10
-    BiomeType("FrozenOcean", 0.0, 0.5, 255, 255, 255),
-    BiomeType("FrozenRiver", 0.0, 0.5, 255, 255, 255),
-    BiomeType("Ice Plains", 0.0, 0.5, 255, 255, 255),
-    BiomeType("Ice Mountains", 0.0, 0.5, 255, 255, 255),
-    BiomeType("MushroomIsland", 0.9, 1.0, 255, 255, 255),
-    # 15
-    BiomeType("MushroomIslandShore", 0.9, 1.0, 255, 255, 255),
-    BiomeType("Beach", 0.8, 0.4, 255, 255, 255),
-    BiomeType("DesertHills", 2.0, 0.0, 255, 255, 255),
-    BiomeType("ForestHills", 0.7, 0.8, 255, 255, 255),
-    BiomeType("TaigaHills", 0.05, 0.8, 255, 255, 255),
-    # 20
-    BiomeType("Extreme Hills Edge", 0.2, 0.3, 255, 255, 255),
-    BiomeType("Jungle", 2.0, 0.45, 255, 255, 255),# <-- GUESS, but a good one
-    BiomeType("Jungle Mountains", 2.0, 0.45, 255, 255, 255), # <-- also a guess
-]
+class BiomeTypes(object):
+    def __init__(self):
+        self.types = {}
+
+        io = pkg_resources.resource_stream(__name__, "biomes.csv")
+        c = csv.reader(io)
+        for record in c:
+            if record[0] == "ID":
+                # headers: ID,Name,Temperature,Rainfall
+                continue
+
+            ID, name, temp, rain = record[:4]
+            self.types[int(ID)] = BiomeType(int(ID), name, float(temp), float(rain))
+

@@ -6,24 +6,35 @@ import contextlib
 import inspect
 import os
 import tempfile
-from PySide import QtGui
+from PySide import QtGui, QtCore
 import logging
 from PySide.QtCore import Qt
-from PySide.QtGui import QWidget
 import gc
 from mcedit2.rendering import rendergraph
+from mcedit2.util import settings
 from mcedit2.widgets.layout import Column, Row
 
 log = logging.getLogger(__name__)
 
-import objgraph
+try:
+    import objgraph
+except ImportError:
+    objgraph = None
 
-class ObjGraphWidget(QWidget):
+inputSetting = settings.Settings().getOption("objgraph/input", unicode)
+
+class ObjGraphWidget(QtGui.QWidget):
     def __init__(self, *a, **kw):
         super(ObjGraphWidget, self).__init__(*a, **kw)
 
-        self.inputWidget = QtGui.QLineEdit()
+        if objgraph is None:
+            self.setLayout(Row(QtGui.QLabel("objgraph is not installed (and you probably don't have GraphViz "
+                                            "either...) "), None))
+            return
 
+        self.inputWidget = QtGui.QLineEdit()
+        self.inputWidget.setText(inputSetting.value(""))
+        self.inputWidget.textChanged.connect(inputSetting.setValue)
         self.listWidget = QtGui.QListWidget()
         self.scrollArea = QtGui.QScrollArea()
         self.imageView = QtGui.QLabel()
@@ -63,26 +74,43 @@ class ObjGraphWidget(QWidget):
         fn = tempfile.mktemp('chain.png')
         #fn = "graph.png"
         yield fn
-        image = QtGui.QImage(fn)
-        self.imageView.setPixmap(QtGui.QPixmap(image))
-        self.imageView.setFixedSize(image.size())
-        os.unlink(fn)
+        if os.path.exists(fn):
+            image = QtGui.QImage(fn)
+            self.imageView.setPixmap(QtGui.QPixmap(image))
+            self.imageView.setFixedSize(image.size())
+            os.unlink(fn)
+        else:
+            icon = QtGui.QIcon.fromTheme("dialog-error")
+            self.imageView.setPixmap(icon.pixmap(64, 64))
+
+    def filterPrimitives(self, obj):
+        return not isinstance(obj, (str, unicode, int, float, QtCore.Signal)) and obj is not None
 
     def showGarbage(self):
         with self.showTempImage() as fn:
-            objgraph.show_refs(gc.garbage, filename=fn)
+            objgraph.show_refs(gc.garbage,
+                               filter=self.filterPrimitives,
+                               max_depth=self.depthLimitBox.value(),
+                               too_many=self.widthLimitBox.value(), filename=fn)
 
     def showRefs(self):
         objType = str(self.inputWidget.text())
         with self.showTempImage() as fn:
-            objgraph.show_refs(objgraph.by_type(objType), filename=fn)
+            objgraph.show_refs(objgraph.by_type(objType),
+                               filter=self.filterPrimitives,
+                               max_depth=self.depthLimitBox.value(),
+                               too_many=self.widthLimitBox.value(), filename=fn)
 
     def showBackrefs(self):
         objType = str(self.inputWidget.text())
         with self.showTempImage() as fn:
-            objgraph.show_chain(objgraph.find_backref_chain(objgraph.by_type(objType)[0],
-                                                            objgraph.is_proper_module),
-                                filename=fn)
+            objects = objgraph.by_type(objType)
+            if len(objects) == 0:
+                return
+            objgraph.show_backrefs(objects[0],
+                                   max_depth=self.depthLimitBox.value(),
+                                   extra_ignore=(id(gc.garbage),id(objects)),
+                                   too_many=self.widthLimitBox.value(), filename=fn)
 
     def showGraph(self):
         from mcedit2 import editorapp

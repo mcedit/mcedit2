@@ -2,6 +2,7 @@
     worldfolder
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
+from collections import defaultdict
 import logging
 from mceditlib.exceptions import ChunkNotPresent
 
@@ -30,8 +31,9 @@ class AnvilWorldFolder(object):
         self.filename = filename
         self.regionFiles = {}
         self._dimensionNames = set(self._findDimensions())
-        self._regionPositionsByDim = {dimName: set(self._listRegionFiles(dimName))
-                                      for dimName in self._dimensionNames}
+        self._regionPositionsByDim = defaultdict(set)
+        self._regionPositionsByDim.update({dimName: set(self._listRegionFiles(dimName))
+                                           for dimName in self._dimensionNames})
 
 
     def __repr__(self):

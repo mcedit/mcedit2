@@ -12,8 +12,10 @@ build
 _build
 *.egg-info
 
-# The "standard" virtualenv directory.
+# virtualenv directories.
 ENV
+ENV32
+ENV64
 
 #profiling/outputs
 *.log
@@ -36,3 +38,10 @@ MCEdit User Data/
 # NBT library build products (when built in-place)
 src/mceditlib/nbt.c
 src/mceditlib/nbt.pyd
+
+src/mcedit2/rendering/blockmodels.html
+src/mcedit2/rendering/modelmesh.html
+src/mcedit2/rendering/blockmodels.c
+src/mcedit2/rendering/modelmesh.c
+*.pyd
+src/mceditlib/nbt.html

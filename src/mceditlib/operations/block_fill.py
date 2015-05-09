@@ -21,7 +21,7 @@ def blockReplaceTable(blockReplacements):
     blockTable = numpy.rollaxis(numpy.indices((blocktypes.id_limit, 16), dtype='u2'), 0, 3)
 
     for old, new in blockReplacements:
-        blockTable[old.ID, old.blockData] = [new.ID, new.blockData]
+        blockTable[old.ID, old.meta] = [new.ID, new.meta]
 
     return blockTable
 
@@ -90,13 +90,10 @@ class FillBlocksOperation(Operation):
         self.chunkCount = 0
         self.skipped = 0
         self.sections = 0
-        log.info("Replacing %s (creating %s)".format(
-            self.blockReplacements,
-            self.createSections))
+        log.info("Replacing with mapping:\n %s\n (creating chunks/sections? %s)", self.blockReplacements, self.createSections)
 
     def done(self):
         log.info(u"Fill/Replace: Skipped {0}/{1} sections".format(self.skipped, self.sections))
-
 
     def operateOnChunk(self, chunk):
 
@@ -109,15 +106,13 @@ class FillBlocksOperation(Operation):
             if section is None:
                 continue
             self.sections += 1
-            # Clip to section's actual size, for edge sections xxxxxxxxxx
-            slices = [slice(0, s) for s in section.Blocks.shape]
 
             sectionMask = self.selection.section_mask(cx, cy, cz)
             if sectionMask is None:
                 self.skipped += 1
                 continue
 
-            mask = sectionMask[slices]
+            mask = sectionMask
             blockCount = mask.sum()
 
             # don't waste time relighting and copying if the mask is empty
@@ -125,8 +120,8 @@ class FillBlocksOperation(Operation):
                 self.skipped += 1
                 continue
 
-            Blocks = section.Blocks[slices]
-            Data = section.Data[slices]
+            Blocks = section.Blocks
+            Data = section.Data
 
             if self.replaceTable is not None:
                 newBlocks = self.replaceTable[Blocks[mask], Data[mask]]
@@ -135,7 +130,7 @@ class FillBlocksOperation(Operation):
 
             else:
                 Blocks[mask] = self.blockType.ID
-                Data[mask] = self.blockType.blockData
+                Data[mask] = self.blockType.meta
 
             if self.changesLighting and self.updateLights:
                 import mceditlib.relight

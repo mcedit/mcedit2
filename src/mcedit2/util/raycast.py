@@ -5,7 +5,8 @@ from __future__ import absolute_import, division, print_function
 import logging
 import math
 from mcedit2.util import profiler
-from mceditlib.geometry import Vector, Ray, rayIntersectsBox, SectionBox
+from mceditlib.geometry import Vector, Ray
+from mceditlib.selection import SectionBox, rayIntersectsBox
 from mceditlib import faces
 
 log = logging.getLogger(__name__)
@@ -23,9 +24,9 @@ class RayBoundsError(RayCastError):
     Raised when a ray exits or does not enter the level boundaries.
     """
 
-def rayCastInBounds(ray, dimension, maxDistance=100, hitAir=False):
+def rayCastInBounds(ray, dimension, maxDistance=100):
     try:
-        position, face = rayCast(ray, dimension, maxDistance, hitAir)
+        position, face = rayCast(ray, dimension, maxDistance)
     except RayBoundsError:
         ixs = rayIntersectsBox(dimension.bounds, ray)
         if ixs:
@@ -36,7 +37,7 @@ def rayCastInBounds(ray, dimension, maxDistance=100, hitAir=False):
     return position, face
 
 @profiler.function
-def rayCast(ray, dimension, maxDistance=100, hitAir=False):
+def rayCast(ray, dimension, maxDistance=100):
     """
     Borrowed from https://gamedev.stackexchange.com/questions/47362/cast-ray-to-select-block-in-voxel-game
 
@@ -47,6 +48,9 @@ def rayCast(ray, dimension, maxDistance=100, hitAir=False):
 
     Raises MaxDistanceError if the ray exceeded the max distance without hitting any blocks, or if the ray exits or
     doesn't enter the dimension's bounds.
+
+    Bypasses non-air blocks until the first air block is found, and only returns when a non-air block is found after
+    the first air block.
 
     :param ray:
     :type ray: Ray
@@ -69,21 +73,19 @@ def rayCast(ray, dimension, maxDistance=100, hitAir=False):
 
         point = intersects[0][0]
 
-    point = advanceToChunk(Ray(point, vector), dimension)
-    currentCX, currentCY, currentCZ = point.intfloor()
-    currentChunk = None
+    point = advanceToChunk(Ray(point, vector), dimension, maxDistance * 4)
+
+    foundAir = False
 
     for pos, face in _cast(point, vector, maxDistance, 1):
-        cx = pos[0] >> 4
-        cz = pos[2] >> 4
-        if cx != currentCX or cz != currentCZ:
-            currentCX = cx
-            currentCZ = cz
-            if dimension.containsChunk(cx, cz):
-                currentChunk = dimension.getChunk(cx, cz)  # xxxx WorldEditor.recentlyLoadedChunks
         ID = dimension.getBlockID(*pos)
-        if ID or hitAir:
+
+        if ID == 0:  # xxx configurable air blocks?
+            foundAir = True
+        if ID and foundAir:
             return Vector(*pos), faces.Face.fromVector(face)
+        if pos not in bounds:
+            raise RayBoundsError("Ray exited dimension bounds")
 
     raise MaxDistanceError("Ray exceeded max distance.")
 
@@ -124,17 +126,20 @@ def _cast(origin, vector, maxDistance, stepSize):
         face[smallAxis] = -faceDirs[smallAxis]
 
 
-def advanceToChunk(ray, dimension):
+def advanceToChunk(ray, dimension, maxDistance):
     point, vector = ray
-    distance = 2000
-    for pos, face in _cast(point, vector, distance, 16):
+    inBounds = point in dimension.bounds
+
+    for pos, face in _cast(point, vector, maxDistance, 16):
 
         x, y, z = pos
         x >>= 4
         y >>= 4
         z >>= 4
-        if pos not in dimension.bounds:
+        if inBounds and pos not in dimension.bounds:
             raise RayBoundsError("Ray exited dimension bounds.")
+        inBounds = pos in dimension.bounds
+
         if dimension.containsChunk(x, z):
             chunk = dimension.getChunk(x, z)
             section = chunk.getSection(y)

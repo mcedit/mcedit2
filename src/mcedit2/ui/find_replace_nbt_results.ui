@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>771</width>
+    <height>458</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QTableView" name="resultsView">
+     <property name="verticalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOn</enum>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <attribute name="horizontalHeaderStretchLastSection">
+      <bool>true</bool>
+     </attribute>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QCheckBox" name="replaceNameCheckbox">
+       <property name="text">
+        <string>Replace Name With:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="replaceNameField"/>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="replaceValueCheckbox">
+       <property name="text">
+        <string>Replace Value With:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="replaceValueField"/>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_12">
+       <property name="text">
+        <string>Tag Type:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="replaceValueTagTypeComboBox">
+       <item>
+        <property name="text">
+         <string>Existing</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>String</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Byte</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Short</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Int</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Long</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Float</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Double</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QLabel" name="label_11">
+       <property name="text">
+        <string>Progress:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QProgressBar" name="progressBar">
+       <property name="value">
+        <number>0</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="replaceAllButton">
+       <property name="text">
+        <string>Replace All</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="replaceSelectedButton">
+       <property name="text">
+        <string>Replace Selected</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="stopButton">
+       <property name="text">
+        <string>Stop</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="findAgainButton">
+       <property name="text">
+        <string>Find Again...</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

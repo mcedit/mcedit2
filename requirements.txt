@@ -1,5 +1,8 @@
-numpy
-PySide
+pyside>=1.2.0
 pyopengl
-# more?
+cython
+ipython
 pygments
+pyzmq
+numpy>=1.9.0
+arrow

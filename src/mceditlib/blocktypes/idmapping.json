@@ -1,0 +1,5 @@
+[
+[50, 5, "minecraft:torch[facing=up]"],
+[75, 5, "minecraft:unlit_redstone_torch[facing=up]"],
+[76, 5, "minecraft:redstone_torch[facing=up]"]
+]

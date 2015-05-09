@@ -43,11 +43,12 @@ class SimpleRevisionCommand(QtGui.QUndoCommand):
         self.setText(text)
 
     def undo(self):
-        self.editorSession.gotoRevision(self.previousRevision)
+        if self.previousRevision is not None:
+            self.editorSession.gotoRevision(self.previousRevision)
 
     def redo(self):
-        self.editorSession.gotoRevision(self.currentRevision)
-        pass
+        if self.currentRevision is not None:
+            self.editorSession.gotoRevision(self.currentRevision)
 
     @contextlib.contextmanager
     def begin(self):

@@ -8,19 +8,23 @@ import math
 from math import degrees, atan, tan, radians, cos, sin
 
 import numpy
-
 from PySide.QtCore import Qt
 from PySide import QtGui, QtCore
-from mcedit2.util import profiler
 
+from mcedit2.util import profiler
+from mcedit2.util.settings import Settings
 from mcedit2.widgets.layout import Column, Row
-from mcedit2.util.lazyprop import lazyprop
+from mceditlib.util.lazyprop import lazyprop
 from mcedit2.worldview.viewcontrols import ViewControls
-from mcedit2.worldview.worldview import WorldView, iterateChunks, ViewMouseAction
-from mceditlib.geometry import Vector
+from mcedit2.worldview.worldview import WorldView, iterateChunks
+from mcedit2.worldview.viewaction import ViewAction
+
 
 log = logging.getLogger(__name__)
 
+settings = Settings()
+ViewDistanceSetting = settings.getOption("worldview/camera/view_distance", int, 32)
+PerspectiveSetting = settings.getOption("worldview/camera/perspective", bool, True)
 
 class CameraWorldViewFrame(QtGui.QWidget):
     def __init__(self, dimension, geometryCache, resourceLoader, shareGLWidget, *args, **kwargs):
@@ -30,15 +34,23 @@ class CameraWorldViewFrame(QtGui.QWidget):
 
         self.viewControls = ViewControls(view)
 
-        viewDistanceInput = QtGui.QSpinBox(minimum=2, maximum=24, singleStep=2)
+        ViewDistanceSetting.connectAndCall(view.setViewDistance)
+
+        viewDistanceInput = QtGui.QSpinBox(minimum=2, maximum=64, singleStep=2)
         viewDistanceInput.setValue(self.worldView.viewDistance)
-        viewDistanceInput.valueChanged.connect(view.setViewDistance)
+        viewDistanceInput.valueChanged.connect(ViewDistanceSetting.setValue)
+
+        PerspectiveSetting.connectAndCall(view.setPerspective)
 
         perspectiveInput = QtGui.QCheckBox("Perspective")
-        perspectiveInput.toggle()
-        perspectiveInput.toggled.connect(view.setPerspective)
+        perspectiveInput.setChecked(view.perspective)
+        perspectiveInput.toggled.connect(PerspectiveSetting.setValue)
 
-        self.setLayout(Column(Row((QtGui.QWidget(), 1),
+        showButton = QtGui.QPushButton("Show...")
+        showButton.setMenu(view.layerToggleGroup.menu)
+
+        self.setLayout(Column(Row(None,
+                                  showButton,
                                   perspectiveInput,
                                   QtGui.QLabel("View Distance:"),
                                   viewDistanceInput,
@@ -48,16 +60,151 @@ class CameraWorldViewFrame(QtGui.QWidget):
 
 
 
+class CameraKeyControls(object):
+    def __init__(self, worldView):
+        """
+
+        :param worldView:
+        :type worldView: CameraWorldView
+        :return:
+        :rtype:
+        """
+        self.worldView = worldView
+        self.forwardAction = self.Forward(self)
+        self.backwardAction = self.Backward(self)
+        self.leftAction = self.Left(self)
+        self.rightAction = self.Right(self)
+        self.upAction = self.Up(self)
+        self.downAction = self.Down(self)
+        self.viewActions = [
+            self.forwardAction,
+            self.backwardAction,
+            self.leftAction,
+            self.rightAction,
+            self.upAction,
+            self.downAction,
+        ]
+        self.forward = 0
+        self.backward = 0
+        self.left = 0
+        self.right = 0
+        self.up = 0
+        self.down = 0
+        self.tickTimer = QtCore.QTimer(interval=33, timeout=self.tickCamera)
+        self.tickTimer.start()
+
+    def tickCamera(self):
+        vector = self.worldView.cameraVector
+        point = self.worldView.centerPoint
+        up = (0, 1, 0)
+        left = vector.cross(up)
+        if self.forward:
+            point = point + vector
+        if self.backward:
+            point = point - vector
+        if self.left:
+            point = point - left
+        if self.right:
+            point = point + left
+        if self.up:
+            point = point + up
+        if self.down:
+            point = point - up
+
+        self.worldView.centerPoint = point
+
+
+    class CameraAction(ViewAction):
+        def __init__(self, controls):
+            super(CameraKeyControls.CameraAction, self).__init__()
+            self.controls = controls
+
+    class Forward(CameraAction):
+        key = Qt.Key_W
+        labelText = "Move Forward"
+        settingsKey = "worldview/camera/move/forward"
+
+        def keyPressEvent(self, event):
+            self.controls.forward = 1
+            self.controls.backward = 0
+
+        def keyReleaseEvent(self, event):
+            self.controls.forward = 0
+
+    class Backward(CameraAction):
+        key = Qt.Key_S
+        labelText = "Move Backward"
+        settingsKey = "worldview/camera/move/backward"
+
+        def keyPressEvent(self, event):
+            self.controls.backward = 1
+            self.controls.forward = 0
+
+        def keyReleaseEvent(self, event):
+            self.controls.backward = 0
+
+    class Left(CameraAction):
+        key = Qt.Key_A
+        labelText = "Move Left"
+        settingsKey = "worldview/camera/move/left"
+
+        def keyPressEvent(self, event):
+            self.controls.left = 1
+            self.controls.right = 0
+
+        def keyReleaseEvent(self, event):
+            self.controls.left = 0
+
+    class Right(CameraAction):
+        key = Qt.Key_D
+        labelText = "Move Right"
+        settingsKey = "worldview/camera/move/right"
+
+        def keyPressEvent(self, event):
+            self.controls.right = 1
+            self.controls.left = 0
+
+        def keyReleaseEvent(self, event):
+            self.controls.right = 0
+
+    class Up(CameraAction):
+        key = Qt.Key_Space
+        labelText = "Move Up"
+        settingsKey = "worldview/camera/move/up"
+
+        def keyPressEvent(self, event):
+            self.controls.up = 1
+            self.controls.down = 0
+
+        def keyReleaseEvent(self, event):
+            self.controls.up = 0
+
+    class Down(CameraAction):
+        key = Qt.Key_C
+        labelText = "Move Down"
+        settingsKey = "worldview/camera/move/down"
+
+        def keyPressEvent(self, event):
+            self.controls.down = 1
+            self.controls.up = 0
+
+        def keyReleaseEvent(self, event):
+            self.controls.down = 0
+
+
 class CameraWorldView(WorldView):
     def __init__(self, *a, **kw):
         self.fov = 70.0  # needed by updateMatrices called from WorldView.__init__
         self._yawPitch = -45., 25.
+        self.viewDistance = 32
+
         WorldView.__init__(self, *a, **kw)
         self.compassNode.yawPitch = self._yawPitch
-        self.viewDistance = 16
-        self.mouseActions = [CameraMoveMouseAction(),
-                             CameraPanMouseAction(),
-                             CameraElevateMouseAction()]
+        self.viewActions = [CameraMoveMouseAction(),
+                             CameraPanMouseAction()]
+
+        self.cameraControls = CameraKeyControls(self)
+        self.viewActions.extend(self.cameraControls.viewActions)
 
         self.discardTimer = QtCore.QTimer()
         self.discardTimer.timeout.connect(self.discardChunksOutsideViewDistance)
@@ -66,6 +213,9 @@ class CameraWorldView(WorldView):
 
     def setViewDistance(self, val):
         self.viewDistance = val
+        self._chunkIter = None
+        self.discardChunksOutsideViewDistance()
+        self.update()
 
     def centerOnPoint(self, pos, distance=20):
         awayVector = self.cameraVector * -distance
@@ -109,7 +259,7 @@ class CameraWorldView(WorldView):
         fovy = degrees(atan(w / h * tan(radians(self.fov) * 0.5)))
 
         projection = QtGui.QMatrix4x4()
-        projection.perspective(fovy, w / h, 1, 1000)
+        projection.perspective(fovy, w / h, 0.05, 2048)
         self.matrixNode.projection = projection
 
     @lazyprop
@@ -148,11 +298,8 @@ class CameraWorldView(WorldView):
         self.viewportMoved.emit(self)
 
     @profiler.function("discardChunks")
-    def discardChunksOutsideViewDistance(self, worldScene=None):
-        if worldScene is None:
-            worldScene = self.worldScene
-
-        positions = list(worldScene.chunkPositions())  # xxxx
+    def discardChunksOutsideViewDistance(self):
+        positions = list(self.worldScene.chunkPositions())  # xxxx
         if not len(positions):
             return
 
@@ -184,24 +331,25 @@ class CameraWorldView(WorldView):
         chunks = chunks[outsideCenter & outsideFocus]
 
         log.debug("Discarding %d chunks...", len(chunks))
-        worldScene.discardChunks(chunks)
+        self.worldScene.discardChunks(chunks)
 
+    def recieveChunk(self, chunk):
+        cx, cz = chunk.chunkPosition
+        x, y, z = self.viewCenter().chunkPos()
+        dx = abs(cx - x)
+        dz = abs(cz - z)
+        if dx > self.viewDistance or dz > self.viewDistance:
+            return iter([])
+        return super(CameraWorldView, self).recieveChunk(chunk)
 
-class CameraElevateMouseAction(ViewMouseAction):
-    labelText = "Wheel Controls Camera Elevation"
-
-    def wheelEvent(self, event):
-        d = event.delta()
-        event.view.centerPoint += (0, d / 32, 0)
-
-
-class CameraPanMouseAction(ViewMouseAction):
+class CameraPanMouseAction(ViewAction):
     button = Qt.RightButton
     mouseDragStart = None
     modifiers = Qt.NoModifier
     labelText = "Turn Camera"
+    settingsKey = "worldview/camera/holdToTurn"
 
-    def mousePressEvent(self, event):
+    def buttonPressEvent(self, event):
         x = event.x()
         y = event.y()
         self.mouseDragStart = x, y
@@ -223,16 +371,17 @@ class CameraPanMouseAction(ViewMouseAction):
             self.mouseDragStart = (x, y)
 
 
-    def mouseReleaseEvent(self, event):
+    def buttonReleaseEvent(self, event):
         self.mouseDragStart = None
 
 
-class CameraMoveMouseAction(ViewMouseAction):
+class CameraMoveMouseAction(ViewAction):
     button = Qt.MiddleButton
     mouseDragStart = None
     labelText = "Move Camera"
+    settingsKey = "worldview/camera/holdToMove"
 
-    def mousePressEvent(self, event):
+    def buttonPressEvent(self, event):
         x = event.x()
         y = event.y()
         self.mouseDragStart = x, y
@@ -258,5 +407,5 @@ class CameraMoveMouseAction(ViewMouseAction):
             self.mouseDragStart = (x, y)
 
 
-    def mouseReleaseEvent(self, event):
+    def buttonReleaseEvent(self, event):
         self.mouseDragStart = None

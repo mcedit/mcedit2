@@ -19,13 +19,13 @@ class LevelFormatError(Exception):
     """ General error for level data not being formatted as expected
     """
 
-class RegionMalformed(LevelFormatError):
+class RegionFormatError(LevelFormatError):
     """ Region index entry points outside of the file or to an incomplete sector. Region compress type
     is unknown.
     """
     pass
 
-class ChunkMalformed(LevelFormatError):
+class ChunkFormatError(LevelFormatError):
     """ Chunk did not have an expected NBT tag.
     """
     pass

@@ -1,0 +1,1561 @@
+{
+    "iron_shovel": {
+        "id": 256,
+        "displayName": "Iron Shovel",
+        "texture": "iron_shovel.png",
+        "obtainable": true,
+        "maxdamage": 250,
+        "stacksize": 1
+    },
+    "iron_pickaxe": {
+        "id": 257,
+        "displayName": "Iron Pickaxe",
+        "texture": "iron_pickaxe.png",
+        "obtainable": true,
+        "maxdamage": 250,
+        "stacksize": 1
+    },
+    "iron_axe": {
+        "id": 258,
+        "displayName": "Iron Axe",
+        "texture": "iron_axe.png",
+        "obtainable": true,
+        "maxdamage": 250,
+        "stacksize": 1
+    },
+    "flint_and_steel": {
+        "id": 259,
+        "displayName": "Flint and Steel",
+        "texture": "flint_and_steel.png",
+        "obtainable": true,
+        "maxdamage": 64,
+        "stacksize": 1
+    },
+    "apple": {
+        "id": 260,
+        "displayName": "Apple",
+        "texture": "apple.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "bow": {
+        "id": 261,
+        "displayName": "Bow",
+        "texture": "bow_standby.png",
+        "obtainable": true,
+        "maxdamage": 384,
+        "stacksize": 1
+    },
+    "arrow": {
+        "id": 262,
+        "displayName": "Arrow",
+        "texture": "arrow.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "coal": {
+        "id": 263,
+        "displayName": ["Coal",
+                 "Charcoal"],
+        "texture": ["coal.png",
+                    "charcoal.png"],
+        "obtainable": true,
+        "maxdamage": 1,
+        "stacksize": 64
+    },
+    "diamond": {
+        "id": 264,
+        "displayName": "Diamond",
+        "texture": "diamond.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "iron_ingot": {
+        "id": 265,
+        "displayName": "Iron Ingot",
+        "texture": "iron_ingot.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "gold_ingot": {
+        "id": 266,
+        "displayName": "Gold Ingot",
+        "texture": "gold_ingot.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "iron_sword": {
+        "id": 267,
+        "displayName": "Iron Sword",
+        "texture": "iron_sword.png",
+        "obtainable": true,
+        "maxdamage": 250,
+        "stacksize": 1
+    },
+    "wooden_sword": {
+        "id": 268,
+        "displayName": "Wooden Sword",
+        "texture": "wood_sword.png",
+        "obtainable": true,
+        "maxdamage": 59,
+        "stacksize": 1
+    },
+    "wooden_shovel": {
+        "id": 269,
+        "displayName": "Wooden Shovel",
+        "texture": "wood_shovel.png",
+        "obtainable": true,
+        "maxdamage": 59,
+        "stacksize": 1
+    },
+    "wooden_pickaxe": {
+        "id": 270,
+        "displayName": "Wooden Pickaxe",
+        "texture": "wood_pickaxe.png",
+        "obtainable": true,
+        "maxdamage": 59,
+        "stacksize": 1
+    },
+    "wooden_axe": {
+        "id": 271,
+        "displayName": "Wooden Axe",
+        "texture": "wood_axe.png",
+        "obtainable": true,
+        "maxdamage": 59,
+        "stacksize": 1
+    },
+    "stone_sword": {
+        "id": 272,
+        "displayName": "Stone Sword",
+        "texture": "stone_sword.png",
+        "obtainable": true,
+        "maxdamage": 131,
+        "stacksize": 1
+    },
+    "stone_shovel": {
+        "id": 273,
+        "displayName": "Stone Shovel",
+        "texture": "stone_shovel.png",
+        "obtainable": true,
+        "maxdamage": 131,
+        "stacksize": 1
+    },
+    "stone_pickaxe": {
+        "id": 274,
+        "displayName": "Stone Pickaxe",
+        "texture": "stone_pickaxe.png",
+        "obtainable": true,
+        "maxdamage": 131,
+        "stacksize": 1
+    },
+    "stone_axe": {
+        "id": 275,
+        "displayName": "Stone Axe",
+        "texture": "stone_axe.png",
+        "obtainable": true,
+        "maxdamage": 131,
+        "stacksize": 1
+    },
+    "diamond_sword": {
+        "id": 276,
+        "displayName": "Diamond Sword",
+        "texture": "diamond_sword.png",
+        "obtainable": true,
+        "maxdamage": 1561,
+        "stacksize": 1
+    },
+    "diamond_shovel": {
+        "id": 277,
+        "displayName": "Diamond Shovel",
+        "texture": "diamond_shovel.png",
+        "obtainable": true,
+        "maxdamage": 1561,
+        "stacksize": 1
+    },
+    "diamond_pickaxe": {
+        "id": 278,
+        "displayName": "Diamond Pickaxe",
+        "texture": "diamond_pickaxe.png",
+        "obtainable": true,
+        "maxdamage": 1561,
+        "stacksize": 1
+    },
+    "diamond_axe": {
+        "id": 279,
+        "displayName": "Diamond Axe",
+        "texture": "diamond_axe.png",
+        "obtainable": true,
+        "maxdamage": 1561,
+        "stacksize": 1
+    },
+    "stick": {
+        "id": 280,
+        "displayName": "Stick",
+        "texture": "stick.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "bowl": {
+        "id": 281,
+        "displayName": "Bowl",
+        "texture": "bowl.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "mushroom_stew": {
+        "id": 282,
+        "displayName": "Mushroom Stew",
+        "texture": "mushroom_stew.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "golden_sword": {
+        "id": 283,
+        "displayName": "Golden Sword",
+        "texture": "gold_sword.png",
+        "obtainable": true,
+        "maxdamage": 32,
+        "stacksize": 1
+    },
+    "golden_shovel": {
+        "id": 284,
+        "displayName": "Golden Shovel",
+        "texture": "gold_shovel.png",
+        "obtainable": true,
+        "maxdamage": 32,
+        "stacksize": 1
+    },
+    "golden_pickaxe": {
+        "id": 285,
+        "displayName": "Golden Pickaxe",
+        "texture": "gold_pickaxe.png",
+        "obtainable": true,
+        "maxdamage": 32,
+        "stacksize": 1
+    },
+    "golden_axe": {
+        "id": 286,
+        "displayName": "Golden Axe",
+        "texture": "gold_axe.png",
+        "obtainable": true,
+        "maxdamage": 32,
+        "stacksize": 1
+    },
+    "string": {
+        "id": 287,
+        "displayName": "String",
+        "texture": "string.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "feather": {
+        "id": 288,
+        "displayName": "Feather",
+        "texture": "feather.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "gunpowder": {
+        "id": 289,
+        "displayName": "Gunpowder",
+        "texture": "gunpowder.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "wooden_hoe": {
+        "id": 290,
+        "displayName": "Wooden Hoe",
+        "texture": "wood_hoe.png",
+        "obtainable": true,
+        "maxdamage": 59,
+        "stacksize": 1
+    },
+    "stone_hoe": {
+        "id": 291,
+        "displayName": "Stone Hoe",
+        "texture": "stone_hoe.png",
+        "obtainable": true,
+        "maxdamage": 131,
+        "stacksize": 1
+    },
+    "iron_hoe": {
+        "id": 292,
+        "displayName": "Iron Hoe",
+        "texture": "iron_hoe.png",
+        "obtainable": true,
+        "maxdamage": 250,
+        "stacksize": 1
+    },
+    "diamond_hoe": {
+        "id": 293,
+        "displayName": "Diamond Hoe",
+        "texture": "diamond_hoe.png",
+        "obtainable": true,
+        "maxdamage": 1561,
+        "stacksize": 1
+    },
+    "golden_hoe": {
+        "id": 294,
+        "displayName": "Golden Hoe",
+        "texture": "gold_hoe.png",
+        "obtainable": true,
+        "maxdamage": 32,
+        "stacksize": 1
+    },
+    "wheat_seeds": {
+        "id": 295,
+        "displayName": "Seeds",
+        "texture": "seeds_wheat.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "wheat": {
+        "id": 296,
+        "displayName": "Wheat",
+        "texture": "wheat.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "bread": {
+        "id": 297,
+        "displayName": "Bread",
+        "texture": "bread.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "leather_helmet": {
+        "id": 298,
+        "displayName": "Leather Cap",
+        "texture": "leather_helmet.png",
+        "obtainable": true,
+        "maxdamage": 55,
+        "stacksize": 1
+    },
+    "leather_chestplate": {
+        "id": 299,
+        "displayName": "Leather Tunic",
+        "texture": "leather_chestplate.png",
+        "obtainable": true,
+        "maxdamage": 80,
+        "stacksize": 1
+    },
+    "leather_leggings": {
+        "id": 300,
+        "displayName": "Leather Pants",
+        "texture": "leather_leggings.png",
+        "obtainable": true,
+        "maxdamage": 75,
+        "stacksize": 1
+    },
+    "leather_boots": {
+        "id": 301,
+        "displayName": "Leather Boots",
+        "texture": "leather_boots.png",
+        "obtainable": true,
+        "maxdamage": 65,
+        "stacksize": 1
+    },
+    "chainmail_helmet": {
+        "id": 302,
+        "displayName": "Chain Helmet",
+        "texture": "chainmail_helmet.png",
+        "obtainable": true,
+        "maxdamage": 165,
+        "stacksize": 1
+    },
+    "chainmail_chestplate": {
+        "id": 303,
+        "displayName": "Chain Tunic",
+        "texture": "chainmail_chestplate.png",
+        "obtainable": true,
+        "maxdamage": 240,
+        "stacksize": 1
+    },
+    "chainmail_leggings": {
+        "id": 304,
+        "displayName": "Chain Leggings",
+        "texture": "chainmail_leggings.png",
+        "obtainable": true,
+        "maxdamage": 225,
+        "stacksize": 1
+    },
+    "chainmail_boots": {
+        "id": 305,
+        "displayName": "Chain Boots",
+        "texture": "chainmail_boots.png",
+        "obtainable": true,
+        "maxdamage": 195,
+        "stacksize": 1
+    },
+    "iron_helmet": {
+        "id": 306,
+        "displayName": "Iron Helmet",
+        "texture": "iron_helmet.png",
+        "obtainable": true,
+        "maxdamage": 165,
+        "stacksize": 1
+    },
+    "iron_chestplate": {
+        "id": 307,
+        "displayName": "Iron Chestplate",
+        "texture": "iron_chestplate.png",
+        "obtainable": true,
+        "maxdamage": 240,
+        "stacksize": 1
+    },
+    "iron_leggings": {
+        "id": 308,
+        "displayName": "Iron Leggings",
+        "texture": "iron_leggings.png",
+        "obtainable": true,
+        "maxdamage": 225,
+        "stacksize": 1
+    },
+    "iron_boots": {
+        "id": 309,
+        "displayName": "Iron Boots",
+        "texture": "iron_boots.png",
+        "obtainable": true,
+        "maxdamage": 195,
+        "stacksize": 1
+    },
+    "diamond_helmet": {
+        "id": 310,
+        "displayName": "Diamond Helmet",
+        "texture": "diamond_helmet.png",
+        "obtainable": true,
+        "maxdamage": 363,
+        "stacksize": 1
+    },
+    "diamond_chestplate": {
+        "id": 311,
+        "displayName": "Diamond Chestplate",
+        "texture": "diamond_chestplate.png",
+        "obtainable": true,
+        "maxdamage": 528,
+        "stacksize": 1
+    },
+    "diamond_leggings": {
+        "id": 312,
+        "displayName": "Diamond Leggings",
+        "texture": "diamond_leggings.png",
+        "obtainable": true,
+        "maxdamage": 495,
+        "stacksize": 1
+    },
+    "diamond_boots": {
+        "id": 313,
+        "displayName": "Diamond Boots",
+        "texture": "diamond_boots.png",
+        "obtainable": true,
+        "maxdamage": 429,
+        "stacksize": 1
+    },
+    "golden_helmet": {
+        "id": 314,
+        "displayName": "Golden Helmet",
+        "texture": "gold_helmet.png",
+        "obtainable": true,
+        "maxdamage": 77,
+        "stacksize": 1
+    },
+    "golden_chestplate": {
+        "id": 315,
+        "displayName": "Golden Chestplate",
+        "texture": "gold_chestplate.png",
+        "obtainable": true,
+        "maxdamage": 112,
+        "stacksize": 1
+    },
+    "golden_leggings": {
+        "id": 316,
+        "displayName": "Golden Leggings",
+        "texture": "gold_leggings.png",
+        "obtainable": true,
+        "maxdamage": 105,
+        "stacksize": 1
+    },
+    "golden_boots": {
+        "id": 317,
+        "displayName": "Golden Boots",
+        "texture": "gold_boots.png",
+        "obtainable": true,
+        "maxdamage": 91,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "flint": {
+        "id": 318,
+        "displayName": "Flint",
+        "texture": "flint.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "porkchop": {
+        "id": 319,
+        "displayName": "Raw Porkchop",
+        "texture": "porkchop_raw.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "cooked_porkchop": {
+        "id": 320,
+        "displayName": "Cooked Porkchop",
+        "texture": "porkchop_cooked.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "painting": {
+        "id": 321,
+        "displayName": "Painting",
+        "texture": "painting.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "golden_apple": {
+        "id": 322,
+        "displayName": "Golden Apple",
+        "texture": "apple_golden.png",
+        "obtainable": true,
+        "maxdamage": 1,
+        "stacksize": 64
+    },
+    "sign": {
+        "id": 323,
+        "displayName": "Sign",
+        "texture": "sign.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 16
+    },
+    "wooden_door": {
+        "id": 324,
+        "displayName": "Oak Door",
+        "texture": "door_wood.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "bucket": {
+        "id": 325,
+        "displayName": "Bucket",
+        "texture": "bucket_empty.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 16
+    },
+    "water_bucket": {
+        "id": 326,
+        "displayName": "Water Bucket",
+        "texture": "bucket_water.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "lava_bucket": {
+        "id": 327,
+        "displayName": "Lava Bucket",
+        "texture": "bucket_lava.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "minecart": {
+        "id": 328,
+        "displayName": "Minecart",
+        "texture": "minecart_normal.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "saddle": {
+        "id": 329,
+        "displayName": "Saddle",
+        "texture": "saddle.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "iron_door": {
+        "id": 330,
+        "displayName": "Iron Door",
+        "texture": "door_iron.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "redstone": {
+        "id": 331,
+        "displayName": "Redstone",
+        "texture": "redstone_dust.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "snowball": {
+        "id": 332,
+        "displayName": "Snowball",
+        "texture": "snowball.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 16
+    },
+    "boat": {
+        "id": 333,
+        "displayName": "Boat",
+        "texture": "boat.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "leather": {
+        "id": 334,
+        "displayName": "Leather",
+        "texture": "leather.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "milk_bucket": {
+        "id": 335,
+        "displayName": "Milk",
+        "texture": "bucket_milk.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "brick": {
+        "id": 336,
+        "displayName": "Brick",
+        "texture": "brick.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "clay_ball": {
+        "id": 337,
+        "displayName": "Clay",
+        "texture": "clay_ball.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "reeds": {
+        "id": 338,
+        "displayName": "Sugar Cane",
+        "texture": "reeds.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "paper": {
+        "id": 339,
+        "displayName": "Paper",
+        "texture": "paper.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "book": {
+        "id": 340,
+        "displayName": "Book",
+        "texture": "book_normal.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "slime_ball": {
+        "id": 341,
+        "displayName": "Slimeball",
+        "texture": "slimeball.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "chest_minecart": {
+        "id": 342,
+        "displayName": "Minecart with Chest",
+        "texture": "minecart_chest.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "furnace_minecart": {
+        "id": 343,
+        "displayName": "Minecart with Furnace",
+        "texture": "minecart_furnace.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "egg": {
+        "id": 344,
+        "displayName": "Egg",
+        "texture": "egg.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 16
+    },
+    "compass": {
+        "id": 345,
+        "displayName": "Compass",
+        "texture": "compass.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "fishing_rod": {
+        "id": 346,
+        "displayName": "Fishing Rod",
+        "texture": "fishing_rod_uncast.png",
+        "obtainable": true,
+        "maxdamage": 64,
+        "stacksize": 1
+    },
+    "clock": {
+        "id": 347,
+        "displayName": "Clock",
+        "texture": "clock.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "glowstone_dust": {
+        "id": 348,
+        "displayName": "Glowstone Dust",
+        "texture": "glowstone_dust.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "fish": {
+        "id": 349,
+        "displayName": ["Raw Fish",
+                 "Raw Salmon",
+                 "Clownfish",
+                 "Pufferfish"],
+        "texture": ["fish_cod_raw.png",
+                    "fish_salmon_raw.png",
+                    "fish_clownfish_raw.png",
+                    "fish_pufferfish_raw.png"],
+        "obtainable": true,
+        "maxdamage": 3,
+        "stacksize": 64
+    },
+    "cooked_fish": {
+        "id": 350,
+        "displayName": ["Cooked Fish",
+                 "Cooked Salmon"],
+        "texture": ["fish_cod_cooked.png",
+                    "fish_salmon_cooked.png"],
+        "obtainable": true,
+        "maxdamage": 1,
+        "stacksize": 64
+    },
+    "dye": {
+        "id": 351,
+        "displayName": ["Ink Sac",
+                 "Rose Red",
+                 "Cactus Green",
+                 "Cocoa Beans",
+                 "Lapis Lazuli",
+                 "Purple Dye",
+                 "Cyan Dye",
+                 "Light Gray Dye",
+                 "Gray Dye",
+                 "Pink Dye",
+                 "Lime Dye",
+                 "Dandelion Yellow",
+                 "Light Blue Dye",
+                 "Magenta Dye",
+                 "Orange Dye",
+                 "Bone Meal"],
+        "texture": ["dye_powder_black.png",
+                    "dye_powder_red.png",
+                    "dye_powder_green.png",
+                    "dye_powder_brown.png",
+                    "dye_powder_blue.png",
+                    "dye_powder_purple.png",
+                    "dye_powder_cyan.png",
+                    "dye_powder_silver.png",
+                    "dye_powder_gray.png",
+                    "dye_powder_pink.png",
+                    "dye_powder_lime.png",
+                    "dye_powder_yellow.png",
+                    "dye_powder_light_blue.png",
+                    "dye_powder_magenta.png",
+                    "dye_powder_orange.png",
+                    "dye_powder_white.png"],
+        "obtainable": true,
+        "maxdamage": 15,
+        "stacksize": 64
+    },
+    "bone": {
+        "id": 352,
+        "displayName": "Bone",
+        "texture": "bone.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "sugar": {
+        "id": 353,
+        "displayName": "Sugar",
+        "texture": "sugar.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "cake": {
+        "id": 354,
+        "displayName": "Cake",
+        "texture": "cake.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "bed": {
+        "id": 355,
+        "displayName": "Bed",
+        "texture": "bed.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "repeater": {
+        "id": 356,
+        "displayName": "Redstone Repeater",
+        "texture": "repeater.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "cookie": {
+        "id": 357,
+        "displayName": "Cookie",
+        "texture": "cookie.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "filled_map": {
+        "id": 358,
+        "displayName": "Map",
+        "texture": "map_filled.png",
+        "obtainable": true,
+        "maxdamage": 32767,
+        "stacksize": 1
+    },
+    "shears": {
+        "id": 359,
+        "displayName": "Shears",
+        "texture": "shears.png",
+        "obtainable": true,
+        "maxdamage": 238,
+        "stacksize": 1
+    },
+    "melon": {
+        "id": 360,
+        "displayName": "Melon",
+        "texture": "melon.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "pumpkin_seeds": {
+        "id": 361,
+        "displayName": "Pumpkin Seeds",
+        "texture": "seeds_pumpkin.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "melon_seeds": {
+        "id": 362,
+        "displayName": "Melon Seeds",
+        "texture": "seeds_melon.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "beef": {
+        "id": 363,
+        "displayName": "Raw Beef",
+        "texture": "beef_raw.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "cooked_beef": {
+        "id": 364,
+        "displayName": "Steak",
+        "texture": "beef_cooked.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "chicken": {
+        "id": 365,
+        "displayName": "Raw Chicken",
+        "texture": "chicken_raw.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "cooked_chicken": {
+        "id": 366,
+        "displayName": "Cooked Chicken",
+        "texture": "chicken_cooked.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "rotten_flesh": {
+        "id": 367,
+        "displayName": "Rotten Flesh",
+        "texture": "rotten_flesh.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "ender_pearl": {
+        "id": 368,
+        "displayName": "Ender Pearl",
+        "texture": "ender_pearl.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 16
+    },
+    "blaze_rod": {
+        "id": 369,
+        "displayName": "Blaze Rod",
+        "texture": "blaze_rod.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "ghast_tear": {
+        "id": 370,
+        "displayName": "Ghast Tear",
+        "texture": "ghast_tear.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "gold_nugget": {
+        "id": 371,
+        "displayName": "Gold Nugget",
+        "texture": "gold_nugget.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "nether_wart": {
+        "id": 372,
+        "displayName": "Nether Wart",
+        "texture": "nether_wart.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "potion": {
+        "_comment":"Datavalues not supported yet!",
+        "id": 373,
+        "displayName": "Potion",
+        "texture": "potion_bottle_drinkable.png",
+        "obtainable": true,
+        "maxdamage": 32767,
+        "stacksize": 1
+    },
+    "glass_bottle": {
+        "id": 374,
+        "displayName": "Glass Bottle",
+        "texture": "potion_bottle_empty.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "spider_eye": {
+        "id": 375,
+        "displayName": "Spider Eye",
+        "texture": "spider_eye.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "fermented_spider_eye": {
+        "id": 376,
+        "displayName": "Fermented Spider Eye",
+        "texture": "spider_eye_fermented.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "blaze_powder": {
+        "id": 377,
+        "displayName": "Blaze Powder",
+        "texture": "blaze_powder.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "magma_cream": {
+        "id": 378,
+        "displayName": "Magma Cream",
+        "texture": "magma_cream.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "brewing_stand": {
+        "id": 379,
+        "displayName": "Brewing Stand",
+        "texture": "brewing_stand.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "cauldron": {
+        "id": 380,
+        "displayName": "Cauldron",
+        "texture": "cauldron.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "ender_eye": {
+        "id": 381,
+        "displayName": "Eye of Ender",
+        "texture": "ender_eye.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "speckled_melon": {
+        "id": 382,
+        "displayName": "Glistering Melon",
+        "texture": "melon_speckled.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "spawn_egg": {
+        "_comment2": "Datavalues not Supported yet!",
+        "id": 383,
+        "displayName": "Spawn Egg",
+        "texture": "spawn_egg.png",
+        "obtainable": true,
+        "maxdamage": 120,
+        "stacksize": 64
+    },
+    "experience_bottle": {
+        "id": 384,
+        "displayName": "Bottle o' Enchanting",
+        "texture": "experience_bottle.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "fire_charge": {
+        "id": 385,
+        "displayName": "Fire Charge",
+        "texture": "fireball.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "writable_book": {
+        "id": 386,
+        "displayName": "Book and Quill",
+        "texture": "book_writable.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "written_book": {
+        "id": 387,
+        "displayName": "Written Book",
+        "texture": "book_written.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "emerald": {
+        "id": 388,
+        "displayName": "Emerald",
+        "texture": "emerald.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "item_frame": {
+        "id": 389,
+        "displayName": "Item Frame",
+        "texture": "item_frame.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "flower_pot": {
+        "id": 390,
+        "displayName": "Flower Pot",
+        "texture": "flower_pot.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "carrot": {
+        "id": 391,
+        "displayName": "Carrot",
+        "texture": "carrot.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "potato": {
+        "id": 392,
+        "displayName": "Potato",
+        "texture": "potato.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "baked_potato": {
+        "id": 393,
+        "displayName": "Baked Potato",
+        "texture": "potato_baked.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "poisonous_potato": {
+        "id": 394,
+        "displayName": "Poisonous Potato",
+        "texture": "potato_poisonous.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "map": {
+        "id": 395,
+        "displayName": "Empty Map",
+        "texture": "map_empty.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "golden_carrot": {
+        "id": 396,
+        "displayName": "Golden Carrot",
+        "texture": "carrot_golden.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "skull": {
+        "id": 397,
+        "displayName": ["Skeleton Skull",
+                 "Wither Skeleton Skull",
+                 "Zombie Head",
+                 "Head",
+                 "Creeper Head"],
+        "texture": null,
+        "obtainable": true,
+        "maxdamage": 4,
+        "stacksize": 64
+    },
+    "carrot_on_a_stick": {
+        "id": 398,
+        "displayName": "Carrot on a Stick",
+        "texture": "carrot_on_a_stick.png",
+        "obtainable": true,
+        "maxdamage": 25,
+        "stacksize": 1
+    },
+    "nether_star": {
+        "id": 399,
+        "displayName": "Nether Star",
+        "texture": "nether_star.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "pumpkin_pie": {
+        "id": 400,
+        "displayName": "Pumpkin Pie",
+        "texture": "pumpkin_pie.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "fireworks": {
+        "id": 401,
+        "displayName": "Firework Rocket",
+        "texture": "fireworks.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "firework_charge": {
+        "id": 402,
+        "displayName": "Firework Star",
+        "texture": "fireworks_charge.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "enchanted_book": {
+        "id": 403,
+        "displayName": "Enchanted Book",
+        "texture": "book_enchanted.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "comparator": {
+        "id": 404,
+        "displayName": "Redstone Comparator",
+        "texture": "comparator.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "netherbrick": {
+        "id": 405,
+        "displayName": "Nether Brick",
+        "texture": "netherbrick.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "quartz": {
+        "id": 406,
+        "displayName": "Nether Quartz",
+        "texture": "quartz.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "tnt_minecart": {
+        "id": 407,
+        "displayName": "Minecart with TNT",
+        "texture": "minecart_tnt.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "hopper_minecart": {
+        "id": 408,
+        "displayName": "Minecart with Hopper",
+        "texture": "minecart_hopper.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "prismarine_shard": {
+        "id": 409,
+        "displayName": "Prismarine Shard",
+        "texture": "prismarine_shard.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "prismarine_crystals": {
+        "id": 410,
+        "displayName": "Prismarine Crystals",
+        "texture": "prismarine_crystals.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "rabbit": {
+        "id": 411,
+        "displayName": "Raw Rabbit",
+        "texture": "rabbit_raw.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "cooked_rabbit": {
+        "id": 412,
+        "displayName": "Cooked Rabbit",
+        "texture": "rabbit_cooked.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "rabbit_stew": {
+        "id": 413,
+        "displayName": "Rabbit Stew",
+        "texture": "rabbit_stew.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "rabbit_foot": {
+        "id": 414,
+        "displayName": "Rabbit's Foot",
+        "texture": "rabbit_foot.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "rabbit_hide": {
+        "id": 415,
+        "displayName": "Rabbit Hide",
+        "texture": "rabbit_hide.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "armor_stand": {
+        "id": 416,
+        "displayName": "Armor Stand",
+        "texture": "wooden_armorstand.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 16
+    },
+    "iron_horse_armor": {
+        "id": 417,
+        "displayName": "Iron Horse Armor",
+        "texture": "iron_horse_armor.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "golden_horse_armor": {
+        "id": 418,
+        "displayName": "Golden Horse Armor",
+        "texture": "gold_horse_armor.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "diamond_horse_armor": {
+        "id": 419,
+        "displayName": "Diamond Horse Armor",
+        "texture": "diamond_horse_armor.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "lead": {
+        "id": 420,
+        "displayName": "Lead",
+        "texture": "lead.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "name_tag": {
+        "id": 421,
+        "displayName": "Name Tag",
+        "texture": "name_tag.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "command_block_minecart": {
+        "id": 422,
+        "displayName": "Minecart with Command Block",
+        "texture": "minecart_command_block.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "mutton": {
+        "id": 423,
+        "displayName": "Raw Mutton",
+        "texture": "mutton_raw.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "cooked_mutton": {
+        "id": 424,
+        "displayName": "Cooked Mutton",
+        "texture": "mutton_cooked.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "banner": {
+        "id": 425,
+        "displayName": ["Black Banner",
+                 "Red Banner",
+                 "Green Banner",
+                 "Brown Banner",
+                 "Blue Banner",
+                 "Purple Banner",
+                 "Cyan Banner",
+                 "Light Gray Banner",
+                 "Gray Banner",
+                 "Pink Banner",
+                 "Lime Banner",
+                 "Yellow Banner",
+                 "Light Blue Banner",
+                 "Magenta Banner",
+                 "Orange Banner",
+                 "White Banner"],
+        "texture": "banner_overlay.png",
+        "obtainable": true,
+        "maxdamage": 15,
+        "stacksize": 16,
+        "__comment": "xxx need to apply dye colors to white banner overlay and put banner base behind it..."
+    },
+    "spruce_door": {
+        "id": 427,
+        "displayName": "Spruce Door",
+        "texture": "door_spruce.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "birch_door": {
+        "id": 428,
+        "displayName": "Birch Door",
+        "texture": "door_birch.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "jungle_door": {
+        "id": 429,
+        "displayName": "Jungle Door",
+        "texture": "door_jungle.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "acacia_door": {
+        "id": 430,
+        "displayName": "Acacia Door",
+        "texture": "door_acacia.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "dark_oak_door": {
+        "id": 431,
+        "displayName": "Dark Oak Door",
+        "texture": "door_dark_oak.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 64
+    },
+    "record_13": {
+        "id": 432,
+        "displayName": "13 Disc",
+        "texture": "record_13.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "record_cat": {
+        "id": 433,
+        "displayName": "cat Disc",
+        "texture": "record_cat.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "record_blocks": {
+        "id": 434,
+        "displayName": "blocks Disc",
+        "texture": "record_blocks.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "record_chirp": {
+        "id": 435,
+        "displayName": "chirp Disc",
+        "texture": "record_chirp.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "record_far": {
+        "id": 436,
+        "displayName": "far Disc",
+        "texture": "record_far.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "record_mall": {
+        "id": 437,
+        "displayName": "mall Disc",
+        "texture": "record_mall.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "record_mellohi": {
+        "id": 438,
+        "displayName": "mellohi Disc",
+        "texture": "record_mellohi.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "record_stal": {
+        "id": 439,
+        "displayName": "stal Disc",
+        "texture": "record_stal.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "record_strad": {
+        "id": 440,
+        "displayName": "strad Disc",
+        "texture": "record_strad.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "record_ward": {
+        "id": 441,
+        "displayName": "ward Disc",
+        "texture": "record_ward.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "record_11": {
+        "id": 442,
+        "displayName": "11 Disc",
+        "texture": "record_11.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    },
+    "record_wait": {
+        "id": 443,
+        "displayName": "wait Disc",
+        "texture": "record_wait.png",
+        "obtainable": true,
+        "maxdamage": 0,
+        "stacksize": 1
+    }
+}

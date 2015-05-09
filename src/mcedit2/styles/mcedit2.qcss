@@ -1,9 +1,13 @@
-WorldListItemWidget:checked {
-    background-color: palette(highlighted-text);
-    border: none;
+
+
+QTreeView::item {
+   border-bottom: 1px solid #d9d9d9;
 }
 
-WorldListItemWidget:pressed {
-    background-color: palette(highlighted-text);
-    border: none;
+QTreeView::item:selected:active{
+   background: palette(highlight);
+}
+
+QTreeView::item:selected:!active {
+   background: palette(highlight);
 }

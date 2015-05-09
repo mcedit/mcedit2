@@ -32,7 +32,10 @@
         <enum>QAbstractSpinBox::UpDownArrows</enum>
        </property>
        <property name="minimum">
-        <number>-9000000</number>
+        <number>-900000000</number>
+       </property>
+       <property name="maximum">
+        <number>900000000</number>
        </property>
        <property name="value">
         <number>0</number>
@@ -49,10 +52,10 @@
      <item>
       <widget class="QSpinBox" name="czSpinBox">
        <property name="minimum">
-        <number>-9000000</number>
+        <number>-90000000</number>
        </property>
        <property name="maximum">
-        <number>9000000</number>
+        <number>90000000</number>
        </property>
       </widget>
      </item>
@@ -61,17 +64,148 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
-     <widget class="QWidget" name="tab">
+     <widget class="QWidget" name="propertiesTab">
       <attribute name="title">
        <string>Chunk</string>
       </attribute>
+      <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QCheckBox" name="terrainPopulatedInput">
+           <property name="toolTip">
+            <string>Marks this chunk to have trees, lakes, ores, and other terrain features regenerated in Minecraft.</string>
+           </property>
+           <property name="layoutDirection">
+            <enum>Qt::RightToLeft</enum>
+           </property>
+           <property name="text">
+            <string>Terrain Populated</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="lightPopulatedInput">
+           <property name="toolTip">
+            <string>Currently does nothing. Minecraft sets it after generating a chunk but never reads it again.</string>
+           </property>
+           <property name="layoutDirection">
+            <enum>Qt::RightToLeft</enum>
+           </property>
+           <property name="text">
+            <string>Light Populated</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QLabel" name="label_3">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>Time in ticks when this chunk was last updated. Recently played chunks will reflect the current in-game time, older chunks will have smaller values.</string>
+             </property>
+             <property name="text">
+              <string>Update Time</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="updateTimeInput">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>Time in ticks when this chunk was last updated. Recently played chunks will reflect the current in-game time, older chunks will have smaller values.</string>
+             </property>
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>2000000000</number>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <widget class="QLabel" name="label_4">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>Number of ticks the player has spent in this chunk.</string>
+             </property>
+             <property name="text">
+              <string>Inhabited Time</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="inhabitedTimeInput">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>Number of ticks the player has spent in this chunk.</string>
+             </property>
+             <property name="minimum">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <number>2000000000</number>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <spacer name="verticalSpacer">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+      </layout>
      </widget>
-     <widget class="NBTTreeView" name="nbtTreeView">
+     <widget class="QWidget" name="nbtTab">
       <attribute name="title">
        <string>NBT Data</string>
       </attribute>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <property name="margin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="NBTEditorWidget" name="nbtEditor" native="true"/>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>
@@ -79,9 +213,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>NBTTreeView</class>
+   <class>NBTEditorWidget</class>
    <extends>QWidget</extends>
-   <header>nbttreeview.h</header>
+   <header>nbteditorwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -4,11 +4,11 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 import math
-from PySide import QtGui, QtCore
+from PySide import QtGui
 from PySide.QtCore import Qt
-from mcedit2.util import raycast
 from mcedit2.widgets.layout import Row, Column
-from mcedit2.worldview.worldview import WorldView, iterateChunks, ViewMouseAction, ZoomWheelAction, MoveViewMouseAction
+from mcedit2.worldview.worldview import WorldView, iterateChunks
+from mcedit2.worldview.viewaction import ViewAction, MoveViewMouseAction, ZoomWheelAction
 from mceditlib.geometry import Ray
 
 log = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ class IsoWorldView(WorldView):
         self.hoverHeight = 1024
         super(IsoWorldView, self).__init__(*a, **kw)
         self.compassNode.yawPitch = self.yrot, 90 - self.xrot
-        self.mouseActions.extend((
+        self.viewActions.extend((
             MoveViewMouseAction(),
             ZoomWheelAction(),
             RotateMouseAction()
@@ -77,7 +77,7 @@ class IsoWorldView(WorldView):
     def cameraVector(self):
         return self._anglesToVector(self.yrot, self.xrot)
 
-    def centerOnPoint(self, pos):
+    def centerOnPoint(self, pos, distance=None):
         #self.rotateView(45., math.degrees(math.atan(1/math.sqrt(2))))
         vec = self.cameraVector()
         ray = Ray(pos, -vec)
@@ -100,7 +100,7 @@ class IsoWorldView(WorldView):
         h = abs(br[1] - tl[1])
 
         d = max(w, h) + 2
-        return iterateChunks(center[0], center[2], d)
+        return iterateChunks(center[0], center[2], d / 2)
 
     def rotateView(self, yrot, xrot):
         self.yrot = yrot
@@ -130,7 +130,7 @@ class IsoWorldView(WorldView):
                          )
         self.matrixNode.modelview = modelview
 
-class RotateMouseAction(ViewMouseAction):
+class RotateMouseAction(ViewAction):
     button = Qt.MiddleButton
     startx = starty = None
 

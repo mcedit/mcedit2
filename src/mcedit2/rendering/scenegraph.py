@@ -3,6 +3,7 @@
 """
 from __future__ import absolute_import, division, print_function
 import logging
+import weakref
 
 from mcedit2.rendering import rendergraph
 
@@ -20,10 +21,22 @@ class Node(object):
         self._dirty = True
         self.childrenChanged = False
         self.descendentChildrenChanged = False
-        self.parent = None
 
     def __repr__(self):
         return "%s(visible=%s, children=%d)" % (self.__class__.__name__, self.visible, len(self._children))
+
+    _parent = None
+    @property
+    def parent(self):
+        if self._parent is not None:
+            return self._parent()
+
+    @parent.setter
+    def parent(self, value):
+        if value is not None:
+            self._parent = weakref.ref(value)
+        else:
+            self._parent = None
 
     def touchChildren(self):
         node = self
@@ -52,6 +65,9 @@ class Node(object):
             c.parent = None
         self.touchChildren()
         self._children[:] = []
+
+    def childCount(self):
+        return len(self._children)
 
     @property
     def children(self):
@@ -134,10 +150,18 @@ class RenderstateNode(Node):
 class TextureAtlasNode(Node):
     RenderNodeClass = rendergraph.TextureAtlasRenderNode
 
-    def __init__(self, textureAtlas):
+    def __init__(self, textureAtlas=None):
         super(TextureAtlasNode, self).__init__()
         self.textureAtlas = textureAtlas
 
+    @property
+    def textureAtlas(self):
+        return self._textureAtlas
+
+    @textureAtlas.setter
+    def textureAtlas(self, value):
+        self._textureAtlas = value
+        self.dirty = True
 
 class TranslateNode(Node):
     RenderNodeClass = rendergraph.TranslateRenderNode
@@ -191,9 +215,11 @@ class VertexNode(Node):
     def __init__(self, vertexArrays):
         """
 
-        :type vertexArrays: VertexArrayBuffer
+        :type vertexArrays: list[VertexArrayBuffer]
         """
         super(VertexNode, self).__init__()
+        if not isinstance(vertexArrays, (list, tuple)):
+            vertexArrays = [vertexArrays]
         self.vertexArrays = vertexArrays
 
 

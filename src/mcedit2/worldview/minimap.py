@@ -7,6 +7,7 @@ from PySide import QtCore, QtGui
 import logging
 import numpy
 from mcedit2.rendering import compass, scenegraph, rendergraph
+from mcedit2.rendering.layers import Layer
 from mcedit2.util import raycast
 from mcedit2.util.glutils import gl
 from mcedit2.util.raycast import rayCastInBounds
@@ -97,6 +98,11 @@ class MinimapWorldView(WorldView):
         self.viewCornersNode = ViewCornersNode()
         self.viewCornersNode.dimension = self.dimension
         self.matrixNode.addChild(self.viewCornersNode)
+
+    def createWorldScene(self):
+        scene = super(MinimapWorldView, self).createWorldScene()
+        self.layerToggleGroup.setVisibleLayers([Layer.Blocks])
+        return scene
 
     def createCompass(self):
         compassNode = compass.CompassNode(small=True)

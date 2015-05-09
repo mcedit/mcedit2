@@ -2,6 +2,8 @@
 
 ## MCEdit 2 is currently in pre-alpha. ONLY report issues where MCEdit does not start at all.
 
+This issue tracker is for **MCEdit 2.0 only**. Issues with MCEdit 1.x need to be reported here: https://github.com/Khroki/MCEdit-Unified/issues
+
 **Before** submitting an issue, read [Reporting Issues](https://github.com/mcedit/mcedit/wiki/Reporting-Issues) and be sure to include all of the required info in your description:
 
 * **Steps to Reproduce** - Step by step, tell us exactly which buttons to click on, text to enter, and keys to press that lead you to discover the problem.

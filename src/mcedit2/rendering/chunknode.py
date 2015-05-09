@@ -3,45 +3,12 @@
 """
 from __future__ import absolute_import, division, print_function
 import logging
-from mcedit2.rendering import scenegraph, rendergraph, layers
+
+from mcedit2.rendering import scenegraph, rendergraph
 from mcedit2.rendering.scenegraph import NamedChildrenNode
 
+
 log = logging.getLogger(__name__)
-
-class ChunkRenderInfo(object):
-    maxlod = 2
-    minlod = 0
-
-    def __init__(self, worldScene, chunkPosition):
-        """
-
-        :param worldScene:
-        :type worldScene: worldmesh.WorldScene
-        :param chunkPosition:
-        :type chunkPosition: (int, int)
-        :return:
-        :rtype:
-        """
-        super(ChunkRenderInfo, self).__init__()
-        self.worldScene = worldScene
-        self.detailLevel = worldScene.minlod
-        self.invalidLayers = set(layers.Layer.AllLayers)
-        self.chunkPosition = chunkPosition
-        self.bufferSize = 0
-        self.vertexNodes = []
-        cx, cz = chunkPosition
-        self.translateOffset = (cx << 4, 0, cz << 4)
-
-    def getChunkVertexNodes(self):
-        return iter(self.vertexNodes)
-
-    @property
-    def visibleLayers(self):
-        return self.worldScene.visibleLayers #xxxx
-
-    @property
-    def done(self):
-        return len(self.invalidLayers) == 0
 
 class ChunkNode(scenegraph.Node):
     RenderNodeClass = rendergraph.TranslateRenderNode
@@ -82,6 +49,12 @@ class ChunkGroupNode(NamedChildrenNode):
         az = cz >> 4
         self.removeChild((ax, az))
 
+    def containsChunkNode(self, (cx, cz)):
+        area = self.getChunkArea(cx, cz)
+        if area is not None:
+            return area.getChild((cx, cz)) is not None
+        return False
+
     def getChunkNode(self, (cx, cz)):
         return self.getChunkArea(cx, cz).getChild((cx, cz))
 
@@ -111,3 +84,10 @@ class ChunkGroupNode(NamedChildrenNode):
 
     def clear(self):
         super(ChunkGroupNode, self).clear()
+
+    def setLayerVisible(self, layerName, visible):
+        for area in self._children.itervalues():
+            for chunkNode in area._children.itervalues():
+                for node in chunkNode.children:
+                    if node.layerName == layerName:
+                        node.visible = visible

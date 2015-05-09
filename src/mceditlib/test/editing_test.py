@@ -2,9 +2,10 @@ import zipfile
 import numpy
 import pytest
 import logging
+from mceditlib.blocktypes import blocktypeConverter
 
 from mceditlib.export import extractSchematicFrom
-from mceditlib.geometry import BoundingBox
+from mceditlib.selection import BoundingBox
 from mceditlib import block_copy
 from mceditlib.worldeditor import WorldEditor
 from templevel import TempLevel
@@ -46,6 +47,8 @@ def testImportAndConvert(world, sourceLevel):
     oldEntityCount = len(list(destDim.getEntities(BoundingBox(destPoint, sourceDim.bounds.size))))
     destDim.copyBlocks(sourceDim, sourceDim.bounds, destPoint, create=True)
 
+    convertBlocks = blocktypeConverter(world, sourceLevel)
+
     for sourceChunk in sourceDim.getChunks():
         cx = sourceChunk.cx
         cz = sourceChunk.cz
@@ -59,9 +62,7 @@ def testImportAndConvert(world, sourceLevel):
                 continue
             sourceSection = sourceChunk.getSection(cy)
 
-            convertedSourceBlocks, convertedSourceData = block_copy.convertBlocks(world, sourceLevel,
-                                                                                  sourceSection.Blocks,
-                                                                                  sourceSection.Data)
+            convertedSourceBlocks, convertedSourceData = convertBlocks(sourceSection.Blocks, sourceSection.Data)
 
             same = (destSection.Blocks == convertedSourceBlocks)
 
@@ -82,7 +83,7 @@ def testFill(world):
     box = BoundingBox(bounds.origin + (bounds.size / 2), (64, bounds.height / 2, 64))
     x, y, z = numpy.array(list(box.positions)).transpose()
 
-    dim.fillBlocks(box, world.blocktypes.WoodPlanks)
+    dim.fillBlocks(box, world.blocktypes["planks"])
 
     def checkEqual(a, b):
         """
@@ -99,28 +100,28 @@ def testFill(world):
             for cy in chunk.bounds.sectionPositions(*cp):
                 assert chunk.getSection(cy) is not None, "Section %s not found" % cy
 
-    checkEqual(dim.getBlocks(x, y, z).Blocks, world.blocktypes.WoodPlanks.ID)
+    checkEqual(dim.getBlocks(x, y, z).Blocks, world.blocktypes["planks"].ID)
 
-    dim.fillBlocks(box, world.blocktypes.Stone, [world.blocktypes.WoodPlanks])
+    dim.fillBlocks(box, world.blocktypes["stone"], [world.blocktypes["planks"]])
     world.saveChanges()
     world.close()
 
     filename = world.filename
     world = WorldEditor(filename)
-    checkEqual(world.getDimension().getBlocks(x, y, z).Blocks, world.blocktypes.Stone.ID)
+    checkEqual(world.getDimension().getBlocks(x, y, z).Blocks, world.blocktypes["stone"].ID)
 
 
 def testOldReplace(world):
     dim = world.getDimension()
-    dim.fillBlocks(BoundingBox((-11, 0, -7), (38, dim.bounds.height, 25)), world.blocktypes.WoodPlanks,
-                   [world.blocktypes.Dirt, world.blocktypes.Grass])
+    dim.fillBlocks(BoundingBox((-11, 0, -7), (38, dim.bounds.height, 25)), world.blocktypes["planks"],
+                   [world.blocktypes["dirt"], world.blocktypes["grass"]])
 
 
 def testMultiReplace(world):
     dim = world.getDimension()
     dim.fillBlocks(BoundingBox((-11, 0, -7), (38, dim.bounds.height, 25)),
-                   [(world.blocktypes.WoodPlanks, world.blocktypes.Dirt),
-                    (world.blocktypes.Grass, world.blocktypes.IronOre)])
+                   [(world.blocktypes["planks"], world.blocktypes["dirt"]),
+                    (world.blocktypes["grass"], world.blocktypes["iron_ore"])])
 
 
 def testImport(world, sourceLevel):

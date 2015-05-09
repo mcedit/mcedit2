@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function
 import collections
 import logging
+import weakref
 from OpenGL import GL
 import numpy
 from mcedit2.rendering import cubes
@@ -24,10 +25,22 @@ class RenderNode(object):
         self.displayList = DisplayList()          # Recompiled whenever this node's scenegraph node is dirty
                                                   # or node gains or loses children
         self.childNeedsRecompile = True
-        self.parent = None
 
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, self.sceneNode)
+
+    _parent = None
+    @property
+    def parent(self):
+        if self._parent:
+            return self._parent()
+
+    @parent.setter
+    def parent(self, value):
+        if value is not None:
+            self._parent = weakref.ref(value)
+        else:
+            self._parent = None
 
     def addChild(self, node):
         self.children.append(node)
@@ -99,6 +112,10 @@ class RenderNode(object):
     def drawSelf(self):
         pass
 
+    def destroy(self):
+        for child in self.children:
+            child.destroy()
+        self.displayList.destroy()
 
 class RenderstateRenderNode(RenderNode):
     def draw(self):
@@ -112,19 +129,17 @@ class RenderstateRenderNode(RenderNode):
     def exit(self):
         raise NotImplementedError
 
-
 class TextureAtlasRenderNode(RenderstateRenderNode):
     def __init__(self, sceneNode):
         super(TextureAtlasRenderNode, self).__init__(sceneNode)
-        self.textureAtlas = sceneNode.textureAtlas
-
-    def compile(self):
-        self.textureAtlas.load()
-        super(TextureAtlasRenderNode, self).compile()
+        self.sceneNode = sceneNode
 
     def enter(self):
+        if self.sceneNode.textureAtlas is None:
+            return
+
         GL.glColor(1., 1., 1., 1.)
-        textureAtlas = self.textureAtlas
+        textureAtlas = self.sceneNode.textureAtlas
         GL.glActiveTexture(GL.GL_TEXTURE0)
         GL.glEnable(GL.GL_TEXTURE_2D)
         textureAtlas.bindTerrain()
@@ -144,8 +159,13 @@ class TextureAtlasRenderNode(RenderstateRenderNode):
         GL.glScale(1. / 16, 1. / 16, 1.)
 
         GL.glActiveTexture(GL.GL_TEXTURE0)
+        GL.glEnable(GL.GL_CULL_FACE)
 
     def exit(self):
+        if self.sceneNode.textureAtlas is None:
+            return
+
+        GL.glDisable(GL.GL_CULL_FACE)
         GL.glActiveTexture(GL.GL_TEXTURE1)
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
         GL.glDisable(GL.GL_TEXTURE_2D)
@@ -196,8 +216,6 @@ class VertexRenderNode(RenderNode):
 
 
     def drawSelf(self):
-        if self.didDraw:
-            assert not self.didDraw
         self.didDraw = True
         bare = []
         withTex = []
@@ -210,17 +228,17 @@ class VertexRenderNode(RenderNode):
             else:
                 bare.append(array)
 
-        self.drawArrays(bare, False, False)
-        self.drawArrays(withTex, True, False)
-        self.drawArrays(withLights, True, True)
+        with gl.glPushAttrib(GL.GL_ENABLE_BIT):
+            GL.glDisable(GL.GL_TEXTURE_2D)
+            self.drawArrays(bare, False, False)
+            GL.glEnable(GL.GL_TEXTURE_2D)
+            self.drawArrays(withTex, True, False)
+            self.drawArrays(withLights, True, True)
 
     def drawArrays(self, vertexArrays, textures, lights):
         if textures:
             GL.glClientActiveTexture(GL.GL_TEXTURE0)
             GL.glEnableClientState(GL.GL_TEXTURE_COORD_ARRAY)
-        else:
-            GL.glActiveTexture(GL.GL_TEXTURE0)
-            GL.glDisable(GL.GL_TEXTURE_2D)
         if lights:
             GL.glClientActiveTexture(GL.GL_TEXTURE1)
             GL.glEnableClientState(GL.GL_TEXTURE_COORD_ARRAY)
@@ -239,11 +257,11 @@ class VertexRenderNode(RenderNode):
             GL.glVertexPointer(3, GL.GL_FLOAT, stride, buf)
             if textures:
                 GL.glClientActiveTexture(GL.GL_TEXTURE0)
-                GL.glTexCoordPointer(2, GL.GL_FLOAT, stride, (buf[3:]))
+                GL.glTexCoordPointer(2, GL.GL_FLOAT, stride, (buf[array.texOffset:]))
             if lights:
                 GL.glClientActiveTexture(GL.GL_TEXTURE1)
-                GL.glTexCoordPointer(2, GL.GL_FLOAT, stride, (buf[5:]))
-            GL.glColorPointer(4, GL.GL_UNSIGNED_BYTE, stride, (buf.view(dtype=numpy.uint8)[(stride - 4):]))
+                GL.glTexCoordPointer(2, GL.GL_FLOAT, stride, (buf[array.lightOffset:]))
+            GL.glColorPointer(4, GL.GL_UNSIGNED_BYTE, stride, (buf.view(dtype=numpy.uint8)[array.rgbaOffset*4:]))
 
             vertexCount = int(array.buffer.size / array.elements)
             GL.glDrawArrays(array.gl_type, 0, vertexCount)
@@ -256,9 +274,6 @@ class VertexRenderNode(RenderNode):
         if textures:
             GL.glClientActiveTexture(GL.GL_TEXTURE0)
             GL.glDisableClientState(GL.GL_TEXTURE_COORD_ARRAY)
-        else:
-            GL.glActiveTexture(GL.GL_TEXTURE0)
-            GL.glEnable(GL.GL_TEXTURE_2D)
 
 class OrthoRenderNode(RenderstateRenderNode):
     def enter(self):
@@ -360,6 +375,7 @@ def updateChildren(renderNode):
 
     for dc in deadChildren:
         renderNode.removeChild(dc)
+        dc.destroy()
 
     for index, sceneChild in enumerate(sceneNode.children):
         renderChild = renderNode.childrenBySceneNode.get(sceneChild)

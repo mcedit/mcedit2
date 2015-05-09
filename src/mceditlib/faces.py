@@ -19,7 +19,7 @@ class Face(int):
         return faceNames[self]
 
     def __repr__(self):
-        return self.name
+        return "Face(%s)" % self.name
 
     @classmethod
     def fromVector(cls, v):
@@ -29,12 +29,16 @@ class Face(int):
                 return face
         raise ValueError("No face for vector %s" % (v,))
 
-FaceXIncreasing = Face(0)
-FaceXDecreasing = Face(1)
-FaceYIncreasing = Face(2)
-FaceYDecreasing = Face(3)
-FaceZIncreasing = Face(4)
-FaceZDecreasing = Face(5)
+    @property
+    def vector(self):
+        return _directions[self]
+
+FaceXIncreasing = FaceEast = Face(0)
+FaceXDecreasing = FaceWest = Face(1)
+FaceYIncreasing = FaceUp = Face(2)
+FaceYDecreasing = FaceDown = Face(3)
+FaceZIncreasing = FaceSouth = Face(4)
+FaceZDecreasing = FaceNorth = Face(5)
 MaxDirections = 6
 
 faceDirections = (
@@ -45,6 +49,9 @@ faceDirections = (
     (FaceZIncreasing, (0, 0, 1)),
     (FaceZDecreasing, (0, 0, -1))
 )
+_directions = {k: v for (k, v) in faceDirections}
+
+allFaces = [f[0] for f in faceDirections]
 
 faceNames = [
     "East",

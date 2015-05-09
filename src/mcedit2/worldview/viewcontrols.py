@@ -7,77 +7,151 @@ from PySide import QtGui
 from PySide.QtCore import Qt
 import time
 from mcedit2.widgets.layout import Column
+from mcedit2.worldview.viewaction import ViewAction
 
 log = logging.getLogger(__name__)
 
-_buttonNames = [
-    (Qt.LeftButton, "Left Button"),
-    (Qt.RightButton, "Right Button"),
-    (Qt.MiddleButton, "Middle Button"),
-]
 
-
-def buttonName(buttons):
-    parts = [name for mask, name in _buttonNames if buttons & mask]
-    return "+".join(parts)
-
-def modifierText(mouseAction):
-    return QtGui.QKeySequence(mouseAction.modifiers).toString() + buttonName(mouseAction.button)
-
-class ButtonModifierInput(QtGui.QPushButton):
-    def __init__(self, action, *a, **kw):
-        super(ButtonModifierInput, self).__init__(flat=True, text=modifierText(action), *a, **kw)
-        self.clicked.connect(self.buttonClicked)
-        self.inputWidget = ModifierInputWidget(action)
-
-    def buttonClicked(self):
-        self.inputWidget.show()
 
 class ModifierInputWidget(QtGui.QWidget):
-    def __init__(self, mouseAction, *a, **kw):
+    def __init__(self, inputButton, *a, **kw):
         """
+        Popup widget to change the binding for a view action.
 
-        :type mouseAction: ViewMouseAction
+        :type inputButton: ButtonModifierInput
         """
         super(ModifierInputWidget, self).__init__(f=Qt.Popup, *a, **kw)
-        self.inputLabel = QtGui.QLabel(modifierText(mouseAction))
-        self.helpLabel = QtGui.QLabel("Click mouse button xxor press a keyxx, while holding any number of modifier keys (Shift, Ctrl, Alt)")
+        self.setMaximumWidth(150)
 
-        self.setLayout(Column(self.inputLabel, self.helpLabel))
+        frame = QtGui.QFrame()
+        frame.setFrameStyle(QtGui.QFrame.Box)
+
+        self.inputLabel = QtGui.QLabel(inputButton.viewAction.describeKeys())
+        self.inputLabel.setAlignment(Qt.AlignCenter)
+        font = self.inputLabel.font()
+        font.setPointSize(font.pointSize() * 1.5)
+        font.setBold(True)
+        self.inputLabel.setFont(font)
+        if hasattr(inputButton.viewAction, "button"):
+            s = "Click a mouse button or press a key, while holding any number of modifier keys (Shift, Ctrl, Alt)"
+        else:
+            s = "Press a key while holding any number of modifier keys (Shift, Ctrl, Alt)"
+
+        self.helpLabel = QtGui.QLabel(s)
+        frame.setLayout(Column(self.inputLabel, self.helpLabel))
+        self.setLayout(Column(frame, margin=0))
         self.helpLabel.mousePressEvent = self.mousePressEvent
-        self.mouseAction = mouseAction
+        self.inputButton = inputButton
 
     def mousePressEvent(self, mouseEvent):
         """
 
-        :type mouseEvent: QMouseEvent
+        :type mouseEvent: QtGui.QMouseEvent
         """
-        ks = QtGui.QKeySequence(mouseEvent.modifiers())
-        s = ks.toString() + buttonName(mouseEvent.button())
-        self.inputLabel.setText(s)
-        self.mouseAction.modifiers = mouseEvent.modifiers()
-        self.mouseAction.button = mouseEvent.button()
+        if not self.rect().contains(mouseEvent.pos()):
+            super(ModifierInputWidget, self).mousePressEvent(mouseEvent)
+            return
 
-    #
-    #def keyPressEvent(self, *args, **kwargs):
-    #    pass
-    #
-    #def keyReleaseEvent(self, *args, **kwargs):
-    #    pass
-    #
-    #def mouseReleaseEvent(self, mouseEvent):
-    #    pass
-    #
-    #def __init__(self, mouseAction, *args, **kwargs):
-    #    super(ButtonModifierInput, self).__init__(*args, **kwargs)
-    #    self.setMaximumWidth(150)
-    #    self.mouseAction = mouseAction
-    #    self.setText()
+        if mouseEvent.button() == Qt.LeftButton:
+            return  # Forbid binding left button
+
+        self.inputButton.setBinding(mouseEvent.button(), 0, mouseEvent.modifiers())
+        self.inputLabel.setText(self.inputButton.viewAction.describeKeys())
+
+    def keyPressEvent(self, keyEvent):
+        """
+
+        :param keyEvent:
+        :type keyEvent: QtGui.QKeyEvent
+        :return:
+        :rtype:
+        """
+        key = keyEvent.key()
+        if key == Qt.Key_Escape:
+            self.close()
+            return
+
+        modifiers = keyEvent.modifiers()
+
+        log.info("Control change: key %s(%s) modifiers %s(%s)", key, hex(key), modifiers, hex(int(modifiers)))
+
+        self.inputButton.setBinding(Qt.NoButton, key, modifiers)
+        self.inputLabel.setText(self.inputButton.viewAction.describeKeys())
+
+    def wheelEvent(self, wheelEvent):
+        if not self.inputButton.viewAction.acceptsMouseWheel:
+            return
+
+        delta = wheelEvent.delta()
+        if delta == 0:
+            return
+        if delta > 0:
+            button = ViewAction.WHEEL_UP
+        else:
+            button = ViewAction.WHEEL_DOWN
+
+        modifiers = wheelEvent.modifiers()
+
+        log.info("Control change: button %s modifiers %s", button, hex(int(modifiers)))
+
+        self.inputButton.setBinding(button, 0, modifiers)
+        self.inputLabel.setText(self.inputButton.viewAction.describeKeys())
+
+
+class ButtonModifierInput(QtGui.QPushButton):
+    def __init__(self, viewAction, *a, **kw):
+        """
+        Button that displays the current key/mouse binding for a view action. Click the button to change the binding.
+
+        :type viewAction: mcedit2.worldview.viewaction.ViewAction
+        """
+        super(ButtonModifierInput, self).__init__(text=viewAction.describeKeys(), *a, **kw)
+        self.setStyleSheet("""
+        :disabled {
+            color: #000000;
+        }
+
+        :enabled {
+            background-color: #DDDDFF;
+        """)
+        self.clicked.connect(self.buttonClicked)
+        self.viewAction = viewAction
+        self.inputWidget = ModifierInputWidget(self)
+
+    def buttonClicked(self):
+        inputWidget = self.inputWidget
+        inputWidget.show()
+        inputWidget.setFocus()
+
+        rect = inputWidget.geometry()
+        topRight = self.parent().mapToGlobal(self.geometry().bottomRight())
+        rect.moveTopRight(topRight)
+        inputWidget.setGeometry(rect)
+
+    def updateText(self):
+        self.setText(self.viewAction.describeKeys())
+
+    @property
+    def key(self):
+        return self.viewAction.key
+
+    @property
+    def modifiers(self):
+        return self.viewAction.modifiers
+
+    @property
+    def button(self):
+        return self.viewAction.button
+
+    def setBinding(self, button, key, modifiers):
+        self.viewAction.setBinding(button, key, modifiers)
+        self.updateText()
+
 
 class ViewControls(QtGui.QFrame):
     def __init__(self, worldView, *args, **kwargs):
         """
-
+        Popup window for quickly reviewing and assigning movement controls for a world view.
 
         :type worldView: WorldView
         :param worldView:
@@ -89,40 +163,39 @@ class ViewControls(QtGui.QFrame):
         layout = QtGui.QFormLayout()
         self.controlInputs = []
 
-        for mouseAction in self.worldView.mouseActions:
-            if not mouseAction.hidden:
-                modInput = ButtonModifierInput(mouseAction, enabled=False)
+        for action in self.worldView.viewActions:
+            if not action.hidden:
+                modInput = ButtonModifierInput(action, enabled=False)
                 self.controlInputs.append(modInput)
-                layout.addRow(QtGui.QLabel(mouseAction.labelText), modInput)
+                layout.addRow(QtGui.QLabel(action.labelText), modInput)
 
         self.hideTime = time.time()
 
-        action = QtGui.QAction("Controls", self)
+        action = QtGui.QAction(self.tr("Controls"), self)
         action.triggered.connect(self.toggleShowHide)
 
         self.controlsButton = QtGui.QToolButton()
         self.controlsButton.setDefaultAction(action)
 
-        self.unlockButton = QtGui.QPushButton("Edit", clicked=self.unlockControls)
-        layout.addRow(QtGui.QLabel("Edit Controls:"), self.unlockButton)
-        self.setLayout(layout)
+        self.unlockButton = QtGui.QPushButton(self.tr("Edit Controls"), clicked=self.toggleUnlockControls)
+        self.setLayout(Column(layout, self.unlockButton))
+        self.unlocked = False
 
-    def unlockControls(self):
-        for ci in self.controlInputs:
-            ci.setEnabled(True)
-            self.unlockButton.setEnabled(False)
+    def toggleUnlockControls(self):
+        self.lockUnlockControls(not self.unlocked)
 
-    def lockControls(self):
+    def lockUnlockControls(self, unlocked):
+        self.unlocked = unlocked
         for ci in self.controlInputs:
-            ci.setEnabled(False)
-            self.unlockButton.setEnabled(True)
+            ci.setEnabled(unlocked)
+            self.unlockButton.setText(self.tr("Done Editing") if unlocked else self.tr("Edit Controls"))
 
     def getShowHideButton(self):
         return self.controlsButton
 
     def hideEvent(self, *a):
         self.hideTime = time.time()
-        self.lockControls()
+        self.lockUnlockControls(False)
 
     def toggleShowHide(self):
         if self.isHidden():
@@ -132,6 +205,5 @@ class ViewControls(QtGui.QFrame):
                 bottomRight = self.controlsButton.parent().mapToGlobal(self.controlsButton.geometry().bottomRight())
                 rect.moveTopRight(bottomRight)
                 self.setGeometry(rect)
-
         else:
             self.hide()

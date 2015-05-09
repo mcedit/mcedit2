@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from PySide import QtGui, QtCore
 import logging
+from mcedit2.resourceloader import ResourceNotFound
 from mcedit2.util.load_ui import load_ui
 
 log = logging.getLogger(__name__)
@@ -32,30 +33,57 @@ class BlockListWidget(QtGui.QWidget):
         table.setHorizontalHeaderLabels(columns)
         for row, block in enumerate(blocktypes):
             icon = QtGui.QIcon(BlockTypePixmap(block, textureAtlas))
-            table.setItem(row, 0, QtGui.QTableWidgetItem(icon, block.internalName))
-            datas = (None, block.englishName, str(block.ID), str(block.blockData), block.unlocalizedName)
+            table.setItem(row, 0, QtGui.QTableWidgetItem(icon, block.internalName + block.blockState))
+            datas = (None, block.displayName, str(block.ID), str(block.meta), block.internalName + block.blockState)
 
             for i, data in enumerate(datas):
                 if data is not None:
                     table.setItem(row, i, QtGui.QTableWidgetItem(data))
 
 
-def BlockTypePixmap(block, textureAtlas):
-    texname = block.textureIconNames[0]
-    io = textureAtlas._openImageStream(texname)
-    data = io.read()
-    array = QtCore.QByteArray(data)
-    buf = QtCore.QBuffer(array)
-    reader = QtGui.QImageReader(buf)
-    image = reader.read()
-    pixmap = QtGui.QPixmap.fromImage(image)
-    w = pixmap.width()
-    h = pixmap.height()
-    s = min(w, h)
-    if w != h:
-        pixmap = pixmap.copy(0, 0, s, s)
+def BlockTypePixmap(block, textureAtlas, size=32):
+    """
 
-    if s != 32:
-        pixmap = pixmap.scaledToWidth(32)
+    :param block:
+    :type block: mceditlib.blocktypes.BlockType
+    :param textureAtlas:
+    :type textureAtlas: mcedit2.rendering.textureatlas.TextureAtlas
+    :return:
+    :rtype: QtGui.QPixmap
+    """
+    models = textureAtlas.blockModels
+    texname = models.firstTextures.get(block.internalName + block.blockState)
+    if texname is None:
+        log.debug("No texture for %s!", block.internalName + block.blockState)
+        texname = "MCEDIT_UNKNOWN"
+    try:
+        io = textureAtlas._openImageStream(texname)
+        return TexturePixmap(io, size=size, texname=texname)
+    except (ValueError, ResourceNotFound) as e:
+        log.warn("BlockTypePixmap: Failed to read texture %s: %r", texname, e)
 
-    return pixmap
+
+def TexturePixmap(io, size=32, texname="Not provided"):
+    try:
+        data = io.read()
+        array = QtCore.QByteArray(data)
+        buf = QtCore.QBuffer(array)
+        reader = QtGui.QImageReader(buf)
+        image = reader.read()
+        pixmap = QtGui.QPixmap.fromImage(image)
+        if pixmap.isNull():
+            log.warn("File %s produced a null pixmap", texname)
+            return None
+
+        w = pixmap.width()
+        h = pixmap.height()
+        s = min(w, h)
+        if w != h:
+            pixmap = pixmap.copy(0, 0, s, s)
+
+        if s != size:
+            pixmap = pixmap.scaledToWidth(size)
+
+        return pixmap
+    except ValueError as e:
+        log.warn("TexturePixmap: Failed to load texture %s: %r", texname, e)

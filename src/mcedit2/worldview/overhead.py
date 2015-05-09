@@ -4,8 +4,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from PySide import QtGui
 import logging
-from mcedit2.worldview.worldview import WorldView, ZoomWheelAction, MoveViewMouseAction
+from mcedit2.worldview.worldview import WorldView
+from mcedit2.worldview.viewaction import MoveViewMouseAction, ZoomWheelAction
 from mcedit2.worldview import worldruler
+from mceditlib.geometry import Vector
 
 log = logging.getLogger(__name__)
 
@@ -31,11 +33,12 @@ def OverheadWorldViewFrame(dimension, geometryCache, resourceLoader, sharedGLWid
     return widget
 
 class OverheadWorldView(WorldView):
+    cameraVector = Vector(0, -1, 0)
     def __init__(self, *a, **kw):
         WorldView.__init__(self, *a, **kw)
         self.scale = 1.
         self.compassNode.yawPitch = 180, 0
-        self.mouseActions.extend((
+        self.viewActions.extend((
             MoveViewMouseAction(),
             ZoomWheelAction(),
         ))

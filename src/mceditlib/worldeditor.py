@@ -6,17 +6,18 @@ import weakref
 import itertools
 
 import numpy
+import re
+from mceditlib import cachefunc
 
 from mceditlib.block_copy import copyBlocksIter
+from mceditlib.nbtattr import NBTListProxy
 from mceditlib.operations.block_fill import FillBlocksOperation
-from mceditlib.blocktypes import pc_blocktypes
-from mceditlib.geometry import BoundingBox
-from mceditlib import nbt
+from mceditlib.selection import BoundingBox
 from mceditlib.findadapter import findAdapter
-from mceditlib.levelbase import matchEntityTags
 from mceditlib.multi_block import getBlocks, setBlocks
-from mceditlib.schematic import SchematicFileAdapter
+from mceditlib.schematic import createSchematic
 from mceditlib.util import displayName, chunk_pos, exhaust, matchEntityTags
+from mceditlib.util.lazyprop import weakrefprop
 
 
 log = logging.getLogger(__name__)
@@ -38,6 +39,41 @@ def string_func(array):
 numpy.set_string_function(string_func)
 
 
+class EntityListProxy(collections.MutableSequence):
+    """
+    A proxy for the Entities and TileEntities lists of a WorldEditorChunk. Accessing an element returns an EntityRef
+    or TileEntityRef wrapping the element of the underlying NBT compound, with a reference to the WorldEditorChunk.
+
+    These Refs cannot be created at load time as they hold a reference to the chunk, preventing the chunk from being
+    unloaded when its refcount reaches zero.
+    """
+
+    chunk = weakrefprop()
+
+    def __init__(self, chunk, attrName, refClass):
+        self.attrName = attrName
+        self.refClass = refClass
+        self.chunk = chunk
+
+    def __getitem__(self, key):
+        return self.refClass(getattr(self.chunk.chunkData, self.attrName)[key], self.chunk)
+
+    def __setitem__(self, key, value):
+        tagList = getattr(self.chunk.chunkData, self.attrName)
+        if isinstance(key, slice):
+            tagList[key] = [v.rootTag for v in value]
+        else:
+            tagList[key] = value.rootTag
+
+    def __delitem__(self, key):
+        del getattr(self.chunk.chunkData, self.attrName)[key]
+
+    def __len__(self):
+        return len(getattr(self.chunk.chunkData, self.attrName))
+
+    def insert(self, index, value):
+        getattr(self.chunk.chunkData, self.attrName).insert(index, value.rootTag)
+
 class WorldEditorChunk(object):
     """
     This is a 16x16xH chunk in a format-independent world.
@@ -45,12 +81,20 @@ class WorldEditorChunk(object):
     vertical sections of 16x16x16, accessed using the `getSection` method.
     """
 
+
+
     def __init__(self, chunkData, editor):
         self.worldEditor = editor
         self.chunkData = chunkData
         self.cx, self.cz = chunkData.cx, chunkData.cz
         self.dimName = chunkData.dimName
         self.dimension = editor.getDimension(self.dimName)
+
+        self.Entities = EntityListProxy(self, "Entities", editor.adapter.EntityRef)
+        self.TileEntities = EntityListProxy(self, "TileEntities", editor.adapter.TileEntityRef)
+        #self.Entities = [editor.adapter.EntityRef(tag, self) for tag in chunkData.Entities]
+        #self.TileEntities = [editor.adapter.TileEntityRef(tag, self) for tag in chunkData.TileEntities]
+
 
     def buildNBTTag(self):
         return self.chunkData.buildNBTTag()
@@ -105,14 +149,6 @@ class WorldEditorChunk(object):
         return self.chunkData.HeightMap
 
     @property
-    def Entities(self):
-        return self.chunkData.Entities
-
-    @property
-    def TileEntities(self):
-        return self.chunkData.TileEntities
-
-    @property
     def TerrainPopulated(self):
         return self.chunkData.TerrainPopulated
 
@@ -120,6 +156,46 @@ class WorldEditorChunk(object):
     def TerrainPopulated(self, val):
         self.chunkData.TerrainPopulated = val
 
+    def addEntity(self, ref):
+        if ref.chunk is self:
+            return
+        self.chunkData.Entities.append(ref.rootTag)
+        ref.chunk = self
+        self.dirty = True
+
+    def removeEntity(self, ref):
+        self.chunkData.Entities.remove(ref.rootTag)
+        ref.chunk = None
+        self.dirty = True
+
+    def removeEntities(self, entities):
+        for ref in entities:  # xxx O(n*m)
+            self.removeEntity(ref)
+
+    def addTileEntity(self, ref):
+        if ref.chunk is self:
+            return
+        self.chunkData.TileEntities.append(ref.rootTag)
+        ref.chunk = self
+        self.dirty = True
+
+    def removeTileEntity(self, ref):
+        if ref.chunk is not self:
+            return
+        self.chunkData.TileEntities.remove(ref.rootTag)
+        ref.chunk = None
+        ref.rootTag = None
+        self.dirty = True
+
+    @property
+    def TileTicks(self):
+        """
+        Directly accesses the TAG_List of TAG_Compounds. Not protected by Refs like Entities and TileEntities are.
+
+        :return:
+        :rtype:
+        """
+        return self.chunkData.TileTicks
 
 class WorldEditor(object):
     def __init__(self, filename=None, create=False, readonly=False, adapterClass=None, adapter=None, resume=None):
@@ -131,7 +207,7 @@ class WorldEditor(object):
         :type filename: str or unknown or unicode
         :type create: bool
         :type readonly: bool
-        :type adapter: unknown or SchematicFileAdapter
+        :type adapter: unknown or mceditlib.anvil.adapter.AnvilWorldAdapter or mceditlib.schematic.SchematicFileAdapter
         :type adapterClass: class
         :type resume: None or bool
         :return:
@@ -154,8 +230,13 @@ class WorldEditor(object):
         # maps (cx, cz, dimName) tuples to WorldEditorChunk
         self._loadedChunks = weakref.WeakValueDictionary()
 
-        # maps (cx, cz, dimName) tuples to WorldEditorChunkData
-        self._loadedChunkData = {}
+        # caches ChunkData from adapter
+        self._chunkDataCache = cachefunc.lru_cache_object(self._getChunkDataRaw, 1000)
+        self._chunkDataCache.should_decache = self._shouldUnloadChunkData
+        self._chunkDataCache.will_decache = self._willUnloadChunkData
+
+        # caches recently used WorldEditorChunks
+        self.recentChunks = collections.deque(maxlen=100)
 
         self._allChunks = None
 
@@ -170,6 +251,11 @@ class WorldEditor(object):
 
     def __repr__(self):
         return "WorldEditor(adapter=%r)" % self.adapter
+
+    # --- Debug ---
+
+    def setCacheLimit(self, size):
+        self._chunkDataCache.setCacheLimit(size)
 
     # --- Undo/redo ---
     def requireRevisions(self):
@@ -226,7 +312,9 @@ class WorldEditor(object):
         :return:
         :rtype:
         """
+        assert index is not None, "None is not a revision index!"
         self.syncToDisk()
+        self.playerCache.clear()
 
         changes = self.adapter.selectRevision(index)
         self.currentRevision = index
@@ -234,14 +322,14 @@ class WorldEditor(object):
             return
         log.info("Going to revision %d", index)
         log.debug("Changes: %s", changes)
+        self.recentChunks.clear()
         for dimName, chunkPositions in changes.chunks.iteritems():
             self.recentDirtyChunks[dimName].update(chunkPositions)
             for cx, cz in chunkPositions:
-                self._loadedChunkData.pop((cx, cz, dimName), None)
+                self._chunkDataCache.decache(cx, cz, dimName)
                 self._loadedChunks.pop((cx, cz, dimName), None)
 
         self.recentDirtyFiles.update(changes.files)
-        # xxx unload players, metadata!!
 
     # --- Save ---
 
@@ -252,16 +340,21 @@ class WorldEditor(object):
         :return:
         :rtype:
         """
+        dirtyPlayers = 0
         for player in self.playerCache.itervalues():
-            player.save()
+            if player.dirty:
+                dirtyPlayers += 1
+                player.save()
 
         dirtyChunkCount = 0
-        for chunk in self._loadedChunkData.itervalues():
-            if chunk.dirty:
+        for cx, cz, dimName in self._chunkDataCache:
+            chunkData = self._chunkDataCache(cx, cz, dimName)
+            if chunkData.dirty:
                 dirtyChunkCount += 1
-                self.adapter.writeChunk(chunk)
-                chunk.dirty = False
-        log.info(u"Saved {0} chunks".format(dirtyChunkCount))
+                self.adapter.writeChunk(chunkData)
+                chunkData.dirty = False
+        self.adapter.syncToDisk()
+        log.info(u"Saved %d chunks and %d players", dirtyChunkCount, dirtyPlayers)
 
     def saveChanges(self):
         if self.readonly:
@@ -271,23 +364,20 @@ class WorldEditor(object):
         self.playerCache.clear()
         self.adapter.saveChanges()
 
+    def saveToFile(self, filename):
+        # XXXX only works with .schematics!!!
+        self.adapter.saveToFile(filename)
+
     def close(self):
         """
         Unload all chunks and close all open filehandles.
         """
         self.adapter.close()
+        self.recentChunks.clear()
 
         self._allChunks = None
         self._loadedChunks.clear()
-        self._loadedChunkData.clear()
-
-    # --- Resource limits ---
-
-    loadedChunkLimit = 400
-
-    # --- Instance variables  ---
-
-    blocktypes = pc_blocktypes
+        self._chunkDataCache.clear()
 
     # --- World limits ---
 
@@ -301,6 +391,10 @@ class WorldEditor(object):
     def displayName(self):
         return displayName(self.filename)
 
+    @property
+    def blocktypes(self):
+        return self.adapter.blocktypes
+
     # --- Chunk I/O ---
 
     def preloadChunkPositions(self):
@@ -309,7 +403,7 @@ class WorldEditor(object):
         for dimName in self.adapter.listDimensions():
             start = time.time()
             chunkPositions = set(self.adapter.chunkPositions(dimName))
-            chunkPositions.update((cx, cz) for (cx, cz, d) in self._loadedChunkData if d == dimName)
+            chunkPositions.update((cx, cz) for cx, cz, cDimName in self._chunkDataCache if cDimName == dimName)
             log.info("Dim %s: Found %d chunks in %0.2f seconds.",
                      dimName,
                      len(chunkPositions),
@@ -334,31 +428,18 @@ class WorldEditor(object):
             self.preloadChunkPositions()
         return self._allChunks[dimName].__iter__()
 
-    def _getChunkData(self, cx, cz, dimName):
-        chunkData = self._loadedChunkData.get((cx, cz, dimName))
-        if chunkData is not None:
-            log.debug("_getChunkData: Chunk %s is in _loadedChunkData", (cx, cz))
-            return chunkData
+    def _getChunkDataRaw(self, cx, cz, dimName):
+        """
+        Wrapped by cachefunc.lru_cache in __init__
+        """
+        return self.adapter.readChunk(cx, cz, dimName)
 
-        chunkData = self.adapter.readChunk(cx, cz, dimName)
-        self._storeLoadedChunkData(chunkData)
+    def _shouldUnloadChunkData(self, key):
+        return key not in self._loadedChunks
 
-        return chunkData
-
-    def _storeLoadedChunkData(self, chunkData):
-        if len(self._loadedChunkData) > self.loadedChunkLimit:
-            # Try to find a chunk to unload. The chunk must not be in _loadedChunks, which contains only chunks that
-            # are in use by another object. If the chunk is dirty, save it to the temporary folder.
-
-            for (ocx, ocz, dimName), oldChunkData in self._loadedChunkData.items():
-                if (ocx, ocz, dimName) not in self._loadedChunks:  # and (ocx, ocz) not in self._recentLoadedChunks:
-                    if oldChunkData.dirty and not self.readonly:
-                        self.adapter.writeChunk(oldChunkData)
-
-                    del self._loadedChunkData[ocx, ocz, dimName]
-                    break
-
-        self._loadedChunkData[chunkData.cx, chunkData.cz, chunkData.dimName] = chunkData
+    def _willUnloadChunkData(self, chunkData):
+        if chunkData.dirty and not self.readonly:
+            self.adapter.writeChunk(chunkData)
 
     def getChunk(self, cx, cz, dimName, create=False):
         """
@@ -373,7 +454,7 @@ class WorldEditor(object):
             return chunk
 
         startTime = time.time()
-        chunkData = self._getChunkData(cx, cz, dimName)
+        chunkData = self._chunkDataCache(cx, cz, dimName)
         chunk = WorldEditorChunk(chunkData, self)
 
         duration = time.time() - startTime
@@ -383,14 +464,17 @@ class WorldEditor(object):
                      len(chunk.rootTag.get("TileTicks", ())))
 
         self._loadedChunks[cx, cz, dimName] = chunk
+
+        self.recentChunks.append(chunk)
         return chunk
 
     # --- Chunk dirty bit ---
 
     def listDirtyChunks(self):
-        for cPos, chunkData in self._loadedChunkData.iteritems():
+        for cx, cz, dimName in self._chunkDataCache:
+            chunkData = self._chunkDataCache(cx, cz, dimName)
             if chunkData.dirty:
-                yield cPos
+                yield cx, cz, dimName
 
     def chunkBecameDirty(self, chunk):
         self.recentDirtyChunks[chunk.dimName].add((chunk.cx, chunk.cz))
@@ -417,7 +501,7 @@ class WorldEditor(object):
     def containsChunk(self, cx, cz, dimName):
         if self._allChunks is not None:
             return (cx, cz) in self._allChunks[dimName]
-        if (cx, cz, dimName) in self._loadedChunkData:
+        if (cx, cz, dimName) in self._chunkDataCache:
             return True
 
         return self.adapter.containsChunk(cx, cz, dimName)
@@ -430,11 +514,13 @@ class WorldEditor(object):
     def createChunk(self, cx, cz, dimName):
         if self.containsChunk(cx, cz, dimName):
             raise ValueError("%r:Chunk %s already present in %s!".format(self, (cx, cz), dimName))
-        if self._allChunks is not None:
-            self._allChunks[dimName].add((cx, cz))
 
-        chunk = self.adapter.createChunk(cx, cz, dimName)
-        self._storeLoadedChunkData(chunk)
+        if hasattr(self.adapter, 'createChunk'):
+            if self._allChunks is not None:
+                self._allChunks[dimName].add((cx, cz))
+
+            chunk = self.adapter.createChunk(cx, cz, dimName)
+            self._chunkDataCache.store(chunk, cx, cz, dimName)
 
     def deleteChunk(self, cx, cz, dimName):
         self.adapter.deleteChunk(cx, cz, dimName)
@@ -489,6 +575,30 @@ class WorldEditor(object):
             self.dimensions[dimName] = dim
         return dim
 
+    def dimNameFromNumber(self, dimNo):
+        """
+        Return the dimension name for the given number, as would be stored in the player's "dimension" tag.
+
+        Handles "DIM1" and "DIM-1" for vanilla dimensions. Most mods add more dimensions similar to "DIM-42", "DIM-100"
+        but some mods like Galacticraft use "DIM_SPACESTATION3" so make an educated guess about the dimension's name
+        ending with its number.
+
+        :param dimNo:
+        :type dimNo:
+        :return:
+        :rtype:
+        """
+        dimNoStr = str(dimNo)
+        for name in self.listDimensions():
+            if name.endswith(dimNoStr):
+                return name
+
+    def dimNumberFromName(self, dimName):
+        matches = re.findall(r'-[0-9]+', dimName)
+        if not len(matches):
+            raise ValueError("Could not parse a dimension number from %s", dimName)
+        return int(matches[-1])
+
 class WorldEditorDimension(object):
     def __init__(self, worldEditor, dimName):
         self.worldEditor = worldEditor
@@ -504,6 +614,11 @@ class WorldEditorDimension(object):
 
     @property
     def bounds(self):
+        """
+
+        :return:
+        :rtype: BoundingBox
+        """
         if self._bounds is None:
             if hasattr(self.adapter, "getDimensionBounds"):
                 self._bounds = self.adapter.getDimensionBounds(self.dimName)
@@ -593,11 +708,20 @@ class WorldEditorDimension(object):
                     if matchEntityTags(ref, kw):
                         yield ref
 
+    def getTileEntity(self, pos, **kw):
+        cx = pos[0] >> 4
+        cz = pos[2] >> 4
+        chunk = self.getChunk(cx, cz)
+        for ref in chunk.TileEntities:
+            if ref.Position == pos:
+                if matchEntityTags(ref, kw):
+                    return ref
+
     def addEntity(self, ref):
         x, y, z = ref.Position
         cx, cz = chunk_pos(x, z)
         chunk = self.getChunk(cx, cz, create=True)
-        chunk.Entities.append(ref.copy())
+        chunk.addEntity(ref.copy())
 
     def addTileEntity(self, ref):
         x, y, z = ref.Position
@@ -606,9 +730,9 @@ class WorldEditorDimension(object):
         existing = [old for old in chunk.TileEntities
                     if old.Position == (x, y, z)]
         for e in existing:
-            chunk.TileEntities.remove(e)
+            chunk.removeTileEntity(e)
 
-        chunk.TileEntities.append(ref.copy())
+        chunk.addTileEntity(ref.copy())
 
     # --- Import/Export ---
 
@@ -622,8 +746,7 @@ class WorldEditorDimension(object):
                                            entities, create, biomes))
 
     def exportSchematicIter(self, selection):
-        schematicAdapter = SchematicFileAdapter(shape=selection.size, blocktypes=self.blocktypes)
-        schematic = WorldEditor(adapter=schematicAdapter)
+        schematic = createSchematic(shape=selection.size, blocktypes=self.blocktypes)
 
         return itertools.chain(copyBlocksIter(schematic.getDimension(), self, selection, (0, 0, 0)), [schematic])
 
@@ -653,6 +776,11 @@ class WorldEditorDimension(object):
 
     # --- Blocks by single coordinate ---
 
+    def getBlock(self, x, y, z):
+        ID = self.getBlockID(x, y, z)
+        meta = self.getBlockData(x, y, z)
+        return self.blocktypes[ID, meta]
+
     def getBlockID(self, x, y, z, default=0):
         cx = x >> 4
         cy = y >> 4
@@ -674,7 +802,7 @@ class WorldEditorDimension(object):
             chunk = self.getChunk(cx, cz)
             sec = chunk.getSection(cy, create=True)
             if sec:
-                array = sec.Data
+                array = sec.Blocks
                 assert array is not None
                 if array is not None:
                     array[y & 0xf, z & 0xf, x & 0xf] = value
@@ -707,6 +835,27 @@ class WorldEditorDimension(object):
                     array[y & 0xf, z & 0xf, x & 0xf] = value
             chunk.dirty = True
 
+    def getBiomeID(self, x, z, default=0):
+        cx = x >> 4
+        cz = z >> 4
+        if self.containsChunk(cx, cz):
+            chunk = self.getChunk(cx, cz)
+            array = chunk.Biomes
+            if array is not None:
+                return array[z & 0xf, x & 0xf]
+        return default
+
+    def setBiomeID(self, x, z, value):
+        cx = x >> 4
+        cz = z >> 4
+        if self.containsChunk(cx, cz):
+            chunk = self.getChunk(cx, cz)
+            array = chunk.Biomes
+            assert array is not None
+            if array is not None:
+                array[z & 0xf, x & 0xf] = value
+            chunk.dirty = True
+
     # --- Blocks by coordinate arrays ---
 
     def getBlocks(self, x, y, z,
@@ -735,4 +884,4 @@ class WorldEditorDimension(object):
                          BlockLight,
                          SkyLight,
                          Biomes,
-                         updateLights)
+                         updateLights and self.adapter.hasLights)

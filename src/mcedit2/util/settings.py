@@ -22,20 +22,33 @@ def Settings():
 
 
 class MCESettingsOption(QtCore.QObject):
-    def __init__(self, settings, key, type, *args, **kwargs):
+    def __init__(self, settings, key, valueType=None, default=None, *args, **kwargs):
         super(MCESettingsOption, self).__init__(*args, **kwargs)
         self.settings = settings
         self.key = key
-        self.type = type
+        self.valueType = valueType
+        self.default = default
 
     def value(self, default=None):
-        value = self.settings.value(self.key, default)
-        if self.type:
-            value = self.type(value)
+        if default is None:
+            default = self.default
+
+        if self.valueType == "json":
+            value = self.settings.jsonValue(self.key, default)
+        else:
+            value = self.settings.value(self.key, default)
+            if self.valueType is bool:
+                if isinstance(value, basestring):
+                    value = value.lower() == "true"
+            elif self.valueType:
+                value = self.valueType(value)
         return value
 
     def setValue(self, value):
-        return self.settings.setValue(self.key, value)
+        if self.valueType == "json":
+            return self.settings.setJsonValue(self.key, value)
+        else:
+            return self.settings.setValue(self.key, value)
 
     valueChanged = QtCore.Signal(object)
 
@@ -45,24 +58,62 @@ class MCESettingsOption(QtCore.QObject):
     def setJsonValue(self, value):
         return self.settings.setJsonValue(self.key, value)
 
+    def connectAndCall(self, callback):
+        """
+        Connect `callback` to this option's `valueChanged` signal, then call it with the value of this option.
+
+        :param callback:
+        :type callback:
+        :return:
+        :rtype:
+        """
+        self.valueChanged.connect(callback)
+        callback(self.value())
+
+class MCESettingsNamespace(object):
+    def __init__(self, rootSettings, prefix):
+        self.rootSettings = rootSettings
+        if not prefix.endswith("/"):
+            prefix = prefix + "/"
+
+        self.prefix = prefix
+
+    def getOption(self, key, type=None, default=None):
+        return self.rootSettings.getOption(self.prefix + key, type, default)
 
 
 class MCESettings(QtCore.QSettings):
-    """
-    Subclass of QSettings. Adds a `getOption` method which returns an individual option as its own object. Adds
-    one signal for each setting, emitted when its value is changed. Also provides json encoded methods to work
-    around a bug in PySide.
 
-    QSettings, under PySide, does not reliably infer that a settings value should be read as a QStringList.
-    jsonValue and setJsonValue methods are provided that will automatically encode/decode the given value to or from json
-
-    """
     def __init__(self, *args, **kwargs):
+        """
+        Subclass of QSettings. Adds a `getOption` method which returns an individual option as its own object. Adds
+        one signal for each setting, emitted when its value is changed. Also provides json encoded methods to work
+        around a bug in PySide.
+
+        QSettings, under PySide, does not reliably infer that a settings value should be read as a QStringList.
+        jsonValue and setJsonValue methods are provided that will automatically encode/decode the given value to or from json
+
+        :rtype: MCESettings
+        """
         dataDir = directories.getUserFilesDirectory()
-        super(MCESettings, self).__init__(os.path.join(dataDir, "mcedit2.ini"), QtCore.QSettings.IniFormat, *args,
+        iniPath = os.path.join(dataDir, "mcedit2.ini")
+        log.info("Loading app settings from %s", iniPath)
+        super(MCESettings, self).__init__(iniPath, QtCore.QSettings.IniFormat, *args,
                                            **kwargs)
         self.options = {}
         #= defaultdict(lambda: QtCore.Signal(object))
+
+    def getNamespace(self, prefix):
+        """
+        Return an MCESettingsNamespace object which can be used to access settings whose keys are all prefixed by
+        the given prefix
+
+        :param prefix:
+        :type prefix:
+        :return:
+        :rtype:
+        """
+        return MCESettingsNamespace(self, prefix)
 
     def getSignal(self, key):
         """
@@ -91,7 +142,8 @@ class MCESettings(QtCore.QSettings):
         if value is not None:
             try:
                 return json.loads(value)
-            except ValueError:  # No JSON object could be decoded
+            except ValueError as e:  # No JSON object could be decoded
+                log.error("Failed to decode setting %s: %s", key, e)
                 return default
         else:
             return default
@@ -99,7 +151,7 @@ class MCESettings(QtCore.QSettings):
     def setJsonValue(self, key, value):
         self.setValue(key, json.dumps(value))
 
-    def getOption(self, key, type=None):
+    def getOption(self, key, type=None, default=None):
         """
         Return an object that represents the setting at 'key'. The object may be used to get and set the value and
         get the value's valueChanged signal. Among other uses, the object's setValue attribute may be connected to the
@@ -114,7 +166,7 @@ class MCESettings(QtCore.QSettings):
         if option:
             return option
 
-        option = MCESettingsOption(self, key, type)
+        option = MCESettingsOption(self, key, type, default)
         self.options[key] = option
         return option
 

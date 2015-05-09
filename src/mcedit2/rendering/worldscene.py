@@ -5,13 +5,17 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import sys
 import collections
+import numpy
+import itertools
 
 from mcedit2.rendering.layers import Layer
 from mcedit2.rendering import chunkupdate, scenegraph
-from mcedit2.rendering import blockmeshes, renderstates
-from mcedit2.rendering.chunknode import ChunkNode, ChunkRenderInfo, ChunkGroupNode
+from mcedit2.rendering import renderstates
+from mcedit2.rendering.chunknode import ChunkNode, ChunkGroupNode
+from mcedit2.rendering.chunkupdate import ChunkRenderInfo
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.geometrycache import GeometryCache
+from mceditlib.anvil.biome_types import BiomeTypes
 
 log = logging.getLogger(__name__)
 
@@ -40,12 +44,11 @@ class SceneUpdateTask(object):
     spaceHeight = 64
     targetFPS = 30
 
-    def __init__(self, worldScene, dimension, textureAtlas, bounds=None):
+    def __init__(self, worldScene, textureAtlas, bounds=None):
         """
 
         :type worldScene: WorldScene
         :type bounds: BoundingBox
-        :type dimension: ISectionWorld
         :type textureAtlas: TextureAtlas
         """
         self.worldScene = worldScene
@@ -57,26 +60,18 @@ class SceneUpdateTask(object):
 
         self.textureAtlas = textureAtlas
 
-        self.blockMeshClasses = blockmeshes.getRendererClasses()
+        self.renderType = numpy.zeros((256*256,), 'uint8')
+        self.renderType[:] = 3
+        for block in self.worldScene.dimension.blocktypes:
+            self.renderType[block.ID] = block.renderType
 
-        self.textureAtlas = textureAtlas
-        # leaves = self.textureAtlas.texCoordsTable[dimension.blocktypes.Leaves.ID]
-        # self.fastLeaves = False
-        # if self.fastLeaves:
-        #     opaqueLeaves = [[self.textureAtlas.texCoordsByName["leaves_%s_opaque" % t]] for t in
-        #                     ("oak", "spruce", "birch", "jungle")]
-        #     leaves[0:4] = opaqueLeaves
-        # else:
-        #     dimension.blocktypes.opaqueCube[dimension.blocktypes.Leaves.ID] = False
-        #
-        # leaves[4:8] = leaves[0:4]
-        # leaves[8:16] = leaves[0:8]
+        biomeTypes = BiomeTypes()
+        self.biomeRain = numpy.zeros((256*256,), numpy.float32)
+        self.biomeTemp = numpy.zeros((256*256,), numpy.float32)
 
-    def lookupTextures(self, blocks, blockData=0, direction=None):
-        if direction is None:
-            direction = slice(None)
-
-        return self.textureAtlas.texCoordsTable[blocks, blockData, direction]
+        for biome in biomeTypes.types.itervalues():
+            self.biomeRain[biome.ID] = biome.rainfall
+            self.biomeTemp[biome.ID] = biome.temperature
 
     overheadMode = False
 
@@ -84,22 +79,22 @@ class SceneUpdateTask(object):
     minWorkFactor = 1
     workFactor = 2
 
-
     def wantsChunk(self, cPos):
         chunkInfo = self.worldScene.chunkRenderInfo.get(cPos)
         if chunkInfo is None:
             return True
 
-        #log.info("Wants chunk %s? %s", cPos, len(chunkNode.invalidLayers))
-        return len(chunkInfo.invalidLayers)
+        return chunkInfo.layersToRender
 
     def workOnChunk(self, chunk, visibleSections=None):
         work = 0
         cPos = chunk.chunkPosition
 
+        log.debug("Working on chunk %s sections %s", cPos, visibleSections)
         chunkInfo = self.worldScene.getChunkRenderInfo(cPos)
 
-        chunkInfo.visibleSections = visibleSections
+        chunkInfo.visibleSections = visibleSections  # currently unused
+
         try:
             chunkUpdate = chunkupdate.ChunkUpdate(self, chunkInfo, chunk)
             for _ in chunkUpdate:
@@ -107,41 +102,56 @@ class SceneUpdateTask(object):
                 if (work % SceneUpdateTask.workFactor) == 0:
                     yield
 
-            chunkInfo.invalidLayers = set()
             meshesByRS = collections.defaultdict(list)
             for mesh in chunkUpdate.blockMeshes:
                 meshesByRS[mesh.renderstate].append(mesh)
 
+            # Create one ChunkNode for each renderstate group, if needed
             for renderstate in renderstates.allRenderstates:
                 groupNode = self.worldScene.getRenderstateGroup(renderstate)
+                if groupNode.containsChunkNode(cPos):
+                    chunkNode = groupNode.getChunkNode(cPos)
+                else:
+                    chunkNode = ChunkNode(cPos)
+                    groupNode.addChunkNode(chunkNode)
+
                 meshes = meshesByRS[renderstate]
                 if len(meshes):
-                    arrays = sum([mesh.vertexArrays for mesh in meshes], [])
-                    if len(arrays):
-                        chunkNode = ChunkNode(cPos)
-                        groupNode.addChunkNode(chunkNode)
-                        node = scenegraph.VertexNode(arrays)
-                        chunkNode.addChild(node)
-                    else:
-                        groupNode.discardChunkNode(*cPos)
+                    meshes = sorted(meshes, key=lambda m: m.layer)
+                    log.debug("Updating chunk node for renderstate %s, mesh count %d", renderstate, len(meshes))
+                    for layer, layerMeshes in itertools.groupby(meshes, lambda m: m.layer):
+                        if layer not in self.worldScene.visibleLayers:
+                            continue
+                        layerMeshes = list(layerMeshes)
 
-                        # Need a way to signal WorldScene that this chunk didn't need updating in this renderstate,
-                        # but it should keep the old vertex arrays for the state.
-                        # Alternately, signal WorldScene that the chunk did update for the renderstate and no
-                        # vertex arrays resulted. Return a mesh with zero length vertexArrays
-                        #else:
-                        #    groupNode.discardChunkNode(*cPos)
+                        # Check if the mesh was re-rendered and remove the old mesh
+                        meshTypes = set(type(m) for m in layerMeshes)
+                        for arrayNode in list(chunkNode.children):
+                            if arrayNode.meshType in meshTypes:
+                                chunkNode.removeChild(arrayNode)
 
+                        # Add the scene nodes created by each mesh builder
+                        for mesh in layerMeshes:
+                            if mesh.sceneNode:
+                                mesh.sceneNode.layerName = layer
+                                mesh.sceneNode.meshType = type(mesh)
+                                chunkNode.addChild(mesh.sceneNode)
+
+                        chunkInfo.renderedLayers.add(layer)
+
+                if chunkNode.childCount() == 0:
+                    groupNode.discardChunkNode(*cPos)
 
         except Exception as e:
             logging.exception(u"Rendering chunk %s failed: %r", cPos, e)
 
 
 class WorldScene(scenegraph.Node):
-    def __init__(self, dimension, textureAtlas, geometryCache=None, bounds=None):
+    def __init__(self, dimension, textureAtlas=None, geometryCache=None, bounds=None):
         super(WorldScene, self).__init__()
 
         self.dimension = dimension
+        self.textureAtlas = textureAtlas
         self.depthOffsetNode = scenegraph.DepthOffsetNode(DepthOffset.Renderer)
         self.addChild(self.depthOffsetNode)
 
@@ -158,7 +168,7 @@ class WorldScene(scenegraph.Node):
         self.chunkRenderInfo = {}
         self.visibleLayers = set(Layer.AllLayers)
 
-        self.updateTask = SceneUpdateTask(self, dimension, textureAtlas, bounds)
+        self.updateTask = SceneUpdateTask(self, textureAtlas, bounds)
 
         if geometryCache is None:
             geometryCache = GeometryCache()
@@ -168,6 +178,12 @@ class WorldScene(scenegraph.Node):
 
         self.minlod = 0
         self.bounds = bounds
+
+    def setTextureAtlas(self, textureAtlas):
+        self.textureAtlas = textureAtlas
+        self.textureAtlasNode.textureAtlas = textureAtlas
+        self.updateTask.textureAtlas = textureAtlas
+        self.discardAllChunks()
 
     def chunkPositions(self):
         return self.chunkRenderInfo.iterkeys()
@@ -180,16 +196,6 @@ class WorldScene(scenegraph.Node):
             self.renderstateNodes[rsClass].addChild(groupNode)
 
         return groupNode
-    #
-    # def toggleLayer(self, val, layer):
-    #     self.chunkGroupNode.toggleLayer(val, layer)
-    #
-    # drawEntities = layerProperty(Layer.Entities)
-    # drawTileEntities = layerProperty(Layer.TileEntities)
-    # drawTileTicks = layerProperty(Layer.TileTicks)
-    # drawMonsters = layerProperty(Layer.Monsters)
-    # drawItems = layerProperty(Layer.Items)
-    # drawTerrainPopulated = layerProperty(Layer.TerrainPopulated)
 
     def discardChunk(self, cx, cz):
         """
@@ -212,9 +218,12 @@ class WorldScene(scenegraph.Node):
         """
         Mark the chunk for regenerating vertex data
         """
+        if invalidLayers is None:
+            invalidLayers = Layer.AllLayers
+
         node = self.chunkRenderInfo.get((cx, cz))
         if node:
-            node.invalidLayers = invalidLayers or Layer.AllLayers
+            node.invalidLayers.update(invalidLayers)
 
     _fastLeaves = False
 
@@ -269,3 +278,15 @@ class WorldScene(scenegraph.Node):
             self.chunkRenderInfo[cPos] = chunkInfo
 
         return chunkInfo
+
+    def setLayerVisible(self, layerName, visible):
+        if visible:
+            self.visibleLayers.add(layerName)
+        else:
+            self.visibleLayers.discard(layerName)
+
+        for groupNode in self.groupNodes.itervalues():
+            groupNode.setLayerVisible(layerName, visible)
+
+    def setVisibleLayers(self, layerNames):
+        self.visibleLayers = set(layerNames)
