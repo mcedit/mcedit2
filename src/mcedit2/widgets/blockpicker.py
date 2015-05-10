@@ -546,7 +546,7 @@ class BlockTypeButton(QtGui.QPushButton):
 
     @blocks.setter
     def blocks(self, value):
-        value = [self.editorSession.blocktypes[block]
+        value = [self.editorSession.worldEditor.blocktypes[block]
                  if not isinstance(block, BlockType)
                  else block
                  for block in value]
