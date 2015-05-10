@@ -4,12 +4,19 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function, unicode_literals
 import sys
-import traceback
 
 import OpenGL
 
 from mcedit2.util import custom_traceback
 
+import codecs
+
+# Since the Windows console uses an encoding that can't represent all unicode
+# characters, we set the error mode of the standard IO streams to "replace"
+# so as not to get encoding errors when printing filenames.
+sys.stdin  = codecs.getreader(sys.stdin.encoding)(sys.stdin,  errors='ignore')
+sys.stdout = codecs.getwriter(sys.stdin.encoding)(sys.stdout, errors='ignore')
+sys.stderr = codecs.getwriter(sys.stdin.encoding)(sys.stderr, errors='ignore')
 
 custom_traceback.install()
 
@@ -63,6 +70,7 @@ def setup_logging():
     fmt = logging.Formatter(
         '[%(levelname)s][%(filename)s:%(lineno)d]:%(message)s'
     )
+
     log_debug("Logging to %s" % logfile)
 
     logfileHandler = logging.FileHandler(logfile, mode="w")
@@ -109,7 +117,7 @@ def startup():
     pyi_tmpdir = getattr(sys, "_MEIPASS", None)
     if pyi_tmpdir:
         os.chdir(pyi_tmpdir)
-        
+
     import pygments.lexers
     if hasattr(pygments.lexers, 'newmod'):
         # pyinstaller hack - must call before importing from mcedit2
