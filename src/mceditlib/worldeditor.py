@@ -12,13 +12,14 @@ from mceditlib import cachefunc
 from mceditlib.block_copy import copyBlocksIter
 from mceditlib.nbtattr import NBTListProxy
 from mceditlib.operations.block_fill import FillBlocksOperation
+from mceditlib.operations.analyze import AnalyzeOperation
 from mceditlib.selection import BoundingBox
 from mceditlib.findadapter import findAdapter
 from mceditlib.multi_block import getBlocks, setBlocks
 from mceditlib.schematic import createSchematic
 from mceditlib.util import displayName, chunk_pos, exhaust, matchEntityTags
 from mceditlib.util.lazyprop import weakrefprop
-
+from mceditlib.blocktypes import BlockType
 
 log = logging.getLogger(__name__)
 
@@ -598,6 +599,8 @@ class WorldEditor(object):
         if not len(matches):
             raise ValueError("Could not parse a dimension number from %s", dimName)
         return int(matches[-1])
+    
+    analyzeOutput = None
 
 class WorldEditorDimension(object):
     def __init__(self, worldEditor, dimName):
@@ -752,7 +755,6 @@ class WorldEditorDimension(object):
 
     def exportSchematic(self, selection):
         """
-
         :type selection: mceditlib.box.BoundingBox
         :return:
         :rtype: WorldEditor
@@ -773,6 +775,14 @@ class WorldEditorDimension(object):
 
     def fillBlocks(self, box, block, blocksToReplace=(), updateLights=True):
         return exhaust(self.fillBlocksIter(box, block, blocksToReplace, updateLights))
+    
+    # --- Analyze ---   
+
+    def analyzeIter(self, selection):
+        return AnalyzeOperation(self, selection)
+    
+    def analyze(self, selection):
+        return exhaust(self.analyzeIter(selection))
 
     # --- Blocks by single coordinate ---
 

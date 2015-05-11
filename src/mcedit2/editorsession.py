@@ -10,6 +10,7 @@ from mcedit2 import editortools
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.editorcommands.fill import fillCommand
 from mcedit2.editorcommands.find_replace import FindReplaceDialog
+from mcedit2.editorcommands.analyze import AnalyzeOutputDialog
 from mcedit2.editortools.select import SelectCommand
 from mcedit2.panels.player import PlayerPanel
 from mcedit2.util.dialogs import NotImplementedYet
@@ -197,6 +198,10 @@ class EditorSession(QtCore.QObject):
         self.actionFindReplace.setShortcut(QtGui.QKeySequence.Find)
         self.actionFindReplace.setObjectName("actionFindReplace")
 
+        self.actionAnalyze = QtGui.QAction(self.tr("Analyze"), self, triggered=self.analyze, enabled=True)
+        #self.actionAnalyze.setShortcut(QtGui.QKeySequence.Analyze)
+        self.actionAnalyze.setObjectName("actionAnalyze")
+
         undoAction = self.undoStack.createUndoAction(self.menuEdit)
         undoAction.setShortcut(QtGui.QKeySequence.Undo)
         redoAction = self.undoStack.createRedoAction(self.menuEdit)
@@ -218,6 +223,8 @@ class EditorSession(QtCore.QObject):
         self.menuEdit.addAction(self.actionFill)
         self.menuEdit.addSeparator()
         self.menuEdit.addAction(self.actionFindReplace)
+        self.menuEdit.addAction(self.actionAnalyze)
+
 
         self.menus.append(self.menuEdit)
 
@@ -500,7 +507,14 @@ class EditorSession(QtCore.QObject):
 
     def findReplace(self):
         self.findReplaceDialog.exec_()
-
+        
+    def analyze(self):
+        task = self.currentDimension.analyzeIter(self.currentSelection)
+        showProgress("Analyzing...", task)
+        outputDialog = AnalyzeOutputDialog(self, self.worldEditor.analyzeBlockOutput, 
+                                           self.worldEditor.analyzeEntityOutput, 
+                                           self.worldEditor.analyzeTileEntityOutput)
+        
     def deleteSelection(self):
         command = SimpleRevisionCommand(self, "Delete")
         with command.begin():
