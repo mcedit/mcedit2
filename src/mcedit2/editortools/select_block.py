@@ -23,10 +23,7 @@ class SelectBlockTool(EditorTool):
         :type editorSession: EditorSession
         """
         super(SelectBlockTool, self).__init__(editorSession, *args, **kwargs)
-        self.createToolWidget()
         self.mousePos = None
-
-    def createToolWidget(self):
         self.toolWidget = load_ui("editortools/select_block.ui")
 
     def mousePress(self, event):
