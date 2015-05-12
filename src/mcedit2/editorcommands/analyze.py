@@ -4,6 +4,7 @@
 from __future__ import absolute_import
 from PySide import QtGui, QtCore
 import logging
+import operator
 
 from mcedit2.util.load_ui import load_ui
 
@@ -16,52 +17,75 @@ class AnalyzeOutputDialog(QtGui.QDialog):
         self.blocktypes = editorSession.worldEditor.blocktypes
         
         load_ui("analyze.ui", baseinstance=self)
-        blockTable = self.blockOutputTable
-        self.setupBlockTable(blockCount, blockTable)
         
-        entityTable = self.entityOutputTable
-        self.setupEntityTable(entityCount, tileEntityCount, entityTable)
-
-        self.sizeHint()
-        self.exec_()
-
-
-
-    def setupBlockTable(self, blockCount, table):
+        
+        blockTableView = self.blockOutputTableView
         blockCounts = sorted([(self.editorSession.worldEditor.blocktypes[ i & 0xfff, i >> 12], blockCount[i])
                          for i in blockCount.nonzero()[0]])
-        table.setRowCount(len(blockCounts))
-        table.setColumnCount(4)
-        table.setHorizontalHeaderLabels(['Name', 'ID', 'Data', 'Count'])
+        self.blockArrayData = [(output[0].displayName, output[0].ID,
+                                output[0].meta, output[1])
+                               for n, output in enumerate(blockCounts)]
+        blockArrayHeaders = ['Name', 'ID', 'Data', 'Count']
+        self.setupTable(self.blockArrayData, blockArrayHeaders, blockTableView)
+        
+        
+        entityTableView = self.entityOutputTableView
+        self.entityArrayData = []
+        for c in entityCount, tileEntityCount:
+            for (id, count) in sorted(c.items()):
+                self.entityArrayData.append((id, count,))
+        entityArrayHeaders = ['Name', 'Count']
+        self.setupTable(self.entityArrayData, entityArrayHeaders, entityTableView)
+        
+        
+        self.adjustSize()
+        self.exec_()       
+        
+    def setupTable(self, arraydata, headerdata, tableView):
+        tableModel = CustomTableModel(arraydata, headerdata)
+        
+        tableView.setModel(tableModel)
+        tableView.verticalHeader().setVisible(False)
+        tableView.horizontalHeader().setStretchLastSection(True)
+        tableView.resizeColumnsToContents()
+        tableView.resizeRowsToContents()        
+        tableView.setSortingEnabled(True)
 
-        for n, output in enumerate(blockCounts):
-            nameItem = QtGui.QTableWidgetItem(output[0].displayName)
-            idItem = QtGui.QTableWidgetItem(str(output[0].ID))
-            dataItem = QtGui.QTableWidgetItem(str(output[0].meta))
-            countItem = QtGui.QTableWidgetItem(str(output[1]))
-            table.setItem(n, 0, nameItem)
-            table.setItem(n, 1, idItem)
-            table.setItem(n, 2, dataItem)
-            table.setItem(n, 3, countItem)
-            
-        table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
-        table.resizeColumnsToContents()
-        table.resizeRowsToContents()
-        table.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+                        
+class CustomTableModel(QtCore.QAbstractTableModel):
+    def __init__(self, arraydata, headerdata, parent=None, *args, **kwargs):
+        QtCore.QAbstractTableModel.__init__(self, parent, *args, **kwargs)
+        self.arraydata = arraydata
+        self.headerdata = ['Name', 'ID', 'Data', 'Count']
         
-    def setupEntityTable(self, entityCount, tileEntityCount, table):
-        table.setRowCount(len(entityCount.items())+len(tileEntityCount.items()))
-        table.setColumnCount(2)
-        table.setHorizontalHeaderLabels(['Name', 'Count'])
+    def rowCount(self, parent):
+        return len(self.arraydata)
+    
+    def columnCount(self, parent):
+        return len(self.arraydata[0])
+    
+    def data(self, index, role):
+        if not index.isValid(): 
+            return None
+        elif role != QtCore.Qt.DisplayRole: 
+            return None
+        return str(self.arraydata[index.row()][index.column()])
+    
+    def headerData(self, col, orientation, role):
+        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+            return str(self.headerdata[col])
+        return None
+    
+    def sort(self, Ncol, order):
+        """
+        Sort table by given column number.
+        """
+        self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
+        self.arraydata = sorted(self.arraydata, key=operator.itemgetter(Ncol))        
+        if order == QtCore.Qt.DescendingOrder:
+            self.arraydata.reverse()
+        self.emit(QtCore.SIGNAL("layoutChanged()"))
+           
         
-        for c in (entityCount, tileEntityCount):
-            for n, (id, count) in enumerate(sorted(c.iteritems())):
-                idItem = QtGui.QTableWidgetItem(str(id))
-                countItem = QtGui.QTableWidgetItem(str(count))
-                table.setItem(n, 0, idItem)
-                table.setItem(n, 1, countItem)
         
-        table.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
-        table.resizeColumnsToContents()
-        table.resizeRowsToContents()
-        table.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        

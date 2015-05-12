@@ -19,13 +19,6 @@ class AnalyzeOperation(Operation):
         """
         Analyze all blocks in a selection.
 
-        If blocksToReplace is given, it may be a list or tuple of blocktypes to replace with the given blocktype.
-
-        Additionally, blockType may be given as a list of (oldBlockType, newBlockType) pairs
-        to perform multiple replacements.
-
-        If updateLights is True, also checks to see if block changes require lighting updates and performs them.
-
         :type dimension: WorldEditorDimension
         :type selection: `~.BoundingBox`
         """
@@ -44,9 +37,9 @@ class AnalyzeOperation(Operation):
 
     def done(self):
         log.info(u"Analyze: Skipped {0}/{1} sections".format(self.skipped, self.sections))
-        self.dimension.worldEditor.analyzeBlockOutput = self.blocks
-        self.dimension.worldEditor.analyzeEntityOutput = self.entityCounts
-        self.dimension.worldEditor.analyzeTileEntityOutput = self.tileEntityCounts
+        #self.dimension.worldEditor.analyzeBlockOutput = self.blocks
+        #self.dimension.worldEditor.analyzeEntityOutput = self.entityCounts
+        #self.dimension.worldEditor.analyzeTileEntityOutput = self.tileEntityCounts
 
     def operateOnChunk(self, chunk):
         self.chunkCount += 1
@@ -69,19 +62,22 @@ class AnalyzeOperation(Operation):
                 self.skipped += 1
                 continue
             
-            for ref in chunk.Entities:
-                if ref.Position in self.selection:
-                    self.entityCounts[ref.rootTag["id"].value] += 1
-           
-            for ref in chunk.TileEntities:
-                if ref.Position in self.selection:
-                    self.tileEntityCounts[ref.rootTag["id"].value] += 1
 
             
             blocks = numpy.array(section.Blocks[sectionMask], dtype='uint16')
             blocks |= (numpy.array(section.Data[sectionMask], dtype='uint16') << 12)
             b = numpy.bincount(blocks.ravel())
+            
             self.blocks[:b.shape[0]] += b
+            
+        for ref in chunk.Entities:
+            if ref.Position in self.selection:
+                self.entityCounts[ref.id] += 1
+       
+        for ref in chunk.TileEntities:
+            if ref.Position in self.selection:
+                self.tileEntityCounts[ref.id] += 1
+
 
 
 

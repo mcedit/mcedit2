@@ -509,11 +509,13 @@ class EditorSession(QtCore.QObject):
         self.findReplaceDialog.exec_()
         
     def analyze(self):
+        if self.currentSelection is None:
+            return
         task = self.currentDimension.analyzeIter(self.currentSelection)
         showProgress("Analyzing...", task)
-        outputDialog = AnalyzeOutputDialog(self, self.worldEditor.analyzeBlockOutput, 
-                                           self.worldEditor.analyzeEntityOutput, 
-                                           self.worldEditor.analyzeTileEntityOutput)
+        outputDialog = AnalyzeOutputDialog(self, task.blocks, 
+                                           task.entityCounts, 
+                                           task.tileEntityCounts)
         
     def deleteSelection(self):
         command = SimpleRevisionCommand(self, "Delete")

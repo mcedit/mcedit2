@@ -599,8 +599,6 @@ class WorldEditor(object):
         if not len(matches):
             raise ValueError("Could not parse a dimension number from %s", dimName)
         return int(matches[-1])
-    
-    analyzeOutput = None
 
 class WorldEditorDimension(object):
     def __init__(self, worldEditor, dimName):
@@ -780,9 +778,6 @@ class WorldEditorDimension(object):
 
     def analyzeIter(self, selection):
         return AnalyzeOperation(self, selection)
-    
-    def analyze(self, selection):
-        return exhaust(self.analyzeIter(selection))
 
     # --- Blocks by single coordinate ---
 
