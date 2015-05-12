@@ -18,21 +18,41 @@ log = logging.getLogger(__name__)
 class Vector(namedtuple("_Vector", ("x", "y", "z"))):
     """
     A vector is an x, y, z coordinate triple that provides vector addition,
-    multiplication, scaling, and cross products.
+    multiplication, scaling, and cross products. Vectors are immutable.
 
     Examples:
 
         >>> p1 = Vector(10, 0, 3)
         >>> p2 = Vector(4, 5, 6)
 
+    Element access:
+        >>> p1.x
+        10
+        >>> p1.y
+        0
+        >>> p1.z
+        3
+
+    Element access via tuple indexing:
+        >>> p1[0]
+        10
+        >>> p1[1]
+        0
+        >>> p1[2]
+        3
+
     Vector addition:
 
         >>> p1 + p2
         Vector(14, 5, 8)
+        >>> p2 + (3, 5, 3)
+        Vector(7, 10, 9)
 
     Vector multiplication:
         >>> p1 * p2
         Vector(40, 0, 18)
+        >>> p2 * (3, 1, 5)
+        Vector(12, 5, 30)
 
     Vector scaling:
         >>> p1 * 5
