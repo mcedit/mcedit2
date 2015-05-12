@@ -3,13 +3,17 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+import traceback
 
 from PySide import QtCore, QtGui
+from PySide.QtGui import qApp
+from mcedit2.command import SimpleRevisionCommand
 
 from mcedit2.editortools import EditorTool
 from mcedit2.handles.boxhandle import BoxHandle
 from mcedit2.rendering import scenegraph
 from mcedit2.rendering.worldscene import WorldScene
+from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
 from mcedit2.widgets.layout import Column
 from mcedit2.widgets.spinslider import SpinSlider
@@ -19,6 +23,10 @@ from mceditlib.schematic import createSchematic
 log = logging.getLogger(__name__)
 
 class GeneratePlugin(QtCore.QObject):
+    def __init__(self, editorSession):
+        super(GeneratePlugin, self).__init__()
+        self.editorSession = editorSession
+
     def generatePreview(self, bounds, blocktypes):
         return self.generate(bounds, blocktypes)
 
@@ -60,6 +68,13 @@ class TreeGen(GeneratePlugin):
 
         return schematic
 
+_pluginClasses = []
+
+def registerGeneratePlugin(cls):
+    _pluginClasses.append(cls)
+
+#_pluginClasses.append(TreeGen)
+
 class GenerateTool(EditorTool):
     name = "Generate"
     iconName = "generate"
@@ -68,15 +83,14 @@ class GenerateTool(EditorTool):
 
     def __init__(self, *args, **kwargs):
         EditorTool.__init__(self, *args, **kwargs)
-        self.createToolWidget()
+        self.liveUpdate = False
 
-    def createToolWidget(self):
         toolWidget = QtGui.QWidget()
 
         self.toolWidget = toolWidget
 
         column = []
-        self.generatorTypes = [TreeGen()]
+        self.generatorTypes = [pluginClass(self.editorSession) for pluginClass in _pluginClasses]
         self.currentType = self.generatorTypes[0]
 
         self.generatorTypeInput = QtGui.QComboBox()
@@ -84,11 +98,21 @@ class GenerateTool(EditorTool):
             self.generatorTypeInput.addItem(gt.displayName, gt)
 
         self.generatorTypeInput.currentIndexChanged.connect(self.generatorTypeChanged)
+
+        self.liveUpdateCheckbox = QtGui.QCheckBox("Live Update")
+
+        self.liveUpdateCheckbox.toggled.connect(self.liveUpdateToggled)
+
         self.optionsHolder = QtGui.QStackedWidget()
         self.optionsHolder.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Expanding)
 
+        self.generateButton = QtGui.QPushButton(self.tr("Generate"))
+        self.generateButton.clicked.connect(self.generateClicked)
+
         column.append(self.generatorTypeInput)
+        column.append(self.liveUpdateCheckbox)
         column.append(self.optionsHolder)
+        column.append(self.generateButton)
 
         self.toolWidget.setLayout(Column(*column))
 
@@ -106,7 +130,13 @@ class GenerateTool(EditorTool):
         self.worldScene = None
 
         self.schematicBounds = None
+        self.currentSchematic = None
 
+        if len(self.generatorTypes):
+            self.generatorTypeChanged(0)
+
+    def liveUpdateToggled(self, value):
+        self.liveUpdate = value
 
     def generatorTypeChanged(self, index):
         self.currentType = self.generatorTypes[index]
@@ -123,34 +153,44 @@ class GenerateTool(EditorTool):
         self.boxHandleNode.mouseRelease(event)
 
     def boundsDidChange(self, bounds):
+        if not self.liveUpdate:
+            return
+
         if bounds is not None and bounds.volume:
             node = self.currentType.getPreviewNode()
             if node is not None:
                 pass
             else:
-
-                if self.schematicBounds is None or self.schematicBounds.size != bounds.size:
-                    schematic = self.currentType.generatePreview(bounds, self.editorSession.worldEditor.blocktypes)
-                    self.displaySchematic(schematic, bounds.origin)
-                else:
-                    self.sceneHolderNode.translateOffset = bounds.origin
+                self.generate(bounds)
 
         self.schematicBounds = bounds
+
+
+    def generate(self, bounds):
+        if self.schematicBounds is None or self.schematicBounds.size != bounds.size:
+            try:
+                schematic = self.currentType.generatePreview(bounds, self.editorSession.worldEditor.blocktypes)
+                self.setCurrentSchematic(schematic, bounds.origin)
+            except Exception as e:
+                log.exception("Error while running generator %s: %s", self.currentType, e)
+                QtGui.QMessageBox.warning(qApp.mainWindow, "Error while running generator",
+                                          "An error occurred while running the generator: \n  %s.\n\n"
+                                          "Traceback: %s" % (e, traceback.format_exc()))
+                self.liveUpdate = False
+        else:
+            self.sceneHolderNode.translateOffset = bounds.origin
+
 
     def boundsDidChangeDone(self, bounds, newSelection):
         if bounds is not None and bounds.volume:
-            if self.schematicBounds is None or self.schematicBounds.size != bounds.size:
-                schematic = self.currentType.generate(bounds, self.editorSession.worldEditor.blocktypes)
-                offset = bounds.origin
-                self.displaySchematic(schematic, offset)
-            else:
-                self.sceneHolderNode.translateOffset = bounds.origin
+            self.generate(bounds)
         else:
-            self.displaySchematic(None, None)
+            self.setCurrentSchematic(None, None)
 
         self.schematicBounds = bounds
 
-    def displaySchematic(self, schematic, offset):
+    def setCurrentSchematic(self, schematic, offset):
+        self.currentSchematic = schematic
         if schematic is not None:
             dim = schematic.getDimension()
 
@@ -176,4 +216,14 @@ class GenerateTool(EditorTool):
                 self.worldScene = None
                 self.loader.timer.stop()
                 self.loader = None
+
+    def generateClicked(self):
+        if self.currentSchematic is None:
+            return
+
+        command = SimpleRevisionCommand(self.editorSession, "Generate %s")
+        with command.begin():
+            task = self.editorSession.currentDimension.importSchematicIter(self.currentSchematic, self.schematicBounds.origin)
+            showProgress(self.tr("Importing generated object..."), task)
+        self.editorSession.pushCommand(command)
 
