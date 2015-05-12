@@ -7,6 +7,8 @@ import logging
 import operator
 
 from mcedit2.util.load_ui import load_ui
+from mcedit2.util.settings import Settings
+from mcedit2.util.directories import getUserFilesDirectory
 
 log = logging.getLogger(__name__)
 
@@ -18,6 +20,14 @@ class AnalyzeOutputDialog(QtGui.QDialog):
         
         load_ui("analyze.ui", baseinstance=self)
         
+        self.setupTables(blockCount, entityCount, tileEntityCount)
+        self.txtButton.clicked.connect(self.export_txt)
+        self.csvButton.clicked.connect(self.export_csv)
+        
+        self.adjustSize()
+        self.exec_()       
+        
+    def setupTables(self, blockCount, entityCount, tileEntityCount):
         
         blockTableView = self.blockOutputTableView
         blockCounts = sorted([(self.editorSession.worldEditor.blocktypes[ i & 0xfff, i >> 12], blockCount[i])
@@ -36,11 +46,7 @@ class AnalyzeOutputDialog(QtGui.QDialog):
                 self.entityArrayData.append((id, count,))
         entityArrayHeaders = ['Name', 'Count']
         self.setupTable(self.entityArrayData, entityArrayHeaders, entityTableView)
-        
-        
-        self.adjustSize()
-        self.exec_()       
-        
+
     def setupTable(self, arraydata, headerdata, tableView):
         tableModel = CustomTableModel(arraydata, headerdata)
         
@@ -50,19 +56,24 @@ class AnalyzeOutputDialog(QtGui.QDialog):
         tableView.resizeColumnsToContents()
         tableView.resizeRowsToContents()        
         tableView.setSortingEnabled(True)
-
+        
+    def export_csv(self):
+        pass
+        
+    def export_txt(self):
+        pass
                         
 class CustomTableModel(QtCore.QAbstractTableModel):
     def __init__(self, arraydata, headerdata, parent=None, *args, **kwargs):
         QtCore.QAbstractTableModel.__init__(self, parent, *args, **kwargs)
         self.arraydata = arraydata
-        self.headerdata = ['Name', 'ID', 'Data', 'Count']
+        self.headerdata = headerdata
         
     def rowCount(self, parent):
         return len(self.arraydata)
     
     def columnCount(self, parent):
-        return len(self.arraydata[0])
+        return len(self.headerdata)
     
     def data(self, index, role):
         if not index.isValid(): 
@@ -80,11 +91,11 @@ class CustomTableModel(QtCore.QAbstractTableModel):
         """
         Sort table by given column number.
         """
-        self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
+        self.layoutAboutToBeChanged.emit()
         self.arraydata = sorted(self.arraydata, key=operator.itemgetter(Ncol))        
         if order == QtCore.Qt.DescendingOrder:
             self.arraydata.reverse()
-        self.emit(QtCore.SIGNAL("layoutChanged()"))
+        self.layoutChanged.emit()
            
         
         
