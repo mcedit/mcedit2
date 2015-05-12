@@ -57,14 +57,6 @@ def ToolClasses():
 
     )
 
-#     global _scanned_modules
-#     if _scanned_modules is None:
-#         _scanned_modules = list(ScanToolModules())
-#     return iter(_registered_tools)
-#
-# def ScanToolModules():
-#     return ScanModules(__name__, __file__)
-
 
 class EditorTool(QtCore.QObject):
     name = "Unnamed tool"
