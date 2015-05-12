@@ -357,10 +357,22 @@ class AnvilWorldMetadata(object):
     SizeOnDisk = nbtattr.NBTAttr('SizeOnDisk', nbt.TAG_Long, 0)
     RandomSeed = nbtattr.NBTAttr('RandomSeed', nbt.TAG_Long, 0)
     Time = nbtattr.NBTAttr('Time', nbt.TAG_Long, 0)  # Age of the world in ticks. 20 ticks per second; 24000 ticks per day.
+    DayTime = nbtattr.NBTAttr('DayTime', nbt.TAG_Long, 0)  # Amount of ticks since Day 1, 6:00
     LastPlayed = nbtattr.NBTAttr('LastPlayed', nbt.TAG_Long, time.time() * 1000)
-
+    Difficulty = nbtattr.NBTAttr('Difficulty', nbt.TAG_Byte, 0)
     LevelName = nbtattr.NBTAttr('LevelName', nbt.TAG_String, "Untitled World")
+    hardcore = nbtattr.NBTAttr('hardcore', nbt.TAG_Byte, False)
+    allowCommands = nbtattr.NBTAttr('allowCommands', nbt.TAG_Byte, False)
+    DifficultyLocked = nbtattr.NBTAttr('DifficultyLocked', nbt.TAG_Byte, False)
 
+
+    SpawnX = nbtattr.NBTAttr('SpawnX', nbt.TAG_Int, 0)
+    SpawnY = nbtattr.NBTAttr('SpawnY', nbt.TAG_Int, 0)
+    SpawnZ = nbtattr.NBTAttr('SpawnZ', nbt.TAG_Int, 0)
+
+    generatorName = nbtattr.NBTAttr('generatorName', nbt.TAG_String, "default")
+    generatorOptions = nbtattr.NBTAttr('generatorOptions', nbt.TAG_String, "") #Default is different for every generatorType
+    
     MapFeatures = nbtattr.NBTAttr('MapFeatures', nbt.TAG_Byte, 1)
 
     GameType = nbtattr.NBTAttr('GameType', nbt.TAG_Int, 0)  # 0 for survival, 1 for creative

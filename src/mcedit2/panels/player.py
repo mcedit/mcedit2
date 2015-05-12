@@ -175,7 +175,6 @@ class PlayerPanel(QtGui.QWidget):
             
     def closeEvent(self, event):
         self.toggleView()
-        event.accept()
 
     def toggleViewAction(self):
         return self._toggleViewAction
