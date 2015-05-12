@@ -3,11 +3,12 @@ import sys
 
 def getUserFilesDirectory():
     exe = sys.executable
+    assert os.path.exists(exe), "%r does not exist" % exe
     if hasattr(sys, 'frozen'):
         folder = os.path.dirname(exe)
     else:
-        script = sys.argv[0]
         if exe.endswith("python") or exe.endswith("python.exe"):
+            script = sys.argv[0]
             folder = os.path.dirname(os.path.dirname(os.path.dirname(script)))  # from src/mcedit, ../../
         else:
             folder = os.path.dirname(exe)
