@@ -5,11 +5,12 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 from PySide import QtGui
 from PySide.QtCore import Qt
+import time
 from mcedit2.util.worldloader import LoaderTimer
 
 log = logging.getLogger(__name__)
 
-itersBeforeDialog = 8
+timeBeforeDialog = 0.5
 
 def showProgress(text, iter, cancel=False):
     """
@@ -26,10 +27,10 @@ def showProgress(text, iter, cancel=False):
     """
     progress = None
     i = 0
+    start = time.time()
     with LoaderTimer.stopCtx():
         for progress in iter:
-            i += 1
-            if i > itersBeforeDialog:
+            if time.time() - start > timeBeforeDialog:
                 break
         else:
             return progress
@@ -44,7 +45,7 @@ def showProgress(text, iter, cancel=False):
             if isinstance(progress, basestring):
                 max = current = 0
                 status = progress
-            elif isinstance(progress, (tuple, list)):
+            elif isinstance(progress, tuple):
                 if len(progress) > 2:
                     current, max, status = progress[:3]
                 else:
