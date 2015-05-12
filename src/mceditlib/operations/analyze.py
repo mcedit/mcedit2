@@ -29,7 +29,7 @@ class AnalyzeOperation(Operation):
         self.selection = selection
         self.entityCounts = defaultdict(int)
         self.tileEntityCounts = defaultdict(int)
-        
+
         self.chunkCount = 0
         self.skipped = 0
         self.sections = 0

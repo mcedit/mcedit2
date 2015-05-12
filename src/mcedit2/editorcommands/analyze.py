@@ -5,7 +5,8 @@ from __future__ import absolute_import
 from PySide import QtGui, QtCore
 import logging
 import operator
-
+import numpy
+import arrow
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.settings import Settings
 from mcedit2.util.directories import getUserFilesDirectory
@@ -13,10 +14,12 @@ from mcedit2.util.directories import getUserFilesDirectory
 log = logging.getLogger(__name__)
 
 class AnalyzeOutputDialog(QtGui.QDialog):
-    def __init__(self, editorSession, blockCount, entityCount, tileEntityCount, *args, **kwargs):
-        super(AnalyzeOutputDialog, self).__init__(*args, **kwargs)
+    def __init__(self, editorSession, blockCount, entityCount, tileEntityCount, worldName, parent=None, *args, **kwargs):
+        super(AnalyzeOutputDialog, self).__init__(parent, *args, **kwargs)
+        
         self.editorSession = editorSession
         self.blocktypes = editorSession.worldEditor.blocktypes
+        self.worldName = worldName
         
         load_ui("analyze.ui", baseinstance=self)
         
@@ -28,7 +31,6 @@ class AnalyzeOutputDialog(QtGui.QDialog):
         self.exec_()       
         
     def setupTables(self, blockCount, entityCount, tileEntityCount):
-        
         blockTableView = self.blockOutputTableView
         blockCounts = sorted([(self.editorSession.worldEditor.blocktypes[ i & 0xfff, i >> 12], blockCount[i])
                          for i in blockCount.nonzero()[0]])
@@ -57,12 +59,54 @@ class AnalyzeOutputDialog(QtGui.QDialog):
         tableView.resizeRowsToContents()        
         tableView.setSortingEnabled(True)
         
-    def export_csv(self):
-        pass
         
+        # -- Exporting stuff --
+        
+    def export_csv(self):
+        startingDir = getUserFilesDirectory()
+        name = self.worldName + "_" + arrow.now().format('DD_MM_YYYY_HH_mm_ss')
+        file = QtGui.QFileDialog.getSaveFileName(QtGui.qApp.mainWindow,
+                                                   self.tr("Export as .csv"),
+                                                   startingDir + "\\" + name,
+                                                   "Comma Seperated Values (*.csv);;Semicolon Seperated Values (*.csv)")
+        if file and file[0]:
+            """
+            Depending on your region, your OS uses ";" or "," as a seperator in .csv files. 
+            (Some countries write 0.5 as 0,5; so they use ; to seperate values).
+            If the user selects Semicolon Seperated Values, we seperate with ";" instead of ","
+            """
+            sep = (";" if (file[1] == "Semicolon Seperated Values (*.csv)") else ",")
+            self.writeFile(file[0], sep)
+           
     def export_txt(self):
-        pass
-                        
+        startingDir = getUserFilesDirectory()
+        name = self.worldName + "_" + arrow.now().format('DD_MM_YYYY_HH_mm_ss')
+        file = QtGui.QFileDialog.getSaveFileName(QtGui.qApp.mainWindow,
+                                                   self.tr("Export as .txt"),
+                                                   startingDir + "\\" + name,
+                                                   "Text File (*.txt)")
+        if file and file[0]:
+            sep = "\t"
+            self.writeFile(file[0], sep)
+        
+    def writeFile(self, filename, sep):
+        with open(filename, 'w') as f:
+            f.write("Blocks:\n")
+            f.write("Name" + sep + "Id" + sep + "Data" + sep + "Count\n")
+            for b in self.blockArrayData:
+                f.write(unicode(b[0]) + sep + unicode(b[1]) + sep + unicode(b[2]) + sep + unicode(b[3]) + "\n") #xxx Unrolled loop
+            f.write("\nEntities:\n")
+            f.write("Name" + sep + "Count\n")
+            for e in self.entityArrayData:
+                f.write(unicode(e[0]) + sep + unicode(e[1]) + "\n") #xxx Unrolled loop   
+                  
+        self.show()
+        self._raise()
+        
+        
+        
+        
+                   
 class CustomTableModel(QtCore.QAbstractTableModel):
     def __init__(self, arraydata, headerdata, parent=None, *args, **kwargs):
         QtCore.QAbstractTableModel.__init__(self, parent, *args, **kwargs)

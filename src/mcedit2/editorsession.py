@@ -515,7 +515,8 @@ class EditorSession(QtCore.QObject):
         showProgress("Analyzing...", task)
         outputDialog = AnalyzeOutputDialog(self, task.blocks, 
                                            task.entityCounts, 
-                                           task.tileEntityCounts)
+                                           task.tileEntityCounts,
+                                           task.dimension.worldEditor.displayName)
         
     def deleteSelection(self):
         command = SimpleRevisionCommand(self, "Delete")
