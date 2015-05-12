@@ -14,9 +14,22 @@ import codecs
 # Since the Windows console uses an encoding that can't represent all unicode
 # characters, we set the error mode of the standard IO streams to "replace"
 # so as not to get encoding errors when printing filenames.
-sys.stdin  = codecs.getreader(sys.stdin.encoding)(sys.stdin,  errors='ignore')
+
+def writer(stream):
+    oldwrite = stream.write
+    def _write(a):
+        if isinstance(a, str):
+            stream.stream.write(a)
+        else:
+            oldwrite(a)
+
+    return _write
+
 sys.stdout = codecs.getwriter(sys.stdin.encoding)(sys.stdout, errors='ignore')
 sys.stderr = codecs.getwriter(sys.stdin.encoding)(sys.stderr, errors='ignore')
+
+sys.stdout.write = writer(sys.stdout)
+sys.stderr.write = writer(sys.stderr)
 
 custom_traceback.install()
 
