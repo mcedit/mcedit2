@@ -10,6 +10,7 @@ import re
 from mceditlib import cachefunc
 
 from mceditlib.block_copy import copyBlocksIter
+from mceditlib.blocktypes import BlockType
 from mceditlib.nbtattr import NBTListProxy
 from mceditlib.operations.block_fill import FillBlocksOperation
 from mceditlib.selection import BoundingBox
@@ -780,6 +781,13 @@ class WorldEditorDimension(object):
         ID = self.getBlockID(x, y, z)
         meta = self.getBlockData(x, y, z)
         return self.blocktypes[ID, meta]
+
+    def setBlock(self, x, y, z, blocktype):
+        if not isinstance(blocktype, BlockType):
+            blocktype = self.blocktypes[blocktype]
+
+        self.setBlockID(x, y, z, blocktype.ID)
+        self.setBlockData(x, y, z, blocktype.meta)
 
     def getBlockID(self, x, y, z, default=0):
         cx = x >> 4
