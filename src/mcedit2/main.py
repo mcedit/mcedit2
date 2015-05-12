@@ -61,7 +61,7 @@ def setup_logging():
 
         if sys.platform == "darwin":
             log_debug("OS X found.")
-            logfile = os.path.expanduser("~/Library/Logs/" + logfilename)
+            logfile = os.path.expanduser(b"~/Library/Logs/" + logfilename)
         else:
             logfile = abslogfile
     else:

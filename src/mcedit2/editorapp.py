@@ -715,7 +715,7 @@ class MCEditApp(QtGui.QApplication):
         NotImplementedYet()
 
     def chooseOpenWorld(self):
-        startingDir = Settings().value("open_world_dialog/starting_dir", os.path.expanduser("~"))
+        startingDir = Settings().value("open_world_dialog/starting_dir", os.path.expanduser(b"~"))
         result = QtGui.QFileDialog.getOpenFileName(self.mainWindow, self.tr("Open World, Level or Schematic"),
                                                    startingDir,
                                                    "All files (*.*)")
