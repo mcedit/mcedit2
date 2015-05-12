@@ -94,16 +94,13 @@ class AnalyzeOutputDialog(QtGui.QDialog):
             f.write("Blocks:\n")
             f.write("Name" + sep + "Id" + sep + "Data" + sep + "Count\n")
             for b in self.blockArrayData:
-                f.write(unicode(b[0]) + sep + unicode(b[1]) + sep + unicode(b[2]) + sep + unicode(b[3]) + "\n") #xxx Unrolled loop
+                string = b[0] + unicode(sep + str(b[1]) + sep + str(b[2]) + sep + str(b[3]) + "\n", encoding="utf-8") #xxx Unrolled loop
+                f.write(string.encode('utf8')) 
             f.write("\nEntities:\n")
             f.write("Name" + sep + "Count\n")
             for e in self.entityArrayData:
-                f.write(unicode(e[0]) + sep + unicode(e[1]) + "\n") #xxx Unrolled loop   
-                  
-        self.show()
-        self._raise()
-        
-        
+                string = e[0] + unicode(sep + str(e[1]) + "\n", encoding='utf-8') #xxx Unrolled loop
+                f.write(string.encode('utf8'))
         
         
                    
