@@ -269,7 +269,7 @@ class InventoryEditor(QtGui.QWidget):
         self.itemListModel = None
 
         self.itemListSearchBox = QtGui.QComboBox()
-        self.itemListSearchBox.textChanged.connect(self.searchTextChanged)
+        self.itemListSearchBox.editTextChanged.connect(self.searchTextChanged)
         self.itemListSearchBox.setEditable(True)
 
         self.inventoryModel = None
