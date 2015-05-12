@@ -16,8 +16,58 @@ import numpy
 log = logging.getLogger(__name__)
 
 class Vector(namedtuple("_Vector", ("x", "y", "z"))):
+    """
+    A vector is an x, y, z coordinate triple that provides vector addition,
+    multiplication, scaling, and cross products.
+
+    Examples:
+
+        >>> p1 = Vector(10, 0, 3)
+        >>> p2 = Vector(4, 5, 6)
+
+    Vector addition:
+
+        >>> p1 + p2
+        Vector(14, 5, 8)
+
+    Vector multiplication:
+        >>> p1 * p2
+        Vector(40, 0, 18)
+
+    Vector scaling:
+        >>> p1 * 5
+        Vector(50, 0, 15)
+
+    Vector cross-product (returns a vector perpendicular to the plane defined by the two vectors):
+        >>> p1.cross(p2)
+        Vector(-15, -48, 50)
+
+    Vector length:
+        >>> p2.length()
+        8.774964387392123
+
+    Vector normalized to unit length:
+        >>> p2.normalize()
+        Vector(0.455842305839, 0.569802882298, 0.683763458758)
+
+    Translate a vector along a distance in a direction given by another vector:
+        >>> direction = p2.normalize()
+        >>> distance = -20
+        >>> p3 = p1 + direction * distance
+        >>> p3
+        Vector(0.883153883229, -11.396057646, -10.6752691752)
+
+    Vector with coordinates rounded down to nearest integer:
+        >>> p3.intfloor()
+        Vector(0, -12, -11)
+
+    Absolute value of vector:
+        >>> p3.abs()
+        Vector(0.883153883229, 11.396057646, 10.6752691752)
+
+    """
     def __repr__(self):
-        return "(x=%s, y=%s, z=%s)" % self
+        return "Vector(%s, %s, %s)" % self
 
     __slots__ = ()
 
