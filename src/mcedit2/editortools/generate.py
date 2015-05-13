@@ -55,15 +55,17 @@ class GeneratePlugin(QtCore.QObject):
         schematic = createSchematic(bounds.size, blocktypes)
         dim = schematic.getDimension()
 
-        self.generateInSchematic(dim)
+        self.generateInSchematic(dim, bounds)
         return schematic
 
-    def generateInSchematic(self, dimension):
+    def generateInSchematic(self, dimension, originalBounds):
         """
         A convenience entry point that provides an already-created schematic file as a WorldEditorDimension.
 
         :param dimension: The main dimension of the schematic
         :type dimension: WorldEditorDimension
+        :param originalBounds: The bounding box in world coordinates
+        :type dimension: BoundingBox
         :return: Nothing. Edit the provided dimension to provide a "return value"
         :rtype: None
         """
@@ -162,7 +164,7 @@ class GenerateTool(EditorTool):
         EditorTool.__init__(self, *args, **kwargs)
         self.livePreview = False
         self.blockPreview = False
-        self.glPreview = False
+        self.glPreview = True
 
         toolWidget = QtGui.QWidget()
 
@@ -179,12 +181,15 @@ class GenerateTool(EditorTool):
         self.generatorTypeInput.currentIndexChanged.connect(self.generatorTypeChanged)
 
         self.livePreviewCheckbox = QtGui.QCheckBox("Live Preview")
+        self.livePreviewCheckbox.setChecked(self.livePreview)
         self.livePreviewCheckbox.toggled.connect(self.livePreviewToggled)
 
         self.blockPreviewCheckbox = QtGui.QCheckBox("Block Preview")
+        self.blockPreviewCheckbox.setChecked(self.blockPreview)
         self.blockPreviewCheckbox.toggled.connect(self.blockPreviewToggled)
 
         self.glPreviewCheckbox = QtGui.QCheckBox("GL Preview")
+        self.glPreviewCheckbox.setChecked(self.glPreview)
         self.glPreviewCheckbox.toggled.connect(self.glPreviewToggled)
 
         self.optionsHolder = QtGui.QStackedWidget()
@@ -349,7 +354,6 @@ class GenerateTool(EditorTool):
             self.clearSchematic()
 
     def clearSchematic(self):
-        self.schematicBounds = None
         if self.worldScene:
             self.sceneHolderNode.removeChild(self.worldScene)
             self.worldScene = None
@@ -358,18 +362,21 @@ class GenerateTool(EditorTool):
 
     def generateClicked(self):
         if self.schematicBounds is None:
+            log.info("schematicBounds is None, not generating")
             return
 
         if self.currentSchematic is None:
+            log.info("Generating new schematic for import")
             currentSchematic = self.currentGenerator.generate(self.schematicBounds, self.editorSession.worldEditor.blocktypes)
         else:
+            log.info("Importing previously generated schematic.")
             currentSchematic = self.currentSchematic
 
-        command = SimpleRevisionCommand(self.editorSession, "Generate %s")
+        command = GenerateCommand(self, self.schematicBounds)
         try:
             with command.begin():
                 if currentSchematic is not None:
-                    task = self.editorSession.currentDimension.importSchematicIter(self.currentSchematic, self.schematicBounds.origin)
+                    task = self.editorSession.currentDimension.importSchematicIter(currentSchematic, self.schematicBounds.origin)
                     showProgress(self.tr("Importing generated object..."), task)
                 else:
                     task = self.currentGenerator.generateInWorld(self.schematicBounds, self.editorSession.currentDimension)
@@ -379,6 +386,21 @@ class GenerateTool(EditorTool):
             command.undo()
         else:
             self.editorSession.pushCommand(command)
-            self.clearSchematic()
 
+class GenerateCommand(SimpleRevisionCommand):
+    def __init__(self, generatorTool, schematicBounds):
+        super(GenerateCommand, self).__init__(generatorTool.editorSession, "Generate %s")
+        self.schematicBounds = schematicBounds
+        self.generatorTool = generatorTool
 
+    def undo(self):
+        super(GenerateCommand, self).undo()
+        self.generatorTool.boxHandleNode.bounds = self.schematicBounds
+        self.generatorTool.schematicBounds = self.schematicBounds
+        self.generatorTool.updatePreview()
+
+    def redo(self):
+        super(GenerateCommand, self).redo()
+        self.generatorTool.clearSchematic()
+        self.generatorTool.clearNode()
+        self.generatorTool.boxHandleNode.bounds = None
