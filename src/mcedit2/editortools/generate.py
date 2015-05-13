@@ -310,18 +310,15 @@ class GenerateTool(EditorTool):
             self.clearSchematic()
             return
 
-        if self.currentSchematic is None or bounds.size != self.currentSchematic.getDimension().bounds.size:
-            try:
-                schematic = self.currentGenerator.generate(bounds, self.editorSession.worldEditor.blocktypes)
-                self.setCurrentSchematic(schematic, bounds.origin)
-            except Exception as e:
-                log.exception("Error while running generator %s: %s", self.currentGenerator, e)
-                QtGui.QMessageBox.warning(qApp.mainWindow, "Error while running generator",
-                                          "An error occurred while running the generator: \n  %s.\n\n"
-                                          "Traceback: %s" % (e, traceback.format_exc()))
-                self.livePreview = False
-        elif self.currentSchematic is not None:
-            self.displaySchematic(self.currentSchematic, bounds.origin)
+        try:
+            schematic = self.currentGenerator.generate(bounds, self.editorSession.worldEditor.blocktypes)
+            self.setCurrentSchematic(schematic, bounds.origin)
+        except Exception as e:
+            log.exception("Error while running generator %s: %s", self.currentGenerator, e)
+            QtGui.QMessageBox.warning(qApp.mainWindow, "Error while running generator",
+                                      "An error occurred while running the generator: \n  %s.\n\n"
+                                      "Traceback: %s" % (e, traceback.format_exc()))
+            self.livePreview = False
 
     def setCurrentSchematic(self, schematic, offset):
         self.currentSchematic = schematic
