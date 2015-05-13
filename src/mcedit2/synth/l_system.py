@@ -240,6 +240,10 @@ class Line(Symbol):
     p2: Vector
 
     """
+    def __init__(self, p1, p2, **kw):
+        super(Line, self).__init__(**kw)
+        self.p1 = p1
+        self.p2 = p2
 
     def renderBlocks(self):
         for x, y, z in bresenham(self.p1, self.p2):
