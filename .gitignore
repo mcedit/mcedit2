@@ -45,3 +45,5 @@ src/mcedit2/rendering/blockmodels.c
 src/mcedit2/rendering/modelmesh.c
 *.pyd
 src/mceditlib/nbt.html
+.settings/de.loskutov.anyedit.AnyEditTools.prefs
+*.prefs
