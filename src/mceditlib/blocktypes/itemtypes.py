@@ -21,13 +21,13 @@ class ItemType(_ItemType):
 
     def __repr__(self):
         try:
-            names = " (%s (%s)" % (self.name, self.internalName)
+            names = " (%s (%s)" % (self.displayName, self.internalName)
         except:
             names = ""
         return "<ItemType (%d:%s)%s>" % (self.ID, self.meta, names)
 
     def __str__(self):
-        return "%s (%s) [%s:%s]" % (self.name, self.internalName, self.ID, self.meta)
+        return "%s (%s) [%s:%s]" % (self.displayName, self.internalName, self.ID, self.meta)
 
     def __cmp__(self, other):
         if not isinstance(other, ItemType):
