@@ -9,7 +9,7 @@ from mcedit2.rendering.blockmeshes import standardCubeTemplates
 from mcedit2.rendering.blockmeshes import ChunkMeshBase
 from mcedit2.rendering.layers import Layer
 from mcedit2.rendering.slices import _XYZ
-from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
+from mcedit2.rendering.vertexarraybuffer import QuadVertexArrayBuffer
 
 log = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class EntityMeshBase(ChunkMeshBase):
         if bounds:
             positions = [p for p in positions if p in bounds]
 
-        vertexBuffer = VertexArrayBuffer(len(positions) * 6, lights=False, textures=False)
+        vertexBuffer = QuadVertexArrayBuffer(len(positions) * 6, lights=False, textures=False)
         vertexBuffer.buffer.shape = (len(positions), 6) + vertexBuffer.buffer.shape[-2:]
         if len(positions):
             positions = numpy.array(positions, dtype=float)

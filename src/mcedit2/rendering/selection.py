@@ -11,7 +11,7 @@ from mcedit2.rendering.chunknode import ChunkGroupNode, ChunkNode
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.renderstates import _RenderstateAlphaBlendNode
 from mcedit2.rendering.scenegraph import VertexNode, RenderstateNode
-from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
+from mcedit2.rendering.vertexarraybuffer import QuadVertexArrayBuffer
 from mcedit2.util import profiler
 from mcedit2.util.glutils import gl
 from mceditlib import faces
@@ -227,9 +227,9 @@ class SelectionScene(scenegraph.Node):
         vertexArrays = []
 
         for (face, exposedFaceMask) in enumerate(self.exposedBlockMasks(sectionMask)):
-            blockIndices = sectionMask[1:-1, 1:-1, 1:-1] & exposedFaceMask
+            blockMask = sectionMask[1:-1, 1:-1, 1:-1] & exposedFaceMask
 
-            vertexBuffer = VertexArrayBuffer.fromIndices(face, blockIndices, False, False)
+            vertexBuffer = QuadVertexArrayBuffer.fromBlockMask(face, blockMask, False, False)
             if not len(vertexBuffer.vertex):
                 continue
 

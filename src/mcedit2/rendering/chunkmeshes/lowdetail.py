@@ -7,7 +7,7 @@ import numpy
 from mcedit2.rendering import renderstates, scenegraph
 from mcedit2.rendering.blockmeshes import standardCubeTemplates
 from mcedit2.rendering.blockmeshes import ChunkMeshBase
-from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
+from mcedit2.rendering.vertexarraybuffer import QuadVertexArrayBuffer
 from mceditlib import faces
 
 log = logging.getLogger(__name__)
@@ -76,7 +76,7 @@ class LowDetailBlockMesh(ChunkMeshBase):
         flatcolors = dim.blocktypes.mapColor[topBlocks, topBlockData][:, numpy.newaxis, :]
 
         yield
-        vertexBuffer = VertexArrayBuffer(len(x), textures=False, lights=False)
+        vertexBuffer = QuadVertexArrayBuffer(len(x), textures=False, lights=False)
 
         vertexBuffer.vertex[..., 0] = x[:, numpy.newaxis]
         vertexBuffer.vertex[..., 1] = y[:, numpy.newaxis]

@@ -10,7 +10,7 @@ cimport numpy
 
 from mcedit2.rendering import renderstates, scenegraph
 from mcedit2.rendering.layers import Layer
-from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
+from mcedit2.rendering.vertexarraybuffer import QuadVertexArrayBuffer
 cimport mcedit2.rendering.blockmodels as blockmodels
 
 from libc.stdlib cimport malloc, realloc, free
@@ -292,7 +292,7 @@ class BlockModelMesh(object):
                                 vertexBuffer = <float *>realloc(vertexBuffer, buffer_size * sizeof(float) * quadFloats)
 
         if buffer_ptr:  # now buffer size
-            vertexArray = VertexArrayBuffer(buffer_ptr)
+            vertexArray = QuadVertexArrayBuffer(buffer_ptr)
             vabuffer = vertexArray.buffer
             memcpy(vabuffer.data, vertexBuffer, buffer_ptr * sizeof(float) * quadFloats)
             self.sceneNode = scenegraph.VertexNode(vertexArray)
