@@ -15,19 +15,7 @@ log = logging.getLogger(__name__)
 
 _registered_tools = []
 
-def RegisterTool(cls):
-    """
-    Register a tool class. Class must inherit from EditorTool.
-
-    >>> @RegisterTool
-    >>> class MyTool(EditorTool):
-    >>>     pass
-
-    :param cls:
-    :type cls:
-    :return:
-    :rtype:
-    """
+def registerToolClass(cls):
     if issubclass(cls, EditorTool):
         _registered_tools.append(cls)
     else:

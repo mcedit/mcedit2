@@ -33,6 +33,7 @@ from mceditlib.util import displayName
 
 def worldMeshVertexSize(worldMesh):
     """
+    xxx what is this for??
 
     :type worldMesh: WorldScene
     """

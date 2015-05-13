@@ -148,6 +148,7 @@ _pluginClasses = []
 
 def registerGeneratePlugin(cls):
     _pluginClasses.append(cls)
+    return cls
 
 _pluginClasses.append(TreeGen)
 

@@ -16,7 +16,7 @@ tileEntityEditorClasses = {
     "Hopper": HopperEditorWidget,
 }
 
-def registerInspectorWidget(ID, widgetClass):
+def registerBlockInspectorWidget(ID, widgetClass):
     tileEntityEditorClasses[ID] = widgetClass
 
 class InspectorWidget(QtGui.QWidget):
