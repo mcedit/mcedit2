@@ -253,6 +253,7 @@ class Line(Symbol):
     def renderSceneNodes(self):
         vertexArray = VertexArrayBuffer(2, GL.GL_LINES, False, False)
         vertexArray.vertex[:] = [self.p1, self.p2]
+        vertexArray.vertex[:] += 0.5  # draw using box centers
         vertexArray.rgba[:] = 255, 64, 64, 128
 
         node = VertexNode([vertexArray])  # xxx LineNode
