@@ -6,35 +6,33 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>409</width>
-    <height>193</height>
+    <width>622</width>
+    <height>585</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Analyze Output</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,2">
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,2,0,0,0">
    <item>
-    <widget class="QLabel">
+    <widget class="QLabel" name="label">
      <property name="text">
       <string>Blocks Found:</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QTableView" name="blockOutputTableView">
-    </widget>
+    <widget class="QTableView" name="blockOutputTableView"/>
    </item>
    <item>
-    <widget class="QLabel">
+    <widget class="QLabel" name="label">
      <property name="text">
       <string>Entities Found:</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QTableView" name="entityOutputTableView">
-    </widget>
+    <widget class="QTableView" name="entityOutputTableView"/>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -83,7 +81,7 @@
   </layout>
  </widget>
  <resources/>
-<connections>
+ <connections>
   <connection>
    <sender>closeButton</sender>
    <signal>clicked()</signal>
