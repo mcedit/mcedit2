@@ -23,15 +23,92 @@ from mceditlib.schematic import createSchematic
 log = logging.getLogger(__name__)
 
 class GeneratePlugin(QtCore.QObject):
-    def __init__(self, editorSession):
+    def __init__(self, generateTool):
         super(GeneratePlugin, self).__init__()
-        self.editorSession = editorSession
+        self.generateTool = generateTool
 
-    def generatePreview(self, bounds, blocktypes):
-        return self.generate(bounds, blocktypes)
+    def getPreviewNode(self, bounds):
+        """
+        Get a preview of the generated object as a SceneNode. Intended as a light-weight alternative to generating
+        the entire object up front when the user selects a bounding box.
 
-    def getPreviewNode(self):
+        :param bounds: Bounding box chosen by the user
+        :type bounds: BoundingBox
+        :return: A preview of the generated object
+        :rtype: SceneNode
+        """
         return None
+
+    def generate(self, bounds, blocktypes):
+        """
+        The main entry point of the GeneratePlugin. Given the bounding box chosen by the user and the BlockTypeSet
+        for the currently edited world, return a world (usually a Schematic file) suitable for importing into the
+        edited world.
+
+        :param bounds: Bounding box chosen by the user
+        :type bounds: BoundingBox
+        :param blocktypes: BlockTypeSet of currently edited world
+        :type blocktypes: BlockTypeSet
+        :return: Generated Schematic
+        :rtype: WorldEditor
+        """
+        schematic = createSchematic(bounds.size, blocktypes)
+        dim = schematic.getDimension()
+
+        self.generateInSchematic(dim)
+        return schematic
+
+    def generateInSchematic(self, dimension):
+        """
+        A convenience entry point that provides an already-created schematic file as a WorldEditorDimension.
+
+        :param dimension: The main dimension of the schematic
+        :type dimension: WorldEditorDimension
+        :return: Nothing. Edit the provided dimension to provide a "return value"
+        :rtype: None
+        """
+        raise NotImplementedError
+
+    def generateInDimension(self, bounds, dimension):
+        """
+        An alternate entry point for generating directly into a world without an intermediate schematic.
+
+        In order to use generateInDimension, you must also override generate and return None.
+
+        This function will not be called for the purpose of displaying block previews. If you need to use
+        generateInDimension, you should implement getPreviewNode to provide an OpenGL preview using scene nodes.
+
+        :param bounds:
+        :type bounds:
+        :param dimension:
+        :type dimension:
+        :return:
+        :rtype:
+        """
+        raise NotImplementedError
+
+    def getOptionsWidget(self):
+        """
+        Return (and possibly create) a QWidget that will be displayed in the Generate Tool Options panel while
+        this GeneratePlugin is chosen.
+
+        :return:
+        :rtype: QtGui.QWidget
+        """
+        raise NotImplementedError
+
+    def updatePreview(self):
+        """
+        Trigger the GenerateTool to call generate() on this GeneratePlugin again. This function should be
+
+        :return:
+        :rtype:
+        """
+        self.generateTool.updatePreview()
+
+    @property
+    def editorSession(self):
+        return self.generateTool.editorSession
 
 class TreeGen(GeneratePlugin):
 
@@ -83,15 +160,17 @@ class GenerateTool(EditorTool):
 
     def __init__(self, *args, **kwargs):
         EditorTool.__init__(self, *args, **kwargs)
-        self.liveUpdate = False
+        self.livePreview = False
+        self.blockPreview = False
+        self.glPreview = False
 
         toolWidget = QtGui.QWidget()
 
         self.toolWidget = toolWidget
 
         column = []
-        self.generatorTypes = [pluginClass(self.editorSession) for pluginClass in _pluginClasses]
-        self.currentType = self.generatorTypes[0]
+        self.generatorTypes = [pluginClass(self) for pluginClass in _pluginClasses]
+        self.currentGenerator = self.generatorTypes[0]
 
         self.generatorTypeInput = QtGui.QComboBox()
         for gt in self.generatorTypes:
@@ -99,9 +178,14 @@ class GenerateTool(EditorTool):
 
         self.generatorTypeInput.currentIndexChanged.connect(self.generatorTypeChanged)
 
-        self.liveUpdateCheckbox = QtGui.QCheckBox("Live Update")
+        self.livePreviewCheckbox = QtGui.QCheckBox("Live Preview")
+        self.livePreviewCheckbox.toggled.connect(self.livePreviewToggled)
 
-        self.liveUpdateCheckbox.toggled.connect(self.liveUpdateToggled)
+        self.blockPreviewCheckbox = QtGui.QCheckBox("Block Preview")
+        self.blockPreviewCheckbox.toggled.connect(self.blockPreviewToggled)
+
+        self.glPreviewCheckbox = QtGui.QCheckBox("GL Preview")
+        self.glPreviewCheckbox.toggled.connect(self.glPreviewToggled)
 
         self.optionsHolder = QtGui.QStackedWidget()
         self.optionsHolder.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Expanding)
@@ -110,7 +194,9 @@ class GenerateTool(EditorTool):
         self.generateButton.clicked.connect(self.generateClicked)
 
         column.append(self.generatorTypeInput)
-        column.append(self.liveUpdateCheckbox)
+        column.append(self.livePreviewCheckbox)
+        column.append(self.blockPreviewCheckbox)
+        column.append(self.glPreviewCheckbox)
         column.append(self.optionsHolder)
         column.append(self.generateButton)
 
@@ -121,6 +207,7 @@ class GenerateTool(EditorTool):
         self.sceneHolderNode = scenegraph.TranslateNode()
         self.overlayNode.addChild(self.sceneHolderNode)
 
+        self.previewNode = None
 
         self.boxHandleNode = BoxHandle()
         self.boxHandleNode.boundsChanged.connect(self.boundsDidChange)
@@ -129,19 +216,30 @@ class GenerateTool(EditorTool):
 
         self.worldScene = None
 
+        self.previewBounds = None
         self.schematicBounds = None
         self.currentSchematic = None
 
         if len(self.generatorTypes):
             self.generatorTypeChanged(0)
 
-    def liveUpdateToggled(self, value):
-        self.liveUpdate = value
+    def livePreviewToggled(self, value):
+        self.livePreview = value
+
+    def blockPreviewToggled(self, value):
+        self.blockPreview = value
+        self.updatePreview()
+
+    def glPreviewToggled(self, value):
+        self.glPreview = value
+        self.updatePreview()
+
 
     def generatorTypeChanged(self, index):
-        self.currentType = self.generatorTypes[index]
+        self.currentGenerator = self.generatorTypes[index]
         self.optionsHolder.removeWidget(self.optionsHolder.widget(0))
-        self.optionsHolder.addWidget(self.currentType.getOptionsWidget())
+        self.optionsHolder.addWidget(self.currentGenerator.getOptionsWidget())
+        self.updatePreview()
 
     def mousePress(self, event):
         self.boxHandleNode.mousePress(event)
@@ -153,44 +251,84 @@ class GenerateTool(EditorTool):
         self.boxHandleNode.mouseRelease(event)
 
     def boundsDidChange(self, bounds):
-        if not self.liveUpdate:
+        # box still being resized
+        if not self.livePreview:
             return
 
-        if bounds is not None and bounds.volume:
-            node = self.currentType.getPreviewNode()
-            if node is not None:
-                pass
-            else:
-                self.generate(bounds)
+        self.previewBounds = bounds
+        self.updatePreview()
 
+    def boundsDidChangeDone(self, bounds, newSelection):
+        # box finished resize
+
+        self.previewBounds = bounds
         self.schematicBounds = bounds
+        self.updatePreview()
 
+    def clearNode(self):
+        if self.previewNode:
+            self.overlayNode.removeChild(self.previewNode)
+            self.previewNode = None
 
-    def generate(self, bounds):
-        if self.schematicBounds is None or self.schematicBounds.size != bounds.size:
+    def updatePreview(self):
+        if self.blockPreview:
+            self.updateBlockPreview()
+        else:
+            self.clearSchematic()
+
+        if self.glPreview:
+            self.updateNodePreview()
+        else:
+            self.clearNode()
+
+    def updateBlockPreview(self):
+        bounds = self.previewBounds
+
+        if bounds is not None and bounds.volume > 0:
+            self.generateNextSchematic(bounds)
+        else:
+            self.clearSchematic()
+
+    def updateNodePreview(self):
+        bounds = self.previewBounds
+
+        if bounds is not None and bounds.volume > 0:
+            node = self.currentGenerator.getPreviewNode(bounds)
+            if node is not None:
+                self.clearNode()
+
+                if isinstance(node, list):
+                    nodes = node
+                    node = scenegraph.Node()
+                    for c in nodes:
+                        node.addChild(c)
+
+                self.overlayNode.addChild(node)
+                self.previewNode = node
+
+    def generateNextSchematic(self, bounds):
+        if bounds is None:
+            self.clearSchematic()
+            return
+
+        if self.currentSchematic is None or bounds.size != self.currentSchematic.getDimension().bounds.size:
             try:
-                schematic = self.currentType.generatePreview(bounds, self.editorSession.worldEditor.blocktypes)
+                schematic = self.currentGenerator.generate(bounds, self.editorSession.worldEditor.blocktypes)
                 self.setCurrentSchematic(schematic, bounds.origin)
             except Exception as e:
-                log.exception("Error while running generator %s: %s", self.currentType, e)
+                log.exception("Error while running generator %s: %s", self.currentGenerator, e)
                 QtGui.QMessageBox.warning(qApp.mainWindow, "Error while running generator",
                                           "An error occurred while running the generator: \n  %s.\n\n"
                                           "Traceback: %s" % (e, traceback.format_exc()))
-                self.liveUpdate = False
-        else:
-            self.sceneHolderNode.translateOffset = bounds.origin
-
-
-    def boundsDidChangeDone(self, bounds, newSelection):
-        if bounds is not None and bounds.volume:
-            self.generate(bounds)
-        else:
-            self.setCurrentSchematic(None, None)
-
-        self.schematicBounds = bounds
+                self.livePreview = False
+        elif self.currentSchematic is not None:
+            self.displaySchematic(self.currentSchematic, bounds.origin)
 
     def setCurrentSchematic(self, schematic, offset):
         self.currentSchematic = schematic
+        self.displaySchematic(schematic, offset)
+
+    def displaySchematic(self, schematic, offset):
         if schematic is not None:
             dim = schematic.getDimension()
 
@@ -211,19 +349,39 @@ class GenerateTool(EditorTool):
             else:
                 self.loader.timer.start()
         else:
-            if self.worldScene:
-                self.sceneHolderNode.removeChild(self.worldScene)
-                self.worldScene = None
-                self.loader.timer.stop()
-                self.loader = None
+            self.clearSchematic()
+
+    def clearSchematic(self):
+        self.schematicBounds = None
+        if self.worldScene:
+            self.sceneHolderNode.removeChild(self.worldScene)
+            self.worldScene = None
+            self.loader.timer.stop()
+            self.loader = None
 
     def generateClicked(self):
-        if self.currentSchematic is None:
+        if self.schematicBounds is None:
             return
 
+        if self.currentSchematic is None:
+            currentSchematic = self.currentGenerator.generate(self.schematicBounds, self.editorSession.worldEditor.blocktypes)
+        else:
+            currentSchematic = self.currentSchematic
+
         command = SimpleRevisionCommand(self.editorSession, "Generate %s")
-        with command.begin():
-            task = self.editorSession.currentDimension.importSchematicIter(self.currentSchematic, self.schematicBounds.origin)
-            showProgress(self.tr("Importing generated object..."), task)
-        self.editorSession.pushCommand(command)
+        try:
+            with command.begin():
+                if currentSchematic is not None:
+                    task = self.editorSession.currentDimension.importSchematicIter(self.currentSchematic, self.schematicBounds.origin)
+                    showProgress(self.tr("Importing generated object..."), task)
+                else:
+                    task = self.currentGenerator.generateInWorld(self.schematicBounds, self.editorSession.currentDimension)
+                    showProgress(self.tr("Generating object in world..."), task)
+        except Exception as e:
+            log.exception("Error while importing or generating in world: %r" % e)
+            command.undo()
+        else:
+            self.editorSession.pushCommand(command)
+            self.clearSchematic()
+
 
