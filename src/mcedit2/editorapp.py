@@ -7,13 +7,15 @@ import logging
 from PySide import QtGui, QtCore, QtNetwork
 from PySide.QtCore import Qt
 import gc
+import imp
 import numpy
+import sys
 from mcedit2.appsettings import RecentFilesSetting, EnableLightingSetting
 from mcedit2.library import LibraryWidget
 
 from mcedit2.util import minecraftinstall
 from mcedit2.util.dialogs import NotImplementedYet
-from mcedit2.util.directories import getUserFilesDirectory
+from mcedit2.util.directories import getUserFilesDirectory, getUserPluginsDirectory
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.objgraphwidget import ObjGraphWidget
 from mcedit2.util.resources import resourcePath
@@ -315,7 +317,18 @@ class MCEditApp(QtGui.QApplication):
 
     @profiler.function
     def didFinishLaunching(self):
-        # --- Open files from command line ---
+        log.info("Loading plugins")
+
+        if getattr(sys, 'frozen', False):
+            # frozen - load from app dir
+            pluginsDir = getUserPluginsDirectory()
+            self.loadPluginsFromDir(pluginsDir)
+        else:
+            # not frozen - load from src/plugins
+            # from editorapp.py, ../../plugins
+            devPluginsDir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "plugins")
+            self.loadPluginsFromDir(devPluginsDir)
+
         log.info("Opening worlds from command line.")
 
         if len(self.commandLineWorlds):
@@ -329,6 +342,26 @@ class MCEditApp(QtGui.QApplication):
             eval_globals = {"session": session,
                             "self": self}
             exec(self.args.eval, eval_globals)
+
+    def loadPluginsFromDir(self, pluginsDir):
+        if not os.path.isdir(pluginsDir):
+            log.warn("Plugins dir %s not found", pluginsDir)
+            return
+
+        log.info("Loading plugins from %s", pluginsDir)
+
+        for filename in os.listdir(pluginsDir):
+            basename, ext = os.path.splitext(filename)
+            if ext in (".pyc", ".pyo"):
+                continue
+            info = imp.find_module(basename, [pluginsDir])
+            try:
+                log.info("Trying to load plugin from %s", filename)
+                pluginModule = imp.load_module(basename, *info)
+                log.info("Loaded %s", filename)
+                # xxx plugin reloading? how to unregister classes and unload blocktypes from plugins?
+            except Exception as e:
+                log.exception("Error while loading plugin from %s: %r", filename, e)
 
     consoleWidget = None
 
