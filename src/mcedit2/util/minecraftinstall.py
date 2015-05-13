@@ -295,6 +295,8 @@ class MMCInstance(object):
             loader.addZipFile(v1_8)
 
         for mod in os.listdir(self.modsDir):
+            if not os.path.isfile(mod):
+                continue
             try:
                 loader.addZipFile(os.path.join(self.modsDir, mod))
             except EnvironmentError as e:
