@@ -124,8 +124,6 @@ def applyReplacementsIterated(symbol_list, repeats):
 
         yield i, symbol_list
 
-
-
 def renderBlocks(symbol_list):
     rendering = []
     for symbol in symbol_list:
@@ -221,6 +219,11 @@ class Fill(Geometric):
 
     + parameters inherited from Geometric
     """
+
+    def __init__(self, box=None, blocktype=None, **kw):
+        super(Fill, self).__init__(box, **kw)
+        if blocktype:
+            self.parameters["blocktype"] = blocktype
 
     def renderBlocks(self):
         return [(x, y, z, self.blocktype) for x, y, z in self.positions]
