@@ -94,13 +94,12 @@ def applyReplacements(symbol_list):
     replaced = False
     new_list = []
     for symbol in symbol_list:
-        rule = getattr(symbol, 'replace', None)
-        if rule is None:
-            new_list.append(symbol)
-        else:
+        if hasattr(symbol, 'replace'):
             replaced = True
-            new_symbols = rule()
+            new_symbols = symbol.replace()
             new_list.extend(new_symbols)
+        else:
+            new_list.append(symbol)
 
     return replaced, new_list
 
