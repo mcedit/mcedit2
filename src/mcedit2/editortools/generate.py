@@ -128,9 +128,9 @@ class TreeGen(GeneratePlugin):
         self.optionsWidget = widget
         return widget
 
-    def generate(self, bounds, blocktypes):
-        schematic = createSchematic(bounds.size, blocktypes)
-        dim = schematic.getDimension()
+    def generateInSchematic(self, dim):
+        bounds = dim.bounds
+        blocktypes = dim.blocktypes
 
         trunkX = int(bounds.width / 2)
         trunkZ = int(bounds.length / 2)
@@ -143,14 +143,13 @@ class TreeGen(GeneratePlugin):
         dim.setBlocks(range(0, bounds.width), [range(crownBottom, bounds.height)], [[range(0, bounds.length)]], leaves)
         dim.setBlocks(trunkX, range(0, bounds.height), trunkZ, wood)
 
-        return schematic
 
 _pluginClasses = []
 
 def registerGeneratePlugin(cls):
     _pluginClasses.append(cls)
 
-#_pluginClasses.append(TreeGen)
+_pluginClasses.append(TreeGen)
 
 class GenerateTool(EditorTool):
     name = "Generate"
