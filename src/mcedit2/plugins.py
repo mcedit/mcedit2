@@ -2,6 +2,7 @@
     plugins
 """
 from __future__ import absolute_import, division, print_function
+from collections import defaultdict
 import logging
 from mcedit2 import editortools
 from mcedit2.editortools import generate
@@ -16,6 +17,35 @@ log = logging.getLogger(__name__)
 # keep track of which plugin is doing the registering and associate
 # it with its classes so MCEdit can unregister them automatically
 # Allowing plugin classes to be unregistered allows reloading plugins and disabling plugins after load times.
+
+_pluginClassesByModule = defaultdict(list)
+_currentPluginModule = None
+
+def loadModule(pluginModule):
+    global _currentPluginModule
+    if hasattr(pluginModule, "register"):
+        _currentPluginModule = pluginModule
+        pluginModule.register()
+        _currentPluginModule = None
+
+def unloadModule(pluginModule):
+    if hasattr(pluginModule, "unregister"):
+        pluginModule.unregister()
+
+    classes = _pluginClassesByModule.pop(pluginModule)
+    if classes:
+        for cls in classes:
+            _unregisterClass(cls)
+
+def _registerClass(cls):
+    _pluginClassesByModule[_currentPluginModule].append(cls)
+
+def _unregisterClass(cls):
+    load_ui.unregisterCustomWidget(cls)
+    editortools.unregisterToolClass(cls)
+    generate.unregisterGeneratePlugin(cls)
+    inspector.unregisterBlockInspectorWidget(cls)
+    entities.unregisterTileEntityRefClass(cls)
 
 def registerCustomWidget(cls):
     """
@@ -32,6 +62,7 @@ def registerCustomWidget(cls):
     :return:
     :rtype: class
     """
+    _registerClass(cls)
     return load_ui.registerCustomWidget(cls)
 
 def registerToolClass(cls):
@@ -48,6 +79,7 @@ def registerToolClass(cls):
     :return:
     :rtype: class
     """
+    _registerClass(cls)
     return editortools.registerToolClass(cls)
 
 def registerGeneratePlugin(cls):
@@ -64,6 +96,7 @@ def registerGeneratePlugin(cls):
     :return:
     :rtype:
     """
+    _registerClass(cls)
     return generate.registerGeneratePlugin(cls)
 
 def registerBlockInspectorWidget(ID, cls):
@@ -83,6 +116,7 @@ def registerBlockInspectorWidget(ID, cls):
     :return:
     :rtype:
     """
+    _registerClass(cls)
     return inspector.registerBlockInspectorWidget(ID, cls)
 
 def registerTileEntityRefClass(ID, cls):
@@ -103,4 +137,5 @@ def registerTileEntityRefClass(ID, cls):
     :rtype:
     """
     # xxx this is anvil.entities - delegate to correct world format
+    _registerClass(cls)
     return entities.registerTileEntityRefClass(ID, cls)

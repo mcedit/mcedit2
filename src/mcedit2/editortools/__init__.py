@@ -22,6 +22,9 @@ def registerToolClass(cls):
         raise ValueError("Class %s must inherit from EditorTool" % cls)
     return cls
 
+def unregisterToolClass(cls):
+    _registered_tools[:] = [c for c in _registered_tools if c != cls]
+
 _scanned_modules = None
 
 def ToolClasses():

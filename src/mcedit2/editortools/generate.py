@@ -153,6 +153,9 @@ def registerGeneratePlugin(cls):
     _pluginClasses.append(cls)
     return cls
 
+def unregisterGeneratePlugin(cls):
+    _pluginClasses[:] = [c for c in _pluginClasses if c != cls]
+
 _pluginClasses.append(TreeGen)
 
 class GenerateTool(EditorTool):

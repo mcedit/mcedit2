@@ -49,6 +49,11 @@ def registerCustomWidget(cls):
     _customWidgetClasses[name] = cls
     return cls
 
+
+def unregisterCustomWidget(cls):
+    _customWidgetClasses.pop(cls.__name__, None)
+
+
 def load_ui(name, parent=None, baseinstance=None):
     loader = MCEUILoader(baseinstance=baseinstance)
     loader.setWorkingDirectory(resourcePath(os.path.join("mcedit2", "ui")))

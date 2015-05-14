@@ -19,6 +19,11 @@ tileEntityEditorClasses = {
 def registerBlockInspectorWidget(ID, widgetClass):
     tileEntityEditorClasses[ID] = widgetClass
 
+def unregisterBlockInspectorWidget(widgetClass):
+    dead = [k for k, v in tileEntityEditorClasses if v == widgetClass]
+    for k in dead:
+        tileEntityEditorClasses.pop(k, None)
+
 class InspectorWidget(QtGui.QWidget):
     def __init__(self, editorSession):
         """

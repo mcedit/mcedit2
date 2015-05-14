@@ -10,6 +10,7 @@ import gc
 import imp
 import numpy
 import sys
+from mcedit2 import plugins
 from mcedit2.appsettings import RecentFilesSetting, EnableLightingSetting
 from mcedit2.library import LibraryWidget
 
@@ -358,6 +359,7 @@ class MCEditApp(QtGui.QApplication):
             try:
                 log.info("Trying to load plugin from %s", filename)
                 pluginModule = imp.load_module(basename, *info)
+                plugins.loadModule(pluginModule)
                 log.info("Loaded %s", filename)
                 # xxx plugin reloading? how to unregister classes and unload blocktypes from plugins?
             except Exception as e:
