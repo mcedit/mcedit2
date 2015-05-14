@@ -102,6 +102,7 @@ class GeneratePlugin(QtCore.QObject):
     def updatePreview(self):
         """
         Trigger the GenerateTool to call generate() on this GeneratePlugin again. This function should be
+        called by the plugin whenever one of the options provided by the options widget is changed.
 
         :return:
         :rtype:
@@ -172,7 +173,9 @@ class GenerateTool(EditorTool):
 
         column = []
         self.generatorTypes = [pluginClass(self) for pluginClass in _pluginClasses]
-        self.currentGenerator = self.generatorTypes[0]
+        self.currentGenerator = None
+        if len(self.generatorTypes):
+            self.currentGenerator = self.generatorTypes[0]
 
         self.generatorTypeInput = QtGui.QComboBox()
         for gt in self.generatorTypes:
@@ -296,6 +299,8 @@ class GenerateTool(EditorTool):
 
     def updateNodePreview(self):
         bounds = self.previewBounds
+        if self.currentGenerator is None:
+            return
 
         if bounds is not None and bounds.volume > 0:
             node = self.currentGenerator.getPreviewNode(bounds)
@@ -314,6 +319,8 @@ class GenerateTool(EditorTool):
     def generateNextSchematic(self, bounds):
         if bounds is None:
             self.clearSchematic()
+            return
+        if self.currentGenerator is None:
             return
 
         try:
@@ -361,6 +368,9 @@ class GenerateTool(EditorTool):
             self.loader = None
 
     def generateClicked(self):
+        if self.currentGenerator is None:
+            return
+
         if self.schematicBounds is None:
             log.info("schematicBounds is None, not generating")
             return
