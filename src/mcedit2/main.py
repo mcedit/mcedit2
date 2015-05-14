@@ -127,6 +127,9 @@ def startup():
     setup_logging()
     sys.excepthook = excepthook
 
+    from mcedit2 import __version__
+    log.info("MCEdit2 version %s starting...", __version__)
+
     pyi_tmpdir = getattr(sys, "_MEIPASS", None)
     if pyi_tmpdir:
         os.chdir(pyi_tmpdir)
