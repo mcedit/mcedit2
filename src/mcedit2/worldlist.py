@@ -379,23 +379,27 @@ class WorldListWidget(QtGui.QDialog):
             self.chunkLoader.chunkCompleted.connect(self.worldView.update)
 
             try:
-                player = worldEditor.getPlayer()
-                log.info("Centering on single-player player.")
-            except PlayerNotFound:
                 try:
-                    center = worldEditor.worldSpawnPosition()
-                    log.info("Centering on spawn position.")
-                except AttributeError:
-                    log.info("Centering on world center")
-                    center = dim.bounds.origin + (dim.bounds.size * 0.5)
-            else:
-                if player.dimName == dim.dimName:
-                    center = Vector(*player.Position)
-                    self.worldView.centerOnPoint(center)
+                    player = worldEditor.getPlayer()
+                    log.info("Centering on single-player player.")
+                except PlayerNotFound:
+                    try:
+                        center = worldEditor.worldSpawnPosition()
+                        log.info("Centering on spawn position.")
+                    except AttributeError:
+                        log.info("Centering on world center")
+                        center = dim.bounds.origin + (dim.bounds.size * 0.5)
                 else:
-                    center = dim.bounds.origin + (dim.bounds.size * 0.5)
+                    if player.dimName == dim.dimName:
+                        center = Vector(*player.Position)
+                        self.worldView.centerOnPoint(center)
+                    else:
+                        center = dim.bounds.origin + (dim.bounds.size * 0.5)
 
-            self.worldView.centerOnPoint(center)
+                self.worldView.centerOnPoint(center)
+            except Exception as e:
+                log.exception("Error while centering view in world list: %s", e)
+
             log.info("Switched world view")
 
     def setWorldView(self, worldView):

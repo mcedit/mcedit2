@@ -507,17 +507,17 @@ class EditorSession(QtCore.QObject):
 
     def findReplace(self):
         self.findReplaceDialog.exec_()
-        
+
     def analyze(self):
         if self.currentSelection is None:
             return
         task = self.currentDimension.analyzeIter(self.currentSelection)
         showProgress("Analyzing...", task)
-        outputDialog = AnalyzeOutputDialog(self, task.blocks, 
-                                           task.entityCounts, 
+        outputDialog = AnalyzeOutputDialog(self, task.blocks,
+                                           task.entityCounts,
                                            task.tileEntityCounts,
                                            task.dimension.worldEditor.displayName)
-        
+
     def deleteSelection(self):
         command = SimpleRevisionCommand(self, "Delete")
         with command.begin():
@@ -673,31 +673,34 @@ class EditorSession(QtCore.QObject):
     # --- Misplaced startup code? ---
 
     def loadDone(self):
-        # Called by MCEditApp after the view is on screen to make sure view.center() works correctly xxx used depth
-        #  buffer read for that, now what?
+        # Called by MCEditApp after the view is on screen to make sure view.center() works correctly
+        # xxx used depthbuffer read for that, now what?
         try:
-            player = self.worldEditor.getPlayer()
-            center = Vector(*player.Position) + (0, 1.8, 0)
-            dimNo = player.Dimension
-            dimName = self.worldEditor.dimNameFromNumber(dimNo)
-            log.info("Setting view angle to single-player player's view in dimension %s.", dimName)
-            rotation = player.Rotation
-            if dimName:
-                self.gotoDimension(dimName)
             try:
-                self.editorTab.currentView().yawPitch = rotation
-            except AttributeError:
-                pass
-        except PlayerNotFound:
-            try:
-                center = self.worldEditor.worldSpawnPosition()
-                log.info("Centering on spawn position.")
-            except AttributeError:
-                log.info("Centering on world center")
-                center = self.currentDimension.bounds.origin + (self.currentDimension.bounds.size * 0.5)
+                player = self.worldEditor.getPlayer()
+                center = Vector(*player.Position) + (0, 1.8, 0)
+                dimNo = player.Dimension
+                dimName = self.worldEditor.dimNameFromNumber(dimNo)
+                log.info("Setting view angle to single-player player's view in dimension %s.", dimName)
+                rotation = player.Rotation
+                if dimName:
+                    self.gotoDimension(dimName)
+                try:
+                    self.editorTab.currentView().yawPitch = rotation
+                except AttributeError:
+                    pass
+            except PlayerNotFound:
+                try:
+                    center = self.worldEditor.worldSpawnPosition()
+                    log.info("Centering on spawn position.")
+                except AttributeError:
+                    log.info("Centering on world center")
+                    center = self.currentDimension.bounds.origin + (self.currentDimension.bounds.size * 0.5)
+            self.editorTab.miniMap.centerOnPoint(center)
+            self.editorTab.currentView().centerOnPoint(center, distance=0)
+        except Exception as e:
+            log.exception("Error while centering on player for world editor: %s", e)
 
-        self.editorTab.miniMap.centerOnPoint(center)
-        self.editorTab.currentView().centerOnPoint(center, distance=0)
 
     # --- Tools ---
 
