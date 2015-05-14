@@ -159,7 +159,7 @@ this way.
             self.versions.append(version)
 
     def jarfileForVersion(self, v):
-        return os.path.join(self.cacheDir, v, "minecraft_server.jar").encode(sys.getfilesystemencoding())
+        return os.path.join(self.cacheDir, v, "minecraft_server.jar")
 
     def checksumForVersion(self, v):
         jf = self.jarfileForVersion(v)
@@ -506,9 +506,6 @@ class MCServerChunkGenerator(object):
         level.saveChanges()
 
     def runServer(self, startingDir):
-        if isinstance(startingDir, unicode):
-            startingDir = startingDir.encode(sys.getfilesystemencoding())
-
         return self._runServer(startingDir, self.serverJarFile)
 
     lowMemory = False
