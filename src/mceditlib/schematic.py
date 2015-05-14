@@ -231,14 +231,13 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
             self.tileEntitiesByChunk[cx, cz].append(tag)
 
     def getItemStackVersionFromEntities(self):
-        for name, tag, path in nbt.walk(
-                itertools.chain(self.rootTag["Entities"],
-                                self.rootTag["TileEntities"])):
-            if ItemStackRef.tagIsItemStack(tag):
-                if tag["id"].tagID == nbt.ID_STRING:
-                    return VERSION_1_8
-                if tag["id"].tagID == nbt.ID_SHORT:
-                    return VERSION_1_7
+        for listTag in self.rootTag["Entities"], self.rootTag["TileEntities"]:
+            for name, tag, path in nbt.walk(listTag):
+                if ItemStackRef.tagIsItemStack(tag):
+                    if tag["id"].tagID == nbt.ID_STRING:
+                        return VERSION_1_8
+                    if tag["id"].tagID == nbt.ID_SHORT:
+                        return VERSION_1_7
 
         # No itemstacks - use version 1.8 since ItemIDs won't need to
         # be added to the root tag.
