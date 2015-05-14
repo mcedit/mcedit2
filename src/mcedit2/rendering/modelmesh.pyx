@@ -54,6 +54,7 @@ class BlockModelMesh(object):
         blockModels = atlas.blockModels
         if not blockModels.cooked:
             log.warn("createVertexArrays: Block models not cooked, aborting.")
+            return
 
         blocktypes = self.sectionUpdate.blocktypes
         areaBlocks = self.sectionUpdate.areaBlocks
