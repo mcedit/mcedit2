@@ -12,6 +12,7 @@ import numpy
 import sys
 from mcedit2 import plugins
 from mcedit2.appsettings import RecentFilesSetting, EnableLightingSetting
+from mcedit2.dialogs.plugins_dialog import PluginsDialog
 from mcedit2.library import LibraryWidget
 
 from mcedit2.util import minecraftinstall
@@ -246,6 +247,7 @@ class MCEditApp(QtGui.QApplication):
 
         mainWindow.actionPreferences.triggered.connect(self.showPrefsDialog)
         mainWindow.actionConfigure_Blocks_Items.triggered.connect(self.showConfigureBlocksDialog)
+        mainWindow.actionPlugins.triggered.connect(self.showPluginsDialog)
 
         log.info("Loaded menus.")
 
@@ -300,6 +302,10 @@ class MCEditApp(QtGui.QApplication):
         self.configureBlocksDialog.setParent(mainWindow)
         self.configureBlocksDialog.setWindowFlags(Qt.Dialog)
 
+        self.pluginsDialog = PluginsDialog()
+        self.pluginsDialog.setParent(mainWindow)
+        self.pluginsDialog.setWindowFlags(Qt.Dialog)
+
         log.info("Loaded app dialogs.")
 
         # --- Loader timer ---
@@ -318,17 +324,21 @@ class MCEditApp(QtGui.QApplication):
 
     @profiler.function
     def didFinishLaunching(self):
-        log.info("Loading plugins")
+        log.info("Finding plugins")
 
         if getattr(sys, 'frozen', False):
             # frozen - load from app dir
             pluginsDir = getUserPluginsDirectory()
-            self.loadPluginsFromDir(pluginsDir)
+            plugins.findNewPluginsInDir(pluginsDir)
         else:
             # not frozen - load from src/plugins
             # from editorapp.py, ../../plugins
             devPluginsDir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "plugins")
-            self.loadPluginsFromDir(devPluginsDir)
+            plugins.findNewPluginsInDir(devPluginsDir)
+
+        for pluginRef in plugins.getAllPlugins():
+            if pluginRef.enabled:
+                pluginRef.load()
 
         log.info("Opening worlds from command line.")
 
@@ -343,27 +353,6 @@ class MCEditApp(QtGui.QApplication):
             eval_globals = {"session": session,
                             "self": self}
             exec(self.args.eval, eval_globals)
-
-    def loadPluginsFromDir(self, pluginsDir):
-        if not os.path.isdir(pluginsDir):
-            log.warn("Plugins dir %s not found", pluginsDir)
-            return
-
-        log.info("Loading plugins from %s", pluginsDir)
-
-        for filename in os.listdir(pluginsDir):
-            basename, ext = os.path.splitext(filename)
-            if ext in (".pyc", ".pyo"):
-                continue
-            info = imp.find_module(basename, [pluginsDir])
-            try:
-                log.info("Trying to load plugin from %s", filename)
-                pluginModule = imp.load_module(basename, *info)
-                plugins.loadModule(pluginModule)
-                log.info("Loaded %s", filename)
-                # xxx plugin reloading? how to unregister classes and unload blocktypes from plugins?
-            except Exception as e:
-                log.exception("Error while loading plugin from %s: %r", filename, e)
 
     consoleWidget = None
 
@@ -910,3 +899,6 @@ class MCEditApp(QtGui.QApplication):
     def configureBlocksFinished(self):
         configuredBlocks = self.configureBlocksDialog.getConfiguredBlocks()
         self.currentSession().setConfiguredBlocks(configuredBlocks)
+
+    def showPluginsDialog(self):
+        self.pluginsDialog.exec_()

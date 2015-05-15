@@ -81,11 +81,12 @@
     <addaction name="actionConfigure_Blocks_Items"/>
     <addaction name="separator"/>
     <addaction name="actionPreferences"/>
+    <addaction name="actionPlugins"/>
    </widget>
    <addaction name="menuMCEdit"/>
    <addaction name="menuWindow"/>
-   <addaction name="menuHelp"/>
    <addaction name="menuOptions"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolsToolBar">
@@ -183,6 +184,11 @@
   <action name="actionConfigure_Blocks_Items">
    <property name="text">
     <string>Configure Blocks/Items...</string>
+   </property>
+  </action>
+  <action name="actionPlugins">
+   <property name="text">
+    <string>Plugins...</string>
    </property>
   </action>
  </widget>
