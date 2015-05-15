@@ -41,7 +41,6 @@ class LSystemPlugin(GeneratePlugin):
     def __init__(self, editorSession):
         super(LSystemPlugin, self).__init__(editorSession)
         self.optionsWidget = None
-        self.displayName = self.tr("L-System Test")
 
         self.iterationsSlider = SpinSlider()
         self.iterationsSlider.setMinimum(1)

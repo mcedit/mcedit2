@@ -23,6 +23,13 @@ from mceditlib.schematic import createSchematic
 log = logging.getLogger(__name__)
 
 class GeneratePlugin(QtCore.QObject):
+    """
+    A plugin for the Generate tool.
+
+    The `displayName` attribute contains the name to display when choosing this plugin. If not
+    present, the class name will be used.
+
+    """
     def __init__(self, generateTool):
         super(GeneratePlugin, self).__init__()
         self.generateTool = generateTool
@@ -153,7 +160,11 @@ class GenerateTool(EditorTool):
 
         self.generatorTypeInput = QtGui.QComboBox()
         for gt in self.generatorTypes:
-            self.generatorTypeInput.addItem(gt.displayName, gt)
+            if hasattr(gt, 'displayName'):
+                displayName = gt.displayName
+            else:
+                displayName = gt.__class__.__name__
+            self.generatorTypeInput.addItem(displayName, gt)
 
         self.generatorTypeInput.currentIndexChanged.connect(self.generatorTypeChanged)
 
