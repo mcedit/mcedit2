@@ -239,12 +239,20 @@ class GenerateTool(EditorTool):
 
     def blockPreviewToggled(self, value):
         self.blockPreview = value
-        self.updatePreview()
+        if value:
+            if self.currentSchematic:
+                self.displaySchematic(self.currentSchematic, self.schematicBounds.origin)
+            else:
+                self.updateBlockPreview()
+        else:
+            self.clearSchematic()
 
     def glPreviewToggled(self, value):
         self.glPreview = value
-        self.updatePreview()
-
+        if value:
+            self.updateNodePreview()  # xxx cache previewNode?
+        else:
+            self.clearNode()
 
     def generatorTypeChanged(self, index):
         self.currentGenerator = self.generatorTypes[index]
@@ -328,17 +336,14 @@ class GenerateTool(EditorTool):
 
         try:
             schematic = self.currentGenerator.generate(bounds, self.editorSession.worldEditor.blocktypes)
-            self.setCurrentSchematic(schematic, bounds.origin)
+            self.currentSchematic = schematic
+            self.displaySchematic(schematic, bounds.origin)
         except Exception as e:
             log.exception("Error while running generator %s: %s", self.currentGenerator, e)
             QtGui.QMessageBox.warning(qApp.mainWindow, "Error while running generator",
                                       "An error occurred while running the generator: \n  %s.\n\n"
                                       "Traceback: %s" % (e, traceback.format_exc()))
             self.livePreview = False
-
-    def setCurrentSchematic(self, schematic, offset):
-        self.currentSchematic = schematic
-        self.displaySchematic(schematic, offset)
 
     def displaySchematic(self, schematic, offset):
         if schematic is not None:
