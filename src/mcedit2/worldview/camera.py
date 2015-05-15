@@ -22,9 +22,9 @@ from mcedit2.worldview.viewaction import ViewAction
 
 log = logging.getLogger(__name__)
 
-settings = Settings()
-ViewDistanceSetting = settings.getOption("worldview/camera/view_distance", int, 32)
-PerspectiveSetting = settings.getOption("worldview/camera/perspective", bool, True)
+settings = Settings().getNamespace("worldview/camera")
+ViewDistanceSetting = settings.getOption("view_distance", int, 32)
+PerspectiveSetting = settings.getOption("perspective", bool, True)
 
 class CameraWorldViewFrame(QtGui.QWidget):
     def __init__(self, dimension, geometryCache, resourceLoader, shareGLWidget, *args, **kwargs):
