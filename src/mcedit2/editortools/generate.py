@@ -29,8 +29,8 @@ class GeneratePlugin(QtCore.QObject):
 
     def getPreviewNode(self, bounds):
         """
-        Get a preview of the generated object as a SceneNode. Intended as a light-weight alternative to generating
-        the entire object up front when the user selects a bounding box.
+        Get a preview of the generated object as a SceneNode. Intended as a light-weight
+        alternative to generating the entire object up front when the user selects a bounding box.
 
         :param bounds: Bounding box chosen by the user
         :type bounds: BoundingBox
@@ -41,9 +41,9 @@ class GeneratePlugin(QtCore.QObject):
 
     def generate(self, bounds, blocktypes):
         """
-        The main entry point of the GeneratePlugin. Given the bounding box chosen by the user and the BlockTypeSet
-        for the currently edited world, return a world (usually a Schematic file) suitable for importing into the
-        edited world.
+        The main entry point of the GeneratePlugin. Given the bounding box chosen by the user and
+        the BlockTypeSet for the currently edited world, return a world (usually a Schematic
+        file) suitable for importing into the edited world.
 
         :param bounds: Bounding box chosen by the user
         :type bounds: BoundingBox
@@ -60,7 +60,8 @@ class GeneratePlugin(QtCore.QObject):
 
     def generateInSchematic(self, dimension, originalBounds):
         """
-        A convenience entry point that provides an already-created schematic file as a WorldEditorDimension.
+        A convenience entry point that provides an already-created schematic file as a
+        WorldEditorDimension.
 
         :param dimension: The main dimension of the schematic
         :type dimension: WorldEditorDimension
@@ -73,12 +74,14 @@ class GeneratePlugin(QtCore.QObject):
 
     def generateInDimension(self, bounds, dimension):
         """
-        An alternate entry point for generating directly into a world without an intermediate schematic.
+        An alternate entry point for generating directly into a world without an intermediate
+        schematic.
 
         In order to use generateInDimension, you must also override generate and return None.
 
-        This function will not be called for the purpose of displaying block previews. If you need to use
-        generateInDimension, you should implement getPreviewNode to provide an OpenGL preview using scene nodes.
+        This function will not be called for the purpose of displaying block previews. If you
+        need to use generateInDimension, you should implement getPreviewNode to provide an OpenGL
+        preview using scene nodes.
 
         :param bounds:
         :type bounds:
@@ -91,8 +94,8 @@ class GeneratePlugin(QtCore.QObject):
 
     def getOptionsWidget(self):
         """
-        Return (and possibly create) a QWidget that will be displayed in the Generate Tool Options panel while
-        this GeneratePlugin is chosen.
+        Return (and possibly create) a QWidget that will be displayed in the Generate Tool
+        Options panel while this GeneratePlugin is chosen.
 
         :return:
         :rtype: QtGui.QWidget
@@ -101,8 +104,9 @@ class GeneratePlugin(QtCore.QObject):
 
     def updatePreview(self):
         """
-        Trigger the GenerateTool to call generate() on this GeneratePlugin again. This function should be
-        called by the plugin whenever one of the options provided by the options widget is changed.
+        Trigger the GenerateTool to call generate() on this GeneratePlugin again. This function
+        should be called by the plugin whenever one of the options provided by the options widget
+        is changed.
 
         :return:
         :rtype:
@@ -113,50 +117,17 @@ class GeneratePlugin(QtCore.QObject):
     def editorSession(self):
         return self.generateTool.editorSession
 
-class TreeGen(GeneratePlugin):
-
-    def __init__(self, *args, **kwargs):
-        super(TreeGen, self).__init__(*args, **kwargs)
-        self.optionsWidget = None
-        self.displayName = self.tr("Tree")
-
-    def getOptionsWidget(self):
-        if self.optionsWidget:
-            return self.optionsWidget
-
-        widget = QtGui.QWidget()
-        self.trunkSlider = SpinSlider()
-        self.trunkSlider.setValue(1)
-        widget.setLayout(Column(self.trunkSlider, None))
-        self.optionsWidget = widget
-        return widget
-
-    def generateInSchematic(self, dim):
-        bounds = dim.bounds
-        blocktypes = dim.blocktypes
-
-        trunkX = int(bounds.width / 2)
-        trunkZ = int(bounds.length / 2)
-
-        crownBottom = int(bounds.height * 2 / 3)
-
-        wood = blocktypes["log[axis=y,variant=birch]"]
-        leaves = blocktypes["leaves[check_decay=false,decayable=true,variant=birch]"]
-
-        dim.setBlocks(range(0, bounds.width), [range(crownBottom, bounds.height)], [[range(0, bounds.length)]], leaves)
-        dim.setBlocks(trunkX, range(0, bounds.height), trunkZ, wood)
-
-
 _pluginClasses = []
+
 
 def registerGeneratePlugin(cls):
     _pluginClasses.append(cls)
     return cls
 
+
 def unregisterGeneratePlugin(cls):
     _pluginClasses[:] = [c for c in _pluginClasses if c != cls]
 
-_pluginClasses.append(TreeGen)
 
 class GenerateTool(EditorTool):
     name = "Generate"
@@ -226,6 +197,7 @@ class GenerateTool(EditorTool):
         self.overlayNode.addChild(self.boxHandleNode)
 
         self.worldScene = None
+        self.loader = None
 
         self.previewBounds = None
         self.schematicBounds = None
