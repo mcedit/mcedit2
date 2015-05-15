@@ -24,7 +24,7 @@ from mcedit2.util.worldloader import LoaderTimer
 from mcedit2.widgets import prefsdialog, configureblocksdialog
 from mcedit2.widgets.blocktype_list import BlockListWidget
 from mcedit2.editorsession import EditorSession
-from mcedit2.widgets.layout import setWidgetError
+from mcedit2.widgets.layout import setWidgetError, Column, Row
 from mcedit2.widgets.log_view import LogViewFrame
 from mcedit2.rendering.chunkloader import ChunkLoaderInfo
 from mcedit2.util import profiler
@@ -804,11 +804,81 @@ class MCEditApp(QtGui.QApplication):
 
     def showAbout(self):
         from mcedit2 import __version__ as v
-        QtGui.QMessageBox.about(self.mainWindow,
-                                "MCEdit %s" % v,
-                                "MCEdit %s\n\nCopyright 2014 "
-                                "David Rio Vierra. All rights reserved." % v
-                                )
+        credits = """<b>Supporters:</b>
+<br>
+<br>Josh Mann
+<br>NodeCraft Hosting
+<br>Drew L
+<br>Capt_World
+<br>Adrian Brightmoore
+<br>Marcel C
+<br>Tim G
+<br>Owen C
+<br>Julian C
+<br>Ausstan L
+<br>Leonard P
+<br>Gregory M
+<br>Joseph P
+<br>Lance R
+<br>John B
+<br>Aaron J
+<br>A.M.P.
+<br>Daniel B
+<br>Zachary B
+<br>Geoffrey C
+<br>Diane W
+<br>Kyle H
+<br>Nathan M
+<br>Ross C
+<br>Thomas H
+<br>Jordan S
+<br>Micael L
+<br>Todd A
+<br>John C
+<br>Elisabeth F
+<br>Chris L
+<br>S Spurlock
+<br>Paul H
+<br>Jack T
+<br>
+<br><b>Technologies used:</b>
+<br>
+<br>Python
+<br>Qt
+<br>PySide
+<br>PyOpenGL
+<br>numpy
+<br>cython
+<br>PyCharm
+<br>
+"""
+
+        aboutBox = QtGui.QDialog(self.mainWindow)
+        icon = self.windowIcon()
+        iconLabel = QtGui.QLabel()
+        iconLabel.setPixmap(icon.pixmap(32, 32))
+
+        versionText = "MCEdit %s" % v
+        aboutBox.setWindowTitle(versionText)
+        versionLabel = QtGui.QLabel(versionText)
+        copyrightLabel = QtGui.QLabel("Copyright 2014-2015 David Rio Vierra. All rights reserved.")
+
+        okButton = QtGui.QPushButton(self.tr("OK"))
+        okButton.clicked.connect(aboutBox.accept)
+
+        creditsField = QtGui.QTextEdit()
+        creditsField.setReadOnly(True)
+        creditsField.setHtml(credits)
+
+        creditsBox = QtGui.QGroupBox()
+        creditsBox.setTitle("Credits")
+
+        creditsBox.setLayout(Column(creditsField))
+        aboutBox.setLayout(Column(Row(iconLabel, Column(versionLabel, copyrightLabel, None)),
+                                  creditsBox,
+                                  Row(None, okButton)))
+
+        aboutBox.exec_()
 
     recentFileLimit = 15
 
