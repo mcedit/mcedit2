@@ -86,10 +86,10 @@ class PluginsTableModel(QtCore.QAbstractTableModel):
 
     def flags(self, index):
         column = index.column()
-        if column == 0:
-            return Qt.ItemIsEnabled | Qt.ItemIsUserCheckable | Qt.ItemIsEditable
+        if column == 1:
+            return Qt.ItemIsEnabled | Qt.ItemIsUserCheckable | Qt.ItemIsSelectable
         else:
-            return Qt.ItemIsEnabled
+            return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
 
 class PluginsDialog(QtGui.QDialog):
