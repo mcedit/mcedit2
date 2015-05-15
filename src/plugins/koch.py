@@ -5,8 +5,12 @@
 from __future__ import absolute_import, division, print_function
 import logging
 from math import pi, cos, sin
+from PySide import QtGui
+from mcedit2.plugins import registerGeneratePlugin
 
 from mcedit2.synth.l_system import Geometric, Line
+from mcedit2.synth.l_system_plugin import LSystemPlugin
+from mcedit2.widgets.blockpicker import BlockTypeButton
 from mceditlib.geometry import Vector
 
 
@@ -118,3 +122,30 @@ if __name__ == '__main__':
     for i in range(3):
         print(point)
         point = rotatePoint(point)
+
+class KochSnowflakePlugin(LSystemPlugin):
+    displayName = "Koch Snowflake"
+
+    def getOptionsWidget(self):
+        widget = QtGui.QWidget()
+
+        self.blockTypeButton = BlockTypeButton()
+        self.blockTypeButton.editorSession = self.editorSession
+        self.blockTypeButton.block = "minecraft:stone"
+        self.blockTypeButton.blocksChanged.connect(self.updatePreview)
+
+        layout = QtGui.QFormLayout()
+        layout.addRow(self.tr("Iterations"), self.iterationsSlider)
+        layout.addRow(self.tr("Block"), self.blockTypeButton)
+
+        widget.setLayout(layout)
+        return widget
+
+    def createInitialSymbol(self, bounds):
+        symbol = Snowflake(bounds, blocktype=self.blockTypeButton.block)
+
+        return symbol
+
+displayName = "Koch Snowflake"
+
+registerGeneratePlugin(KochSnowflakePlugin)
