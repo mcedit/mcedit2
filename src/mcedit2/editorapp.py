@@ -787,7 +787,7 @@ class MCEditApp(QtGui.QApplication):
                 return
 
         self.mainWindow.saveSettings()
-        raise SystemExit
+        self.quit()
 
     # --- Help Menu Actions ---
 
