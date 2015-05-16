@@ -1,7 +1,12 @@
+#!/usr/bin/env python
 """
     main.py
+
+    This is the main entry point of the MCEdit application.
+
+    The order of every statement in this file is important, including import statements. If
+    you do an "organize imports" on this file, I will kill you.
 """
-#!/usr/bin/env python
 from __future__ import absolute_import, division, print_function, unicode_literals
 import sys
 
@@ -166,7 +171,6 @@ def excepthook(exc_type, exc_value, exc_tb):
 def main():
     app = startup()
     sys.exit(app.exec_())
-
 
 if __name__ == "__main__":
     main()
