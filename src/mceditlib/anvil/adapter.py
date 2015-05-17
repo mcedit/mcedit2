@@ -365,11 +365,6 @@ class AnvilWorldMetadata(object):
     allowCommands = nbtattr.NBTAttr('allowCommands', nbt.TAG_Byte, False)
     DifficultyLocked = nbtattr.NBTAttr('DifficultyLocked', nbt.TAG_Byte, False)
 
-
-    SpawnX = nbtattr.NBTAttr('SpawnX', nbt.TAG_Int, 0)
-    SpawnY = nbtattr.NBTAttr('SpawnY', nbt.TAG_Int, 0)
-    SpawnZ = nbtattr.NBTAttr('SpawnZ', nbt.TAG_Int, 0)
-
     generatorName = nbtattr.NBTAttr('generatorName', nbt.TAG_String, "default")
     generatorOptions = nbtattr.NBTAttr('generatorOptions', nbt.TAG_String, "") #Default is different for every generatorType
     
