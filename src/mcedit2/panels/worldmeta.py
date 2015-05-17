@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 
 class WorldMetaPanel(QtGui.QWidget):
-    GENERATOR_TYPES = ["default", "flat", "largeBiomes", "amplified", "customized", 'debug_all_block_states']
+    GENERATOR_TYPES = ['default', 'flat', 'largeBiomes', 'amplified', 'customized', 'debug_all_block_states']
 
     editsDisabled = False
 
@@ -26,21 +26,21 @@ class WorldMetaPanel(QtGui.QWidget):
         self.editorSession = editorSession
         self.worldMeta = self.editorSession.worldEditor.adapter.metadata
 
-        callIcon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/edit_metadata.png"))
-        callButton = QtGui.QAction(callIcon, self.tr("World Info"), self)
+        callIcon = QtGui.QIcon(resourcePath('mcedit2/assets/mcedit2/icons/edit_metadata.png'))
+        callButton = QtGui.QAction(callIcon, self.tr('World Info'), self)
         callButton.setCheckable(True)
         callButton.triggered.connect(self.toggleView)
         self._toggleViewAction = callButton
 
-        load_ui("panels/worldmeta.ui", baseinstance=self)
+        load_ui('panels/worldmeta.ui', baseinstance=self)
 
         self.worldNBTEditor.editorSession = self.editorSession
         self.editorSession.revisionChanged.connect(self.revisionDidChange)
 
-        self.gamemodes = [self.tr(string) for string in("Survival", "Creative", "Adventure", "Spectator")]
-        self.difficulties = [self.tr(string) for string in ("Peaceful", "Easy", "Normal", "Hard")]
-        self.generatorNames = [self.tr(string) for string in ("default", "flat", "largeBiomes",
-                                                              "amplified", "customized", 'debug_all_block_states')]
+        self.gamemodes = [self.tr('Survival'), self.tr('Creative'), self.tr('Adventure'), self.tr('Spectator')]
+        self.difficulties = [self.tr('Peaceful'), self.tr('Easy'), self.tr('Normal'), self.tr('Hard')]
+        self.generatorNames = [self.tr('Default'), self.tr('Flat'), self.tr('Large Biomes'), self.tr('Amplified'),
+                               self.tr('Customized'), self.tr('Debug All Block States')]
 
         self.defaultGamemodeCombo.addItems(self.gamemodes)
         self.defaultGamemodeCombo.currentIndexChanged.connect(self.defaultGamemodeChanged)
@@ -62,13 +62,13 @@ class WorldMetaPanel(QtGui.QWidget):
         self.timeDays.editingFinished.connect(self.timeChanged)
         self.timeSlider.sliderReleased.connect(self.timeChanged)
 
-        self.dawnButton.setIcon(QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/clock/dawn.png")))
+        self.dawnButton.setIcon(QtGui.QIcon(resourcePath('mcedit2/assets/mcedit2/clock/dawn.png')))
         self.dawnButton.pressed.connect(self.setTimeDawn)
-        self.noonButton.setIcon(QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/clock/noon.png")))
+        self.noonButton.setIcon(QtGui.QIcon(resourcePath('mcedit2/assets/mcedit2/clock/noon.png')))
         self.noonButton.pressed.connect(self.setTimeNoon)
-        self.eveningButton.setIcon(QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/clock/evening.png")))
+        self.eveningButton.setIcon(QtGui.QIcon(resourcePath('mcedit2/assets/mcedit2/clock/evening.png')))
         self.eveningButton.pressed.connect(self.setTimeEvening)
-        self.nightButton.setIcon(QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/clock/night.png")))
+        self.nightButton.setIcon(QtGui.QIcon(resourcePath('mcedit2/assets/mcedit2/clock/night.png')))
         self.nightButton.pressed.connect(self.setTimeNight)
 
         self.lockedDifficultyBool.stateChanged.connect(self.lockedDifficultyChanged)
@@ -115,7 +115,7 @@ class WorldMetaPanel(QtGui.QWidget):
         self.editsDisabled = False
 
     def updateNBTTree(self):
-        self.worldNBTEditor.undoCommandPrefixText = self.tr("World Metadata: ")
+        self.worldNBTEditor.undoCommandPrefixText = self.tr('World Metadata: ')
         self.worldNBTEditor.setRootTagRef(self.worldMeta)
 
     def revisionDidChange(self):
@@ -145,7 +145,7 @@ class WorldMetaPanel(QtGui.QWidget):
         if self.editsDisabled or self.worldMeta.LevelName == self.worldNameLineEdit.text():
             return
 
-        command = WorldMetaEditCommand(self.editorSession, self.tr("Change Level Name"))
+        command = WorldMetaEditCommand(self.editorSession, self.tr('Change Level Name'))
         with command.begin():
             self.worldMeta.LevelName = self.worldNameLineEdit.text()
         self.editorSession.pushCommand(command)
@@ -154,7 +154,7 @@ class WorldMetaPanel(QtGui.QWidget):
         if self.editsDisabled or self.worldMeta.RandomSeed == long(self.generatorSeedLineEdit.text()):
             return
 
-        command = WorldMetaEditCommand(self.editorSession, self.tr("Change Generator Random Seed"))
+        command = WorldMetaEditCommand(self.editorSession, self.tr('Change Generator Random Seed'))
         with command.begin():
             self.worldMeta.RandomSeed = long(self.generatorSeedLineEdit.text())
         self.editorSession.pushCommand(command)
@@ -163,7 +163,7 @@ class WorldMetaPanel(QtGui.QWidget):
         if self.editsDisabled or self.worldMeta.generatorOptions == self.generatorOptionsLineEdit.text():
             return
 
-        command = WorldMetaEditCommand(self.editorSession, self.tr("Change Generator Options"))
+        command = WorldMetaEditCommand(self.editorSession, self.tr('Change Generator Options'))
         with command.begin():
             self.worldMeta.generatorOptions = self.generatorOptionsLineEdit.text()
         self.editorSession.pushCommand(command)
@@ -172,7 +172,7 @@ class WorldMetaPanel(QtGui.QWidget):
         if self.editsDisabled:  # xxx copied from inventory.py
             return
 
-        command = WorldMetaEditCommand(self.editorSession, self.tr("Change Default Gamemode"))
+        command = WorldMetaEditCommand(self.editorSession, self.tr('Change Default Gamemode'))
         with command.begin():
             self.worldMeta.GameType = self.defaultGamemodeCombo.currentIndex()
         self.editorSession.pushCommand(command)
@@ -181,7 +181,7 @@ class WorldMetaPanel(QtGui.QWidget):
         if self.editsDisabled:  # xxx copied from inventory.py
             return
 
-        command = WorldMetaEditCommand(self.editorSession, self.tr("Change Difficulty"))
+        command = WorldMetaEditCommand(self.editorSession, self.tr('Change Difficulty'))
         with command.begin():
             self.worldMeta.Difficulty = self.worldDifficultyCombo.currentIndex()
         self.editorSession.pushCommand(command)
@@ -190,7 +190,7 @@ class WorldMetaPanel(QtGui.QWidget):
         if self.editsDisabled:  # xxx copied from inventory.py
             return
 
-        command = WorldMetaEditCommand(self.editorSession, self.tr("Change Generation Type"))
+        command = WorldMetaEditCommand(self.editorSession, self.tr('Change Generation Type'))
         with command.begin():
             self.worldMeta.generatorName = self.GENERATOR_TYPES[self.generationTypeCombo.currentIndex()]
         self.editorSession.pushCommand(command)
@@ -199,7 +199,7 @@ class WorldMetaPanel(QtGui.QWidget):
         if self.editsDisabled:  # xxx copied from inventory.py
             return
 
-        command = WorldMetaEditCommand(self.editorSession, self.tr("Change Spawn Coordinates"))
+        command = WorldMetaEditCommand(self.editorSession, self.tr('Change Spawn Coordinates'))
         with command.begin():
             self.worldMeta.setWorldSpawnPosition(self.spawnX.value(), self.spawnY.value(), self.spawnZ.value())
         self.editorSession.pushCommand(command)
@@ -208,7 +208,7 @@ class WorldMetaPanel(QtGui.QWidget):
         if self.editsDisabled:  # xxx copied from inventory.py
             return
 
-        command = WorldMetaEditCommand(self.editorSession, self.tr("Change DayTime"))
+        command = WorldMetaEditCommand(self.editorSession, self.tr('Change DayTime'))
         with command.begin():
             days, time = self.timeDays.value(), self.timeSlider.value()
             print days, time
@@ -236,7 +236,7 @@ class WorldMetaPanel(QtGui.QWidget):
         if self.editsDisabled:  # xxx copied from inventory.py
             return
 
-        command = WorldMetaEditCommand(self.editorSession, self.tr("Change Hardcore"))
+        command = WorldMetaEditCommand(self.editorSession, self.tr('Change Hardcore'))
         with command.begin():
             self.worldMeta.hardcore = self.hardcoreBool.isChecked()
         self.editorSession.pushCommand(command)
@@ -245,7 +245,7 @@ class WorldMetaPanel(QtGui.QWidget):
         if self.editsDisabled:  # xxx copied from inventory.py
             return
 
-        command = WorldMetaEditCommand(self.editorSession, self.tr("Change Locked Difficulty"))
+        command = WorldMetaEditCommand(self.editorSession, self.tr('Change Locked Difficulty'))
         with command.begin():
             self.worldMeta.DifficultyLocked = self.lockedDifficultyBool.isChecked()
         self.editorSession.pushCommand(command)
@@ -254,7 +254,7 @@ class WorldMetaPanel(QtGui.QWidget):
         if self.editsDisabled:  # xxx copied from inventory.py
             return
 
-        command = WorldMetaEditCommand(self.editorSession, self.tr("Change Allow Commands"))
+        command = WorldMetaEditCommand(self.editorSession, self.tr('Change Allow Commands'))
         with command.begin():
             self.worldMeta.allowCommands = self.commandsBool.isChecked()
         self.editorSession.pushCommand(command)
