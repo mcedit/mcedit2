@@ -13,7 +13,7 @@ from mcedit2.editorcommands.find_replace import FindReplaceDialog
 from mcedit2.editorcommands.analyze import AnalyzeOutputDialog
 from mcedit2.editortools.select import SelectCommand
 from mcedit2.panels.player import PlayerPanel
-from mcedit2.panels.worldmeta import WorldMetaPanel
+from mcedit2.panels.worldinfo import WorldInfoPanel
 from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.directories import getUserSchematicsDirectory
 from mceditlib.util.lazyprop import weakrefprop
@@ -279,8 +279,8 @@ class EditorSession(QtCore.QObject):
         progress("Loading panels...")
 
         self.playerPanel = PlayerPanel(self)
-        self.worldMetaPanel = WorldMetaPanel(self)
-        self.panels = [self.playerPanel, self.worldMetaPanel]
+        self.WorldInfoPanel = WorldInfoPanel(self)
+        self.panels = [self.playerPanel, self.WorldInfoPanel]
 
         # --- Tools ---
 

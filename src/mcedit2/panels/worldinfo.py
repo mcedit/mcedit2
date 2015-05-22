@@ -1,5 +1,5 @@
 """
-    player
+    worldinfo
 """
 from __future__ import absolute_import
 import logging
@@ -16,13 +16,13 @@ from mcedit2.util.screen import centerWidgetInScreen
 log = logging.getLogger(__name__)
 
 
-class WorldMetaPanel(QtGui.QWidget):
+class WorldInfoPanel(QtGui.QWidget):
     GENERATOR_TYPES = ['default', 'flat', 'largeBiomes', 'amplified', 'customized', 'debug_all_block_states']
 
     editsDisabled = False
 
     def __init__(self, editorSession):
-        super(WorldMetaPanel, self).__init__(QtGui.qApp.mainWindow, f=Qt.Tool)
+        super(WorldInfoPanel, self).__init__(QtGui.qApp.mainWindow, f=Qt.Tool)
         self.editorSession = editorSession
         self.worldMeta = self.editorSession.worldEditor.adapter.metadata
 
