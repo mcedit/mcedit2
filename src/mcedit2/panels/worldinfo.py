@@ -32,7 +32,7 @@ class WorldInfoPanel(QtGui.QWidget):
         callButton.triggered.connect(self.toggleView)
         self._toggleViewAction = callButton
 
-        load_ui('panels/worldmeta.ui', baseinstance=self)
+        load_ui('panels/worldinfo.ui', baseinstance=self)
 
         self.worldNBTEditor.editorSession = self.editorSession
         self.editorSession.revisionChanged.connect(self.revisionDidChange)
