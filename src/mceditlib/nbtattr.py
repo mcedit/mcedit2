@@ -275,6 +275,37 @@ class NBTVectorAttr(NBTListAttr):
         return Vector(*val)
 
 
+class KeyedVectorAttr(object):
+    """
+    This attr is useful when a Vector is represented as a trio of named tags in a compound
+    instead of as a list of tags. For example, the world spawn position (SpawnX, SpawnY,
+    SpawnZ) and a TileEntity's position (x, y, z).
+    """
+    def __init__(self, xKey, yKey, zKey, tagType, default=None):
+        self.tagType = tagType
+        self.default = default
+        self.keys = xKey, yKey, zKey
+
+    def __get__(self, instance, owner):
+        tag = instance.rootTag
+        for key in self.keys:
+            if key not in tag:
+                tag[key] = self.tagType(value=self.default)
+
+        return Vector(*[tag[k].value for k in self.keys])
+
+    def __set__(self, instance, value):
+        tag = instance.rootTag
+        for key, val in zip(self.keys, value):
+            if key not in tag:
+                tag[key] = self.tagType(val)
+            else:
+                tag[key].value = val
+
+        instance.dirty = True
+
+
+
 def SetNBTDefaults(ref):
     """
     Given an object whose class has several members of type `NBT[*]Attr`,

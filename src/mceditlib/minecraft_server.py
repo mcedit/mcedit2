@@ -356,7 +356,7 @@ class MCServerChunkGenerator(object):
 
     def generateAtPositionIter(self, tempWorld, tempDir, cx, cz, simulate=False):
         tempWorldRW = worldeditor.WorldEditor(tempWorld.filename)
-        tempWorldRW.setWorldSpawnPosition((cx * 16, 64, cz * 16))
+        tempWorldRW.getWorldMetadata().Spawn = cx * 16, 64, cz * 16
         tempWorldRW.saveChanges()
         tempWorldRW.close()
         del tempWorldRW

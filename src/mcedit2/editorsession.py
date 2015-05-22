@@ -693,7 +693,7 @@ class EditorSession(QtCore.QObject):
                     pass
             except PlayerNotFound:
                 try:
-                    center = self.worldEditor.worldSpawnPosition()
+                    center = self.worldEditor.getWorldMetadata().Spawn
                     log.info("Centering on spawn position.")
                 except AttributeError:
                     log.info("Centering on world center")

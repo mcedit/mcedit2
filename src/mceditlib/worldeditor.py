@@ -529,21 +529,21 @@ class WorldEditor(object):
         if self._allChunks is not None:
             self._allChunks[dimName].discard((cx, cz))
 
-    # --- Player and spawn manipulation ---
+    # --- World metadata ---
 
-    def worldSpawnPosition(self):
+    def getWorldMetadata(self):
         """
-        Return the world's default spawn position.
-        """
-        return self.adapter.metadata.worldSpawnPosition()
+        Return an object containing global info about the world.
 
-    def setWorldSpawnPosition(self, pos):
-        """
-        Change the world's default spawn position.
+        Different level formats can return different objects for the world metadata.
+        At the very least, you can expect the object to have Spawn and Seed attributes.
 
-        :param pos: (x, y, z) coordinates
+        Currently, only AnvilWorldMetadata is ever returned.
+        :return:
         """
-        self.adapter.metadata.setWorldSpawnPosition(pos)
+        return self.adapter.metadata
+
+    # --- Players ---
 
     def listPlayers(self):
         return self.adapter.listPlayers()

@@ -374,25 +374,20 @@ class AnvilWorldMetadata(object):
 
     version = nbtattr.NBTAttr('version', nbt.TAG_Int, VERSION_ANVIL)
 
-    def worldSpawnPosition(self):
-        return Vector(*[self.rootTag[i].value for i in ("SpawnX", "SpawnY", "SpawnZ")])
-
-    def setWorldSpawnPosition(self, pos):
-        for name, val in zip(("SpawnX", "SpawnY", "SpawnZ"), pos):
-            self.rootTag[name] = nbt.TAG_Int(val)
+    Spawn = nbtattr.KeyedVectorAttr('SpawnX', 'SpawnY', 'SpawnZ', nbt.TAG_Int)
 
     def is1_8World(self):
         # Minecraft 1.8 adds a dozen tags to level.dat/Data. These tags are removed if
         # the world is played in 1.7 (and all of the items are removed too!)
         # Use some of these tags to decide whether to use 1.7 format ItemStacks or 1.8 format ones.
-        # In 1.8, the stack's "id" is a string, but in 1.7 it is an int.
-        tags = (t in self.rootTag for t in (
+        # In 1.8, the stack's "id" is a TAG_String, but in 1.7 it is a TAG_Short.
+        tags = (
             'BorderCenterX', 'BorderCenterZ',
             'BorderDamagePerBlock',
             'BorderSafeZone',
             'BorderSize'
-        ))
-        return any(tags)
+        )
+        return any(tag in self.rootTag for tag in tags)
 
 class AnvilWorldAdapter(object):
     """

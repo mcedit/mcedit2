@@ -384,7 +384,7 @@ class WorldListWidget(QtGui.QDialog):
                     log.info("Centering on single-player player.")
                 except PlayerNotFound:
                     try:
-                        center = worldEditor.worldSpawnPosition()
+                        center = worldEditor.getWorldMetadata().Spawn
                         log.info("Centering on spawn position.")
                     except AttributeError:
                         log.info("Centering on world center")

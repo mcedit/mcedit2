@@ -90,7 +90,7 @@ class WorldInfoPanel(QtGui.QWidget):
         self.generatorSeedLineEdit.setText(str(self.worldMeta.RandomSeed))
         self.generatorOptionsLineEdit.setText(self.worldMeta.generatorOptions)
 
-        sx, sy, sz = self.worldMeta.worldSpawnPosition()
+        sx, sy, sz = self.worldMeta.Spawn
         self.spawnX.setValue(sx)
         self.spawnY.setValue(sy)
         self.spawnZ.setValue(sz)
@@ -201,7 +201,7 @@ class WorldInfoPanel(QtGui.QWidget):
 
         command = WorldMetaEditCommand(self.editorSession, self.tr('Change Spawn Coordinates'))
         with command.begin():
-            self.worldMeta.setWorldSpawnPosition(self.spawnX.value(), self.spawnY.value(), self.spawnZ.value())
+            self.worldMeta.Spawn = self.spawnX.value(), self.spawnY.value(), self.spawnZ.value()
         self.editorSession.pushCommand(command)
 
     def timeChanged(self):

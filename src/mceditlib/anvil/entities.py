@@ -63,15 +63,7 @@ class PCTileEntityRefBase(object):
         return self.rootTag
 
     id = nbtattr.NBTAttr("id", nbt.TAG_String)
-
-    @property
-    def Position(self):
-        return Vector(*[self.rootTag[c].value for c in 'xyz'])
-
-    @Position.setter
-    def Position(self, pos):
-        for a, p in zip('xyz', pos):
-            self.rootTag[a] = nbt.TAG_Int(p)
+    Position = nbtattr.KeyedVectorAttr('x', 'y', 'z', nbt.TAG_Int, 0)
 
     def copy(self):
         return self.copyWithOffset(Vector(0, 0, 0))
