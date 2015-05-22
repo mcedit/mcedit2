@@ -26,7 +26,7 @@ class WorldInfoPanel(QtGui.QWidget):
         self.editorSession = editorSession
         self.worldMeta = self.editorSession.worldEditor.adapter.metadata
 
-        callIcon = QtGui.QIcon(resourcePath('mcedit2/assets/mcedit2/icons/edit_metadata.png'))
+        callIcon = QtGui.QIcon(resourcePath('mcedit2/assets/mcedit2/icons/edit_worldinfo.png'))
         callButton = QtGui.QAction(callIcon, self.tr('World Info'), self)
         callButton.setCheckable(True)
         callButton.triggered.connect(self.toggleView)
