@@ -93,7 +93,7 @@ class PlayerPanel(QtGui.QWidget):
         action.setCheckable(True)
         action.triggered.connect(self.toggleView)
         self._toggleViewAction = action
-
+                     
         self.editorSession.revisionChanged.connect(self.revisionDidChange)
         self.initPropertiesWidget()
 
@@ -172,6 +172,9 @@ class PlayerPanel(QtGui.QWidget):
         else:
             self.hide()
             self._toggleViewAction.setChecked(False)
+            
+    def closeEvent(self, event):
+        self.toggleView()
 
     def toggleViewAction(self):
         return self._toggleViewAction
