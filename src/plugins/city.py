@@ -21,12 +21,6 @@ log = logging.getLogger(__name__)
 
 method = "City"  # xxx
 
-random = Random()
-
-
-def setSeed(seed):
-    global random
-    random = Random(seed)
 
 
 class City(Geometric):
@@ -61,8 +55,8 @@ class City(Geometric):
 
         for i in xrange(1, buildingCount):
             print('Constructing building %s of %s' % (i, buildingCount))
-            r = random.randint(0, halfSize.x / 8 * 7)
-            theta = random.random() * TwoPI
+            r = self.random.randint(0, halfSize.x / 8 * 7)
+            theta = self.random.random() * TwoPI
             phi = 0
             (x1, y1, z1) = polarToCartesian(theta, phi, r) + groundOrigin
 
@@ -73,7 +67,7 @@ class City(Geometric):
 
             # Scale the buildings further out downwards
             coef = float(r / (centerX / 8.0 * 7.0))
-            if random.randint(1, 20) < 2:
+            if self.random.randint(1, 20) < 2:
                 # But occasionally allow a full-height building
                 h = self.height
             else:
@@ -82,7 +76,7 @@ class City(Geometric):
             if h < MINSIZE:
                 h = MINSIZE + 1
             # Vary heights somewhat
-            h = random.randint(MINSIZE, h)
+            h = self.random.randint(MINSIZE, h)
 
             if h < MINSIZE:
                 h = MINSIZE
@@ -90,26 +84,26 @@ class City(Geometric):
             w = self.width / MINSIZE
             if w < MINSIZE:
                 w = MINSIZE + 1
-            w = random.randint(MINSIZE, w) / 2
+            w = self.random.randint(MINSIZE, w) / 2
 
             if w < MINSIZE:
                 w = MINSIZE
             if w > MINSIZE * 2:
-                if random.randint(1, 10) < 2:
-                    w = MINSIZE * 2 + random.randint(MINSIZE, MINSIZE * 2)
+                if self.random.randint(1, 10) < 2:
+                    w = MINSIZE * 2 + self.random.randint(MINSIZE, MINSIZE * 2)
                 else:
                     w = MINSIZE * 2
 
             d = self.length / MINSIZE
             if d < MINSIZE:
                 d = MINSIZE + 1
-            d = random.randint(MINSIZE, d) / 2
+            d = self.random.randint(MINSIZE, d) / 2
 
             if d < MINSIZE:
                 d = MINSIZE
             if d > MINSIZE * 2:
-                if random.randint(1, 10) < 2:
-                    d = MINSIZE * 2 + random.randint(MINSIZE, MINSIZE * 2)
+                if self.random.randint(1, 10) < 2:
+                    d = MINSIZE * 2 + self.random.randint(MINSIZE, MINSIZE * 2)
                 else:
                     d = MINSIZE * 2
 
@@ -125,7 +119,7 @@ class City(Geometric):
 
             newBox = BoundingBox((tx1, ty1, tz1), (tx2, ty2, tz2))
 
-            if MINSIZE > 4 and random.randint(0, 100) < 10:
+            if MINSIZE > 4 and self.random.randint(0, 100) < 10:
                 yield BuildingAngledShim(newBox, **self.parameters)
             else:
                 yield RuinedBuilding(newBox, **self.parameters)
@@ -134,8 +128,8 @@ class City(Geometric):
 class BuildingAngledShim(Geometric):
     def replace(self):
         return [BuildingAngled(self,
-                               orientation=random.randint(0, 45),
-                               numSides=random.randint(3, 11),
+                               orientation=self.random.randint(0, 45),
+                               numSides=self.random.randint(3, 11),
                                **self.parameters)]
 
 
@@ -154,16 +148,16 @@ class BuildingAngled(Geometric):
         centreDepth = depth / 2
 
         # Randomly swap edge and fill blocks
-        if random.randint(1, 100) < 30:
+        if self.random.randint(1, 100) < 30:
             edgeBlock, fillBlock = fillBlock, edgeBlock
 
         TwoPI = 2 * pi
 
         SideLength = centreWidth
-        RINGS = random.randint(1, SideLength / 4 + 1)
+        RINGS = self.random.randint(1, SideLength / 4 + 1)
 
         if Orientation == -1:  # Randomise
-            Orientation = random.randint(0, 45)
+            Orientation = self.random.randint(0, 45)
 
         offsetX = 0
         offsetZ = 0
@@ -171,15 +165,15 @@ class BuildingAngled(Geometric):
         angle = TwoPI / 360
 
         if numSides < 3:
-            numSides = 3 + random.randint(0, 15)
+            numSides = 3 + self.random.randint(0, 15)
 
         banding = False
         bandingSize1 = 0
         bandingSize2 = 0
-        if random.randint(1, 20) < 10:
+        if self.random.randint(1, 20) < 10:
             banding = True
-            bandingSize1 = random.randint(2, 8)
-            bandingSize2 = random.randint(1, bandingSize1)
+            bandingSize1 = self.random.randint(2, 8)
+            bandingSize2 = self.random.randint(1, bandingSize1)
 
         for y in xrange(0, height):
             print('%s: %s of %s' % (method, y, height))
@@ -237,29 +231,29 @@ class RuinedBuilding(Geometric):
         H = Factorise(height - 1)
         D = Factorise(depth - 1)
 
-        w = W.pop(random.randint(0, len(W) - 1))
-        h = H.pop(random.randint(0, len(H) - 1))
-        d = D.pop(random.randint(0, len(D) - 1))
+        w = W.pop(self.random.randint(0, len(W) - 1))
+        h = H.pop(self.random.randint(0, len(H) - 1))
+        d = D.pop(self.random.randint(0, len(D) - 1))
 
         drawGlass = False
-        if random.randint(1, 20) > 1:
+        if self.random.randint(1, 20) > 1:
             drawGlass = True
 
         banding = False
         bandType = 1
         bandingSize1 = 0
         bandingSize2 = 0
-        if random.randint(1, 20) < 10:
+        if self.random.randint(1, 20) < 10:
             banding = True
-            bandingSize1 = random.randint(2, 8)
-            bandingSize2 = random.randint(1, bandingSize1)
-        if random.randint(1, 20) < 5:
+            bandingSize1 = self.random.randint(2, 8)
+            bandingSize2 = self.random.randint(1, bandingSize1)
+        if self.random.randint(1, 20) < 5:
             bandType = 2
 
         # Floors
         print('%s: Floors' % method)
         for iterY in xrange(0, height - 1):
-            if iterY == 0 or (iterY % 4 == 0 and random.randint(1, 10) > 1):
+            if iterY == 0 or (iterY % 4 == 0 and self.random.randint(1, 10) > 1):
                 floorBox = BoundingBox((self.minx + 1, self.miny + iterY, self.minz + 1),
                                        (width - 1, 1, depth - 1))
                 yield Fill(floorBox, blocktype=fillBlock)
@@ -268,7 +262,7 @@ class RuinedBuilding(Geometric):
 
         # Create room partitions along the entire height whenever x % w == 0 or x % roomSize == 0
         # Likewise for z % d == 0 or z % roomSize == 0
-        roomSize = random.randint(6, 12)
+        roomSize = self.random.randint(6, 12)
 
         for x in range(width):
             if x % w == 0 or x % roomSize == 0:
@@ -394,8 +388,8 @@ class CityGeneratePlugin(LSystemPlugin):
     displayName = "GFX: City"
 
     def createInitialSymbol(self, bounds):
-        setSeed(self.seedInput.value())
         symbol = City(bounds,
+                      random=Random(self.seedInput.value()),
                       fillBlockType=self.fillBlockButton.block,
                       edgeBlockType=self.edgeBlockButton.block,
                       lightBlockType=self.lightBlockButton.block,
