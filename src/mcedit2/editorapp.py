@@ -20,6 +20,7 @@ from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.directories import getUserFilesDirectory, getUserPluginsDirectory
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.objgraphwidget import ObjGraphWidget
+from mcedit2.util.qglcontext import validateQGLContext
 from mcedit2.util.resources import resourcePath
 from mcedit2.util.worldloader import LoaderTimer
 from mcedit2.widgets import prefsdialog, configureblocksdialog
@@ -103,6 +104,10 @@ class MCEditApp(QtGui.QApplication):
         self.setStyleSheet(styleSheet)
 
         log.info("Loaded stylesheet.")
+
+        # --- OpenGL ---
+
+        validateQGLContext()
 
         # --- Main Window ---
 
