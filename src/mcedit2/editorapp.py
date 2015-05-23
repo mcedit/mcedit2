@@ -399,16 +399,16 @@ class MCEditApp(QtGui.QApplication):
         socket = QtNetwork.QLocalSocket()
         socket.connectToServer(serverName)
         if socket.waitForConnected(500):
-            # xxx maybe write argv to the running app and have it open files?
+            # TODO: get filenames from argv and pass to running app
             log.error("%s already running", serverName)
             raise SystemExit  # Already running
 
         def newConnection():
             newSocket = server.nextPendingConnection()
+            # TODO: read filenames from socket
             newSocket.close()
             self.mainWindow.activateWindow()
             self.mainWindow.raise_()
-
 
         server = QtNetwork.QLocalServer(newConnection=newConnection)
         server._listener = newConnection
@@ -455,8 +455,9 @@ class MCEditApp(QtGui.QApplication):
         if fps is not None:
             self.fpsLabel.setText("%0.1f fps" % fps)
 
-
     idleTime = 333
+
+    # --- Global chunk loading timer ---
 
     @profiler.function
     def loadTimerFired(self):
@@ -473,6 +474,8 @@ class MCEditApp(QtGui.QApplication):
         except StopIteration:
             log.debug("Loading timer idle (no chunks)")
             self.loadTimer.setInterval(self.idleTime)
+
+    # --- Update UI after tab change ---
 
     def sessionDidChange(self, session, previousSession):
         """
@@ -538,7 +541,6 @@ class MCEditApp(QtGui.QApplication):
                 self.sessionDockWidgets.append(dw)
 
             session.focusWorldView()
-
 
     def removeSessionDockWidgets(self):
         for dw in self.sessionDockWidgets:
@@ -682,7 +684,6 @@ class MCEditApp(QtGui.QApplication):
             fileLoadingDialog.setValue(current)
             fileLoadingDialog.setMaximum(max)
             fileLoadingDialog.setLabelText(status)
-
 
         try:
             resourceLoader = self.getResourceLoaderForFilename(filename)

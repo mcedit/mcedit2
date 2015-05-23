@@ -42,13 +42,15 @@ from mceditlib.revisionhistory import UndoFolderExists
 from mceditlib.worldeditor import WorldEditor
 from mceditlib.blocktypes import BlockType
 
-
 log = logging.getLogger(__name__)
-"""
-An EditorSession is a world currently opened for editing, the state of the editor including the current
-selection box, the editor tab containing its viewports, its command history, a separate instance of each editor
-tool (why?), and the ChunkLoader that coordinates loading chunks into its viewports.
-"""
+
+sessionSettings = Settings().getNamespace("editorsession")
+currentViewSetting = sessionSettings.getOption("currentview", unicode, "cam")
+
+# An EditorSession is a world currently opened for editing, the state of the editor including the
+# current selection box, the editor tab containing its viewports, its command history, its shared OpenGL context,
+# a separate instance of each editor tool (why?), and the ChunkLoader that coordinates loading
+# chunks into its viewports.
 
 class PendingImport(object):
     def __init__(self, schematic, pos, text):
@@ -62,6 +64,7 @@ class PendingImport(object):
     @property
     def bounds(self):
         return BoundingBox(self.pos, self.schematic.getDimension().bounds.size)
+
 
 class PasteImportCommand(QtGui.QUndoCommand):
     def __init__(self, editorSession, pendingImport, text, *args, **kwargs):
@@ -77,8 +80,10 @@ class PasteImportCommand(QtGui.QUndoCommand):
         self.editorSession.moveTool.addPendingImport(self.pendingImport)
         self.editorSession.chooseTool("Move")
 
+
 class EditorSession(QtCore.QObject):
-    def __init__(self, filename, resourceLoader, configuredBlocks, readonly=False, progressCallback=None):
+    def __init__(self, filename, resourceLoader, configuredBlocks, readonly=False,
+                 progressCallback=None):
         """
 
         :param filename:
@@ -111,6 +116,10 @@ class EditorSession(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.undoStack = MCEUndoStack()
 
+        self.loader = None
+        self.blockModels = None
+        self.textureAtlas = None
+
         self.filename = filename
         self.dockWidgets = []
         self.undoBlock = None
@@ -118,7 +127,7 @@ class EditorSession(QtCore.QObject):
         self.dirty = False
         self.configuredBlocks = None
 
-        self.copiedSchematic = None
+        self.copiedSchematic = None  # xxx should be app global!!
         """:type : WorldEditor"""
 
         # --- Open world editor ---
@@ -131,13 +140,16 @@ class EditorSession(QtCore.QObject):
             msgBox.setWindowTitle(self.tr("MCEdit %(version)s") % {"version": v})
             msgBox.setText(self.tr("This world was not properly closed by MCEdit."))
             msgBox.setInformativeText(self.tr(
-                "MCEdit may have crashed. An undo history was found for this world. You may try to resume editing "
-                "with the saved undo history, or start over with the current state of the world."))
+                "MCEdit may have crashed. An undo history was found for this world. You may try "
+                "to resume editing with the saved undo history, or start over with the current "
+                "state of the world."))
             resumeBtn = msgBox.addButton("Resume Editing", QtGui.QMessageBox.ApplyRole)
             msgBox.addButton("Discard History", QtGui.QMessageBox.DestructiveRole)
             # msgBox.exec_()
             # clicked = msgBox.clickedButton()
-            clicked = None  # xxxxx
+
+            # xxxxx resume editing not implemented in session - need to restore undo history!
+            clicked = None
             resume = clicked is resumeBtn
             try:
                 self.worldEditor = WorldEditor(filename, readonly=readonly, resume=resume)
@@ -167,27 +179,33 @@ class EditorSession(QtCore.QObject):
         self.actionCopy.setShortcut(QtGui.QKeySequence.Copy)
         self.actionCopy.setObjectName("actionCopy")
 
-        self.actionPaste = QtGui.QAction(self.tr("Paste"), self, triggered=self.paste, enabled=False)
+        self.actionPaste = QtGui.QAction(self.tr("Paste"), self, triggered=self.paste,
+                                         enabled=False)
         self.actionPaste.setShortcut(QtGui.QKeySequence.Paste)
         self.actionPaste.setObjectName("actionPaste")
 
-        self.actionPaste_Blocks = QtGui.QAction(self.tr("Paste Blocks"), self, triggered=self.pasteBlocks, enabled=False)
+        self.actionPaste_Blocks = QtGui.QAction(self.tr("Paste Blocks"), self,
+                                                triggered=self.pasteBlocks, enabled=False)
         self.actionPaste_Blocks.setShortcut(QtGui.QKeySequence("Ctrl+Shift+V"))
         self.actionPaste_Blocks.setObjectName("actionPaste_Blocks")
 
-        self.actionPaste_Entities = QtGui.QAction(self.tr("Paste Entities"), self, triggered=self.pasteEntities, enabled=False)
+        self.actionPaste_Entities = QtGui.QAction(self.tr("Paste Entities"), self,
+                                                  triggered=self.pasteEntities, enabled=False)
         self.actionPaste_Entities.setShortcut(QtGui.QKeySequence("Ctrl+Alt+V"))
         self.actionPaste_Entities.setObjectName("actionPaste_Entities")
 
-        self.actionClear = QtGui.QAction(self.tr("Delete"), self, triggered=self.deleteSelection, enabled=False)
+        self.actionClear = QtGui.QAction(self.tr("Delete"), self, triggered=self.deleteSelection,
+                                         enabled=False)
         self.actionClear.setShortcut(QtGui.QKeySequence.Delete)
         self.actionClear.setObjectName("actionClear")
 
-        self.actionDeleteBlocks = QtGui.QAction(self.tr("Delete Blocks"), self, triggered=self.deleteBlocks, enabled=False)
+        self.actionDeleteBlocks = QtGui.QAction(self.tr("Delete Blocks"), self,
+                                                triggered=self.deleteBlocks, enabled=False)
         self.actionDeleteBlocks.setShortcut(QtGui.QKeySequence("Shift+Del"))
         self.actionDeleteBlocks.setObjectName("actionDeleteBlocks")
 
-        self.actionDeleteEntities = QtGui.QAction(self.tr("Delete Entities"), self, triggered=self.deleteEntities, enabled=False)
+        self.actionDeleteEntities = QtGui.QAction(self.tr("Delete Entities"), self,
+                                                  triggered=self.deleteEntities, enabled=False)
         self.actionDeleteEntities.setShortcut(QtGui.QKeySequence("Shift+Alt+Del"))
         self.actionDeleteEntities.setObjectName("actionDeleteEntities")
 
@@ -195,12 +213,14 @@ class EditorSession(QtCore.QObject):
         self.actionFill.setShortcut(QtGui.QKeySequence("Shift+Ctrl+F"))
         self.actionFill.setObjectName("actionFill")
 
-        self.actionFindReplace = QtGui.QAction(self.tr("Find/Replace"), self, triggered=self.findReplace, enabled=True)
+        self.actionFindReplace = QtGui.QAction(self.tr("Find/Replace"), self,
+                                               triggered=self.findReplace, enabled=True)
         self.actionFindReplace.setShortcut(QtGui.QKeySequence.Find)
         self.actionFindReplace.setObjectName("actionFindReplace")
 
-        self.actionAnalyze = QtGui.QAction(self.tr("Analyze"), self, triggered=self.analyze, enabled=True)
-        #self.actionAnalyze.setShortcut(QtGui.QKeySequence.Analyze)
+        self.actionAnalyze = QtGui.QAction(self.tr("Analyze"), self, triggered=self.analyze,
+                                           enabled=True)
+        # self.actionAnalyze.setShortcut(QtGui.QKeySequence.Analyze)
         self.actionAnalyze.setObjectName("actionAnalyze")
 
         undoAction = self.undoStack.createUndoAction(self.menuEdit)
@@ -225,7 +245,6 @@ class EditorSession(QtCore.QObject):
         self.menuEdit.addSeparator()
         self.menuEdit.addAction(self.actionFindReplace)
         self.menuEdit.addAction(self.actionAnalyze)
-
 
         self.menus.append(self.menuEdit)
 
@@ -304,8 +323,8 @@ class EditorSession(QtCore.QObject):
         def _dimChanged(f):
             def _changed():
                 self.gotoDimension(f)
-            return _changed
 
+            return _changed
 
         dimButton = self.changeDimensionButton = QtGui.QToolButton()
         dimButton.setText(self.dimensionMenuLabel(""))
@@ -344,7 +363,8 @@ class EditorSession(QtCore.QObject):
         self.dockWidgets.append((Qt.RightDockWidgetArea, self.inspectorDockWidget))
 
         if len(self.toolActions):
-            self.toolActions[0].trigger()  # Must be called after toolChanged is connected to editorTab
+            # Must be called after toolChanged is connected to editorTab
+            self.toolActions[0].trigger()
 
         if hasattr(progress, 'progressCount') and progress.progressCount != progressMax:
             log.info("Update progressMax to %d, please.", progress.progressCount)
@@ -359,6 +379,7 @@ class EditorSession(QtCore.QObject):
         if self.worldEditor:
             self.worldEditor.close()
             self.worldEditor = None
+
     # Connecting these signals to the EditorTab creates a circular reference through
     # the Qt objects, preventing the EditorSession from being destroyed
 
@@ -433,7 +454,6 @@ class EditorSession(QtCore.QObject):
             blockJson['forcedModelRotation'] = blockDef.modelRotations
             blockJson['forcedRotationFlags'] = blockDef.rotationFlags
             blockJson['__configured__'] = True
-
 
         self.configuredBlocks = configuredBlocks
 
@@ -561,11 +581,10 @@ class EditorSession(QtCore.QObject):
 
     dimensionChanged = QtCore.Signal(object)
 
-
     _dimDisplayNames = {"": "Overworld",
-                       "DIM-1": "Nether",
-                       "DIM1": "The End",
-                       }
+                        "DIM-1": "Nether",
+                        "DIM1": "The End",
+                        }
 
     def dimensionDisplayName(self, dimName):
         return self._dimDisplayNames.get(dimName, dimName)
@@ -586,7 +605,6 @@ class EditorSession(QtCore.QObject):
         self.loader.allChunksDone.connect(self.updateView)
 
         self.dimensionChanged.emit(dim)
-
 
     # - Import/export -
 
@@ -676,14 +694,15 @@ class EditorSession(QtCore.QObject):
 
     def loadDone(self):
         # Called by MCEditApp after the view is on screen to make sure view.center() works correctly
-        # xxx used depthbuffer read for that, now what?
+        # xxx was needed because view.centerOnPoint used a depthbuffer read for that, now what?
         try:
             try:
                 player = self.worldEditor.getPlayer()
                 center = Vector(*player.Position) + (0, 1.8, 0)
                 dimNo = player.Dimension
                 dimName = self.worldEditor.dimNameFromNumber(dimNo)
-                log.info("Setting view angle to single-player player's view in dimension %s.", dimName)
+                log.info("Setting view angle to single-player player's view in dimension %s.",
+                         dimName)
                 rotation = player.Rotation
                 if dimName:
                     self.gotoDimension(dimName)
@@ -702,7 +721,6 @@ class EditorSession(QtCore.QObject):
             self.editorTab.currentView().centerOnPoint(center, distance=0)
         except Exception as e:
             log.exception("Error while centering on player for world editor: %s", e)
-
 
     # --- Tools ---
 
@@ -732,15 +750,19 @@ class EditorSession(QtCore.QObject):
 
     def chunkDidComplete(self):
         from mcedit2 import editorapp
-        editorapp.MCEditApp.app.updateStatusLabel(None, None, None, self.loader.cps, self.editorTab.currentView().fps)
+
+        editorapp.MCEditApp.app.updateStatusLabel(None, None, None, self.loader.cps,
+                                                  self.editorTab.currentView().fps)
 
     def updateStatusFromEvent(self, event):
         from mcedit2 import editorapp
+
         if event.blockPosition:
             id = self.currentDimension.getBlockID(*event.blockPosition)
             data = self.currentDimension.getBlockData(*event.blockPosition)
             block = self.worldEditor.blocktypes[id, data]
-            biomeID = self.currentDimension.getBiomeID(event.blockPosition[0], event.blockPosition[2])
+            biomeID = self.currentDimension.getBiomeID(event.blockPosition[0],
+                                                       event.blockPosition[2])
             biome = self.biomeTypes.types.get(biomeID)
             if biome is not None:
                 biomeName = biome.name
@@ -748,9 +770,11 @@ class EditorSession(QtCore.QObject):
                 biomeName = "Unknown biome"
 
             biomeText = "%s (%d)" % (biomeName, biomeID)
-            editorapp.MCEditApp.app.updateStatusLabel(event.blockPosition, block, biomeText, self.loader.cps, event.view.fps)
+            editorapp.MCEditApp.app.updateStatusLabel(event.blockPosition, block, biomeText,
+                                                      self.loader.cps, event.view.fps)
         else:
-            editorapp.MCEditApp.app.updateStatusLabel('(N/A)', None, None, self.loader.cps, event.view.fps)
+            editorapp.MCEditApp.app.updateStatusLabel('(N/A)', None, None, self.loader.cps,
+                                                      event.view.fps)
 
     def viewMousePress(self, event):
         self.updateStatusFromEvent(event)
@@ -789,7 +813,8 @@ class EditorSession(QtCore.QObject):
             msgBox = QtGui.QMessageBox(self.editorTab.window())
             msgBox.setText("The world has been modified.")
             msgBox.setInformativeText("Do you want to save your changes?")
-            msgBox.setStandardButtons(QtGui.QMessageBox.Save | QtGui.QMessageBox.Discard | QtGui.QMessageBox.Cancel)
+            msgBox.setStandardButtons(
+                QtGui.QMessageBox.Save | QtGui.QMessageBox.Discard | QtGui.QMessageBox.Cancel)
             msgBox.setDefaultButton(QtGui.QMessageBox.Save)
             ret = msgBox.exec_()
 
@@ -837,18 +862,16 @@ class EditorSession(QtCore.QObject):
             if blocktype.unknown:
                 yield blocktype.internalName
 
+
 class EditorTab(QtGui.QWidget):
-    """
-    EditorTab is the widget containing the editor viewports, the minimap, and
-    the settings panel for the currently selected tool.
-    """
     def __init__(self, editorSession):
         """
+        EditorTab is the widget containing the editor viewports, the minimap, and
+        the settings panel for the currently selected tool and its dockwidget.
 
         :type editorSession: mcedit2.editorsession.EditorSession
         :rtype: EditorTab
         """
-        settings = Settings()
 
         QtGui.QWidget.__init__(self)
         self.setContentsMargins(0, 0, 0, 0)
@@ -863,11 +886,11 @@ class EditorTab(QtGui.QWidget):
         self.views = []
 
         for name, handler in (
-            ("2D", self.showCutawayView),
-            ("Over", self.showOverheadView),
-            # ("Iso", self.showIsoView),
-            ("Cam", self.showCameraView),
-            # ("4-up", self.showFourUpView),
+                ("2D", self.showCutawayView),
+                ("Over", self.showOverheadView),
+                # ("Iso", self.showIsoView),
+                ("Cam", self.showCameraView),
+                # ("4-up", self.showFourUpView),
         ):
             button = QtGui.QToolButton(text=name, checkable=True)
             button.clicked.connect(handler)
@@ -917,7 +940,7 @@ class EditorTab(QtGui.QWidget):
         self.setLayout(Column(self.viewButtonToolbar,
                               Row(self.viewStack, margin=0), margin=0))
 
-        currentViewName = settings.value("mainwindow/currentview", "Cam")
+        currentViewName = currentViewSetting.value()
         if currentViewName not in self.viewButtons:
             currentViewName = "Cam"
         self.viewButtons[currentViewName].click()
@@ -930,6 +953,7 @@ class EditorTab(QtGui.QWidget):
             view.destroy()
 
         super(EditorTab, self).destroy()
+
     editorSession = weakrefprop()
 
     def configuredBlocksDidChange(self):
@@ -946,7 +970,8 @@ class EditorTab(QtGui.QWidget):
             self.toolOptionsArea.takeWidget()  # setWidget gives ownership to the scroll area
             self.toolOptionsArea.setWidget(tool.toolWidget)
             self.toolOptionsDockWidget.setWindowTitle(self.tr(tool.name) + self.tr(" Tool Options"))
-        log.info("Setting cursor %r for tool %r on view %r", tool.cursorNode, tool, self.currentView())
+        log.info("Setting cursor %r for tool %r on view %r", tool.cursorNode, tool,
+                 self.currentView())
         self.currentView().setToolCursor(tool.cursorNode)
 
     def saveState(self):
@@ -959,7 +984,6 @@ class EditorTab(QtGui.QWidget):
 
     def viewDidChange(self, view):
         self.miniMap.centerOnPoint(view.viewCenter())
-        Settings().setValue("mainwindow/currentview", view.viewID)
         if self.editorSession.currentTool:
             view.setToolCursor(self.editorSession.currentTool.cursorNode)
 
@@ -970,7 +994,6 @@ class EditorTab(QtGui.QWidget):
         overlayNodes.insert(0, self.editorSession.editorOverlay)
         view.setToolOverlays(overlayNodes)
         view.setFocus()
-
 
     def viewOffsetChanged(self, view):
         self.miniMap.centerOnPoint(view.viewCenter())
@@ -1007,6 +1030,7 @@ class EditorTab(QtGui.QWidget):
 
     def showOverheadView(self):
         self.showViewFrame(self.overheadViewFrame)
+
     #
     # def showIsoView(self):
     #     self.showViewFrame(self.isoViewFrame)

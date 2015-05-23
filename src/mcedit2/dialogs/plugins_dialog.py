@@ -83,7 +83,6 @@ class PluginsTableModel(QtCore.QAbstractTableModel):
 
         self.dataChanged.emit(index, index)
 
-
     def flags(self, index):
         column = index.column()
         if column == 1:
