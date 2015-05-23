@@ -1,3 +1,3 @@
-# Set default behaviour, in case users don't have core.autocrlf set.
-* text=auto
+# Do not perform any line ending translations
+* -text
 
