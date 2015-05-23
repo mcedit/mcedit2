@@ -23,6 +23,7 @@ from mcedit2.rendering.textureatlas import TextureAtlas
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 from mcedit2.rendering import scenegraph, rendergraph
 from mcedit2.util import profiler, raycast
+from mcedit2.util.qglcontext import validateQGLContext
 from mcedit2.util.settings import Settings
 from mcedit2.widgets.infopanel import InfoPanel
 from mceditlib import faces, exceptions
@@ -89,6 +90,8 @@ class WorldView(QGLWidget):
         :rtype:
         """
         QGLWidget.__init__(self, shareWidget=sharedGLWidget)
+        validateQGLContext(self.context())
+
         self.setSizePolicy(QtGui.QSizePolicy.Policy.Expanding, QtGui.QSizePolicy.Policy.Expanding)
         self.setFocusPolicy(Qt.ClickFocus)
 

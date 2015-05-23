@@ -8,12 +8,13 @@ import logging
 
 log = logging.getLogger(__name__)
 
-
-def validateQGLContext():
+def setDefaultFormat():
     oglFormat = QtOpenGL.QGLFormat()
     oglFormat.setVersion(1, 3)
+    oglFormat.setDirectRendering(True)
     QtOpenGL.QGLFormat.setDefaultFormat(oglFormat)
-    context = QtOpenGL.QGLContext(oglFormat)
+
+def validateQGLContext(context):
     context.makeCurrent()
     versionFlags = QtOpenGL.QGLFormat.openGLVersionFlags()
     log.info("OpenGL Version Info:")
@@ -35,8 +36,8 @@ def validateQGLContext():
 
     actualFormat = context.format()
     """:type : QtOpenGL.QGLFormat"""
-
-    if (not versionFlags & QtOpenGL.QGLFormat.OpenGL_Version_1_3
+    if (not context.isValid() or not actualFormat.directRendering()
+        or not versionFlags & QtOpenGL.QGLFormat.OpenGL_Version_1_3
         or (actualFormat.majorVersion(), actualFormat.minorVersion()) < (1, 3)):
         msgBox = QtGui.QMessageBox()
         msgBox.setWindowTitle(QtGui.qApp.tr("OpenGL Error"))
@@ -48,10 +49,11 @@ def validateQGLContext():
         )
 
         detailedText = "Obtained a GL context with this format:\n"
+        detailedText += "Valid: %s\n" % (context.isValid(),)
         detailedText += "Version: %s.%s\n" % (actualFormat.majorVersion(), actualFormat.minorVersion())
+        detailedText += "Hardware Accelerated: %s\n" % (actualFormat.directRendering(), )
         detailedText += "Depth buffer: %s, %s\n" % (actualFormat.depth(), actualFormat.depthBufferSize())
         detailedText += "Double buffer: %s\n" % (actualFormat.doubleBuffer(), )
-        detailedText += "Direct render: %s\n" % (actualFormat.directRendering(), )
         detailedText += "\n"
         detailedText += "Driver info:\n"
         detailedText += "GL_VERSION: %s\n" % GL.glGetString(GL.GL_VERSION)
