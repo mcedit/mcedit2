@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function
 from collections import defaultdict
 import logging
+import itertools
 import os
 import imp
 import traceback
@@ -60,6 +61,34 @@ class PluginRef(object):
         self.loadError = None
         self.unloadError = None
 
+        self.timestamps = {}
+
+    def checkTimestamps(self):
+        """
+        Record the modification time for this plugin's file and return True if it differs
+        from the previously recorded time.
+
+        If self.filename specifies a directory, walks the directory tree and records the mod
+        times of all files and directories found.
+        :return:
+        """
+        timestamps = {}
+        filename = os.path.join(self.pluginsDir, self.filename)
+        if os.path.isdir(filename):
+            for dirname, subdirs, files in os.walk(filename):
+                for child in itertools.chain(subdirs, files):
+                    pathname = os.path.join(dirname, child)
+                    modtime = os.stat(pathname).st_mtime
+                    timestamps[pathname] = modtime
+
+        else:
+            modtime = os.stat(filename).st_mtime
+            timestamps[filename] = modtime
+
+        changed = timestamps == self.timestamps
+        self.timestamps = timestamps
+        return changed
+
     def findModule(self):
         """
         Returns (file, pathname, description).
@@ -76,11 +105,11 @@ class PluginRef(object):
             return
 
         basename, ext = os.path.splitext(self.filename)
-        file = None
+        io = None
         try:
-            file, pathname, description = self.findModule()
+            io, pathname, description = self.findModule()
             log.info("Trying to load plugin from %s", self.filename)
-            self.pluginModule = imp.load_module(basename, file, pathname, description)
+            self.pluginModule = imp.load_module(basename, io, pathname, description)
             registerModule(self.filename, self.pluginModule)
             if hasattr(self.pluginModule, 'displayName'):
                 self._displayName = self.pluginModule.displayName
@@ -92,8 +121,8 @@ class PluginRef(object):
         else:
             self.loadError = None
         finally:
-            if file:
-                file.close()
+            if io:
+                io.close()
 
     def unload(self):
         if self.pluginModule is None:
@@ -161,26 +190,27 @@ def findNewPluginsInDir(pluginsDir):
         if filename not in _pluginRefs:
             ref = detectPlugin(filename, pluginsDir)
             if ref:
+                ref.checkTimestamps()
                 _pluginRefs[filename] = ref
 
 
 def detectPlugin(filename, pluginsDir):
-    file = None
+    io = None
     basename, ext = os.path.splitext(filename)
     if ext in (".pyc", ".pyo"):
         return None
 
     ref = PluginRef(filename, pluginsDir)
     try:
-        file, pathname, description = ref.findModule()
+        io, pathname, description = ref.findModule()
     except Exception as e:
         log.exception("Could not detect %s as a plugin or module: %s", filename, e)
         return None
     else:
         return ref
     finally:
-        if file:
-            file.close()
+        if io:
+            io.close()
 
 
 # --- Plugin registration ---
