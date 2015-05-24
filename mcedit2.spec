@@ -25,7 +25,6 @@ for root, dirnames, filenames in itertools.chain(os.walk(os.path.join('src', 'mc
             continue
 
         modulename = ".".join(components)  # dotted modulename
-        print modulename
         everything.append(modulename)
 
 a = Analysis(['src/mcedit2/main.py'],
