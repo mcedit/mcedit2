@@ -2,8 +2,34 @@
 # Build script for pyinstaller. Run using:
 # $ pyinstaller mcedit2.spec
 
+import fnmatch
+import os
+import itertools
+
+# Grab every .py file under src/mcedit2 and src/mceditlib because some modules are made
+# available for plugins and not directly used by MCEdit.
+everything = []
+for root, dirnames, filenames in itertools.chain(os.walk(os.path.join('src', 'mcedit2')),
+                                                 os.walk(os.path.join('src', 'mceditlib'))):
+    for filename in fnmatch.filter(filenames, '*.py'):
+        if filename == "__init__.py":
+            filepath = root
+        else:
+            filepath = os.path.join(root, filename)
+            filepath = filepath[:-3]  # discard ".py"
+
+        components = filepath.split(os.path.sep)
+        components = components[1:]  # discard 'src/'
+
+        if "test" in components or components == ["mcedit2", "main"]:
+            continue
+
+        modulename = ".".join(components)  # dotted modulename
+        print modulename
+        everything.append(modulename)
+
 a = Analysis(['src/mcedit2/main.py'],
-             hiddenimports=['PySide.QtXml', 'zmq'],
+             hiddenimports=['PySide.QtXml', 'zmq'] + everything,
              hookspath=['.'],
              runtime_hooks=None,
              excludes=['Tkinter', 'Tcl', 'Tk', 'wx',
