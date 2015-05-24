@@ -253,7 +253,9 @@ class Line(Symbol):
     p2: Vector
 
     """
+
     def __init__(self, p1, p2, **kw):
+        kw.setdefault("glColor", (255, 64, 64, 128))
         super(Line, self).__init__(**kw)
         self.p1 = p1
         self.p2 = p2
@@ -262,12 +264,11 @@ class Line(Symbol):
         for x, y, z in bresenham(self.p1, self.p2):
             yield x, y, z, self.blocktype
 
-
     def renderSceneNodes(self):
         vertexArray = VertexArrayBuffer(2, GL.GL_LINES, False, False)
         vertexArray.vertex[:] = [self.p1, self.p2]
         vertexArray.vertex[:] += 0.5  # draw using box centers
-        vertexArray.rgba[:] = 255, 64, 64, 128
+        vertexArray.rgba[:] = self.glColor
 
         node = VertexNode([vertexArray])  # xxx LineNode
 
