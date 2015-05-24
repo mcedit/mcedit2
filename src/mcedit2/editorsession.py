@@ -298,8 +298,8 @@ class EditorSession(QtCore.QObject):
         progress("Loading panels...")
 
         self.playerPanel = PlayerPanel(self)
-        self.WorldInfoPanel = WorldInfoPanel(self)
-        self.panels = [self.playerPanel, self.WorldInfoPanel]
+        self.worldInfoPanel = WorldInfoPanel(self)
+        self.panels = [self.playerPanel, self.worldInfoPanel]
 
         # --- Tools ---
 
