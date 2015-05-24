@@ -8,7 +8,7 @@ This issue tracker is for **MCEdit 2.0 only**. Issues with MCEdit 1.x need to be
 
 **Before** submitting an issue, read [Reporting Issues](https://github.com/mcedit/mcedit/wiki/Reporting-Issues) and be sure to include all of the required info in your description:
 
-* **Error log** - If MCEdit tells you it had an error, there will be vital information inside the console window and/or error log file. On Windows, this is the file `mcedit.log` inside the `MCEdit-<version>-<platform>` folder. Use [pastebin](http://pastebin.com/) or [gist](https://gist.github.com/) for logs longer than a dozen lines. On Mac OS X, error info can be copied from the Console utility. (`mcedit.log` is also present on OS X, though it's buried deep inside the application bundle.) On Linux, the error log will be shown on the terminal you started MCEdit from.
+* **Error log** - If MCEdit tells you it had an error, there will be vital information inside the console window and/or error log file. On Windows, this is the file `mcedit.log` inside the `MCEdit User Data` folder. Use [pastebin](http://pastebin.com/) or [gist](https://gist.github.com/) for logs longer than a dozen lines. On Mac OS X, the error log is inside `~/Library/Logs`. On Linux, the error log will be inside `MCEdit User Data` and will also be shown on the terminal you started MCEdit from.
 
 * **Steps to Reproduce** - Step by step, tell us exactly which buttons to click on, text to enter, and keys to press that lead you to discover the problem.
 * **MCEdit Version Number** - Found in the title bar of the main window.
