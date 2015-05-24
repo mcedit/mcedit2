@@ -129,11 +129,19 @@ _pluginClasses = []
 
 def registerGeneratePlugin(cls):
     _pluginClasses.append(cls)
+    _GeneratePlugins.instance.pluginAdded.emit(cls)
     return cls
 
 
 def unregisterGeneratePlugin(cls):
     _pluginClasses[:] = [c for c in _pluginClasses if c != cls]
+    _GeneratePlugins.instance.pluginRemoved.emit(cls)
+
+class _GeneratePlugins(QtCore.QObject):
+    pluginRemoved = QtCore.Signal(object)
+    pluginAdded = QtCore.Signal(object)
+
+_GeneratePlugins.instance = _GeneratePlugins()
 
 
 class GenerateTool(EditorTool):
@@ -159,14 +167,9 @@ class GenerateTool(EditorTool):
             self.currentGenerator = self.generatorTypes[0]
 
         self.generatorTypeInput = QtGui.QComboBox()
-        for gt in self.generatorTypes:
-            if hasattr(gt, 'displayName'):
-                displayName = gt.displayName
-            else:
-                displayName = gt.__class__.__name__
-            self.generatorTypeInput.addItem(displayName, gt)
+        self.generatorTypesChanged()
 
-        self.generatorTypeInput.currentIndexChanged.connect(self.generatorTypeChanged)
+        self.generatorTypeInput.currentIndexChanged.connect(self.currentTypeChanged)
 
         self.livePreviewCheckbox = QtGui.QCheckBox("Live Preview")
         self.livePreviewCheckbox.setChecked(self.livePreview)
@@ -214,8 +217,35 @@ class GenerateTool(EditorTool):
         self.schematicBounds = None
         self.currentSchematic = None
 
-        if len(self.generatorTypes):
-            self.generatorTypeChanged(0)
+        self.currentTypeChanged(0)
+
+        # Name of last selected generator plugin is saved after unloading
+        # so it can be reselected if it is immediately reloaded
+        self._lastTypeName = None
+
+        _GeneratePlugins.instance.pluginAdded.connect(self.addPlugin)
+        _GeneratePlugins.instance.pluginRemoved.connect(self.removePlugin)
+
+    def removePlugin(self, cls):
+        self.generatorTypes[:] = [gt for gt in self.generatorTypes if not isinstance(gt, cls)]
+        self.generatorTypesChanged()
+        if self.currentGenerator not in self.generatorTypes:
+            lastTypeName = self.currentGenerator.__class__.__name__
+            self.currentTypeChanged(0)  # resets self._lastTypeName
+            self._lastTypeName = lastTypeName
+
+    def addPlugin(self, cls):
+        self.generatorTypes.append(cls(self))
+        self.generatorTypesChanged()
+
+    def generatorTypesChanged(self):
+        for gt in self.generatorTypes:
+            if hasattr(gt, 'displayName'):
+                displayName = gt.displayName
+            else:
+                displayName = gt.__class__.__name__
+            self.generatorTypeInput.addItem(displayName, gt)
+
 
     def livePreviewToggled(self, value):
         self.livePreview = value
@@ -237,11 +267,19 @@ class GenerateTool(EditorTool):
         else:
             self.clearNode()
 
-    def generatorTypeChanged(self, index):
-        self.currentGenerator = self.generatorTypes[index]
+    def currentTypeChanged(self, index):
+        # user selected generator type after old type was unloaded, so forget the old type
+        self._lastTypeName = None
+
         self.optionsHolder.removeWidget(self.optionsHolder.widget(0))
-        self.optionsHolder.addWidget(self.currentGenerator.getOptionsWidget())
-        self.updatePreview()
+        if index < len(self.generatorTypes):
+            self.currentGenerator = self.generatorTypes[index]
+            self.optionsHolder.addWidget(self.currentGenerator.getOptionsWidget())
+            self.updatePreview()
+        else:
+            self.currentGenerator = None
+            self.clearSchematic()
+            self.clearNode()
 
     def mousePress(self, event):
         self.boxHandleNode.mousePress(event)
