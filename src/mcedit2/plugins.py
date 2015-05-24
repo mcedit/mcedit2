@@ -85,7 +85,7 @@ class PluginRef(object):
             modtime = os.stat(filename).st_mtime
             timestamps[filename] = modtime
 
-        changed = timestamps == self.timestamps
+        changed = timestamps != self.timestamps
         self.timestamps = timestamps
         return changed
 
@@ -109,8 +109,13 @@ class PluginRef(object):
         try:
             io, pathname, description = self.findModule()
             log.info("Trying to load plugin from %s", self.filename)
+            global _currentPluginPathname
+            _currentPluginPathname = pathname
+
             self.pluginModule = imp.load_module(basename, io, pathname, description)
-            registerModule(self.filename, self.pluginModule)
+            registerModule(self.fullpath, self.pluginModule)
+            _currentPluginPathname = None
+
             if hasattr(self.pluginModule, 'displayName'):
                 self._displayName = self.pluginModule.displayName
 
@@ -128,7 +133,7 @@ class PluginRef(object):
         if self.pluginModule is None:
             return
         try:
-            unregisterModule(self.pluginModule)
+            unregisterModule(self.fullpath, self.pluginModule)
             sys.modules.remove(self.pluginModule)
         except Exception as e:
             self.unloadError = traceback.format_exc()
@@ -150,7 +155,11 @@ class PluginRef(object):
         return os.path.splitext(os.path.basename(self.filename))[0]
 
     def exists(self):
-        return os.path.exists(self.filename)
+        return os.path.exists(self.fullpath)
+
+    @property
+    def fullpath(self):
+        return os.path.join(self.pluginsDir, self.filename)
 
     @property
     def enabled(self):
@@ -216,43 +225,30 @@ def detectPlugin(filename, pluginsDir):
 # --- Plugin registration ---
 
 _loadedModules = {}
-_pluginClassesByModule = defaultdict(list)
-_currentPluginModule = None
+_pluginClassesByPathname = defaultdict(list)
+_currentPluginPathname = None
 
 def registerModule(filename, pluginModule):
-    global _currentPluginModule
     if hasattr(pluginModule, "register"):
-        _currentPluginModule = pluginModule
         pluginModule.register()
-        _currentPluginModule = None
 
     _loadedModules[filename] = pluginModule
     pluginModule.__FOUND_FILENAME__ = filename
 
-def unregisterModule(pluginModule):
+def unregisterModule(filename, pluginModule):
     if hasattr(pluginModule, "unregister"):
         pluginModule.unregister()
 
-    classes = _pluginClassesByModule.pop(pluginModule)
+    classes = _pluginClassesByPathname.pop(filename)
     if classes:
         for cls in classes:
             _unregisterClass(cls)
 
     _loadedModules.pop(pluginModule.__FOUND_FILENAME__)
 
-def reloadModule(filename):
-    module = _loadedModules.get(filename)
-    if module:
-        filename = module.__FOUND_FILENAME__
-        unregisterModule(module)
-
-        reload(module)
-        registerModule(filename, module)
-    # else loadModule(filename)?
-
 
 def _registerClass(cls):
-    _pluginClassesByModule[_currentPluginModule].append(cls)
+    _pluginClassesByPathname[_currentPluginPathname].append(cls)
 
 
 def _unregisterClass(cls):
