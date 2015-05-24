@@ -237,6 +237,9 @@ class GenerateTool(EditorTool):
     def addPlugin(self, cls):
         self.generatorTypes.append(cls(self))
         self.generatorTypesChanged()
+        if self._lastTypeName is not None:
+            if cls.__name__ == self._lastTypeName:
+                self.currentTypeChanged(len(self.generatorTypes)-1)
 
     def generatorTypesChanged(self):
         for gt in self.generatorTypes:
