@@ -280,7 +280,7 @@ def registerTileEntityRefClass(ID, refClass):
     _tileEntityClasses[ID] = refClass
 
 def unregisterTileEntityRefClass(cls):
-    dead = [k for k, v in _tileEntityClasses if v == cls]
+    dead = [k for k, v in _tileEntityClasses.iteritems() if v == cls]
     for k in dead:
         _tileEntityClasses.pop(k, None)
 

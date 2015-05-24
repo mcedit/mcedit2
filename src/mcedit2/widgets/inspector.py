@@ -20,7 +20,7 @@ def registerBlockInspectorWidget(ID, widgetClass):
     tileEntityEditorClasses[ID] = widgetClass
 
 def unregisterBlockInspectorWidget(widgetClass):
-    dead = [k for k, v in tileEntityEditorClasses if v == widgetClass]
+    dead = [k for k, v in tileEntityEditorClasses.iteritems() if v == widgetClass]
     for k in dead:
         tileEntityEditorClasses.pop(k, None)
 
