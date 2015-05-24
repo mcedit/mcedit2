@@ -134,7 +134,10 @@ class PluginRef(object):
             return
         try:
             unregisterModule(self.fullpath, self.pluginModule)
-            sys.modules.remove(self.pluginModule)
+            for k, v in sys.modules.iteritems():
+                if v == self.pluginModule:
+                    sys.modules.pop(k)
+                    break
         except Exception as e:
             self.unloadError = traceback.format_exc()
             log.exception("Error while unloading plugin from %s: %r", self.filename, e)
