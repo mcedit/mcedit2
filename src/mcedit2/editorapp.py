@@ -929,3 +929,29 @@ class MCEditApp(QtGui.QApplication):
             self.mainWindow.removeDockWidget(self.textureAtlasDockWidget)
             self.mainWindow.removeDockWidget(self.infoDockWidget)
             self.mainWindow.panelsToolBar.removeAction(self.infoDockWidget.toggleViewAction())
+
+    # --- App foreground ---
+
+    def event(self, event):
+        """
+
+        :type event: QtCore.QEvent
+        :rtype: bool
+        """
+        if event.type() == QtCore.QEvent.ApplicationActivated:
+            self.tryReloadPlugins()
+            event.accept()
+            return True
+
+        else:
+            return super(MCEditApp, self).event(event)
+
+    def tryReloadPlugins(self):
+        if not DevModeSetting.value():
+            return
+        
+        for pluginRef in plugins.getAllPlugins():
+            if pluginRef.checkTimestamps():
+                log.info("Plugin %s changed. Reloading plugin module...", pluginRef.displayName)
+                pluginRef.unload()
+                pluginRef.load()
