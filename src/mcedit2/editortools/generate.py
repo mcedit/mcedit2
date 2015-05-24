@@ -305,6 +305,9 @@ class GenerateTool(EditorTool):
 
     def boundsDidChange(self, bounds):
         # box still being resized
+        if not self.currentGenerator:
+            return
+
         if not self.livePreview:
             return
 
@@ -314,6 +317,8 @@ class GenerateTool(EditorTool):
 
     def boundsDidChangeDone(self, bounds, newSelection):
         # box finished resize
+        if not self.currentGenerator:
+            return
 
         self.previewBounds = bounds
         self.schematicBounds = bounds
