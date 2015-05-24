@@ -120,11 +120,6 @@ def setup_logging():
 
 
 editorApp = None
-DEBUG = False
-if "-debug" in sys.argv:
-    sys.argv.remove("-debug")
-    DEBUG = True
-
 
 @profiler.function("startup")
 def startup():
@@ -146,7 +141,7 @@ def startup():
 
     from mcedit2.editorapp import MCEditApp
 
-    editorApp = MCEditApp(sys.argv, DEBUG)
+    editorApp = MCEditApp(sys.argv)
 
     return editorApp
 

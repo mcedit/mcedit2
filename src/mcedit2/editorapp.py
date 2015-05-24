@@ -11,7 +11,7 @@ import imp
 import numpy
 import sys
 from mcedit2 import plugins
-from mcedit2.appsettings import RecentFilesSetting, EnableLightingSetting
+from mcedit2.appsettings import RecentFilesSetting, EnableLightingSetting, DevModeSetting
 from mcedit2.dialogs.plugins_dialog import PluginsDialog
 from mcedit2.library import LibraryWidget
 
@@ -75,9 +75,8 @@ class MCEditMainWindow(QtGui.QMainWindow):
                 return
 
 class MCEditApp(QtGui.QApplication):
-    def __init__(self, argv, DEBUG=False):
+    def __init__(self, argv):
         super(MCEditApp, self).__init__(argv)
-        self.DEBUG = DEBUG
         MCEditApp.app = self
 
         minecraftinstall.GetInstalls().ensureValidInstall()
@@ -159,56 +158,46 @@ class MCEditApp(QtGui.QApplication):
 
         # --- Debug Widgets ---
 
-        if DEBUG:
-            debugMenu = self.createDebugMenu()
+        self.debugMenu = self.createDebugMenu()
 
-            self.debugObjectInspector = ObjectInspector(mainWindow)
-            self.inspectorDockWidget = QtGui.QDockWidget("Inspector", mainWindow, objectName="InspectorWidget")
-            self.inspectorDockWidget.setWidget(self.debugObjectInspector)
-            mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.inspectorDockWidget)
-            debugMenu.addAction(self.inspectorDockWidget.toggleViewAction())
-            self.inspectorDockWidget.close()
+        self.debugObjectInspector = ObjectInspector(mainWindow)
+        self.inspectorDockWidget = QtGui.QDockWidget("Inspector", mainWindow, objectName="InspectorWidget")
+        self.inspectorDockWidget.setWidget(self.debugObjectInspector)
+        self.debugMenu.addAction(self.inspectorDockWidget.toggleViewAction())
+        self.inspectorDockWidget.close()
 
-            self.profileView = ProfilerWidget()
-            profileDockWidget = QtGui.QDockWidget("Profiler", mainWindow, objectName="ProfilerWidget")
-            profileDockWidget.setWidget(self.profileView)
-            mainWindow.addDockWidget(Qt.RightDockWidgetArea, profileDockWidget)
-            debugMenu.addAction(profileDockWidget.toggleViewAction())
-            profileDockWidget.close()
+        self.profileView = ProfilerWidget()
+        self.profileDockWidget = QtGui.QDockWidget("Profiler", mainWindow, objectName="ProfilerWidget")
+        self.profileDockWidget.setWidget(self.profileView)
+        self.debugMenu.addAction(self.profileDockWidget.toggleViewAction())
+        self.profileDockWidget.close()
 
-            self.textureAtlasView = QtGui.QLabel()
-            self.textureAtlasView.setScaledContents(True)
-            self.textureAtlasDockWidget = QtGui.QDockWidget("Texture Atlas", mainWindow, objectName="TextureAtlasWidget")
+        self.textureAtlasView = QtGui.QLabel()
+        self.textureAtlasView.setScaledContents(True)
+        self.textureAtlasDockWidget = QtGui.QDockWidget("Texture Atlas", mainWindow, objectName="TextureAtlasWidget")
 
-            self.textureAtlasArea = QtGui.QScrollArea()
-            self.textureAtlasArea.setWidget(self.textureAtlasView)
-            self.textureAtlasDockWidget.setWidget(self.textureAtlasArea)
-            mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.textureAtlasDockWidget)
-            debugMenu.addAction(self.textureAtlasDockWidget.toggleViewAction())
-            self.textureAtlasDockWidget.close()
+        self.textureAtlasArea = QtGui.QScrollArea()
+        self.textureAtlasArea.setWidget(self.textureAtlasView)
+        self.textureAtlasDockWidget.setWidget(self.textureAtlasArea)
+        self.debugMenu.addAction(self.textureAtlasDockWidget.toggleViewAction())
+        self.textureAtlasDockWidget.close()
 
-            infoTabs = QtGui.QTabWidget()
+        infoTabs = QtGui.QTabWidget()
 
-            self.cursorInfo = WorldCursorInfo()
-            infoTabs.addTab(self.cursorInfo, "Cursor")
+        self.cursorInfo = WorldCursorInfo()
+        infoTabs.addTab(self.cursorInfo, "Cursor")
 
-            self.viewInfo = WorldViewInfo()
-            infoTabs.addTab(self.viewInfo, "View")
+        self.viewInfo = WorldViewInfo()
+        infoTabs.addTab(self.viewInfo, "View")
 
-            self.loaderInfo = ChunkLoaderInfo()
-            infoTabs.addTab(self.loaderInfo, "Loader")
+        self.loaderInfo = ChunkLoaderInfo()
+        infoTabs.addTab(self.loaderInfo, "Loader")
 
-            infoDockWidget = QtGui.QDockWidget("Debug Info", mainWindow, objectName="DebugInfo")
-            infoDockWidget.setWidget(infoTabs)
+        self.infoDockWidget = QtGui.QDockWidget("Debug Info", mainWindow, objectName="DebugInfo")
+        self.infoDockWidget.setWidget(infoTabs)
+        self.infoDockWidget.close()
 
-            mainWindow.addDockWidget(Qt.BottomDockWidgetArea, infoDockWidget)
-            mainWindow.tabifyDockWidget(infoDockWidget, self.logViewDockWidget)
-
-            self.globalPanels.append(infoDockWidget)
-            mainWindow.panelsToolBar.addAction(infoDockWidget.toggleViewAction())
-            infoDockWidget.close()
-
-            log.info("Loaded debug widgets.")
+        log.info("Loaded debug widgets.")
 
         # --- Menu Actions ---
 
@@ -253,6 +242,11 @@ class MCEditApp(QtGui.QApplication):
         mainWindow.actionPreferences.triggered.connect(self.showPrefsDialog)
         mainWindow.actionConfigure_Blocks_Items.triggered.connect(self.showConfigureBlocksDialog)
         mainWindow.actionPlugins.triggered.connect(self.showPluginsDialog)
+
+        mainWindow.actionEnable_Developer_Mode.setChecked(DevModeSetting.value())
+        mainWindow.actionEnable_Developer_Mode.toggled.connect(DevModeSetting.setValue)
+        DevModeSetting.valueChanged.connect(self.toggleDeveloperMode)
+        self.toggleDeveloperMode(DevModeSetting.value())
 
         log.info("Loaded menus.")
 
@@ -359,38 +353,45 @@ class MCEditApp(QtGui.QApplication):
                             "self": self}
             exec(self.args.eval, eval_globals)
 
+    pluginsChanged = QtCore.Signal()
+
     consoleWidget = None
 
     def createDebugMenu(self):
-        debugMenu = self.mainWindow.menuBar().addMenu("&Debug")
+        debugMenu = QtGui.QMenu(self.tr("&Debug"))
 
         def raiseError():
-            raise ValueError("User requested error")
+            ret = QtGui.QMessageBox.warning(self.mainWindow,
+                                            self.tr("Raise Error"),
+                                            self.tr("Raise an error? This may crash MCEdit."),
+                                            buttons=QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+            if ret == QtGui.QMessageBox.Yes:
+                raise ValueError("User requested error")
 
-        debugMenu.addAction("Raise Error").triggered.connect(raiseError)
+        debugMenu.addAction(self.tr("Raise Error")).triggered.connect(raiseError)
 
         def showConsole():
             if self.consoleWidget is None:
                 self.consoleWidget = terminal_widget(sessions=self.sessions)
             self.consoleWidget.show()
 
-        debugMenu.addAction("IPython Console").triggered.connect(showConsole)
+        debugMenu.addAction(self.tr("IPython Console")).triggered.connect(showConsole)
 
         objGraph = ObjGraphWidget()
 
         def showObjGraph():
             objGraph.show()
 
-        debugMenu.addAction("ObjGraph").triggered.connect(showObjGraph)
+        debugMenu.addAction(self.tr("ObjGraph")).triggered.connect(showObjGraph)
 
         def showHeapy():
             from guppy import hpy
             h = hpy()
             print(h.heap())
 
-        debugMenu.addAction("Heap Trace").triggered.connect(showHeapy)
+        debugMenu.addAction(self.tr("Heap Trace (slow)")).triggered.connect(showHeapy)
 
-        debugMenu.addAction("Collect Garbage").triggered.connect(gc.collect)
+        debugMenu.addAction(self.tr("Collect Garbage")).triggered.connect(gc.collect)
 
         return debugMenu
 
@@ -508,33 +509,33 @@ class MCEditApp(QtGui.QApplication):
             for action in session.toolActions:
                 self.mainWindow.toolsToolBar.addAction(action)
 
-            if self.DEBUG:
-                self.loaderInfo.object = session.loader
-                view = session.editorTab.currentView()
-                self.cursorInfo.object = view
-                session.editorTab.viewChanged.connect(self.cursorInfo.setObject)
-                self.viewInfo.object = view
-                session.editorTab.viewChanged.connect(self.viewInfo.setObject)
 
-                atlas = session.textureAtlas
-                try:
-                    atlas.load()
-                except Exception as e:
-                    log.exception("Failed to finalize texture atlas.")
-                else:
-                    argbData = numpy.dstack((atlas.textureData[..., 3:], atlas.textureData[..., :3]))
-                    argbData = argbData[::-1, :, ::-1]
-                    buf = argbData.tostring()
-                    textureAtlasImg = QtGui.QImage(buf,
-                                                   atlas.width, atlas.height,
-                                                   QtGui.QImage.Format_RGB32)
+            self.loaderInfo.object = session.loader
+            view = session.editorTab.currentView()
+            self.cursorInfo.object = view
+            session.editorTab.viewChanged.connect(self.cursorInfo.setObject)
+            self.viewInfo.object = view
+            session.editorTab.viewChanged.connect(self.viewInfo.setObject)
 
-                    textureAtlasImg.textureImageData = buf  # QImage does not retain backing data
+            atlas = session.textureAtlas
+            try:
+                atlas.load()
+            except Exception as e:
+                log.exception("Failed to finalize texture atlas.")
+            else:
+                argbData = numpy.dstack((atlas.textureData[..., 3:], atlas.textureData[..., :3]))
+                argbData = argbData[::-1, :, ::-1]
+                buf = argbData.tostring()
+                textureAtlasImg = QtGui.QImage(buf,
+                                               atlas.width, atlas.height,
+                                               QtGui.QImage.Format_RGB32)
 
-                    pixmap = QtGui.QPixmap.fromImage(textureAtlasImg)
-                    pixmap = pixmap.scaled(atlas.width * 2, atlas.height * 2)
-                    self.textureAtlasView.setPixmap(pixmap)
-                    self.textureAtlasView.resize(atlas.width * 2, atlas.height * 2)
+                textureAtlasImg.textureImageData = buf  # QImage does not retain backing data
+
+                pixmap = QtGui.QPixmap.fromImage(textureAtlasImg)
+                pixmap = pixmap.scaled(atlas.width * 2, atlas.height * 2)
+                self.textureAtlasView.setPixmap(pixmap)
+                self.textureAtlasView.resize(atlas.width * 2, atlas.height * 2)
 
             for pos, dw in session.dockWidgets:
                 self.mainWindow.addDockWidget(pos, dw)
@@ -908,3 +909,23 @@ class MCEditApp(QtGui.QApplication):
 
     def showPluginsDialog(self):
         self.pluginsDialog.exec_()
+
+    def toggleDeveloperMode(self, enable):
+        if enable:
+            self.mainWindow.menuBar().addAction(self.debugMenu.menuAction())
+            self.mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.inspectorDockWidget)
+            self.mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.profileDockWidget)
+            self.mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.textureAtlasDockWidget)
+            self.mainWindow.addDockWidget(Qt.BottomDockWidgetArea, self.infoDockWidget)
+            self.mainWindow.tabifyDockWidget(self.infoDockWidget, self.logViewDockWidget)
+            self.mainWindow.panelsToolBar.addAction(self.infoDockWidget.toggleViewAction())
+
+            self.globalPanels.append(self.infoDockWidget)
+
+        else:
+            self.mainWindow.menuBar().removeAction(self.debugMenu.menuAction())
+            self.mainWindow.removeDockWidget(self.inspectorDockWidget)
+            self.mainWindow.removeDockWidget(self.profileDockWidget)
+            self.mainWindow.removeDockWidget(self.textureAtlasDockWidget)
+            self.mainWindow.removeDockWidget(self.infoDockWidget)
+            self.mainWindow.panelsToolBar.removeAction(self.infoDockWidget.toggleViewAction())

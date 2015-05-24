@@ -82,6 +82,7 @@
     <addaction name="separator"/>
     <addaction name="actionPreferences"/>
     <addaction name="actionPlugins"/>
+    <addaction name="actionEnable_Developer_Mode"/>
    </widget>
    <addaction name="menuMCEdit"/>
    <addaction name="menuWindow"/>
@@ -189,6 +190,14 @@
   <action name="actionPlugins">
    <property name="text">
     <string>Plugins...</string>
+   </property>
+  </action>
+  <action name="actionEnable_Developer_Mode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Enable Developer Mode</string>
    </property>
   </action>
  </widget>
