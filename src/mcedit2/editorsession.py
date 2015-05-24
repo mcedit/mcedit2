@@ -824,12 +824,13 @@ class EditorSession(QtCore.QObject):
             if ret == QtGui.QMessageBox.Cancel:
                 return False
 
+        for panel in self.panels:
+            panel.close()
+
         self.editorTab.saveState()
         self.worldEditor.close()
         self.worldEditor = None
 
-        for panel in self.panels:
-            panel.close()
         return True
 
     # --- Inspector ---
