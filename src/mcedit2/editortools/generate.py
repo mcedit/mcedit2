@@ -109,6 +109,16 @@ class GeneratePlugin(QtCore.QObject):
         """
         raise NotImplementedError
 
+    def boundsChanged(self, bounds):
+        """
+        Called by GenerateTool whenever the user moves or resizes the bounding box.
+        The plugin may use this to change parts of the options widget, for example.
+
+        :type bounds: BoundingBox
+        :rtype: None
+        """
+        pass
+
     def updatePreview(self):
         """
         Trigger the GenerateTool to call generate() on this GeneratePlugin again. This function
@@ -299,6 +309,7 @@ class GenerateTool(EditorTool):
             return
 
         self.previewBounds = bounds
+        self.currentGenerator.boundsChanged(bounds)
         self.updatePreview()
 
     def boundsDidChangeDone(self, bounds, newSelection):
@@ -306,6 +317,7 @@ class GenerateTool(EditorTool):
 
         self.previewBounds = bounds
         self.schematicBounds = bounds
+        self.currentGenerator.boundsChanged(bounds)
         self.updatePreview()
 
     def clearNode(self):
