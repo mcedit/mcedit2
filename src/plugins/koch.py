@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 import logging
 from math import pi, cos, sin
 from PySide import QtGui
+import math
 from mcedit2.plugins import registerGeneratePlugin
 
 from mcedit2.synth.l_system import Geometric, Line
@@ -38,16 +39,16 @@ class Side(Line):
         spike = mid1 + rotatePoint(d * -0.3333)
 
         # First segment
-        yield Side(p1=p1, p2=mid1, blocktype=self.blocktype)
+        yield Side(p1=p1, p2=mid1, **self.parameters)
 
         # Second segment
-        yield Side(p1=mid1, p2=spike, blocktype=self.blocktype)
+        yield Side(p1=mid1, p2=spike, **self.parameters)
 
         # Third segment
-        yield Side(p1=spike, p2=mid2, blocktype=self.blocktype)
+        yield Side(p1=spike, p2=mid2, **self.parameters)
 
         # Fourth segment
-        yield Side(p1=mid2, p2=p2, blocktype=self.blocktype)
+        yield Side(p1=mid2, p2=p2, **self.parameters)
 
 
 # One-third of a circle
@@ -110,7 +111,7 @@ class Snowflake(Geometric):
         endPoints = points[1:] + points[:1]
 
         for p1, p2 in zip(startPoints, endPoints):
-            yield Side(p1=p1, p2=p2, blocktype=self.blocktype)
+            yield Side(p1=p1, p2=p2, blocktype=self.blocktype, glColor=(255, 64, 255, 128))
 
 
 if __name__ == '__main__':
@@ -145,6 +146,11 @@ class KochSnowflakePlugin(LSystemPlugin):
         symbol = Snowflake(bounds, blocktype=self.blockTypeButton.block)
 
         return symbol
+
+    def boundsChanged(self, bounds):
+        size = (bounds.width + bounds.length) / 2
+        maxiter = math.log(size, 4) + 2
+        self.iterationsSlider.setMaximum(maxiter)
 
 displayName = "Koch Snowflake"
 
