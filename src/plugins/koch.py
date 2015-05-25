@@ -126,9 +126,13 @@ if __name__ == '__main__':
 
 class KochSnowflakePlugin(LSystemPlugin):
     displayName = "Koch Snowflake"
-
+    _optionsWidget = None
+    
     def getOptionsWidget(self):
-        widget = QtGui.QWidget()
+        if self._optionsWidget:
+            return self._optionsWidget
+
+        widget = self._optionsWidget = QtGui.QWidget()
 
         self.blockTypeButton = BlockTypeButton()
         self.blockTypeButton.editorSession = self.editorSession
