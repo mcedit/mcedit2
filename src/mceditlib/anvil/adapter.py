@@ -22,7 +22,7 @@ from mceditlib.geometry import Vector
 from mceditlib.nbt import NBTFormatError
 from mceditlib.selection import BoundingBox
 from mceditlib import nbtattr
-from mceditlib.exceptions import PlayerNotFound, ChunkNotPresent
+from mceditlib.exceptions import PlayerNotFound, ChunkNotPresent, LevelFormatError
 from mceditlib.revisionhistory import RevisionHistory
 
 
@@ -486,7 +486,8 @@ class AnvilWorldAdapter(object):
                 log.info("%r while loading level.dat_old. Initializing with defaults.", e)
                 self._createMetadataTag()
 
-        assert self.metadata.version == VERSION_ANVIL, "Pre-Anvil world formats are not supported (for now)"
+        if self.metadata.version != VERSION_ANVIL:
+            raise LevelFormatError("Pre-Anvil world formats are not supported (for now)")
 
     def loadBlockMapping(self):
         if self.metadata.is1_8World():
