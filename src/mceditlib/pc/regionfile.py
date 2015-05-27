@@ -173,7 +173,7 @@ class RegionFile(object):
             cx, cz = cPos
             if self._getOffset(cx, cz) == 0:
                 log.info("Found chunk {found} and its slot is empty, recovering it".format(found=cPos))
-                self.writeChunk(cx, cz, foundData)
+                self.writeChunkBytes(cx, cz, foundData)
                 recovered += 1
 
         log.info("Repair complete. Removed {0} chunks, recovered {1} chunks, net {2}".format(deleted, recovered, recovered - deleted))
