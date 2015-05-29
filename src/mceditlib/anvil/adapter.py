@@ -24,7 +24,7 @@ from mceditlib.selection import BoundingBox
 from mceditlib import nbtattr
 from mceditlib.exceptions import PlayerNotFound, ChunkNotPresent, LevelFormatError
 from mceditlib.revisionhistory import RevisionHistory
-
+from mceditlib.util import exhaust
 
 log = logging.getLogger(__name__)
 
@@ -598,6 +598,9 @@ class AnvilWorldAdapter(object):
             self.metadata.dirty = False
 
     def saveChanges(self):
+        exhaust(self.saveChangesIter())
+
+    def saveChangesIter(self):
         """
         Write all changes from all revisions into the world folder.
 
@@ -608,8 +611,11 @@ class AnvilWorldAdapter(object):
             raise IOError("World is opened read only.")
 
         self.checkSessionLock()
-        self.revisionHistory.writeAllChanges(self.selectedRevision)
+        for status in self.revisionHistory.writeAllChangesIter(self.selectedRevision):
+            yield status
+
         self.selectedRevision = self.revisionHistory.getHead()
+        yield
 
     def close(self):
         """

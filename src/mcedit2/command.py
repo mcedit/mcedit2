@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function
 import contextlib
 import logging
 from PySide import QtGui
+from mcedit2.util.showprogress import showProgress
 
 log = logging.getLogger(__name__)
 
@@ -55,5 +56,7 @@ class SimpleRevisionCommand(QtGui.QUndoCommand):
         self.previousRevision = self.editorSession.currentRevision
         self.editorSession.beginUndo()
         yield
-        self.editorSession.commitUndo()
+        task = self.editorSession.commitUndoIter()
+        showProgress(QtGui.qApp.tr("Writing undo history"), task)
+
         self.currentRevision = self.editorSession.currentRevision

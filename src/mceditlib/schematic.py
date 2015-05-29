@@ -256,6 +256,10 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
     def saveChanges(self):
         return self.saveToFile(self.filename)
 
+    def saveChangesIter(self):
+        self.saveChanges()
+        yield 100, 100, "Done"
+
     def saveToFile(self, filename):
         """ save to file named filename."""
 

@@ -16,6 +16,7 @@ from mcedit2.panels.player import PlayerPanel
 from mcedit2.panels.worldinfo import WorldInfoPanel
 from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.directories import getUserSchematicsDirectory
+from mceditlib.util import exhaust
 from mceditlib.util.lazyprop import weakrefprop
 from mcedit2.util.raycast import rayCastInBounds
 from mcedit2.util.showprogress import showProgress
@@ -495,7 +496,9 @@ class EditorSession(QtCore.QObject):
 
     def save(self):
         self.undoStack.clearUndoBlock()
-        self.worldEditor.saveChanges()
+
+        saveTask = self.worldEditor.saveChangesIter()
+        showProgress("Saving...", saveTask)
         self.dirty = False
 
     # - Edit -
@@ -670,7 +673,11 @@ class EditorSession(QtCore.QObject):
         self.worldEditor.beginUndo()
 
     def commitUndo(self):
-        self.worldEditor.commitUndo()
+        exhaust(self.commitUndoIter())
+
+    def commitUndoIter(self):
+        for status in self.worldEditor.commitUndoIter():
+            yield status
         self.revisionChanged.emit(self.worldEditor.currentRevision)
 
     def undoForward(self):

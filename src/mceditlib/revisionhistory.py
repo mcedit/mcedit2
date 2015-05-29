@@ -268,14 +268,25 @@ class RevisionHistory(object):
         return changes
 
     def writeAllChanges(self, requestedRevision=None):
+        for status in self.writeAllChangesIter(requestedRevision):
+            pass
+
+    def writeAllChangesIter(self, requestedRevision=None):
         """
-        Write all changes to the root world folder, preserving undo history. The previous head node is no longer
-        valid after calling writeAllChanges. Specify a revision to only save changes up to and including that
+        Write all changes to the root world folder, preserving undo history. The world folder
+        becomes the new head node. The previous head node is no longer valid after calling
+        writeAllChanges. Specify a revision to only save changes up to and including that
         revision.
+
         :return:
         :rtype:
         """
         # XXXXX wait for async writes to complete here
+        # Progress counts:
+        # 0-20:   Orphaned chains
+        # 20-100: History nodes
+
+        maxprogress = 100
 
         if isinstance(requestedRevision, RevisionHistoryNode):
             requestedIndex = self.nodes.index(requestedRevision)
@@ -284,6 +295,7 @@ class RevisionHistory(object):
         else:
             requestedIndex = requestedRevision
 
+        orphanChainProgress = 20
         if self.orphanChainIndex is not None:
             # Root node is orphaned - collapse orphan chain into it in reverse order
             orphanNodes = []
@@ -292,8 +304,13 @@ class RevisionHistory(object):
                 orphanNodes.append(orphanChainNode)
                 orphanChainNode = orphanChainNode.parentNode
 
-            for orphanChainNode in reversed(orphanNodes):
-                copyToFolder(self.rootFolder, orphanChainNode)
+            for progress, orphanChainNode in enumProgress(reversed(orphanNodes), 0, 20):
+                yield (progress, maxprogress, "Collapsing orphaned chain")
+
+                copyTask = copyToFolderIter(self.rootFolder, orphanChainNode)
+                copyTask = rescaleProgress(copyTask, progress, 20/len(orphanNodes))
+                for current, _, status in copyTask:
+                    yield current, maxprogress, status
 
             self.nodes[self.orphanChainIndex] = self.rootNode
             self.orphanChainIndex = None
@@ -308,7 +325,7 @@ class RevisionHistory(object):
             indexes = xrange(self.rootNodeIndex+1, requestedIndex+1)
         log.info("writeAllChanges: moving %s", "forwards" if direction == 1 else "backwards")
 
-        for currentIndex in indexes:
+        for progress, currentIndex in enumProgress(indexes, 20, 80):
             # Write all changes from each node into the initial folder. Save the previous
             # chunk and file data from the initial folder into a reverse revision.
 
@@ -320,7 +337,11 @@ class RevisionHistory(object):
             reverseNode.differences = self.rootNode.differences
             self.rootNode.differences = currentNode.getChanges()
 
-            copyToFolder(self.rootFolder, currentNode, reverseNode)
+            copyTask = copyToFolderIter(self.rootFolder, currentNode, reverseNode)
+            copyTask = rescaleProgress(copyTask, progress, 80 / len(indexes))
+            for current, _, status in copyTask:
+                yield current, maxprogress, status
+
             # xxx look ahead one or more nodes to skip some copies
 
             reverseNode.setRevisionInfo(self.rootNode.getRevisionInfo())
@@ -339,8 +360,54 @@ class RevisionHistory(object):
             currentNode.invalid = True
             shutil.rmtree(currentNode.worldFolder.filename, ignore_errors=True)
 
-
 def copyToFolder(destFolder, sourceNode, presaveNode=None):
+    for status in copyToFolderIter(destFolder, sourceNode, presaveNode):
+        pass
+
+def rescaleProgress(iterable, start, end):
+    """
+    Given an iterable that yields (current, maximum, status) tuples, rescales current and maximum
+    to fit within the range [start, end]. `current` is assumed to start at zero.
+
+    :param iterable:
+    :param start:
+    :param end:
+    :return:
+    """
+    d = end - start
+
+    for current, maximum, status in iterable:
+        yield start + current * d / maximum, end, status
+
+
+def enumProgress(collection, start, end=None):
+    """
+    Iterate through a collection, yielding (progress, value) tuples. `progress` is the value
+    between `start` and `end` proportional to the progress through the collection.
+
+    :param collection:
+    :param progress:
+    :return:
+    """
+    if end is None:
+        end = start
+        start = 0
+
+    if len(collection) == 0:
+        return
+
+    progFraction = (end - start) / len(collection)
+    for i, value in enumerate(collection):
+        yield start + i * progFraction, value
+
+
+def copyToFolderIter(destFolder, sourceNode, presaveNode=None):
+    # Progress counts:
+    # 0-10:   deleted chunks
+    # 10-80:  new/modified chunks
+    # 80-90:  deleted files
+    # 90-100: new/modified files
+
     if presaveNode:
         presaveFolder = presaveNode.worldFolder
     else:
@@ -348,16 +415,28 @@ def copyToFolder(destFolder, sourceNode, presaveNode=None):
 
     sourceFolder = sourceNode.worldFolder
 
+    maxprogress = 100
+
     # Remove deleted chunks
-    for cx, cz, dimName in sourceNode.deadChunks:
+    for deadProgress, (cx, cz, dimName) in enumProgress(sourceNode.deadChunks, 0, 10):
+        yield deadProgress, maxprogress, "Removing deleted chunks"
+
         if destFolder.containsChunk(cx, cz, dimName):
             if presaveFolder and not presaveFolder.containsChunk(cx, cz, dimName):
                 presaveFolder.writeChunkBytes(cx, cz, dimName, destFolder.readChunkBytes(cx, cz, dimName))
             destFolder.deleteChunk(cx, cz, dimName)
 
     # Write new and modified chunks
-    for dimName in sourceFolder.listDimensions():
-        for cx, cz in sourceFolder.chunkPositions(dimName):
+    dims = list(sourceFolder.listDimensions())
+    dimProgress = 70 / len(dims)
+
+    for i, dimName in enumerate(dims):
+        progress = 10 + i * dimProgress
+
+        cPos = list(sourceFolder.chunkPositions(dimName))
+        for chunkProgress, (cx, cz) in enumProgress(cPos, progress, progress + dimProgress):
+            yield chunkProgress, maxprogress, "Writing new and modified chunks"
+
             if presaveFolder and not presaveFolder.containsChunk(cx, cz, dimName):
                 if destFolder.containsChunk(cx, cz, dimName):
                     presaveFolder.writeChunkBytes(cx, cz, dimName, destFolder.readChunkBytes(cx, cz, dimName))
@@ -366,20 +445,28 @@ def copyToFolder(destFolder, sourceNode, presaveNode=None):
             destFolder.writeChunkBytes(cx, cz, dimName, sourceFolder.readChunkBytes(cx, cz, dimName))
 
     # Remove deleted files
-    for path in sourceNode.deadFiles:
+    for delProgress, path in enumProgress(sourceNode.deadFiles, 80, 10):
+        yield delProgress, maxprogress, "Removing deleted files"
+
         if destFolder.containsFile(path):
             if presaveFolder and not presaveFolder.containsFile(path):
                 presaveFolder.writeFile(path, destFolder.readFile(path))
             destFolder.deleteFile(path)
 
     # Write new and modified files
-    for path in sourceFolder.listAllFiles():
+
+    files = list(sourceFolder.listAllFiles())
+    for delProgress, path in enumProgress(files, 90, 10):
+        yield delProgress, maxprogress, "Writing new and modified files"
+
         if presaveFolder and not presaveFolder.containsFile(path):
             if destFolder.containsFile(path):
                 presaveFolder.writeFile(path, destFolder.readFile(path))
             else:  # new file
                 presaveNode.deleteFile(path)
         destFolder.writeFile(path, sourceFolder.readFile(path))
+
+    yield maxprogress, maxprogress, "Done"
 
 class RevisionHistoryNode(object):
     def __init__(self, history, worldFolder, parentNode):

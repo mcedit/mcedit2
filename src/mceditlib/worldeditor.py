@@ -281,6 +281,9 @@ class WorldEditor(object):
         log.info("Opened revision %d", self.currentRevision)
 
     def commitUndo(self, revisionInfo=None):
+        exhaust(self.commitUndoIter(revisionInfo))
+
+    def commitUndoIter(self, revisionInfo=None):
         """
         Record all changes since the last call to beginUndo into the adapter's current revision. The revision is closed
         and beginUndo must be called to open the next revision.
@@ -291,7 +294,9 @@ class WorldEditor(object):
         :rtype:
         """
         self.adapter.setRevisionInfo(revisionInfo)
-        self.syncToDisk()
+        for status in self.syncToDiskIter():
+            yield status
+
         self.adapter.closeRevision()
         log.info("Closed revision %d", self.currentRevision)
 
@@ -334,8 +339,10 @@ class WorldEditor(object):
         self.recentDirtyFiles.update(changes.files)
 
     # --- Save ---
-
     def syncToDisk(self):
+        exhaust(self.syncToDiskIter())
+
+    def syncToDiskIter(self):
         """
         Write all loaded chunks, player files, etc to disk.
 
@@ -344,12 +351,15 @@ class WorldEditor(object):
         """
         dirtyPlayers = 0
         for player in self.playerCache.itervalues():
+            # xxx should be in adapter?
             if player.dirty:
                 dirtyPlayers += 1
                 player.save()
 
         dirtyChunkCount = 0
-        for cx, cz, dimName in self._chunkDataCache:
+        for i, (cx, cz, dimName) in enumerate(self._chunkDataCache):
+            yield i, len(self._chunkDataCache), "Writing modified chunks"
+
             chunkData = self._chunkDataCache(cx, cz, dimName)
             if chunkData.dirty:
                 dirtyChunkCount += 1
@@ -359,12 +369,16 @@ class WorldEditor(object):
         log.info(u"Saved %d chunks and %d players", dirtyChunkCount, dirtyPlayers)
 
     def saveChanges(self):
+        exhaust(self.saveChangesIter())
+
+    def saveChangesIter(self):
         if self.readonly:
             raise IOError("World is opened read only.")
 
         self.syncToDisk()
         self.playerCache.clear()
-        self.adapter.saveChanges()
+        for status in self.adapter.saveChangesIter():
+            yield status
 
     def saveToFile(self, filename):
         # XXXX only works with .schematics!!!

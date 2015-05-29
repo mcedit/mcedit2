@@ -19,6 +19,8 @@ def exhaust(_iter):
     Functions named ending in "Iter" return an iterable object that does
     long-running work and yields progress information on each call. exhaust()
     is used to implement the non-Iter equivalents
+
+    :type _iter: Iterable
     """
     i = None
     for i in _iter:
