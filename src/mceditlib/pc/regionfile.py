@@ -156,13 +156,12 @@ class RegionFile(object):
                             overlaps = True
                         _freeSectors[i] = False
 
-                    if xPos != cx or zPos != cz or overlaps:
+                    if xPos != cx or zPos != cz:
                         lostAndFound[xPos, zPos] = data
+                        raise RegionFormatError("Chunk {found} was found in the slot reserved for {expected}".format(found=(xPos, zPos), expected=(cx, cz)))
 
-                        if (xPos, zPos) != (cx, cz):
-                            raise RegionFormatError("Chunk {found} was found in the slot reserved for {expected}".format(found=(xPos, zPos), expected=(cx, cz)))
-                        else:
-                            raise RegionFormatError("Chunk {found} (in slot {expected}) has overlapping sectors with another chunk!".format(found=(xPos, zPos), expected=(cx, cz)))
+                    if overlaps:
+                        raise RegionFormatError("Chunk {found} (in slot {expected}) has overlapping sectors with another chunk!".format(found=(xPos, zPos), expected=(cx, cz)))
 
                 except Exception as e:
                     log.info("Unexpected chunk data at sector {sector} ({exc})".format(sector=sectorStart, exc=e))
