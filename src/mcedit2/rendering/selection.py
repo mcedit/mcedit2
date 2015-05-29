@@ -17,6 +17,7 @@ from mcedit2.util.glutils import gl
 from mceditlib import faces
 from mceditlib.exceptions import ChunkNotPresent
 from mceditlib.selection import SectionBox, BoundingBox, SelectionBox, rayIntersectsBox
+from mceditlib.util import exhaust
 
 log = logging.getLogger(__name__)
 
@@ -152,8 +153,8 @@ class SelectionScene(scenegraph.Node):
         self.groupNode.clear()
         self._loader = None
         if selection.chunkCount < 16:
-            for _ in self.loadSections():
-                pass
+            exhaust(self.loadSections())
+
             self.loadTimer.setInterval(333)
 
 

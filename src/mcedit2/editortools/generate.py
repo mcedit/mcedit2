@@ -18,7 +18,7 @@ from mcedit2.util.worldloader import WorldLoader
 from mcedit2.widgets.layout import Column
 from mcedit2.widgets.spinslider import SpinSlider
 from mceditlib.schematic import createSchematic
-
+from mceditlib.util import exhaust
 
 log = logging.getLogger(__name__)
 
@@ -402,8 +402,7 @@ class GenerateTool(EditorTool):
 
             self.loader = WorldLoader(self.worldScene)
             if dim.chunkCount() <= self.instantDisplayChunks:
-                for _ in self.loader.work():
-                    pass
+                exhaust(self.loader.work())
             else:
                 self.loader.timer.start()
         else:
