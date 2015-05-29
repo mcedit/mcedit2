@@ -154,6 +154,9 @@ class lru_cache_object(object):
     def __iter__(self):
         return iter(self.cache)
 
+    def __len__(self):
+        return len(self.cache)
+
     should_decache = None
     will_decache = None
 
