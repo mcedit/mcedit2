@@ -9,9 +9,8 @@ import logging
 import numpy
 from mcedit2.rendering import compass, scenegraph, rendergraph
 from mcedit2.rendering.layers import Layer
-from mcedit2.util import raycast
 from mcedit2.util.glutils import gl
-from mcedit2.util.raycast import rayCastInBounds
+from mcedit2.util.raycast import rayCastInBounds, MaxDistanceError
 from mcedit2.worldview.worldview import WorldView
 from mceditlib.geometry import Vector, Ray
 
@@ -180,8 +179,16 @@ class MinimapWorldView(WorldView):
 
     def currentViewMatrixChanged(self, currentView):
         self.viewCornersNode.corners = currentView.getViewCorners()
-        planeDistance = 20
-        planeHeight = (currentView.centerPoint + currentView.cameraVector * planeDistance).y
+        try:
+            targetPoint, face = rayCastInBounds(Ray(currentView.centerPoint, currentView.cameraVector), self.dimension, 100)
+            if targetPoint is None:
+                raise MaxDistanceError
+            planeHeight = targetPoint.y
+            
+        except MaxDistanceError:
+            planeDistance = 20
+            planeHeight = (currentView.centerPoint + currentView.cameraVector * planeDistance).y
+
         self.viewCornersNode.planeHeight = planeHeight
 
     def zoom(self, scale, (mx, my)):

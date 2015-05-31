@@ -266,7 +266,6 @@ class CameraWorldView(WorldView):
     def cameraVector(self):
         return self._anglesToVector(*self.yawPitch)
 
-
     def makeChunkIter(self):
         radius = self.viewDistance
 
