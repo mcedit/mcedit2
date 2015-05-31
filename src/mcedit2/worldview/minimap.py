@@ -2,6 +2,7 @@
     minimap.py
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
+from collections import namedtuple
 from OpenGL import GL
 from PySide import QtCore, QtGui
 import logging
@@ -16,50 +17,93 @@ from mceditlib.geometry import Vector, Ray
 
 log = logging.getLogger(__name__)
 
+class LineSegment(namedtuple("LineSegment", "p1 p2")):
+    def atHeight(self, y):
+        p1 = self.p1
+        p2 = self.p2
+        if not (p1.y < y < p2.y or p1.y > y > p2.y):
+            return None
+
+        r = Ray.fromPoints(p1, p2)
+        return r.atHeight(y)
+
+
 class ViewCornersRenderNode(rendergraph.RenderNode):
-    # bottom left, near
-    # bottom left, far
-    # top left, near
-    # top left, far
-    # bottom right, near
-    # bottom right, far
-    # top right, near
-    # top right, far
+
+    #
+    # Renders the intersection of a horizontal plane with the view frustum
+    # We only check the four vertical segments (with respect to the view angle)
+    # and the four segments pointing outward from the viewer.
+    # The four outward segments are checked first, if all four intersect they are used
+    # as the corners. If only two outwards segments intersect, the two furthest
+    # verticals are intersected and used as the last two corners.
+    # If no outward segments intersect (rare) then all four verticals are used.
+
+    # 0: bottom left, near
+    # 1: bottom left, far
+    # 2: top left, near
+    # 3: top left, far
+    # 4: bottom right, near
+    # 5: bottom right, far
+    # 6: top right, near
+    # 7: top right, far
+
+    verticalIndices = [
+        (1, 3),
+        (5, 7),
+        (0, 2),
+        (4, 6),
+    ]
+    outwardIndices = [
+        (0, 1),
+        (2, 3),
+        (4, 5),
+        (6, 7),
+    ]
 
     def drawSelf(self):
         if self.sceneNode.corners is None or self.sceneNode.dimension is None:
             return
         corners = self.sceneNode.corners
-        dimension = self.sceneNode.dimension
-        corners = corners[:2], corners[2:4], corners[6:8], corners[4:6]
 
-        def rayCastCorner(near, far):
-            ray = Ray.fromPoints(near, far)
-            if not any(ray.vector):
-                return far
-            try:
-                #point = rayCastInBounds(ray, dimension, 50)[0]
-                #return point or far
-                return near + (near - far) / 4
-            except raycast.MaxDistanceError:
-                return ray.atHeight(0)
+        outwardSegments = [LineSegment(corners[i], corners[j]) for i, j in self.outwardIndices]
+        verticalSegments = [LineSegment(corners[i], corners[j]) for i, j in self.verticalIndices]
+        points = []
 
-        # Average nearby height values or something to suppress jitter??
-        corners = [rayCastCorner(near, far) for near, far in corners]
-        corners.append(corners[0])
+        for segment in outwardSegments:
+            p = segment.atHeight(self.sceneNode.planeHeight)
+            if p is not None:
+                points.append(p)
+
+        if len(points) < 4:
+            # only intersected two outward segments. check the far verticals.
+            for segment in verticalSegments[:2]:
+                r = Ray.fromPoints(*segment)
+                points.append(r.atHeight(self.sceneNode.planeHeight))
+
+        if len(points) < 4:
+            # intersected zero outward segments!
+            # rarely occurs, the near verticals are 1/10 of a block tall
+            for segment in verticalSegments[2:]:
+                r = Ray.fromPoints(*segment)
+                points.append(r.atHeight(self.sceneNode.planeHeight))
+
+        if len(points) < 4:
+            return
+
+        p1, p2, p3, p4 = points[:4]
+        points = [p1, p2, p4, p3, p1]
 
         with gl.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT, GL.GL_COLOR_BUFFER_BIT):
             GL.glDepthMask(False)
             GL.glEnable(GL.GL_BLEND)
-            GL.glVertexPointer(3, GL.GL_FLOAT, 0, numpy.array(corners).ravel())
+            GL.glVertexPointer(3, GL.GL_FLOAT, 0, numpy.array(points).ravel())
 
             GL.glLineWidth(3.0)
 
             GL.glColor(1, 1, .1, 0.5)
             GL.glDisable(GL.GL_DEPTH_TEST)
-            GL.glDrawArrays(GL.GL_LINE_STRIP, 0, 5)
-
-
+            GL.glDrawArrays(GL.GL_LINE_STRIP, 0, len(points))
 
 
 class ViewCornersNode(scenegraph.Node):
@@ -85,6 +129,17 @@ class ViewCornersNode(scenegraph.Node):
     @dimension.setter
     def dimension(self, value):
         self._dimension = value
+        self.dirty = True
+        
+    _planeHeight = None
+
+    @property
+    def planeHeight(self):
+        return self._planeHeight
+
+    @planeHeight.setter
+    def planeHeight(self, value):
+        self._planeHeight = value
         self.dirty = True
 
 
@@ -124,7 +179,10 @@ class MinimapWorldView(WorldView):
         self.matrixNode.modelview = modelview
 
     def currentViewMatrixChanged(self, currentView):
-        self.viewCornersNode.corners = currentView.getViewBounds()
+        self.viewCornersNode.corners = currentView.getViewCorners()
+        planeDistance = 20
+        planeHeight = (currentView.centerPoint + currentView.cameraVector * planeDistance).y
+        self.viewCornersNode.planeHeight = planeHeight
 
     def zoom(self, scale, (mx, my)):
 

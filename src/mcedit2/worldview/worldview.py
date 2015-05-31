@@ -265,7 +265,7 @@ class WorldView(QGLWidget):
         matrix = self.matrixNode.projection * self.matrixNode.modelview
         matrix, inverted = matrix.inverted()
         worldCorners = [matrix.map(corner) for corner in corners]
-        worldCorners = [(corner / corner.w()).toTuple()[:3] for corner in worldCorners]
+        worldCorners = [Vector(*((corner / corner.w()).toTuple()[:3])) for corner in worldCorners]
         return worldCorners
 
     def getViewBounds(self):
