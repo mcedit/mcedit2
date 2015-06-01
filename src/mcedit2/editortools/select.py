@@ -8,6 +8,7 @@ from OpenGL import GL
 from PySide import QtGui, QtCore
 
 from mcedit2.editortools import EditorTool
+from mcedit2.editortools.brush import shapes
 from mcedit2.handles.boxhandle import BoxHandle
 from mcedit2.rendering import cubes
 from mcedit2.rendering.selection import SelectionScene, SelectionFaceNode
@@ -15,7 +16,6 @@ from mcedit2.util.load_ui import load_ui
 from mcedit2.util.glutils import gl
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering import scenegraph, rendergraph
-from mcedit2.widgets import shapewidget
 from mcedit2.widgets.layout import Column
 from mcedit2.widgets.shapewidget import ShapeWidget
 from mceditlib import faces
@@ -282,8 +282,8 @@ class SelectionTool(EditorTool):
     showPreviousSelection = True
 
     def createShapedSelection(self, box):
-        if self.shapeInput.currentShape is shapewidget.Square:
-            return box
+        if self.shapeInput.currentShape is shapes.Square:
+            return box  # ugly hack
         else:
             return selection.ShapedSelection(box, self.shapeInput.currentShape.shapeFunc)
 
