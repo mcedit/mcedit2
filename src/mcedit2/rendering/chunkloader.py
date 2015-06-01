@@ -143,7 +143,7 @@ class ChunkLoader(QtCore.QObject):
             return self.chunkWorker.next()
         except StopIteration:
             self.chunkWorker = None
-
+            raise
 
     def _loadChunks(self):
         """
