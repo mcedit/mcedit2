@@ -30,10 +30,41 @@ class Diamond(BrushShape):
     icon = "shapes/diamond.png"
     shapeFunc = staticmethod(selection.DiamondShape)
 
+class Cylinder(BrushShape):
+    ID = "Cylinder"
+    icon = None
+
+    def shapeFunc(self, blockPositions, selectionSize):
+        # axis = y
+        #
+
+        y, z, x = blockPositions
+        h, l, w = selectionSize
+        # radius
+        w /= 2
+        l /= 2
+        # offset to 0,0 at center
+        x -= w - 0.5
+        z -= l - 0.5
+
+        # distance formula:
+        # for circles: x^2 + z^2 < r^2
+        # for ovoids: x^2/rx^2 + z^2/rz^2 < 1
+        x *= x
+        z *= z
+
+        rx2 = w*w
+        rz2 = l*l
+
+        x /= rx2
+        z /= rz2
+
+        distances = x + z
+        return (distances < 1) & (0 <= y) & (y < h)
 
 
 # load from plugins here, rename to selection shapes?
-allShapes = (Square(), Round(), Diamond())
+allShapes = (Square(), Round(), Diamond(), Cylinder())
 
 def getShapes():
     return allShapes
