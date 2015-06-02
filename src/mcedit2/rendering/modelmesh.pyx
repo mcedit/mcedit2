@@ -96,7 +96,7 @@ class BlockModelMesh(object):
         cdef blockmodels.ModelQuadList quads
         cdef blockmodels.ModelQuad quad
 
-        cdef unsigned short rx, ry, rz
+        cdef short rx, ry, rz
         cdef unsigned char bl, sl
         cdef unsigned char tintType
         cdef unsigned char biomeID
