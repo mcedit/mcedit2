@@ -12,6 +12,7 @@ from mcedit2.editortools.brush.masklevel import FakeBrushSection
 from mcedit2.editortools.brush.modes import BrushModes
 from mcedit2.rendering import worldscene, scenegraph
 from mcedit2.rendering.depths import DepthOffset
+from mcedit2.rendering.selection import SelectionBoxNode
 from mcedit2.util.load_ui import load_ui, registerCustomWidget
 from mcedit2.util.settings import Settings
 from mcedit2.util.showprogress import showProgress
@@ -190,12 +191,19 @@ class BrushTool(EditorTool):
         if self.cursorWorldScene:
             self.brushLoader.timer.stop()
             self.cursorNode.removeChild(self.cursorWorldScene)
+            self.cursorNode.removeChild(self.cursorBoxNode)
 
         cursorLevel = self.brushMode.createCursorLevel(self)
+        cursorBox = self.brushMode.brushBoxForPoint((0, 0, 0), self.options)
+
+        self.cursorBoxNode = SelectionBoxNode()
+        self.cursorBoxNode.selectionBox = cursorBox
+        self.cursorBoxNode.filled = False
 
         self.cursorWorldScene = worldscene.WorldScene(cursorLevel, self.editorSession.textureAtlas)
         self.cursorWorldScene.depthOffsetNode.depthOffset = DepthOffset.PreviewRenderer
         self.cursorNode.addChild(self.cursorWorldScene)
+        self.cursorNode.addChild(self.cursorBoxNode)
 
         self.brushLoader = WorldLoader(self.cursorWorldScene)
         self.brushLoader.timer.start()
