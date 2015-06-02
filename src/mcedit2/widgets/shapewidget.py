@@ -25,11 +25,14 @@ class ShapeWidget(QtGui.QWidget):
         iconBase = resourcePath("mcedit2/assets/mcedit2/icons")
         actions = {}
         for shape in getShapes():
-            filename = os.path.join(iconBase, shape.icon)
-            assert os.path.exists(filename), "%r does not exist" % filename
-            icon = QtGui.QIcon(filename)
-            if icon is None:
-                raise ValueError("Failed to read shape icon file %s" % filename)
+            if shape.icon is not None:
+                filename = os.path.join(iconBase, shape.icon)
+                assert os.path.exists(filename), "%r does not exist" % filename
+                icon = QtGui.QIcon(filename)
+                if icon is None:
+                    log.warn("Failed to read shape icon file %s" % filename)
+            else:
+                icon = None
 
             def _handler(shape):
                 def handler():
@@ -37,7 +40,10 @@ class ShapeWidget(QtGui.QWidget):
                     BrushShapeSetting.setValue(shape.ID)
                     self.shapeChanged.emit()
                 return handler
-            action = QtGui.QAction(icon, shape.ID, self, triggered=_handler(shape))
+            if icon is None:
+                action = QtGui.QAction(shape.ID, self, triggered=_handler(shape))
+            else:
+                action = QtGui.QAction(icon, shape.ID, self, triggered=_handler(shape))
             button = QtGui.QToolButton()
             action.setCheckable(True)
             button.setDefaultAction(action)
