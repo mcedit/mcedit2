@@ -118,7 +118,6 @@ class SelectionBox(object):
     maxcy = NotImplemented
     maxcz = NotImplemented
 
-
     def chunkBox(self, level):
         """Returns this box extended to the chunk boundaries of the given level"""
         box = self
@@ -129,11 +128,11 @@ class SelectionBox(object):
         return self.mincx <= cx < self.maxcx and self.mincz <= cz < self.maxcz
 
     def chunkPositions(self):
-        #iterate through all of the chunk positions within this selection box
+        """ Iterate through all of the chunk positions within this selection box """
         return itertools.product(xrange(self.mincx, self.maxcx), xrange(self.mincz, self.maxcz))
 
     def sectionPositions(self, cx=0, cz=0):
-        #iterate through all of the section positions within this chunk
+        """ Iterate through all of the section positions within this chunk"""
         return range(self.mincy, self.maxcy)
 
     @property
@@ -151,7 +150,6 @@ class InvertedBox(SelectionBox):
         self.maxcx = base.maxcx
         self.maxcy = base.maxcy
         self.maxcz = base.maxcz
-
 
     def contains_coords(self, x, y, z):
         return not self.base.contains_coords(x, y, z)
@@ -216,15 +214,17 @@ class IntersectionBox(CombinationBox):
 
 class DifferenceBox(CombinationBox):
     oper = lambda a, b: a & (~b)
-    boundsminoper = lambda *a: a[0]
-    boundsmaxoper = lambda *a: a[0]
+    boundsminoper = lambda a, b: a
+    boundsmaxoper = lambda a, b: a
 
 
 def SectionBox(cx, cy, cz, section=None):
     if section is None:
         shape = 16, 16, 16
     else:
-        shape = section.Blocks.shape  # XXX needed because FakeChunkedLevel returns odd sized sections - fix with storage adapter
+        # XXX needed because FakeChunkedLevel returns odd sized sections - fix with storage adapter
+        # still needed????
+        shape = section.Blocks.shape
         shape = shape[2], shape[0], shape[1]
 
     return BoundingBox(Vector(cx, cy, cz) * 16, shape)
@@ -232,8 +232,8 @@ def SectionBox(cx, cy, cz, section=None):
 
 def rayIntersectsBox(box, ray):
     """
-    Return a list of (point, face) pairs for each side of the box intersected by ray. The list is sorted by distance
-    from the ray's origin, nearest to furthest.
+    Return a list of (point, face) pairs for each side of the box intersected by ray. The list is
+    sorted by distance from the ray's origin, nearest to furthest.
 
     :param box:
     :type box:
@@ -245,10 +245,6 @@ def rayIntersectsBox(box, ray):
     nearPoint, vector = ray
 
     intersections = []
-
-    #        glPointSize(5.0)
-    #        glColor(1.0, 1.0, 0.0, 1.0)
-    #        glBegin(GL_POINTS)
 
     for dim in range(3):
         dim1 = dim + 1
@@ -274,8 +270,8 @@ def rayIntersectsBox(box, ray):
 
     if not len(intersections):
         return None
-    # Get the distance from the viewing plane for each intersection point
 
+    # Get the distance from the near point for each intersection point
     byDistance = [((point - nearPoint).lengthSquared(), point, face)
                   for point, face in intersections]
 

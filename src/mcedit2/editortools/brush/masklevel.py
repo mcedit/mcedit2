@@ -15,7 +15,7 @@ NULL_ID = 255  # xxx WHAT IS THIS FOR?
 class MaskLevel(object):
     def __init__(self, selection, fillBlock, blocktypes, biomeID=None):
         """
-        Level emulator to be used for rendering brushes and selections.
+        Dimension emulator to be used for rendering brushes and selections.
 
         :type selection: mceditlib.selection.ShapedSelection
         :param selection:

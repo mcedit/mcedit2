@@ -233,10 +233,8 @@ class SectionUpdate(object):
         # new rendertypes:
         # 0: ??
         # 1. lava/water
-        # 2: item?
+        # 2: entity/chest/banner/sign/etc
         # 3: block model
-
-
 
     @property
     def fastLeaves(self):

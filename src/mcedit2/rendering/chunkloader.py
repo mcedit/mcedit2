@@ -31,8 +31,11 @@ class ChunkLoaderInfo(InfoPanel):
 class IChunkLoaderClient(object):
     def requestChunk(self):
         """
+        Called on the first client in the clients list. When the first client returns None,
+        is called on the second client, and so on.
+
         Return the coordinates of the chunk requested by the client. Each
-        call to the client should return a different set of coordinates.
+        call to `requestChunk` should return a different set of coordinates.
 
         Return None to request no chunks.
 
@@ -43,7 +46,7 @@ class IChunkLoaderClient(object):
 
     def wantsChunk(self, (cx, cz)):
         """
-        Optional.
+        Called on each client after a chunk is requested, but before it is loaded.
 
         Return False to skip loading the chunk at the given position.
         If all clients return False, the chunk is not loaded.
@@ -53,17 +56,24 @@ class IChunkLoaderClient(object):
 
     def recieveChunk(self, chunk):
         """
-        Process the chunk. May be implemented as a generator function or a function that returns an iterable - if
-        `recieve chunk` returns an iterable, it will be exhausted
+        Called on each client after a chunk is loaded. Allows the chunk to be processed.
+
+        May be implemented as a generator function or a function that returns an iterable - if
+        `recieveChunk` returns an iterable, it will be exhausted. This allows potentially
+        long-running operations on a single chunk to be split over multiple calls to
+        ChunkLoader.next()
 
         :param chunk: returned by level.getChunk()
+        :type chunk: WorldEditorChunk
         :return: See description
-        :rtype: None or iterator
+        :rtype: Iterable | None
         """
 
     def chunkNotLoaded(self, (cx, cz), exc):
         """
-        Notifies the client that a chunk failed to load with an exception.
+        Called when a chunk fails to load due to an exception.
+
+        Notifies each client of the chunk's position and the thrown exception.
 
         :param (cx, cz): chunk position
         :param exc: The exception that was thrown, usually IOError or LevelFormatError

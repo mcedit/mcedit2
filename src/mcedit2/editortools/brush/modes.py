@@ -43,9 +43,26 @@ class BrushMode(QtCore.QObject):
         raise NotImplementedError
 
     def createOptionsWidget(self, brushTool):
+        """
+        Called by BrushTool to create a widget to display for this mode in the brush options panel.
+
+        Shouldn't the widget be created in __init__? When are BrushModes created? On module load,
+        I think.
+
+        :param brushTool:
+        :return:
+        """
         return None
 
     def createCursorLevel(self, brushTool):
+        """
+        Called by BrushTool to create a MaskLevel (or WorldEditorDimension?) to use for the cursor.
+        Should return a world with a bounding box sized to `brushTool.options['brushSize']` and
+        centered at 0, 0, 0 (???)
+
+        :param brushTool:
+        :return:
+        """
         return None
 
 
@@ -80,6 +97,7 @@ class Fill(BrushMode):
 
         :type command: BrushCommand
         """
+        # xxx combine selections?
         fill = command.editorSession.currentDimension.fillBlocksIter(selections[0], command.options['blockInfo'])
         showProgress("Applying brush...", fill)
 
