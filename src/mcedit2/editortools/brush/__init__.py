@@ -17,6 +17,7 @@ from mcedit2.util.load_ui import load_ui, registerCustomWidget
 from mcedit2.util.settings import Settings
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
+from mceditlib.geometry import Vector
 from mceditlib.util import exhaust
 
 
@@ -121,6 +122,10 @@ class BrushTool(EditorTool):
         self.toolWidget.ySpinSlider.setValue(self.brushSize[1])
         self.toolWidget.zSpinSlider.setValue(self.brushSize[2])
 
+    @property
+    def hoverDistance(self):
+        return self.toolWidget.hoverSpinSlider.value()
+
     _brushSize = (0, 0, 0)
 
     @property
@@ -157,13 +162,15 @@ class BrushTool(EditorTool):
 
     def mousePress(self, event):
         pos = event.blockPosition
-        pos += event.blockFace.vector
-        command = BrushCommand(self.editorSession, [pos], self.options)
+        vector = (event.blockFace.vector * self.hoverDistance)
+        command = BrushCommand(self.editorSession, [pos + vector], self.options)
         self.editorSession.pushCommand(command)
 
     def mouseMove(self, event):
         if event.blockPosition:
-            self.cursorNode.translateOffset = event.blockPosition + event.blockFace.vector
+            vector = (event.blockFace.vector * self.hoverDistance)
+            assert isinstance(vector, Vector), "vector isa %s" % type(vector)
+            self.cursorNode.translateOffset = event.blockPosition + vector
 
     @property
     def options(self):

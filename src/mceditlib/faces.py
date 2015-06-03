@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from mceditlib.geometry import Vector
 
 
 class Face(int):
@@ -42,12 +43,12 @@ FaceZDecreasing = FaceNorth = Face(5)
 MaxDirections = 6
 
 faceDirections = (
-    (FaceXIncreasing, (1, 0, 0)),
-    (FaceXDecreasing, (-1, 0, 0)),
-    (FaceYIncreasing, (0, 1, 0)),
-    (FaceYDecreasing, (0, -1, 0)),
-    (FaceZIncreasing, (0, 0, 1)),
-    (FaceZDecreasing, (0, 0, -1))
+    (FaceXIncreasing, Vector(1, 0, 0)),
+    (FaceXDecreasing, Vector(-1, 0, 0)),
+    (FaceYIncreasing, Vector(0, 1, 0)),
+    (FaceYDecreasing, Vector(0, -1, 0)),
+    (FaceZIncreasing, Vector(0, 0, 1)),
+    (FaceZDecreasing, Vector(0, 0, -1))
 )
 _directions = {k: v for (k, v) in faceDirections}
 
