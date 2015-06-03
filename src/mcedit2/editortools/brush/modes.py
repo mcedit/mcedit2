@@ -10,7 +10,7 @@ from mcedit2.widgets.blockpicker import BlockTypeButton
 from mcedit2.widgets.layout import Column, Row
 from mceditlib.anvil.biome_types import BiomeTypes
 from mceditlib.geometry import Vector
-from mceditlib.selection import ShapedSelection, BoundingBox
+from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
 
@@ -105,7 +105,8 @@ class Fill(BrushMode):
         return self.brushBoundingBox(point, options)
 
     def createCursorLevel(self, brushTool):
-        selection = ShapedSelection(self.brushBoxForPoint((0, 0, 0), brushTool.options), brushTool.brushShape.shapeFunc)
+        box = self.brushBoxForPoint((0, 0, 0), brushTool.options)
+        selection = brushTool.brushShape.createShapedSelection(box)
         cursorLevel = MaskLevel(selection,
                                 self.blockTypeButton.block,
                                 brushTool.editorSession.worldEditor.blocktypes)
@@ -157,8 +158,8 @@ class Biome(BrushMode):
 
     def createCursorLevel(self, brushTool):
         box = self.brushBoxForPoint((0, 0, 0), brushTool.options)
+        selection = brushTool.brushShape.createShapedSelection(box)
 
-        selection = ShapedSelection(box, brushTool.brushShape.shapeFunc)
         cursorLevel = MaskLevel(selection,
                                 brushTool.editorSession.worldEditor.blocktypes["minecraft:grass"],
                                 brushTool.editorSession.worldEditor.blocktypes,

@@ -17,7 +17,7 @@ class MaskLevel(object):
         """
         Dimension emulator to be used for rendering brushes and selections.
 
-        :type selection: mceditlib.selection.ShapedSelection
+        :type selection: mceditlib.selection.ShapeFuncSelection
         :param selection:
         :param fillBlock:
         :param blocktypes:

@@ -62,10 +62,10 @@ class SelectionCoordinateWidget(QtGui.QWidget):
         self.yMaxInput.setMinimum(minVal)
         self.zMaxInput.setMinimum(minVal)
 
-
     boxChanged = QtCore.Signal(BoundingBox)
 
     _boundingBox = BoundingBox()
+
     @property
     def boundingBox(self):
         return self._boundingBox
@@ -88,14 +88,12 @@ class SelectionCoordinateWidget(QtGui.QWidget):
                 self.yMaxInput.setValue(box.maxy)
                 self.zMaxInput.setValue(box.maxz)
 
-
     def setMinX(self, value):
         origin, size = self.boundingBox
         origin = value, origin[1], origin[2]
         box = BoundingBox(origin, size)
         self.boundingBox = box
         self.boxChanged.emit(box)
-
 
     def setMinY(self, value):
         origin, size = self.boundingBox
@@ -275,18 +273,13 @@ class SelectionTool(EditorTool):
     def mouseRelease(self, event):
         self.boxHandleNode.mouseRelease(event)
 
-
     selectionColor = (0.8, 0.8, 1.0)
     alpha = 0.33
 
     showPreviousSelection = True
 
     def createShapedSelection(self, box):
-        if self.shapeInput.currentShape is shapes.Square:
-            return box  # ugly hack
-        else:
-            return selection.ShapedSelection(box, self.shapeInput.currentShape.shapeFunc)
-
+        return self.shapeInput.currentShape.createShapedSelection(box)
 
 class SelectionCursorRenderNode(rendergraph.RenderNode):
     def drawSelf(self):

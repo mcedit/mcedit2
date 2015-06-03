@@ -6,14 +6,14 @@ import logging
 import timeit
 from PySide import QtGui
 from mcedit2.rendering.selection import SelectionScene
-from mceditlib.selection import ShapedSelection, SphereShape
+from mceditlib.selection import ShapeFuncSelection, SphereShape
 from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
 
 def main():
     app = QtGui.QApplication([])
-    selection = ShapedSelection(BoundingBox((0, 0, 0), (63, 63, 63)), SphereShape)
+    selection = ShapeFuncSelection(BoundingBox((0, 0, 0), (63, 63, 63)), SphereShape)
     scene = SelectionScene()
     def timeBuild():
         scene.selection = selection

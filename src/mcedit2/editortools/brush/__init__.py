@@ -17,7 +17,6 @@ from mcedit2.util.load_ui import load_ui, registerCustomWidget
 from mcedit2.util.settings import Settings
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
-from mceditlib.selection import ShapedSelection
 from mceditlib.util import exhaust
 
 
@@ -72,7 +71,8 @@ class BrushCommand(SimplePerformCommand):
         yield 0, len(self.points), "Applying {0} brush...".format(self.brushMode.name)
         try:
             #xxx combine selections
-            selections = [ShapedSelection(self.brushMode.brushBoxForPoint(point, self.options), self.brushShape.shapeFunc) for point in self.points]
+            selections = [self.brushShape.createShapedSelection(self.brushMode.brushBoxForPoint(point, self.options))
+                          for point in self.points]
             self.brushMode.applyToSelections(self, selections)
         except NotImplementedError:
             for i, point in enumerate(self.points):

@@ -526,7 +526,6 @@ class BoundingBox(SelectionBox):
         """The largest chunk position contained in this box"""
         return ((self.origin.z + self.size.z - 1) >> 4) + 1
 
-
     @property
     def isChunkAligned(self):
         return (self.origin.x & 0xf == 0) and (self.origin.z & 0xf == 0)
@@ -537,7 +536,7 @@ class FloatBox(BoundingBox):
     type = float
 
 
-class ShapedSelection(BoundingBox):
+class ShapeFuncSelection(BoundingBox):
     def __init__(self, box, shapeFunc):
         """
         Generic class for implementing shaped selections via a shapeFunc callable.
@@ -562,7 +561,7 @@ class ShapedSelection(BoundingBox):
         :type shapeFunc: Callable(blockPositions, selectionShape)
         :type box: BoundingBox
         """
-        super(ShapedSelection, self).__init__(box.origin, box.size)
+        super(ShapeFuncSelection, self).__init__(box.origin, box.size)
         self.shapeFunc = shapeFunc
 
     def box_mask(self, box):
@@ -610,46 +609,4 @@ class ShapedSelection(BoundingBox):
                 for i in range(len(x)):
                     yield x[i], y[i], z[i]
 
-
-# --- Shape functions ---
-
-
-def SphereShape(blockPositions, shape):
-    # x^2 + y^2 + z^2 < r^2
-    #
-    # blockPositions are the positions of the lower left corners of each block.
-    #
-    # to define the sphere, we measure the distance from the center of each block
-    # to the sphere's center, which will be on a block edge when the size is even
-    # or at a block center when the size is odd.
-    #
-    # to this end, we offset blockPositions downward so the sphere's center is at 0, 0, 0
-    # and blockPositions are the positions of the centers of the blocks
-
-    radius = shape / 2.0
-    offset = radius - 0.5
-
-    blockPositions -= offset[:, None, None, None]
-
-    blockPositions *= blockPositions
-    radius2 = radius * radius
-
-    blockPositions /= radius2[:, None, None, None]
-    distances = sum(blockPositions, 0)
-    return distances < 1
-
-
-def BoxShape(blockPositions, shape):
-    blockPositions /= shape[:, None, None, None]  # XXXXXX USING DIVIDE FOR A RECTANGLE
-
-    distances = numpy.absolute(blockPositions).max(0)
-    return distances < .5
-
-
-def DiamondShape(blockPositions, shape):
-    blockPositions = numpy.abs(blockPositions)
-    shape /= 2
-    blockPositions /= shape[:, None, None, None]
-    distances = numpy.sum(blockPositions, 0)
-    return distances < 1
 
