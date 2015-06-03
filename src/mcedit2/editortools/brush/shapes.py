@@ -166,9 +166,54 @@ class Cylinder(BrushShape):
         distances = x + z
         return (distances < 1) & (0 <= y) & (y < h)
 
+class ParabolicDome(BrushShape):
+    ID = "ParabolicDome"
+    icon = None
+
+    def shapeFunc(self, blockPositions, selectionSize):
+
+        # In 2D:
+        # Parabola:
+        #   y = x^2
+        # Need to get y=h when x=0, so add h and invert:
+        #   y = h - x^2
+        # Need to get y=0 when x=w/2, which means getting x^2=h when x=w/2
+        # Scale x down by w/2 and then up by sqrt(h)
+        #   y = h - x'^2
+        #   x' = 2x/w sqrt(h)
+
+        # Assert h is positive.
+        #   x'^2 = 4hx^2/w^2
+        #   y = h - 4hx^2/w^2
+        #
+        # Fill in the parabola:
+        #   y <= h - 4hx^2/w^2
+        #
+        # Extend to 3D.
+        # x' = 4hx^2/w^2
+        # z' = 4hz^2/l^2
+
+        # y <= h - sqrt(x'^2 + z'^2)
+
+        y, z, x = blockPositions
+        h, l, w = selectionSize
+        # First, offset x and z such that 0, 0 is at the bottom center of the selection box.
+        x -= w / 2.0 - 0.5
+        z -= l / 2.0 - 0.5
+
+        # Now drop h by one to treat it as the maximum value and
+        # not the "one-past" we use for array indexing.
+        h -= 1
+
+        xPrime = 4 * h * x * x / (w * w)
+        zPrime = 4 * h * z * z / (l * l)
+
+        yPrime = h - numpy.sqrt(xPrime * xPrime + zPrime * zPrime)
+        # yPrime = h - xPrime
+        return (y <= yPrime) & (y > 0) & (x < w/2.0) & (x > -w/2.0) & (z < l/2.0) & (z > -l/2.0)
 
 # load from plugins here, rename to selection shapes?
-allShapes = (Square(), Round(), Diamond(), Cylinder())
+allShapes = (Square(), Round(), Diamond(), Cylinder(), ParabolicDome())
 
 def getShapes():
     return allShapes
