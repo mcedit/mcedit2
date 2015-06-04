@@ -164,7 +164,7 @@ class Ray(object):
     def intersectPlane(self, dim, pos):
         """
         :type dim: int
-        :type pos: int
+        :type pos: float
         :rtype: Vector
         """
         point, vector = self
@@ -173,6 +173,7 @@ class Ray(object):
             return point  # point is backward on ray, return ray origin
 
         if vector[dim] == 0:
+            # ray is parallel to plane. return some point on plane, but should raise an error?
             s = [0, 0, 0]
             s[dim] = pos
             return point + s
