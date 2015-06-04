@@ -97,7 +97,7 @@ class CameraKeyControls(object):
         vector = self.worldView.cameraVector
         point = self.worldView.centerPoint
         up = (0, 1, 0)
-        left = vector.cross(up)
+        left = vector.cross(up).normalize()
         if self.forward:
             point = point + vector
         if self.backward:
