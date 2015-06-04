@@ -971,7 +971,13 @@ class EditorTab(QtGui.QWidget):
     def dimensionDidChange(self, dim):
         for view in self.views:
             view.setDimension(dim)
+        # EditorSession has a new loader now, so re-add minimap and current view
+
+        self.editorSession.loader.addClient(self.miniMap)
+        view = self.currentView()
+        if view is not None:
             self.editorSession.loader.addClient(view)
+
 
     def toolDidChange(self, tool):
         if tool.toolWidget:
@@ -1021,7 +1027,10 @@ class EditorTab(QtGui.QWidget):
 
         :rtype: mcedit2.worldview.worldview.WorldView
         """
-        return self.viewStack.currentWidget().worldView
+        widget = self.viewStack.currentWidget()
+        if widget is None:
+            return None
+        return widget.worldView
 
     def showViewFrame(self, frame):
         center = self.currentView().viewCenter()

@@ -194,8 +194,6 @@ class WorldView(QGLWidget):
         self.matrixNode = scenegraph.MatrixNode()
         self._updateMatrices()
 
-
-
         self.matrixNode.addChild(self.loadableChunksNode)
         self.matrixNode.addChild(self.worldScene)
         self.matrixNode.addChild(self.overlayNode)

@@ -423,8 +423,7 @@ class WorldEditor(object):
             log.info("Dim %s: Found %d chunks in %0.2f seconds.",
                      dimName,
                      len(chunkPositions),
-                     time.time() -
-                     start)
+                     time.time() - start)
             self._allChunks[dimName] = chunkPositions
 
     def chunkCount(self, dimName):
