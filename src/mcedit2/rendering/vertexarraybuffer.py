@@ -35,7 +35,7 @@ class VertexArrayBuffer(object):
                 bl: float32 (with lights=True)
                 sl: float32 (with lights=True)
             rgba:
-                rgba: uint32 (four uint8s packed with r in the most significant byte)
+                rgba: uint8 (four uint8s packed with r in the most significant byte)
 
 
         Access elements using .vertex, .texcoord, .lightcoord, .rgba

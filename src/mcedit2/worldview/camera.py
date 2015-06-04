@@ -10,10 +10,14 @@ from math import degrees, atan, tan, radians, cos, sin
 import numpy
 from PySide.QtCore import Qt
 from PySide import QtGui, QtCore
+from mcedit2.rendering.workplane import WorkplaneNode
 
 from mcedit2.util import profiler
 from mcedit2.util.settings import Settings
 from mcedit2.widgets.layout import Column, Row
+from mcedit2.widgets.spinslider import SpinSlider
+from mceditlib import faces
+from mceditlib.geometry import Vector
 from mceditlib.util.lazyprop import lazyprop
 from mcedit2.worldview.viewcontrols import ViewControls
 from mcedit2.worldview.worldview import WorldView, iterateChunks
@@ -42,17 +46,29 @@ class CameraWorldViewFrame(QtGui.QWidget):
 
         PerspectiveSetting.connectAndCall(view.setPerspective)
 
-        perspectiveInput = QtGui.QCheckBox("Perspective")
+        perspectiveInput = QtGui.QCheckBox(self.tr("Perspective"))
         perspectiveInput.setChecked(view.perspective)
         perspectiveInput.toggled.connect(PerspectiveSetting.setValue)
 
-        showButton = QtGui.QPushButton("Show...")
+        showButton = QtGui.QPushButton(self.tr("Show..."))
         showButton.setMenu(view.layerToggleGroup.menu)
 
+        workplaneCheckbox = QtGui.QCheckBox(self.tr("Work Plane"))
+        workplaneSpinSlider = SpinSlider()
+        workplaneSpinSlider.setValue(64)
+        workplaneSpinSlider.setMinimum(dimension.bounds.miny)
+        workplaneSpinSlider.setMaximum(dimension.bounds.maxy)
+
+        workplaneCheckbox.toggled.connect(view.toggleWorkplane)
+
+        workplaneSpinSlider.valueChanged.connect(view.setWorkplaneLevel)
+
         self.setLayout(Column(Row(None,
+                                  workplaneCheckbox,
+                                  workplaneSpinSlider,
                                   showButton,
                                   perspectiveInput,
-                                  QtGui.QLabel("View Distance:"),
+                                  QtGui.QLabel(self.tr("View Distance:")),
                                   viewDistanceInput,
                                   self.viewControls.getShowHideButton(), margin=0),
                               view, margin=0))
@@ -198,10 +214,13 @@ class CameraWorldView(WorldView):
         self._yawPitch = -45., 25.
         self.viewDistance = 32
 
+        self.workplaneNode = WorkplaneNode()
+        self.workplaneNode.visible = False
+
         WorldView.__init__(self, *a, **kw)
         self.compassNode.yawPitch = self._yawPitch
         self.viewActions = [CameraMoveMouseAction(),
-                             CameraPanMouseAction()]
+                            CameraPanMouseAction()]
 
         self.cameraControls = CameraKeyControls(self)
         self.viewActions.extend(self.cameraControls.viewActions)
@@ -210,6 +229,48 @@ class CameraWorldView(WorldView):
         self.discardTimer.timeout.connect(self.discardChunksOutsideViewDistance)
         self.discardTimer.setInterval(1000)
         self.discardTimer.start()
+
+        self.workplaneLevel = 0
+        self.workplaneEnabled = False
+        self.viewportMoved.connect(self.updateWorkplane)
+
+    def updateWorkplane(self):
+        distance = 40
+        pos = self.centerPoint + self.cameraVector * distance
+        pos = pos.intfloor()
+
+        self.workplaneNode.position = Vector(pos[0], self.workplaneLevel, pos[2])
+
+    def toggleWorkplane(self, enabled):
+        self.workplaneNode.visible = enabled
+        self.workplaneEnabled = enabled
+
+    def setWorkplaneLevel(self, level):
+        self.workplaneLevel = level
+        self.updateWorkplane()
+        self.update()
+
+    def createSceneGraph(self):
+        scenegraph = super(CameraWorldView, self).createSceneGraph()
+        self.matrixNode.addChild(self.workplaneNode)
+        return scenegraph
+
+    def augmentEvent(self, x, y, event):
+        super(CameraWorldView, self).augmentEvent(x, y, event)
+        if not self.workplaneEnabled:
+            return
+
+        point = event.ray.atHeight(self.workplaneLevel)
+        if point != event.ray.point:
+            direction = point - event.ray.point
+            if direction.length() >= (event.blockPosition - event.ray.point).length():
+                return
+
+            event.blockPosition = point.intfloor()
+            if direction.y >= 0:
+                event.blockFace = faces.FaceDown
+            else:
+                event.blockFace = faces.FaceUp
 
     def setViewDistance(self, val):
         self.viewDistance = val
