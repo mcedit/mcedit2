@@ -512,7 +512,7 @@ class WorldView(QGLWidget):
         :rtype: Ray
         """
 
-        p0, p1 = self.pointsAtPositions((x, y, 0.0), (x, y, 0.1))
+        p0, p1 = self.pointsAtPositions((x, y, 0.0), (x, y, 1.0))
         return Ray(p0, (p1 - p0).normalize())
 
     def rayAtCenter(self):
