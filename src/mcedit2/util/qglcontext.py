@@ -69,5 +69,3 @@ def validateQGLContext(context):
         msgBox.exec_()
 
         raise SystemExit
-
-    return context
