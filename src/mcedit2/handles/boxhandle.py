@@ -14,7 +14,11 @@ log = logging.getLogger(__name__)
 
 
 class BoxHandle(scenegraph.Node, QtCore.QObject):
+    # The face that was clicked on
     dragResizeFace = None
+
+    # The dimension of the imaginary plane perpendicular to the clicked face
+    # that the drag will move across
     dragResizeDimension = None
     dragResizePosition = None
 
@@ -77,15 +81,14 @@ class BoxHandle(scenegraph.Node, QtCore.QObject):
         side = self.dragResizeFace & 1
         dragdim = self.dragResizeFace >> 1
 
-
-        o, s = list(box.origin), list(box.size)
+        origin, size = list(box.origin), list(box.size)
         if side:
-            o[dragdim] += s[dragdim]
-        s[dragdim] = 0
+            origin[dragdim] += size[dragdim]
+        size[dragdim] = 0
 
-        otherSide = BoundingBox(o, s)
-        o[dragdim] = int(numpy.floor(point[dragdim] + 0.5))
-        thisSide = BoundingBox(o, s)
+        otherSide = BoundingBox(origin, size)
+        origin[dragdim] = int(numpy.floor(point[dragdim] + 0.5))
+        thisSide = BoundingBox(origin, size)
 
         return thisSide.union(otherSide)
 
@@ -127,9 +130,12 @@ class BoxHandle(scenegraph.Node, QtCore.QObject):
                 # Choose a dimension perpendicular to the dragged face
                 # Try not to pick a dimension close to edge-on with the view vector
                 dim = ((face.dimension + 1) % 3)
+
+                dim1 = (dim+1) % 3
+
                 vector = event.view.cameraVector.abs()
-                if vector[dim] < 0.1:
-                    dim = ((dim+1) % 3)
+                if vector[dim1] > vector[dim]:
+                    dim = dim1
 
                 self.dragResizeDimension = dim
                 self.dragResizePosition = point[self.dragResizeDimension]
