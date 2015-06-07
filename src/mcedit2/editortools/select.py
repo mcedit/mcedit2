@@ -195,6 +195,12 @@ class SelectionTool(EditorTool):
         self.newSelectionNode = None
 
         editorSession.dimensionChanged.connect(self.dimensionDidChange)
+        editorSession.revisionChanged.connect(self.revisionDidChange)
+
+    def revisionDidChange(self, changes):
+        chunks = changes.chunks[self.editorSession.currentDimension.dimName]
+        for cx, cz in chunks:
+            self.selectionNode.discardChunk(cx, cz)
 
     def dimensionDidChange(self):
         self.selectionNode.dimension = self.editorSession.currentDimension

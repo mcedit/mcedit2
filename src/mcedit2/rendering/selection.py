@@ -157,8 +157,8 @@ class SelectionScene(scenegraph.Node):
 
             self.loadTimer.setInterval(333)
 
-
     _loader = None
+
     def loadMore(self):
         if self._loader is None:
             self._loader = self.loadSections()
@@ -193,6 +193,9 @@ class SelectionScene(scenegraph.Node):
                 self.groupNode.addChunkNode(chunkNode)
             yield
         self.loadTimer.setInterval(333)
+
+    def discardChunk(self, cx, cz):
+        self.groupNode.discardChunkNode(cx, cz)
 
     def exposedBlockMasks(self, mask):
         """
