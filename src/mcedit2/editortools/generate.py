@@ -6,7 +6,6 @@ import logging
 import traceback
 
 from PySide import QtCore, QtGui
-from PySide.QtGui import qApp
 from mcedit2.command import SimpleRevisionCommand
 
 from mcedit2.editortools import EditorTool
@@ -16,7 +15,6 @@ from mcedit2.rendering.worldscene import WorldScene
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
 from mcedit2.widgets.layout import Column
-from mcedit2.widgets.spinslider import SpinSlider
 from mceditlib.schematic import createSchematic
 from mceditlib.util import exhaust
 
@@ -355,18 +353,22 @@ class GenerateTool(EditorTool):
             return
 
         if bounds is not None and bounds.volume > 0:
-            node = self.currentGenerator.getPreviewNode(bounds)
-            if node is not None:
-                self.clearNode()
+            try:
+                node = self.currentGenerator.getPreviewNode(bounds)
+            except Exception:
+                log.exception("Error while getting scene nodes from generator:")
+            else:
+                if node is not None:
+                    self.clearNode()
 
-                if isinstance(node, list):
-                    nodes = node
-                    node = scenegraph.Node()
-                    for c in nodes:
-                        node.addChild(c)
+                    if isinstance(node, list):
+                        nodes = node
+                        node = scenegraph.Node()
+                        for c in nodes:
+                            node.addChild(c)
 
-                self.overlayNode.addChild(node)
-                self.previewNode = node
+                    self.overlayNode.addChild(node)
+                    self.previewNode = node
 
     def generateNextSchematic(self, bounds):
         if bounds is None:
@@ -381,7 +383,7 @@ class GenerateTool(EditorTool):
             self.displaySchematic(schematic, bounds.origin)
         except Exception as e:
             log.exception("Error while running generator %s: %s", self.currentGenerator, e)
-            QtGui.QMessageBox.warning(qApp.mainWindow, "Error while running generator",
+            QtGui.QMessageBox.warning(QtGui.qApp.mainWindow, "Error while running generator",
                                       "An error occurred while running the generator: \n  %s.\n\n"
                                       "Traceback: %s" % (e, traceback.format_exc()))
             self.livePreview = False
