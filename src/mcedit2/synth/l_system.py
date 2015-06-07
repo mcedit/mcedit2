@@ -9,7 +9,7 @@ from OpenGL import GL
 from mcedit2.rendering.scenegraph import Node, VertexNode
 from mcedit2.rendering.selection import SelectionBoxNode
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
-from mcedit2.util.bresenham import bresenham
+from mcedit2.util import bresenham
 from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
@@ -261,7 +261,7 @@ class Line(Symbol):
         self.p2 = p2
 
     def renderBlocks(self):
-        for x, y, z in bresenham(self.p1, self.p2):
+        for x, y, z in bresenham.bresenham(self.p1, self.p2):
             yield x, y, z, self.blocktype
 
     def renderSceneNodes(self):
