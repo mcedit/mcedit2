@@ -622,7 +622,9 @@ class ShapeFuncSelection(BoundingBox):
         return mask
 
     def __cmp__(self, b):
-        return cmp((self.origin, self.size, self.shapeFunc), None if b is None else (b.origin, b.size, b.shapeFunc))
+        if not isinstance(b, ShapeFuncSelection):
+            return -1
+        return cmp((self.origin, self.size, self.shapeFunc), (b.origin, b.size, b.shapeFunc))
 
     @property
     def positions(self):
