@@ -39,7 +39,7 @@ from mceditlib.operations import ComposeOperations
 from mceditlib.operations.entity import RemoveEntitiesOperation
 from mceditlib.selection import BoundingBox
 from mceditlib.exceptions import PlayerNotFound
-from mceditlib.revisionhistory import UndoFolderExists
+from mceditlib.revisionhistory import UndoFolderExists, RevisionChanges
 from mceditlib.worldeditor import WorldEditor
 from mceditlib.blocktypes import BlockType
 
@@ -653,7 +653,7 @@ class EditorSession(QtCore.QObject):
 
     # --- Undo support ---
 
-    revisionChanged = QtCore.Signal(int)
+    revisionChanged = QtCore.Signal(RevisionChanges)
 
     def undoIndexChanged(self, index):
         self.editorTab.currentView().update()
@@ -678,20 +678,24 @@ class EditorSession(QtCore.QObject):
     def commitUndoIter(self):
         for status in self.worldEditor.commitUndoIter():
             yield status
-        self.revisionChanged.emit(self.worldEditor.currentRevision)
+        changes = self.worldEditor.getRevisionChanges(self.currentRevision-1, self.currentRevision)
+        self.revisionChanged.emit(changes)
 
     def undoForward(self):
         self.worldEditor.redo()
-        self.revisionChanged.emit(self.worldEditor.currentRevision)
+        changes = self.worldEditor.getRevisionChanges(self.currentRevision-1, self.currentRevision)
+        self.revisionChanged.emit(changes)
 
     def undoBackward(self):
         self.worldEditor.undo()
-        self.revisionChanged.emit(self.worldEditor.currentRevision)
+        changes = self.worldEditor.getRevisionChanges(self.currentRevision-1, self.currentRevision)
+        self.revisionChanged.emit(changes)
 
     def gotoRevision(self, index):
         if index != self.currentRevision:
+            changes = self.worldEditor.getRevisionChanges(self.currentRevision, index)
             self.worldEditor.gotoRevision(index)
-            self.revisionChanged.emit(self.worldEditor.currentRevision)
+            self.revisionChanged.emit(changes)
 
     @property
     def currentRevision(self):

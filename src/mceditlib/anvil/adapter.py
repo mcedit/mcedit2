@@ -706,6 +706,9 @@ class AnvilWorldAdapter(object):
         for ID, node in enumerate(self.revisionHistory.nodes):
             yield ID, node.getRevisionInfo()
 
+    def getRevisionChanges(self, oldRevision, newRevision):
+        return self.revisionHistory.getRevisionChanges(oldRevision, newRevision)
+
     # --- Session lock ---
 
     def acquireSessionLock(self):

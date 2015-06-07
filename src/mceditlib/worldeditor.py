@@ -338,6 +338,9 @@ class WorldEditor(object):
 
         self.recentDirtyFiles.update(changes.files)
 
+    def getRevisionChanges(self, oldIndex, newIndex):
+        return self.adapter.getRevisionChanges(oldIndex, newIndex)
+
     # --- Save ---
     def syncToDisk(self):
         exhaust(self.syncToDiskIter())
