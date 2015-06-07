@@ -36,12 +36,12 @@ On Windows, `easy_install` is able to install binary installer packages into a v
 - [cython](http://www.lfd.uci.edu/~gohlke/pythonlibs#cython) (for building `nbt.pyd`)
 - [ipython](http://www.lfd.uci.edu/~gohlke/pythonlibs#ipython) (for debugging)
 - [pygments](http://www.lfd.uci.edu/~gohlke/pythonlibs#pygments) (required by IPython) 
-- [pyzmq](http://www.lfd.uci.edu/~gohlke/pythonlibs#pyzmq) (required by IPython)
 - [numpy](http://www.lfd.uci.edu/~gohlke/pythonlibs#numpy) **
 
-Also use _pip_ to install this library:
+Also use _pip_ to install these libraries:
 
 - `pip install arrow` - a date/time class with nice text formatting.
+- `pip install pyzmq` - Gohlke's pyzmq builds don't work on Windows XP
 
 **Note that Gohlke's numpy builds use the Intel Math Kernel Library (MKL) which requires a license to use. If you 
 have not purchased an MKL license (it's expensive) then you ***DO NOT HAVE PERMISSION TO DISTRIBUTE APPS*** built 
