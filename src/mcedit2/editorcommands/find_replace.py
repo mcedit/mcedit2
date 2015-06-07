@@ -247,8 +247,10 @@ class FindReplaceBlocks(QtCore.QObject):
     def doReplace(self):
         replacements = self.getReplacements()
         command = SimpleRevisionCommand(self.editorSession, "Replace")
-        selection = self.editorSession.currentDimension.bounds
-        # selection = self.editorSession.currentSelection
+        if self.dialog.replaceBlocksInSelectionCheckbox.isChecked():
+            selection = self.editorSession.currentSelection
+        else:
+            selection = self.editorSession.currentDimension.bounds
         with command.begin():
             task = self.editorSession.currentDimension.fillBlocksIter(selection, replacements, updateLights=False)
             showProgress("Replacing...", task)
