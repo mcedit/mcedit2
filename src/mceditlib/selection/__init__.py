@@ -131,7 +131,7 @@ class SelectionBox(object):
         """ Iterate through all of the chunk positions within this selection box """
         return itertools.product(xrange(self.mincx, self.maxcx), xrange(self.mincz, self.maxcz))
 
-    def sectionPositions(self, cx=0, cz=0):
+    def sectionPositions(self, cx, cz):
         """ Iterate through all of the section positions within this chunk"""
         return range(self.mincy, self.maxcy)
 
@@ -157,6 +157,7 @@ class InvertedBox(SelectionBox):
     def box_mask(self, box):
         return ~self.base.box_mask(box)
 
+
 class CombinationBox(SelectionBox):
     oper = NotImplemented
     boundsminoper = NotImplemented
@@ -173,49 +174,75 @@ class CombinationBox(SelectionBox):
         self.maxcz = self.boundsmaxoper(left.maxcz, right.maxcz)
 
     def __contains__(self, item):
-        return self.left.contains(item) or self.right.contains(item)
-
-    def contains_coords(self, x, y, z):
-        left = self.left.contains_coords(x, y, z)
-        right = self.left.contains_coords(x, y, z)
-        if left is None:
-            return right
-        if right is None:
-            return left
-        return self.oper(left, right)
-
-    def box_mask(self, box):
-        left = self.left.box_mask(box)
-        right = self.right.box_mask(box)
-        if left is None:
-            return right
-        if right is None:
-            return left
-        return self.oper(left, right)
+        return self.oper(item in self.left, item in self.right)
 
     def sectionPositions(self, cx, cz):
         left = self.left.sectionPositions(cx, cz)
         right = self.right.sectionPositions(cx, cz)
-        sections = set()
-        sections.update(left)
-        sections.update(right)
-        return sorted(sections)
-
+        left = set(left)
+        right = set(right)
+        return self.oper(left, right)
 
 class UnionBox(CombinationBox):
     oper = operator.or_
     boundsminoper = min
     boundsmaxoper = max
 
+    def contains_coords(self, x, y, z):
+        left = self.left.contains_coords(x, y, z)
+        if left:
+            return True
+        right = self.right.contains_coords(x, y, z)
+        return self.oper(left, right)
+
+    def box_mask(self, box):
+        left = self.left.box_mask(box)
+        right = self.right.box_mask(box)
+        if left is None and right is None:
+            return None
+
+        return left | right
+
 class IntersectionBox(CombinationBox):
     oper = operator.and_
     boundsminoper = max
     boundsmaxoper = min
 
+    def contains_coords(self, x, y, z):
+        left = self.left.contains_coords(x, y, z)
+        if not left:
+            return False
+
+        right = self.right.contains_coords(x, y, z)
+        return self.oper(left, right)
+
+    def box_mask(self, box):
+        left = self.left.box_mask(box)
+        if left is None:
+            return None
+        right = self.right.box_mask(box)
+        if right is None:
+            return None
+        return self.oper(left, right)
+
 class DifferenceBox(CombinationBox):
     oper = lambda a, b: a & (~b)
     boundsminoper = lambda a, b: a
     boundsmaxoper = lambda a, b: a
+
+    def contains_coords(self, x, y, z):
+        left = self.left.contains_coords(x, y, z)
+        if not left:
+            return False
+        right = self.right.contains_coords(x, y, z)
+        return self.oper(left, right)
+
+    def box_mask(self, box):
+        left = self.left.box_mask(box)
+        right = self.right.box_mask(box)
+        if left is None:
+            return None
+        return self.oper(left, right)
 
 
 def SectionBox(cx, cy, cz, section=None):
