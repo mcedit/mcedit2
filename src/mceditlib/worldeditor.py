@@ -494,6 +494,8 @@ class WorldEditor(object):
             if chunkData.dirty:
                 yield cx, cz, dimName
 
+    # xxx get rid of this, use RevisionChanges instead
+
     def chunkBecameDirty(self, chunk):
         self.recentDirtyChunks[chunk.dimName].add((chunk.cx, chunk.cz))
 
@@ -544,6 +546,7 @@ class WorldEditor(object):
         self.adapter.deleteChunk(cx, cz, dimName)
         if self._allChunks is not None:
             self._allChunks[dimName].discard((cx, cz))
+        self.recentDirtyChunks[dimName].add((cx, cz))
 
     # --- World metadata ---
 
