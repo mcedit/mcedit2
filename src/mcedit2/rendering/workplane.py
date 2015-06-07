@@ -17,6 +17,21 @@ class WorkplaneNode(scenegraph.Node):
         super(WorkplaneNode, self).__init__()
         self.translateNode = scenegraph.TranslateNode()
         self.addChild(self.translateNode)
+        self.axis = 1
+
+    vertexNode = None
+
+    _axis = 1
+
+    @property
+    def axis(self):
+        return self._axis
+
+    @axis.setter
+    def axis(self, axis):
+        self._axis = axis
+        self.dirty = True
+
         gridSize = 64
         left = -gridSize//2
         right = gridSize//2
@@ -27,24 +42,29 @@ class WorkplaneNode(scenegraph.Node):
         gridArrayBuffer.rgba[:] = 255, 255, 255, 100
 
         # y=0, move by translating
-        gridArrayBuffer.vertex[:, 1] = 0
+        gridArrayBuffer.vertex[:, axis] = 0
+
+        axis1 = (axis-1) % 3
+        axis2 = (axis+1) % 3
 
         # left edge
-        gridArrayBuffer.vertex[0:gridSize*2:2, 2] = left
-        gridArrayBuffer.vertex[0:gridSize*2:2, 0] = range(left, right)
+        gridArrayBuffer.vertex[0:gridSize*2:2, axis2] = left
+        gridArrayBuffer.vertex[0:gridSize*2:2, axis1] = range(left, right)
 
         # right edge
-        gridArrayBuffer.vertex[1:gridSize*2:2, 2] = right-1
-        gridArrayBuffer.vertex[1:gridSize*2:2, 0] = range(left, right)
+        gridArrayBuffer.vertex[1:gridSize*2:2, axis2] = right-1
+        gridArrayBuffer.vertex[1:gridSize*2:2, axis1] = range(left, right)
 
         # bottom edge
-        gridArrayBuffer.vertex[gridSize*2::2, 0] = left
-        gridArrayBuffer.vertex[gridSize*2::2, 2] = range(left, right)
+        gridArrayBuffer.vertex[gridSize*2::2, axis1] = left
+        gridArrayBuffer.vertex[gridSize*2::2, axis2] = range(left, right)
 
         # top edge
-        gridArrayBuffer.vertex[gridSize*2+1::2, 0] = right-1
-        gridArrayBuffer.vertex[gridSize*2+1::2, 2] = range(left, right)
+        gridArrayBuffer.vertex[gridSize*2+1::2, axis1] = right-1
+        gridArrayBuffer.vertex[gridSize*2+1::2, axis2] = range(left, right)
 
+        if self.vertexNode:
+            self.translateNode.removeChild(self.vertexNode)
         self.vertexNode = scenegraph.VertexNode([gridArrayBuffer])
         self.translateNode.addChild(self.vertexNode)
 
