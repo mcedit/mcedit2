@@ -36,6 +36,21 @@ def validateQGLContext(context):
 
     actualFormat = context.format()
     """:type : QtOpenGL.QGLFormat"""
+
+    detailedText = "Obtained a GL context with this format:\n"
+    detailedText += "Valid: %s\n" % (context.isValid(),)
+    detailedText += "Version: %s.%s\n" % (actualFormat.majorVersion(), actualFormat.minorVersion())
+    detailedText += "Hardware Accelerated: %s\n" % (actualFormat.directRendering(), )
+    detailedText += "Depth buffer: %s, %s\n" % (actualFormat.depth(), actualFormat.depthBufferSize())
+    detailedText += "Double buffer: %s\n" % (actualFormat.doubleBuffer(), )
+    detailedText += "\n"
+    detailedText += "Driver info:\n"
+    detailedText += "GL_VERSION: %s\n" % GL.glGetString(GL.GL_VERSION)
+    detailedText += "GL_VENDOR: %s\n" % GL.glGetString(GL.GL_VENDOR)
+    detailedText += "GL_RENDERER: %s\n" % GL.glGetString(GL.GL_RENDERER)
+
+    log.info("%s", detailedText)
+
     if (not context.isValid() or not actualFormat.directRendering()
         or not versionFlags & QtOpenGL.QGLFormat.OpenGL_Version_1_3
         or (actualFormat.majorVersion(), actualFormat.minorVersion()) < (1, 3)):
@@ -47,18 +62,6 @@ def validateQGLContext(context):
             QtGui.qApp.tr("Could not create a usable OpenGL context. Verify that your "
                           "graphics drivers are installed correctly.")
         )
-
-        detailedText = "Obtained a GL context with this format:\n"
-        detailedText += "Valid: %s\n" % (context.isValid(),)
-        detailedText += "Version: %s.%s\n" % (actualFormat.majorVersion(), actualFormat.minorVersion())
-        detailedText += "Hardware Accelerated: %s\n" % (actualFormat.directRendering(), )
-        detailedText += "Depth buffer: %s, %s\n" % (actualFormat.depth(), actualFormat.depthBufferSize())
-        detailedText += "Double buffer: %s\n" % (actualFormat.doubleBuffer(), )
-        detailedText += "\n"
-        detailedText += "Driver info:\n"
-        detailedText += "GL_VERSION: %s\n" % GL.glGetString(GL.GL_VERSION)
-        detailedText += "GL_VENDOR: %s\n" % GL.glGetString(GL.GL_VENDOR)
-        detailedText += "GL_RENDERER: %s\n" % GL.glGetString(GL.GL_RENDERER)
 
         msgBox.setDetailedText(detailedText)
 
