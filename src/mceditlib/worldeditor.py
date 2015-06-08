@@ -128,7 +128,6 @@ class WorldEditorChunk(object):
     @dirty.setter
     def dirty(self, val):
         self.chunkData.dirty = val
-        self.worldEditor.chunkBecameDirty(self)
 
     # --- Chunk attributes ---
 
@@ -242,11 +241,6 @@ class WorldEditor(object):
 
         self._allChunks = None
 
-        self.recentDirtyChunks = collections.defaultdict(set)
-        self.recentDirtyFiles = set()
-
-        self.recentDirtySections = collections.defaultdict(set)
-
         self.dimensions = {}
 
         self.currentRevision = 0
@@ -331,12 +325,9 @@ class WorldEditor(object):
         log.debug("Changes: %s", changes)
         self.recentChunks.clear()
         for dimName, chunkPositions in changes.chunks.iteritems():
-            self.recentDirtyChunks[dimName].update(chunkPositions)
             for cx, cz in chunkPositions:
                 self._chunkDataCache.decache(cx, cz, dimName)
                 self._loadedChunks.pop((cx, cz, dimName), None)
-
-        self.recentDirtyFiles.update(changes.files)
 
         # xxx slow, scan changes for chunks and check if they are added/removed
         self._allChunks = None
@@ -497,14 +488,6 @@ class WorldEditor(object):
             if chunkData.dirty:
                 yield cx, cz, dimName
 
-    # xxx get rid of this, use RevisionChanges instead
-
-    def chunkBecameDirty(self, chunk):
-        self.recentDirtyChunks[chunk.dimName].add((chunk.cx, chunk.cz))
-
-    def getRecentDirtyChunks(self, dimName):
-        return self.recentDirtyChunks.pop(dimName, set())
-
     # --- HeightMaps ---
 
     def heightMapAt(self, x, z, dimName):
@@ -549,7 +532,6 @@ class WorldEditor(object):
         self.adapter.deleteChunk(cx, cz, dimName)
         if self._allChunks is not None:
             self._allChunks[dimName].discard((cx, cz))
-        self.recentDirtyChunks[dimName].add((cx, cz))
 
     # --- World metadata ---
 
@@ -712,9 +694,6 @@ class WorldEditorDimension(object):
 
     def deleteChunk(self, cx, cz):
         self.worldEditor.deleteChunk(cx, cz, self.dimName)
-
-    def getRecentDirtyChunks(self):
-        return self.worldEditor.getRecentDirtyChunks(self.dimName)
 
     # --- Entities and TileEntities ---
 

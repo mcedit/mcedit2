@@ -634,6 +634,7 @@ class EditorSession(QtCore.QObject):
 
         self.loader.chunkCompleted.connect(self.chunkDidComplete)
         self.loader.allChunksDone.connect(self.updateView)
+        self.revisionChanged.connect(self.loader.revisionDidChange)
 
         self.dimensionChanged.emit(dim)
 

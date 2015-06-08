@@ -2,7 +2,7 @@
     ${NAME}
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
-from collections import deque
+from collections import deque, defaultdict
 import logging
 import time
 import weakref
@@ -107,6 +107,7 @@ class ChunkLoader(QtCore.QObject):
         self.dimension = dimension
         self.chunkWorker = None
         self.chunkSamples = deque(maxlen=30)
+        self.invalidChunks = defaultdict(set)
         for i in range(self.chunkSamples.maxlen):
             self.chunkSamples.append(0.0)
 
@@ -155,6 +156,11 @@ class ChunkLoader(QtCore.QObject):
             self.chunkWorker = None
             raise
 
+    def revisionDidChange(self, revisionChanges):
+        dimName = self.dimension.dimName
+        for cx, cz in revisionChanges.chunks[dimName]:
+            self.invalidChunks[dimName].add((cx, cz))
+
     def _loadChunks(self):
         """
         Generator function, returns an iterator. On each iteration, requests a chunk position from a client, then loads
@@ -169,7 +175,7 @@ class ChunkLoader(QtCore.QObject):
                 log.debug("ChunkLoader: No clients!")
                 return
 
-            invalidChunks = self.dimension.getRecentDirtyChunks()
+            invalidChunks = self.invalidChunks.pop(self.dimension.dimName, [])
             for c in invalidChunks:
                 for ref in self.clients:
                     client = ref()
