@@ -556,12 +556,28 @@ class RevisionHistoryNode(object):
             raise RuntimeError("Accessing invalid node: %r" % self)
         node = self
         pos = set()
+        dead = set()
+
+        #
+        # If a node is found in deadChunks:
+        #   if found again in a later revision, it is alive
+        #   if found again in this revision, it is still alive
+        #   otherwise, it is dead
+        #
+        # `pos` contains all chunks found in this and later revisions.
+        # Thus, `pos` should be subtracted from `deadChunks` before adding `deadChunks` to `dead`
+
         while node:
-            pos.update(node.worldFolder.chunkPositions(dimName))
+            nodepos = set(node.worldFolder.chunkPositions(dimName))
+            pos.update(nodepos)
+
+            nodedead = set((cx, cz) for cx, cz, deadDim in node.deadChunks if deadDim == dimName)
+            nodedead.difference_update(pos)
+            dead.update(nodedead)
 
             node = node.parentNode
 
-        return pos
+        return pos - dead
 
     def chunkCount(self, dimName):
         node = self
@@ -619,6 +635,8 @@ class RevisionHistoryNode(object):
         node = self
         while node:
             # Ask RevisionHistory for most recent node containing this chunk?
+            if (cx, cz, dimName) in node.deadChunks:
+                raise ChunkNotPresent((cx, cz), "Chunk was deleted")
             if node.worldFolder.containsChunk(cx, cz, dimName):
                 data = node.worldFolder.readChunkBytes(cx, cz, dimName)
                 return data
@@ -694,6 +712,8 @@ class RevisionHistoryNode(object):
             raise RuntimeError("Accessing invalid node: %r" % self)
         node = self
         while node:
+            if path in node.deadFiles:
+                raise IOError("File not found (deleted)")
             if node.worldFolder.containsFile(path):
                 data = node.worldFolder.readFile(path)
                 if data is not None:
