@@ -74,6 +74,8 @@ class MCEditMainWindow(QtGui.QMainWindow):
                 event.ignore()
                 return
 
+        MCEditApp.app.quit()
+
 class MCEditApp(QtGui.QApplication):
     def __init__(self, argv):
         super(MCEditApp, self).__init__(argv)
