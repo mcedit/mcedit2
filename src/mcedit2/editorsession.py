@@ -716,7 +716,7 @@ class EditorSession(QtCore.QObject):
 
     def undoBackward(self):
         self.worldEditor.undo()
-        changes = self.worldEditor.getRevisionChanges(self.currentRevision-1, self.currentRevision)
+        changes = self.worldEditor.getRevisionChanges(self.currentRevision, self.currentRevision+1)
         self.revisionChanged.emit(changes)
 
     def gotoRevision(self, index):
