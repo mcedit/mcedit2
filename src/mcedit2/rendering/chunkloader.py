@@ -79,6 +79,14 @@ class IChunkLoaderClient(object):
         :param exc: The exception that was thrown, usually IOError or LevelFormatError
         """
 
+    def chunkNotPresent(self, (cx, cz)):
+        """
+        Called when a chunk fails to load because it is not present in the world.
+
+        Notifies each client of the chunk's position.
+
+        :param (cx, cz): chunk position
+        """
 
 class ChunkLoader(QtCore.QObject):
     chunkCompleted = QtCore.Signal()
@@ -203,7 +211,12 @@ class ChunkLoader(QtCore.QObject):
     def _loadChunk(self, cPos):
 
         if not self.dimension.containsChunk(*cPos):
-            log.debug("Chunk %s is missing!", cPos)
+            for ref in self.clients:
+                client = ref()
+                if client is None:
+                    continue
+                if hasattr(client, 'chunkNotPresent'):
+                    client.chunkNotPresent(cPos)
             return
 
         if not any([ref().wantsChunk(cPos)

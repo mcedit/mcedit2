@@ -143,8 +143,14 @@ class SceneUpdateTask(object):
                     groupNode.discardChunkNode(*cPos)
 
         except Exception as e:
-            logging.exception(u"Rendering chunk %s failed: %r", cPos, e)
+            log.exception(u"Rendering chunk %s failed: %r", cPos, e)
 
+    def chunkNotPresent(self, (cx, cz)):
+        log.info("Chunk removed: %s", (cx, cz))
+        # Assume chunk was deleted by the user
+        for renderstate in renderstates.allRenderstates:
+            groupNode = self.worldScene.getRenderstateGroup(renderstate)
+            groupNode.discardChunkNode(cx, cz)
 
 class WorldScene(scenegraph.Node):
     def __init__(self, dimension, textureAtlas=None, geometryCache=None, bounds=None):
@@ -269,6 +275,9 @@ class WorldScene(scenegraph.Node):
 
     def workOnChunk(self, chunk, visibleSections=None):
         return self.updateTask.workOnChunk(chunk, visibleSections)
+
+    def chunkNotPresent(self, cPos):
+        self.updateTask.chunkNotPresent(cPos)
 
     def getChunkRenderInfo(self, cPos):
         chunkInfo = self.chunkRenderInfo.get(cPos)

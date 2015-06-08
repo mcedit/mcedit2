@@ -96,6 +96,7 @@ class SlicedWorldScene(scenegraph.Node):
     loadRadius = 320
 
     _pos = 0
+
     @property
     def pos(self):
         return self._pos
@@ -153,6 +154,10 @@ class SlicedWorldScene(scenegraph.Node):
 
     def wantsChunk(self, c):
         return any([mesh.wantsChunk(c) for mesh in self.sliceScenes.itervalues()])
+
+    def chunkNotPresent(self, cPos):
+        for mesh in self.sliceScenes.itervalues():
+            mesh.chunkNotPresent(cPos)
 
     @profiler.iterator("SlicedMesh")
     def workOnChunk(self, c, sections=None):
