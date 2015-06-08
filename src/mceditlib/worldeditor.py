@@ -338,6 +338,9 @@ class WorldEditor(object):
 
         self.recentDirtyFiles.update(changes.files)
 
+        # xxx slow, scan changes for chunks and check if they are added/removed
+        self._allChunks = None
+
     def getRevisionChanges(self, oldIndex, newIndex):
         return self.adapter.getRevisionChanges(oldIndex, newIndex)
 
