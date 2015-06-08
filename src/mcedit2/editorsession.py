@@ -283,6 +283,20 @@ class EditorSession(QtCore.QObject):
 
         self.menus.append(self.menuImportExport)
 
+        # - Chunk -
+
+        self.menuChunk = QtGui.QMenu(self.tr("Chunk"))
+
+        self.actionDeleteChunks = QtGui.QAction(self.tr("Delete Chunks"), self, triggered=self.deleteChunks)
+        self.actionCreateChunks = QtGui.QAction(self.tr("Create Chunks"), self, triggered=self.createChunks)
+        self.actionRepopChunks = QtGui.QAction(self.tr("Mark Chunks For Repopulation"),
+                                               self, triggered=self.repopChunks)
+
+        self.menuChunk.addAction(self.actionDeleteChunks)
+        self.menuChunk.addAction(self.actionCreateChunks)
+        self.menuChunk.addAction(self.actionRepopChunks)
+        self.menus.append(self.menuChunk)
+
         # --- Resources ---
 
         self.resourceLoader = resourceLoader
@@ -369,17 +383,6 @@ class EditorSession(QtCore.QObject):
 
         if hasattr(progress, 'progressCount') and progress.progressCount != progressMax:
             log.info("Update progressMax to %d, please.", progress.progressCount)
-
-    def dispose(self):
-        if self.textureAtlas:
-            self.textureAtlas.dispose()
-            self.textureAtlas = None
-        if self.editorTab:
-            self.editorTab.destroy()
-            self.editorTab = None
-        if self.worldEditor:
-            self.worldEditor.close()
-            self.worldEditor = None
 
     # Connecting these signals to the EditorTab creates a circular reference through
     # the Qt objects, preventing the EditorSession from being destroyed
@@ -476,6 +479,7 @@ class EditorSession(QtCore.QObject):
     def currentSelection(self, box):
         self._currentSelection = box
         self.enableSelectionCommands(box is not None and box.volume != 0)
+        self.enableChunkSelectionCommands(box is not None)
         self.selectionChanged.emit(box)
 
     def enableSelectionCommands(self, enable):
@@ -489,6 +493,11 @@ class EditorSession(QtCore.QObject):
         self.actionDeleteEntities.setEnabled(enable)
         self.actionFill.setEnabled(enable)
         self.actionExport.setEnabled(enable)
+
+    def enableChunkSelectionCommands(self, enable):
+        self.actionDeleteChunks.setEnabled(enable)
+        self.actionCreateChunks.setEnabled(enable)
+        self.actionRepopChunks.setEnabled(enable)
 
     # --- Menu commands ---
 
@@ -579,6 +588,25 @@ class EditorSession(QtCore.QObject):
         command = SelectCommand(self, None)
         command.setText(self.tr("Deselect"))
         self.pushCommand(command)
+
+    # - Chunk -
+
+    def deleteChunks(self):
+        if self.currentSelection is None:
+            return
+
+        command = SimpleRevisionCommand(self, self.tr("Delete Chunks"))
+        with command.begin():
+            for cx in range(self.currentSelection.mincx, self.currentSelection.maxcx):
+                for cz in range(self.currentSelection.mincz, self.currentSelection.maxcz):
+                    self.currentDimension.deleteChunk(cx, cz)
+        self.pushCommand(command)
+
+    def createChunks(self):
+        QtGui.QMessageBox.warning(QtGui.qApp.mainWindow, "Not implemented.", "Create chunks is not implemented yet!")
+
+    def repopChunks(self):
+        QtGui.QMessageBox.warning(QtGui.qApp.mainWindow, "Not implemented.", "Repop chunks is not implemented yet!")
 
     # - Dimensions -
 
