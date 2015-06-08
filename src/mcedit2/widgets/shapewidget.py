@@ -17,6 +17,7 @@ log = logging.getLogger(__name__)
 @registerCustomWidget
 class ShapeWidget(QtGui.QWidget):
     def __init__(self, *args, **kwargs):
+        addShapes = kwargs.pop('addShapes', None)
         super(ShapeWidget, self).__init__(*args, **kwargs)
         buttons = self.buttons = []
         layout = flowlayout.FlowLayout()
@@ -24,7 +25,10 @@ class ShapeWidget(QtGui.QWidget):
         actionGroup.setExclusive(True)
         iconBase = resourcePath("mcedit2/assets/mcedit2/icons")
         actions = {}
-        for shape in getShapes():
+        shapes = list(getShapes())
+        if addShapes:
+            shapes.extend(addShapes)
+        for shape in shapes:
             if shape.icon is not None:
                 filename = os.path.join(iconBase, shape.icon)
                 assert os.path.exists(filename), "%r does not exist" % filename
@@ -54,11 +58,13 @@ class ShapeWidget(QtGui.QWidget):
             actions[shape.ID] = action
 
         self.setLayout(layout)
-        currentID = BrushShapeSetting.value(getShapes()[0].ID)
-        shapesByID = {shape.ID:shape for shape in getShapes()}
+        currentID = BrushShapeSetting.value(shapes[0].ID)
+        shapesByID = {shape.ID: shape for shape in shapes}
+        if currentID not in actions:
+            currentID = shapes[0].ID
         actions[currentID].setChecked(True)
 
-        self.currentShape = shapesByID.get(currentID, getShapes()[0])
+        self.currentShape = shapesByID.get(currentID, shapes[0])
 
     shapeChanged = QtCore.Signal()
 

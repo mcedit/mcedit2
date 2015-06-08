@@ -9,6 +9,7 @@ from PySide import QtGui, QtCore
 
 from mcedit2.editortools import EditorTool
 from mcedit2.editortools.brush import shapes
+from mcedit2.editortools.brush.shapes import ChunkShape
 from mcedit2.handles.boxhandle import BoxHandle
 from mcedit2.rendering import cubes
 from mcedit2.rendering.selection import SelectionScene, SelectionFaceNode
@@ -174,7 +175,7 @@ class SelectionTool(EditorTool):
 
         self.coordInput = SelectionCoordinateWidget()
         self.coordInput.boxChanged.connect(self.coordInputChanged)
-        self.shapeInput = ShapeWidget()
+        self.shapeInput = ShapeWidget(addShapes=[ChunkShape()])
         self.shapeInput.shapeChanged.connect(self.shapeDidChange)
         self.toolWidget.setLayout(Column(self.coordInput,
                                          self.shapeInput,

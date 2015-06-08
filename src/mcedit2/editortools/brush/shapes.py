@@ -168,6 +168,15 @@ class Cylinder(BrushShape):
         distances = x + z
         return (distances < 1) & (0 <= y) & (y < h)
 
+
+class ChunkShape(BrushShape):
+    ID = "Chunk"
+    icon = None
+
+    def createShapedSelection(self, box, dimension):
+        return box.chunkBox(dimension)
+
+
 class ParabolicDome(BrushShape):
     ID = "ParabolicDome"
     icon = None
