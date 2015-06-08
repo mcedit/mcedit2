@@ -72,7 +72,8 @@ class BrushCommand(SimplePerformCommand):
         yield 0, len(self.points), "Applying {0} brush...".format(self.brushMode.name)
         try:
             #xxx combine selections
-            selections = [self.brushShape.createShapedSelection(self.brushMode.brushBoxForPoint(point, self.options))
+            selections = [self.brushShape.createShapedSelection(self.brushMode.brushBoxForPoint(point, self.options),
+                                                                self.editorSession.currentDimension)
                           for point in self.points]
             self.brushMode.applyToSelections(self, selections)
         except NotImplementedError:

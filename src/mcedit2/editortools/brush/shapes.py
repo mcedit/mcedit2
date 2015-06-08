@@ -13,7 +13,7 @@ class BrushShape(object):
     ID = NotImplemented
     icon = NotImplemented
 
-    def createShapedSelection(self, box):
+    def createShapedSelection(self, box, dimension):
         """
         Return a SelectionBox that selects the blocks inside this shape.
 
@@ -24,6 +24,8 @@ class BrushShape(object):
 
         :param box: Bounding box of the selection
         :type box: BoundingBox
+        :param dimension: Dimension to create the shaped selection for.
+        :type dimension: WorldEditorDimension
         :return: SelectionBox object that selects all blocks inside this shape
         :rtype: SelectionBox
         """
@@ -103,7 +105,7 @@ class Square(BrushShape):
     ID = "Square"
     icon = "shapes/square.png"
 
-    def createShapedSelection(self, box):
+    def createShapedSelection(self, box, dimension):
         # BoundingBox is already a SelectionBox, so just return it
         return box
 

@@ -106,7 +106,8 @@ class Fill(BrushMode):
 
     def createCursorLevel(self, brushTool):
         box = self.brushBoxForPoint((0, 0, 0), brushTool.options)
-        selection = brushTool.brushShape.createShapedSelection(box)
+        selection = brushTool.brushShape.createShapedSelection(box,
+                                                               brushTool.editorSession.currentDimension)
         cursorLevel = MaskLevel(selection,
                                 self.blockTypeButton.block,
                                 brushTool.editorSession.worldEditor.blocktypes)
@@ -158,7 +159,7 @@ class Biome(BrushMode):
 
     def createCursorLevel(self, brushTool):
         box = self.brushBoxForPoint((0, 0, 0), brushTool.options)
-        selection = brushTool.brushShape.createShapedSelection(box)
+        selection = brushTool.brushShape.createShapedSelection(box, brushTool.editorSession.currentDimension)
 
         cursorLevel = MaskLevel(selection,
                                 brushTool.editorSession.worldEditor.blocktypes["minecraft:grass"],

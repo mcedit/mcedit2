@@ -285,7 +285,7 @@ class SelectionTool(EditorTool):
     showPreviousSelection = True
 
     def createShapedSelection(self, box):
-        return self.shapeInput.currentShape.createShapedSelection(box)
+        return self.shapeInput.currentShape.createShapedSelection(box, self.editorSession.currentDimension)
 
 class SelectionCursorRenderNode(rendergraph.RenderNode):
     def drawSelf(self):
