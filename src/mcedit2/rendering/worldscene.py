@@ -146,7 +146,6 @@ class SceneUpdateTask(object):
             log.exception(u"Rendering chunk %s failed: %r", cPos, e)
 
     def chunkNotPresent(self, (cx, cz)):
-        log.info("Chunk removed: %s", (cx, cz))
         # Assume chunk was deleted by the user
         for renderstate in renderstates.allRenderstates:
             groupNode = self.worldScene.getRenderstateGroup(renderstate)

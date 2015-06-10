@@ -586,7 +586,6 @@ class WorldView(QGLWidget):
         return True
 
     def chunkNotPresent(self, cPos):
-        log.info("Chunk not present: %s", cPos)
         self.worldScene.chunkNotPresent(cPos)
         self.loadableChunksNode.dirty = True  # gross.
 
