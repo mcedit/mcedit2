@@ -1,10 +1,10 @@
 import os
 import sys
-import win32api
 
 
 def getUserFilesDirectory():
     if sys.platform == "win32":
+        import win32api
         # On Windows, sys.executable is codepage-encoded.
         # It cannot represent all possible filenames, so get the exe filename
         # using this wide-character API, which returns a `unicode`
