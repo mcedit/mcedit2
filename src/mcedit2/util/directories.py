@@ -1,7 +1,12 @@
 import os
 import sys
-import win32api
-
+try:
+    assert sys.platform == "win32"
+    # If sys.platform is "win32", win32api is needed and expected
+    import win32api
+except AssertionError as _ae:
+    # If sys.platform is not "win32", do not try to import win32api
+    win32api = None
 
 def getUserFilesDirectory():
     if sys.platform == "win32":

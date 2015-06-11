@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from OpenGL import GL
 from PySide import QtOpenGL, QtGui
 import logging
+from sys import platform
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +37,16 @@ def validateQGLContext(context):
 
     actualFormat = context.format()
     """:type : QtOpenGL.QGLFormat"""
+
+    def getmajor():
+        return int(str(GL.glGetString(GL.GL_VERSION)).split()[0].partition(".")[0])
+
+    def getminor():
+        return int(str(GL.glGetString(GL.GL_VERSION)).split()[0].partition(".")[2])
+
+    if platform == 'darwin':
+        actualFormat.majorVersion = getmajor
+        actualFormat.minorVersion = getminor
 
     detailedText = "Obtained a GL context with this format:\n"
     detailedText += "Valid: %s\n" % (context.isValid(),)
