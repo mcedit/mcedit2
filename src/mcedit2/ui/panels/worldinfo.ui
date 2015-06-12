@@ -49,7 +49,7 @@
           <item>
            <widget class="QCheckBox" name="commandsBool">
             <property name="text">
-             <string>Commands</string>
+             <string>Allow Commands</string>
             </property>
            </widget>
           </item>
