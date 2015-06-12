@@ -37,6 +37,13 @@ def validateQGLContext(context):
     actualFormat = context.format()
     """:type : QtOpenGL.QGLFormat"""
 
+    # Qt 4.8.6 on OS X always returns (1, 0) for the QGLFormat's major and minor versions.
+    # (QTBUG-40415)
+    # Check GL_MAJOR_VERSION and GL_MINOR_VERSION instead.
+
+    major = GL.glGetInteger(GL.GL_MAJOR_VERSION)
+    minor = GL.glGetInteger(GL.GL_MINOR_VERSION)
+
     detailedText = "Obtained a GL context with this format:\n"
     detailedText += "Valid: %s\n" % (context.isValid(),)
     detailedText += "Version: %s.%s\n" % (actualFormat.majorVersion(), actualFormat.minorVersion())
@@ -45,7 +52,7 @@ def validateQGLContext(context):
     detailedText += "Double buffer: %s\n" % (actualFormat.doubleBuffer(), )
     detailedText += "\n"
     detailedText += "Driver info:\n"
-    detailedText += "GL_VERSION: %s\n" % GL.glGetString(GL.GL_VERSION)
+    detailedText += "GL_VERSION: %s (%s, %s)\n" % (GL.glGetString(GL.GL_VERSION), major, minor)
     detailedText += "GL_VENDOR: %s\n" % GL.glGetString(GL.GL_VENDOR)
     detailedText += "GL_RENDERER: %s\n" % GL.glGetString(GL.GL_RENDERER)
 
@@ -53,7 +60,7 @@ def validateQGLContext(context):
 
     if (not context.isValid() or not actualFormat.directRendering()
         or not versionFlags & QtOpenGL.QGLFormat.OpenGL_Version_1_3
-        or (actualFormat.majorVersion(), actualFormat.minorVersion()) < (1, 3)):
+        or (major, minor) < (1, 3)):
         msgBox = QtGui.QMessageBox()
         msgBox.setWindowTitle(QtGui.qApp.tr("OpenGL Error"))
         msgBox.setStandardButtons(QtGui.QMessageBox.Close)
