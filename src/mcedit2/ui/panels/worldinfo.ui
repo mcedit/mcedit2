@@ -145,7 +145,11 @@
              </widget>
             </item>
             <item>
-             <widget class="QComboBox" name="generationTypeCombo"/>
+             <widget class="QComboBox" name="generatorTypeCombo">
+              <property name="editable">
+               <bool>true</bool>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>

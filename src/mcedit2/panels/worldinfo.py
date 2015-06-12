@@ -17,7 +17,6 @@ log = logging.getLogger(__name__)
 
 
 class WorldInfoPanel(QtGui.QWidget):
-    GENERATOR_TYPES = ['default', 'flat', 'largeBiomes', 'amplified', 'customized', 'debug_all_block_states']
 
     editsDisabled = False
 
@@ -39,8 +38,14 @@ class WorldInfoPanel(QtGui.QWidget):
 
         self.gamemodes = [self.tr('Survival'), self.tr('Creative'), self.tr('Adventure'), self.tr('Spectator')]
         self.difficulties = [self.tr('Peaceful'), self.tr('Easy'), self.tr('Normal'), self.tr('Hard')]
-        self.generatorNames = [self.tr('Default'), self.tr('Flat'), self.tr('Large Biomes'), self.tr('Amplified'),
-                               self.tr('Customized'), self.tr('Debug All Block States')]
+        self.generatorTypes = [
+            (self.tr('Default'), 'default'),
+            (self.tr('Flat'), 'flat'),
+            (self.tr('Large Biomes'), 'largeBiomes'),
+            (self.tr('Amplified'), 'amplified'),
+            (self.tr('Customized'), 'customized'),
+            (self.tr('Debug All Block States'), 'debug_all_block_states'),
+        ]
 
         self.defaultGamemodeCombo.addItems(self.gamemodes)
         self.defaultGamemodeCombo.currentIndexChanged.connect(self.defaultGamemodeChanged)
@@ -48,8 +53,15 @@ class WorldInfoPanel(QtGui.QWidget):
         self.worldDifficultyCombo.addItems(self.difficulties)
         self.worldDifficultyCombo.currentIndexChanged.connect(self.worldDifficultyChanged)
 
-        self.generationTypeCombo.addItems(self.generatorNames)
-        self.generationTypeCombo.currentIndexChanged.connect(self.generationTypeChanged)
+        for name, data in self.generatorTypes:
+            self.generatorTypeCombo.addItem(name, data)
+
+        self.generatorTypeCombo.currentIndexChanged.connect(self.generatorTypeChanged)
+
+        # Since QComboBox emits editTextChanged after every keystroke,
+        # we connect to its QLineEdit's editingFinished to only get signaled
+        # after the line edit loses focus (or the user presses return)
+        self.generatorTypeCombo.lineEdit().editingFinished.connect(self.generatorTypeChanged)
 
         self.worldNameLineEdit.editingFinished.connect(self.worldNameChanged)
         self.generatorSeedLineEdit.editingFinished.connect(self.seedChanged)
@@ -83,7 +95,15 @@ class WorldInfoPanel(QtGui.QWidget):
     def updatePanel(self):
         self.defaultGamemodeCombo.setCurrentIndex(self.worldMeta.GameType)
         self.worldDifficultyCombo.setCurrentIndex(self.worldMeta.Difficulty)
-        self.generationTypeCombo.setCurrentIndex(self.GENERATOR_TYPES.index(self.worldMeta.generatorName))
+
+        generatorIndex = self.generatorTypeCombo.findData(self.worldMeta.generatorName)
+        if generatorIndex == -1:
+            generatorIndex = self.generatorTypeCombo.findText(self.worldMeta.generatorName)
+            if generatorIndex == -1:
+                self.generatorTypeCombo.addItem(self.worldMeta.generatorName)
+                generatorIndex = self.generatorTypeCombo.count()-1
+
+        self.generatorTypeCombo.setCurrentIndex(generatorIndex)
 
         self.worldNameLineEdit.setText(self.worldMeta.LevelName)
         self.worldNameLineEdit.setText(self.worldMeta.LevelName)
@@ -186,13 +206,20 @@ class WorldInfoPanel(QtGui.QWidget):
             self.worldMeta.Difficulty = self.worldDifficultyCombo.currentIndex()
         self.editorSession.pushCommand(command)
 
-    def generationTypeChanged(self):
-        if self.editsDisabled:  # xxx copied from inventory.py
+    def generatorTypeChanged(self):
+        generatorName = self.generatorTypeCombo.currentText()
+        generatorIndex = self.generatorTypeCombo.findText(generatorName)
+        if generatorIndex != -1:
+            itemData = self.generatorTypeCombo.itemData(-1)
+            if itemData:
+                generatorName = itemData
+
+        if self.editsDisabled or self.worldMeta.generatorName == generatorName:
             return
 
         command = WorldMetaEditCommand(self.editorSession, self.tr('Change Generation Type'))
         with command.begin():
-            self.worldMeta.generatorName = self.GENERATOR_TYPES[self.generationTypeCombo.currentIndex()]
+            self.worldMeta.generatorName = generatorName
         self.editorSession.pushCommand(command)
 
     def spawnChanged(self):
