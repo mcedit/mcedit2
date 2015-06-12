@@ -688,6 +688,7 @@ class EditorSession(QtCore.QObject):
         self.editorTab.currentView().update()
 
     def pushCommand(self, command):
+        log.info("Pushing command %s" % command.text())
         self.undoStack.push(command)
 
     def setUndoBlock(self, callback):
