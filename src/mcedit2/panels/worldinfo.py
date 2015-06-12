@@ -93,6 +93,10 @@ class WorldInfoPanel(QtGui.QWidget):
         centerWidgetInScreen(self)
 
     def updatePanel(self):
+        with self.disableEdits():
+            self._updatePanel()
+
+    def _updatePanel(self):
         self.defaultGamemodeCombo.setCurrentIndex(self.worldMeta.GameType)
         self.worldDifficultyCombo.setCurrentIndex(self.worldMeta.Difficulty)
 
@@ -128,7 +132,7 @@ class WorldInfoPanel(QtGui.QWidget):
         self.commandsBool.setChecked(bool(self.worldMeta.allowCommands))
         self.hardcoreBool.setChecked(bool(self.worldMeta.hardcore))
 
-    @contextmanager  # xxx copied from inventory.py
+    @contextmanager
     def disableEdits(self):
         self.editsDisabled = True
         yield
@@ -189,21 +193,23 @@ class WorldInfoPanel(QtGui.QWidget):
         self.editorSession.pushCommand(command)
 
     def defaultGamemodeChanged(self):
-        if self.editsDisabled:  # xxx copied from inventory.py
+        gamemodeIndex = self.defaultGamemodeCombo.currentIndex()
+        if self.editsDisabled or self.worldMeta.GameType == gamemodeIndex:
             return
 
         command = WorldMetaEditCommand(self.editorSession, self.tr('Change Default Gamemode'))
         with command.begin():
-            self.worldMeta.GameType = self.defaultGamemodeCombo.currentIndex()
+            self.worldMeta.GameType = gamemodeIndex
         self.editorSession.pushCommand(command)
 
     def worldDifficultyChanged(self):
-        if self.editsDisabled:  # xxx copied from inventory.py
+        difficultyIndex = self.worldDifficultyCombo.currentIndex()
+        if self.editsDisabled or self.worldMeta.Difficulty == difficultyIndex:
             return
 
         command = WorldMetaEditCommand(self.editorSession, self.tr('Change Difficulty'))
         with command.begin():
-            self.worldMeta.Difficulty = self.worldDifficultyCombo.currentIndex()
+            self.worldMeta.Difficulty = difficultyIndex
         self.editorSession.pushCommand(command)
 
     def generatorTypeChanged(self):
@@ -223,23 +229,23 @@ class WorldInfoPanel(QtGui.QWidget):
         self.editorSession.pushCommand(command)
 
     def spawnChanged(self):
-        if self.editsDisabled:  # xxx copied from inventory.py
+        spawn = self.spawnX.value(), self.spawnY.value(), self.spawnZ.value()
+        if self.editsDisabled or spawn == self.worldMeta.Spawn:
             return
 
         command = WorldMetaEditCommand(self.editorSession, self.tr('Change Spawn Coordinates'))
         with command.begin():
-            self.worldMeta.Spawn = self.spawnX.value(), self.spawnY.value(), self.spawnZ.value()
+            self.worldMeta.Spawn = spawn
         self.editorSession.pushCommand(command)
 
     def timeChanged(self):
-        if self.editsDisabled:  # xxx copied from inventory.py
+        days, time = self.timeDays.value(), self.timeSlider.value()
+        time = max((days * 24000 + time) - 30000, 0)
+        if self.editsDisabled or self.worldMeta.DayTime == time:
             return
 
         command = WorldMetaEditCommand(self.editorSession, self.tr('Change DayTime'))
         with command.begin():
-            days, time = self.timeDays.value(), self.timeSlider.value()
-            print days, time
-            time = max((days * 24000 + time) - 30000, 0)
             self.worldMeta.DayTime = time
         self.editorSession.pushCommand(command)
 
@@ -260,7 +266,7 @@ class WorldInfoPanel(QtGui.QWidget):
         self.timeChanged()
 
     def hardcoreChanged(self):
-        if self.editsDisabled:  # xxx copied from inventory.py
+        if self.editsDisabled:
             return
 
         command = WorldMetaEditCommand(self.editorSession, self.tr('Change Hardcore'))
@@ -269,7 +275,7 @@ class WorldInfoPanel(QtGui.QWidget):
         self.editorSession.pushCommand(command)
 
     def lockedDifficultyChanged(self):
-        if self.editsDisabled:  # xxx copied from inventory.py
+        if self.editsDisabled:
             return
 
         command = WorldMetaEditCommand(self.editorSession, self.tr('Change Locked Difficulty'))
@@ -278,7 +284,7 @@ class WorldInfoPanel(QtGui.QWidget):
         self.editorSession.pushCommand(command)
 
     def allowCommandsChanged(self):
-        if self.editsDisabled:  # xxx copied from inventory.py
+        if self.editsDisabled:
             return
 
         command = WorldMetaEditCommand(self.editorSession, self.tr('Change Allow Commands'))
