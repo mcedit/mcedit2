@@ -169,7 +169,14 @@ class WorldListModel(QtCore.QAbstractListModel):
         if worlds is None:
             worlds = []
 
-        self.worlds = [(f, getWorldInfo(f)) for f in worlds]
+        self.worlds = []
+        for f in worlds:
+            try:
+                info = getWorldInfo(f)
+            except Exception as e:
+                continue
+            else:
+                self.worlds.append((f, info))
 
     def rowCount(self, index):
         if index.isValid():
