@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from OpenGL import GL
 from PySide import QtOpenGL, QtGui
 import logging
+import re
 
 log = logging.getLogger(__name__)
 
@@ -39,10 +40,13 @@ def validateQGLContext(context):
 
     # Qt 4.8.6 on OS X always returns (1, 0) for the QGLFormat's major and minor versions.
     # (QTBUG-40415)
-    # Check GL_MAJOR_VERSION and GL_MINOR_VERSION instead.
-
-    major = GL.glGetInteger(GL.GL_MAJOR_VERSION)
-    minor = GL.glGetInteger(GL.GL_MINOR_VERSION)
+    # Check GL_VERSION instead.
+    
+    version = GL.glGetString(GL.GL_VERSION)
+    match = re.match(r'^(\d+)\.(\d+)', version)
+    major, minor = match.groups()
+    major = int(major)
+    minor = int(minor)
 
     detailedText = "Obtained a GL context with this format:\n"
     detailedText += "Valid: %s\n" % (context.isValid(),)
@@ -52,7 +56,7 @@ def validateQGLContext(context):
     detailedText += "Double buffer: %s\n" % (actualFormat.doubleBuffer(), )
     detailedText += "\n"
     detailedText += "Driver info:\n"
-    detailedText += "GL_VERSION: %s (%s, %s)\n" % (GL.glGetString(GL.GL_VERSION), major, minor)
+    detailedText += "GL_VERSION: %s (%s, %s)\n" % (version, major, minor)
     detailedText += "GL_VENDOR: %s\n" % GL.glGetString(GL.GL_VENDOR)
     detailedText += "GL_RENDERER: %s\n" % GL.glGetString(GL.GL_RENDERER)
 
