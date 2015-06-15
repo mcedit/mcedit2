@@ -8,6 +8,7 @@ import numpy
 from mcedit2.rendering.modelmesh import BlockModelMesh
 
 from mcedit2.rendering import layers
+from mcedit2.rendering.chunkmeshes.chunksections import ChunkSectionsRenderer
 from mcedit2.rendering.chunkmeshes.entitymesh import TileEntityMesh, MonsterRenderer, ItemRenderer
 from mcedit2.rendering.chunkmeshes.lowdetail import LowDetailBlockMesh, OverheadBlockMesh
 from mcedit2.rendering.chunkmeshes.terrainpop import TerrainPopulatedRenderer
@@ -125,6 +126,7 @@ class ChunkUpdate(object):
         ItemRenderer,
         TileTicksRenderer,
         TerrainPopulatedRenderer,
+        ChunkSectionsRenderer,
         LowDetailBlockMesh,
         OverheadBlockMesh,
     ]
