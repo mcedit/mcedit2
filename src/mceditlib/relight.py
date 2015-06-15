@@ -104,6 +104,8 @@ def updateHeightmap(dimension, x, y, z):
         #
         if not len(updatePos):
             return
+        if not ENABLE_LIGHTING:
+            return
 
         ys, zs, xs = zip(*updatePos)
         uy = numpy.concatenate(ys)
@@ -149,9 +151,9 @@ def updateLights(dimension, x, y, z):
     :return:
     :rtype:
     """
+    updateHeightmap(dimension, x, y, z)
     if not ENABLE_LIGHTING:
         return
-    updateHeightmap(dimension, x, y, z)
     brightness = numpy.array(dimension.blocktypes.brightness)
     brightness.dtype = 'int8'
 
