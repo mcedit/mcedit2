@@ -2,7 +2,6 @@
     ${NAME}
 """
 from __future__ import absolute_import, division, print_function
-import collections
 import logging
 import weakref
 from OpenGL import GL
@@ -10,6 +9,7 @@ import numpy
 from mcedit2.rendering import cubes
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.util import profiler
+from mcedit2.util import glutils
 from mcedit2.util.glutils import DisplayList, gl
 
 log = logging.getLogger(__name__)
@@ -140,7 +140,7 @@ class TextureAtlasRenderNode(RenderstateRenderNode):
 
         GL.glColor(1., 1., 1., 1.)
         textureAtlas = self.sceneNode.textureAtlas
-        GL.glActiveTexture(GL.GL_TEXTURE0)
+        glutils.glActiveTexture(GL.GL_TEXTURE0)
         GL.glEnable(GL.GL_TEXTURE_2D)
         textureAtlas.bindTerrain()
 
@@ -149,7 +149,7 @@ class TextureAtlasRenderNode(RenderstateRenderNode):
         GL.glLoadIdentity()
         GL.glScale(1. / textureAtlas.width, 1. / textureAtlas.height, 1.)
 
-        GL.glActiveTexture(GL.GL_TEXTURE1)
+        glutils.glActiveTexture(GL.GL_TEXTURE1)
         GL.glEnable(GL.GL_TEXTURE_2D)
         textureAtlas.bindLight()
 
@@ -158,7 +158,7 @@ class TextureAtlasRenderNode(RenderstateRenderNode):
         GL.glLoadIdentity()
         GL.glScale(1. / 16, 1. / 16, 1.)
 
-        GL.glActiveTexture(GL.GL_TEXTURE0)
+        glutils.glActiveTexture(GL.GL_TEXTURE0)
         GL.glEnable(GL.GL_CULL_FACE)
 
     def exit(self):
@@ -166,13 +166,13 @@ class TextureAtlasRenderNode(RenderstateRenderNode):
             return
 
         GL.glDisable(GL.GL_CULL_FACE)
-        GL.glActiveTexture(GL.GL_TEXTURE1)
+        glutils.glActiveTexture(GL.GL_TEXTURE1)
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
         GL.glDisable(GL.GL_TEXTURE_2D)
         GL.glMatrixMode(GL.GL_TEXTURE)
         GL.glPopMatrix()
 
-        GL.glActiveTexture(GL.GL_TEXTURE0)
+        glutils.glActiveTexture(GL.GL_TEXTURE0)
         GL.glDisable(GL.GL_TEXTURE_2D)
         GL.glMatrixMode(GL.GL_TEXTURE)
         GL.glPopMatrix()

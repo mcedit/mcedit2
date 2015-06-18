@@ -19,6 +19,8 @@ Pythonesque wrappers around certain OpenGL functions.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from OpenGL import GL
+from OpenGL.GL.ARB import multitexture
+from OpenGL.extensions import alternate
 import numpy
 from contextlib import contextmanager
 
@@ -109,6 +111,8 @@ class gl(object):
     def glDeleteLists(cls, base, n):
         cls.listCount -= n
         return GL.glDeleteLists(base, n)
+
+glActiveTexture = alternate(GL.glActiveTexture, multitexture.glActiveTextureARB)
 
 allDisplayLists = []
 
