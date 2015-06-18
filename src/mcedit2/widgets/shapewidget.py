@@ -10,6 +10,7 @@ from mcedit2.editortools.brush.shapes import getShapes
 from mcedit2.util.load_ui import registerCustomWidget
 from mcedit2.util.resources import resourcePath
 from mcedit2.widgets import flowlayout
+from mcedit2.widgets.layout import Column
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ class ShapeWidget(QtGui.QWidget):
         addShapes = kwargs.pop('addShapes', None)
         super(ShapeWidget, self).__init__(*args, **kwargs)
         buttons = self.buttons = []
-        layout = flowlayout.FlowLayout()
+        flowLayout = flowlayout.FlowLayout()
         actionGroup = QtGui.QActionGroup(self)
         actionGroup.setExclusive(True)
         iconBase = resourcePath("mcedit2/assets/mcedit2/icons")
@@ -42,7 +43,7 @@ class ShapeWidget(QtGui.QWidget):
                 def handler():
                     self.currentShape = shape
                     BrushShapeSetting.setValue(shape.ID)
-                    self.shapeChanged.emit()
+                    self.shapeChanged.emit(shape)
                 return handler
             if icon is None:
                 action = QtGui.QAction(shape.ID, self, triggered=_handler(shape))
@@ -53,11 +54,15 @@ class ShapeWidget(QtGui.QWidget):
             button.setDefaultAction(action)
             button.setIconSize(QtCore.QSize(32, 32))
             buttons.append(button)
-            layout.addWidget(button)
+            flowLayout.addWidget(button)
             actionGroup.addAction(action)
             actions[shape.ID] = action
+            shape.optionsChanged.connect(self.shapeOptionsChanged.emit)
 
+        self.optionsHolder = QtGui.QStackedWidget()
+        layout = Column(flowLayout, (self.optionsHolder, 1))
         self.setLayout(layout)
+
         currentID = BrushShapeSetting.value(shapes[0].ID)
         shapesByID = {shape.ID: shape for shape in shapes}
         if currentID not in actions:
@@ -66,6 +71,19 @@ class ShapeWidget(QtGui.QWidget):
 
         self.currentShape = shapesByID.get(currentID, shapes[0])
 
-    shapeChanged = QtCore.Signal()
+        self.shapeChanged.connect(self.shapeDidChange)
+        self.shapeDidChange(self.currentShape)
+
+    shapeChanged = QtCore.Signal(object)
+    shapeOptionsChanged = QtCore.Signal()
+
+    def shapeDidChange(self, newShape):
+        while self.optionsHolder.count():
+            self.optionsHolder.removeWidget(self.optionsHolder.widget(0))
+
+        widget = newShape.getOptionsWidget()
+        if widget:
+            self.optionsHolder.addWidget(widget)
+
 
 

@@ -177,6 +177,8 @@ class SelectionTool(EditorTool):
         self.coordInput.boxChanged.connect(self.coordInputChanged)
         self.shapeInput = ShapeWidget(addShapes=[ChunkShape()])
         self.shapeInput.shapeChanged.connect(self.shapeDidChange)
+        self.shapeInput.shapeOptionsChanged.connect(self.shapeDidChange)
+
         self.toolWidget.setLayout(Column(self.coordInput,
                                          self.shapeInput,
                                          None))

@@ -3,16 +3,34 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+from PySide import QtGui, QtCore
 import numpy
+from mcedit2.widgets.layout import Column
 from mceditlib import selection
 
 log = logging.getLogger(__name__)
 
 
-class BrushShape(object):
+class BrushShape(QtCore.QObject):
+    """
+    BrushShape is an object that produces a shaped selection box, usable with the Brush and
+    Select tools. BrushShape is responsible for providing a widget to present shape-specific options
+    to the widget, and for signaling its client that the user has changed these options. It also
+    provides an internal string ID and an icon to display in the shape chooser widget.
+
+    :cvar ID: String identifier
+    :type ID: str
+    :cvar icon: Path to icon file, relative to `mcedit2/assets/mcedit2/icons`
+    :type icon: basestring
+    :cvar optionsChanged: This signal should be emitted whenever the options in the BrushShape's
+    options widget are changed, to notify the shape's client that it should redraw the shape.
+    :type optionsChanged: Signal
+    """
+
     ID = NotImplemented
     icon = NotImplemented
-
+    optionsChanged = QtCore.Signal()
+    
     def createShapedSelection(self, box, dimension):
         """
         Return a SelectionBox that selects the blocks inside this shape.
@@ -60,7 +78,7 @@ class BrushShape(object):
         """
         raise NotImplementedError
 
-    def createOptionsWidget(self):
+    def getOptionsWidget(self):
         """
         Return a QWidget to present additional options for this shape.
 
@@ -105,9 +123,25 @@ class Square(BrushShape):
     ID = "Square"
     icon = "shapes/square.png"
 
+    def __init__(self):
+        super(Square, self).__init__()
+
+        self.optionsWidget = QtGui.QWidget()
+        self.hollowCheckbox = QtGui.QCheckBox()
+        self.optionsWidget.setLayout(Column(self.hollowCheckbox))
+        self.hollowCheckbox.toggled.connect(self.hollowChanged)
+
+    def hollowChanged(self):
+        # can't connect toggled to optionsChanged directly because toggled emits with the
+        # new check state as an arg, but optionsChanged takes no args.
+        self.optionsChanged.emit()
+
     def createShapedSelection(self, box, dimension):
         # BoundingBox is already a SelectionBox, so just return it
         return box
+
+    def getOptionsWidget(self):
+        return self.optionsWidget
 
 
 class Diamond(BrushShape):
@@ -224,7 +258,8 @@ class ParabolicDome(BrushShape):
         return (y <= yPrime) & (y > 0) & (x < w/2.0) & (x > -w/2.0) & (z < l/2.0) & (z > -l/2.0)
 
 # load from plugins here, rename to selection shapes?
-allShapes = (Square(), Round(), Diamond(), Cylinder(), ParabolicDome())
 
+# xxx what is responsible for "owning" the instances of BrushShape??
+# Currently the ShapeWidget seems to own them.
 def getShapes():
-    return allShapes
+    return Square(), Round(), Diamond(), Cylinder(), ParabolicDome()

@@ -114,6 +114,7 @@ class BrushTool(EditorTool):
         self.toolWidget.zSpinSlider.valueChanged.connect(self.setZ)
 
         self.toolWidget.brushShapeInput.shapeChanged.connect(self.updateCursor)
+        self.toolWidget.brushShapeInput.shapeOptionsChanged.connect(self.updateCursor)
 
         self.fillBlock = editorSession.worldEditor.blocktypes["stone"]
 
