@@ -140,7 +140,12 @@ def updateHeightmap(dimension, x, y, z):
 
 ENABLE_LIGHTING = True
 
-def updateLights(dimension, x, y, z):
+def updateLightsInSelection(dimension, selection):
+    # xxx slow
+    x, y, z = numpy.array(selection.positions).T
+    return updateLightsByCoord(dimension, x, y, z)
+
+def updateLightsByCoord(dimension, x, y, z):
     """
 
     :param dimension:

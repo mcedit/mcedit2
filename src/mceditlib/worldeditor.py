@@ -849,6 +849,45 @@ class WorldEditorDimension(object):
                     array[y & 0xf, z & 0xf, x & 0xf] = value
             chunk.dirty = True
 
+    def getLight(self, arrayName, x, y, z, default=0):
+        cx = x >> 4
+        cy = y >> 4
+        cz = z >> 4
+        if self.containsChunk(cx, cz):
+            chunk = self.getChunk(cx, cz)
+            sec = chunk.getSection(cy)
+            if sec:
+                array = getattr(sec, arrayName)
+                if array is not None:
+                    return array[y & 0xf, z & 0xf, x & 0xf]
+        return default
+
+    def setLight(self, arrayName, x, y, z, value):
+        cx = x >> 4
+        cy = y >> 4
+        cz = z >> 4
+        if self.containsChunk(cx, cz):
+            chunk = self.getChunk(cx, cz)
+            sec = chunk.getSection(cy, create=True)
+            if sec:
+                array = getattr(sec, arrayName)
+                assert array is not None
+                if array is not None:
+                    array[y & 0xf, z & 0xf, x & 0xf] = value
+            chunk.dirty = True
+
+    def getBlockLight(self, x, y, z, default=0):
+        return self.getLight("BlockLight", x, y, z, default)
+
+    def setBlockLight(self, x, y, z, value):
+        return self.setLight("BlockLight", x, y, z, value)
+
+    def getSkyLight(self, x, y, z, default=0):
+        return self.getLight("SkyLight", x, y, z, default)
+
+    def setSkyLight(self, x, y, z, value):
+        return self.setLight("SkyLight", x, y, z, value)
+
     def getBiomeID(self, x, z, default=0):
         cx = x >> 4
         cz = z >> 4

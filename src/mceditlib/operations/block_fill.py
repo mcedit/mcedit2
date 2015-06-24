@@ -140,7 +140,7 @@ class FillBlocksOperation(Operation):
                 z = coords[1] + (cz << 4)
                 x = coords[2] + (cx << 4)
 
-                mceditlib.relight.updateLights(self.dimension, x, y, z)
+                mceditlib.relight.updateLightsByCoord(self.dimension, x, y, z)
 
         def include(ref):
             return ref.Position not in self.selection

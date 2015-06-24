@@ -59,7 +59,7 @@ class FakeChunkData(object):
         arrays or its rootTag. Alternately, just set `chunk.dirty = True`
 
         needsLighting is deprecated; Use the updateLights= argument
-        of setBlocks and other editing functions, or call updateLights(level, x, y, z) to
+        of setBlocks and other editing functions, or call updateLightsByCoord(level, x, y, z) to
         explicitly update lights yourself.
 
         """

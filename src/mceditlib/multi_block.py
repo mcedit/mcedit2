@@ -356,7 +356,7 @@ def setBlocks(dimension, x, y, z,
         chunk.dirty = True
 
     if updateLights:
-        relight.updateLights(dimension, x, y, z)
+        relight.updateLightsByCoord(dimension, x, y, z)
 
 
 def setChunkBlocks(chunk, x, y, z,
