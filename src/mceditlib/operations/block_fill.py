@@ -107,16 +107,13 @@ class FillBlocksOperation(Operation):
                 continue
             self.sections += 1
 
-            sectionMask = self.selection.section_mask(cx, cy, cz)
-            if sectionMask is None:
+            mask = self.selection.section_mask(cx, cy, cz)
+            if mask is None:
                 self.skipped += 1
                 continue
 
-            mask = sectionMask
-            blockCount = mask.sum()
-
             # don't waste time relighting and copying if the mask is empty
-            if blockCount == 0:
+            if not mask.any():
                 self.skipped += 1
                 continue
 
