@@ -10,6 +10,10 @@ def updateLightsByCoord(dim, x, y, z):
     for i in range(len(x)):
         updateLights(dim, x[i], y[i], z[i])
 
+def updateLightsInSelection(dim, selection):
+    for x, y, z in selection.positions:
+        updateLights(dim, x, y, z)
+
 def neighbors(x, y, z):
     yield x-1, y, z
     yield x+1, y, z
