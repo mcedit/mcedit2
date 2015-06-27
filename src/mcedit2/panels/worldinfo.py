@@ -3,6 +3,7 @@
 """
 from __future__ import absolute_import
 import logging
+import os
 from contextlib import contextmanager
 
 from PySide import QtGui
@@ -140,7 +141,7 @@ class WorldInfoPanel(QtGui.QWidget):
 
     def updateNBTTree(self):
         self.worldNBTEditor.undoCommandPrefixText = self.tr('World Metadata: ')
-        self.worldNBTEditor.setRootTagRef(self.worldMeta)
+        self.worldNBTEditor.setRootTagRef(self.worldMeta, os.name == 'posix')   # Workround for bug 53
 
     def revisionDidChange(self):
         self.worldMeta = self.editorSession.worldEditor.adapter.metadata
