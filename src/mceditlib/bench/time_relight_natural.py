@@ -21,7 +21,7 @@ def natural_relight():
     def do_relight():
         cx, cy, cz = poses.next()
         print "Relighting section %s..." % ((cx, cy, cz),)
-        indices = numpy.indices((16, 16, 16), numpy.uint32)
+        indices = numpy.indices((16, 16, 16), numpy.int32)
         indices.shape = 3, 16*16*16
         indices += ([cx], [cy], [cz])
         x, y, z = indices
