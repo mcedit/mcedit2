@@ -15,7 +15,10 @@ install_requires = [
     "numpy",
 ]
 
-mceditlib_ext_modules = cythonize("src/mceditlib/nbt.pyx")
+mceditlib_ext_modules = cythonize([
+    "src/mceditlib/nbt.pyx",
+    "src/mceditlib/relight/with_cython.pyx"
+])
 
 setup(name='mceditlib',
       version=version,

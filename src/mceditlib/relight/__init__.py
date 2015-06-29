@@ -25,4 +25,4 @@ def setModule(mod):
     updateLightsByCoord = mod.updateLightsByCoord
     updateLightsInSelection = mod.updateLightsInSelection
 
-setMethod("pure")
+setMethod("cython")
