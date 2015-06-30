@@ -245,14 +245,8 @@ class DifferenceBox(CombinationBox):
         return self.oper(left, right)
 
 
-def SectionBox(cx, cy, cz, section=None):
-    if section is None:
-        shape = 16, 16, 16
-    else:
-        # XXX needed because FakeChunkedLevel returns odd sized sections - fix with storage adapter
-        # still needed????
-        shape = section.Blocks.shape
-        shape = shape[2], shape[0], shape[1]
+def SectionBox(cx, cy, cz):
+    shape = 16, 16, 16
 
     return BoundingBox(Vector(cx, cy, cz) * 16, shape)
 

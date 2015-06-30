@@ -125,13 +125,6 @@ def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocks
                     if destSection is None:
                         continue
 
-                    # Recompute destSectionBox and intersect using the shape of destSection.Blocks
-                    # after destChunk is loaded to work with odd shaped FakeChunkDatas XXXXXXXXXXXX
-                    destSectionBox = SectionBox(destCpos[0], destCy, destCpos[1], destSection)
-                    intersect = destSectionBox.intersect(destBox)
-                    if intersect.volume == 0:
-                        continue
-
                     destSlices = (
                         slice(intersect.miny - (destCy << 4), intersect.maxy - (destCy << 4)),
                         slice(intersect.minz - (destCpos[1] << 4), intersect.maxz - (destCpos[1] << 4)),
