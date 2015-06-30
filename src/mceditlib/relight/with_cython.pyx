@@ -13,6 +13,7 @@ from libcpp.pair cimport pair
 from libcpp.deque cimport deque
 from libcpp cimport bool
 
+cimport cython
 from cython.operator cimport dereference as deref
 from cpython cimport Py_INCREF, Py_DECREF
 
@@ -39,6 +40,7 @@ cdef section_key_t section_key(int cx, int cy, int cz):
 
 DEF CACHE_LIMIT = 100
 
+@cython.final
 cdef class RelightCtx(object):
     cdef:
         map[section_key_t, RelightSection] section_cache
