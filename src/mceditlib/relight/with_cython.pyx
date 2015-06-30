@@ -15,6 +15,8 @@ from libc.stdlib cimport malloc, free
 
 log = logging.getLogger(__name__)
 
+OUTPUT_STATS = True
+
 cdef struct RelightSection:
     unsigned short[:,:,:] Blocks
     unsigned char[:,:,:] BlockLight
@@ -40,11 +42,13 @@ cdef class RelightCtx(object):
         object dimension
         char [:] brightness
         char [:] opacity
+        unsigned int spreadCount, drawCount, fadeCount
 
     def __init__(self, dim):
         self.dimension = dim
         self.brightness = self.dimension.blocktypes.brightness
         self.opacity = self.dimension.blocktypes.opacity
+        self.spreadCount = self.drawCount = self.fadeCount = 0
 
     cdef RelightSection * getSection(self, int cx, int cy, int cz):
         cdef long long key = section_key(cx, cy, cz)
@@ -76,6 +80,8 @@ cdef class RelightCtx(object):
     def __dealloc__(self):
         cdef RelightSection cachedSection
         cdef section_key_t key
+        if OUTPUT_STATS:
+            print("RelightCtx Finished: draw=%7d, spread=%7d, fade=%7d" % (self.drawCount, self.spreadCount, self.fadeCount))
         for keyval in self.section_cache:
             key = keyval.first
             cachedSection = keyval.second
@@ -147,7 +153,7 @@ cdef void drawLight(RelightCtx ctx, int x, int y, int z):
     cdef char opacity = ctx.getBlockOpacity(x, y, z)
     cdef char adjacentLight
     cdef int nx, ny, nz
-
+    ctx.drawCount += 1
     cdef int i
     for i in range(6):
         if i == 0:
@@ -177,6 +183,8 @@ cdef void spreadLight(RelightCtx ctx, int x, int y, int z):
     cdef char light = ctx.getBlockLight(x, y, z)
     if light <= 0:
         return
+    ctx.spreadCount += 1
+
     cdef int nx, ny, nz
     cdef char adjacentLight, adjacentOpacity, newLight
 
@@ -213,6 +221,7 @@ cdef void spreadLight(RelightCtx ctx, int x, int y, int z):
 
 
 cdef void fadeLight(RelightCtx ctx, int x, int y, int z, char previousLight):
+    ctx.fadeCount += 1
     fadedCells = findFadedCells(ctx, x, y, z, previousLight)
     for x, y, z in fadedCells:
         ctx.setBlockLight(x, y, z, ctx.getBlockBrightness(x, y, z))
