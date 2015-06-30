@@ -1,5 +1,5 @@
 # distutils: language = c++
-# cython: profile = True
+# cython: profile = True, boundscheck=False
 """
     with_cython
 """
@@ -79,6 +79,8 @@ cdef class RelightCtx(object):
         if self.section_cache.size() > CACHE_LIMIT:
             # xxx decache something!
             pass
+        assert section.Blocks.shape == section.BlockLight.shape == section.SkyLight.shape == (16, 16, 16)
+        
         cachedSection.Blocks = section.Blocks
         cachedSection.BlockLight = section.BlockLight
         cachedSection.SkyLight = section.SkyLight
