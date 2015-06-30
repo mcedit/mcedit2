@@ -116,7 +116,13 @@ class ObjGraphWidget(QtGui.QWidget):
         from mcedit2 import editorapp
         editorApp = editorapp.MCEditApp.app
         objName = str(self.inputWidget.text()) or "editorApp"
-        obj = eval(objName)
+        try:
+            obj = eval(objName)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return
+
         if isinstance(obj, rendergraph.RenderNode):
             def edge_func(x):
                 return x.children
