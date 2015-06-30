@@ -47,3 +47,6 @@ src/mcedit2/rendering/modelmesh.c
 src/mceditlib/nbt.html
 .settings/de.loskutov.anyedit.AnyEditTools.prefs
 *.prefs
+
+src/mceditlib/relight/with_cython.cpp
+src/mceditlib/relight/with_cython.html
