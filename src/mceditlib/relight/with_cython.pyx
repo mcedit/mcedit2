@@ -59,28 +59,34 @@ cdef class RelightCtx(object):
         cdef long long key = section_key(cx, cy, cz)
         cdef map[long long, RelightSection].iterator i = self.section_cache.find(key)
 
+        if i == self.section_cache.end():
+            if 0 == self.cacheSection(cx, cy, cz):
+                return NULL
+
+        return &(self.section_cache[key])
+
+    cdef int cacheSection(self, int cx, int cy, int cz):
         # Initializer is *required* - if memoryview fields are uninitialized, they cannot be assigned
         # later as Cython attempts to decref the uninitialized memoryview and segfaults.
         cdef RelightSection cachedSection = [None, None, None, NULL, 0]
+        cdef long long key = section_key(cx, cy, cz)
 
-        if i == self.section_cache.end():
-            if not self.dimension.containsChunk(cx, cz):
-                return NULL
-            chunk = self.dimension.getChunk(cx, cz)
-            section = chunk.getSection(cy)
-            if section is None:
-                return NULL
-            if self.section_cache.size() > CACHE_LIMIT:
-                # xxx decache something!
-                pass
-            cachedSection.Blocks = section.Blocks
-            cachedSection.BlockLight = section.BlockLight
-            cachedSection.SkyLight = section.SkyLight
-            cachedSection.chunk = <void *>chunk
-            Py_INCREF(chunk)
-            self.section_cache[key] = cachedSection
-
-        return &(self.section_cache[key])
+        if not self.dimension.containsChunk(cx, cz):
+            return 0
+        chunk = self.dimension.getChunk(cx, cz)
+        section = chunk.getSection(cy)
+        if section is None:
+            return 0
+        if self.section_cache.size() > CACHE_LIMIT:
+            # xxx decache something!
+            pass
+        cachedSection.Blocks = section.Blocks
+        cachedSection.BlockLight = section.BlockLight
+        cachedSection.SkyLight = section.SkyLight
+        cachedSection.chunk = <void *>chunk
+        Py_INCREF(chunk)
+        self.section_cache[key] = cachedSection
+        return 1
 
     def __dealloc__(self):
         cdef RelightSection cachedSection
