@@ -112,14 +112,18 @@ cdef class RelightCtx(object):
         if section is NULL:
             return 0
 
-        return section.BlockLight[y & 0xf, z & 0xf, x & 0xf]
+        return section.BlockLight[<unsigned int>(y & 0xf),
+                                  <unsigned int>(z & 0xf),
+                                  <unsigned int>(x & 0xf)]
 
     cdef void setBlockLight(self, int x, int y, int z, char value):
         cdef RelightSection * section = self.getSection(x >> 4, y >> 4, z >> 4)
         if section is NULL:
             return
         section.dirty = 1
-        section.BlockLight[y & 0xf, z & 0xf, x & 0xf] = value
+        section.BlockLight[<unsigned int>(y & 0xf),
+                           <unsigned int>(z & 0xf),
+                           <unsigned int>(x & 0xf)] = value
 
 
     cdef char getBlockBrightness(self, int x, int y, int z):
@@ -127,7 +131,9 @@ cdef class RelightCtx(object):
         if section is NULL:
             return 0
 
-        cdef unsigned short blockID = section.Blocks[y & 0xf, z & 0xf, x & 0xf]
+        cdef unsigned short blockID = section.Blocks[<unsigned int>(y & 0xf),
+                                                     <unsigned int>(z & 0xf),
+                                                     <unsigned int>(x & 0xf)]
         cdef char value = self.brightness[blockID]
         return value
 
@@ -136,7 +142,9 @@ cdef class RelightCtx(object):
         if section is NULL:
             return 15
 
-        cdef unsigned short blockID = section.Blocks[y & 0xf, z & 0xf, x & 0xf]
+        cdef unsigned short blockID = section.Blocks[<unsigned int>(y & 0xf),
+                                                     <unsigned int>(z & 0xf),
+                                                     <unsigned int>(x & 0xf)]
         return max(<char>1, # truncation warning
                    self.opacity[blockID])
 
