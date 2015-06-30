@@ -45,8 +45,8 @@ cdef class RelightCtx(object):
     cdef:
         map[section_key_t, RelightSection] section_cache
         object dimension
-        char [:] brightness
-        char [:] opacity
+        unsigned char [:] brightness
+        unsigned char [:] opacity
         IF OUTPUT_STATS:
             unsigned int spreadCount, drawCount, fadeCount
 
@@ -130,7 +130,7 @@ cdef class RelightCtx(object):
                            <unsigned int>(x & 0xf)] = value
 
 
-    cdef char getBlockBrightness(self, int x, int y, int z):
+    cdef unsigned char getBlockBrightness(self, int x, int y, int z):
         cdef RelightSection * section = self.getSection(x >> 4, y >> 4, z >> 4)
         if section is NULL:
             return 0
@@ -141,7 +141,7 @@ cdef class RelightCtx(object):
         cdef char value = self.brightness[blockID]
         return value
 
-    cdef char getBlockOpacity(self, int x, int y, int z):
+    cdef unsigned char getBlockOpacity(self, int x, int y, int z):
         cdef RelightSection * section = self.getSection(x >> 4, y >> 4, z >> 4)
         if section is NULL:
             return 15
@@ -149,7 +149,7 @@ cdef class RelightCtx(object):
         cdef unsigned short blockID = section.Blocks[<unsigned int>(y & 0xf),
                                                      <unsigned int>(z & 0xf),
                                                      <unsigned int>(x & 0xf)]
-        return max(<char>1, # truncation warning
+        return max(<unsigned char>1, # truncation warning
                    self.opacity[blockID])
 
 
@@ -179,8 +179,8 @@ cdef void updateLights(RelightCtx ctx, int x, int y, int z):
         fadeLight(ctx, x, y, z, previousLight)
 
 cdef void drawLight(RelightCtx ctx, int x, int y, int z):
-    cdef char opacity = ctx.getBlockOpacity(x, y, z)
-    cdef char adjacentLight
+    cdef short opacity = ctx.getBlockOpacity(x, y, z)
+    cdef short adjacentLight
     cdef int nx, ny, nz
     IF OUTPUT_STATS:
         ctx.drawCount += 1
@@ -210,14 +210,14 @@ cdef void drawLight(RelightCtx ctx, int x, int y, int z):
             ctx.setBlockLight(x, y, z, adjacentLight - opacity)
 
 cdef void spreadLight(RelightCtx ctx, int x, int y, int z):
-    cdef char light = ctx.getBlockLight(x, y, z)
+    cdef short light = ctx.getBlockLight(x, y, z)
     if light <= 0:
         return
     IF OUTPUT_STATS:
         ctx.spreadCount += 1
 
     cdef int nx, ny, nz
-    cdef char adjacentLight, adjacentOpacity, newLight
+    cdef short adjacentLight, adjacentOpacity, newLight
 
     cdef int i
     for i in range(6):
@@ -240,14 +240,12 @@ cdef void spreadLight(RelightCtx ctx, int x, int y, int z):
         else:
             nz = z
 
-        # xxx cast to int because one of these is a numpy.uint8 and
-        # light - opacity rolls over to a large number.
-        adjacentLight = int(ctx.getBlockLight(nx, ny, nz))
+        adjacentLight = ctx.getBlockLight(nx, ny, nz)
         adjacentOpacity = ctx.getBlockOpacity(nx, ny, nz)
         newLight = light - adjacentOpacity
         # If the adjacent cell already has the "correct" light value, stop.
         if newLight > adjacentLight:
-            ctx.setBlockLight(nx, ny, nz, newLight)
+            ctx.setBlockLight(nx, ny, nz, <char>newLight)
             spreadLight(ctx, nx, ny, nz)
 
 
@@ -300,7 +298,7 @@ ctypedef pair[coord, int] toScan_t
 cdef set[coord] findFadedCells(RelightCtx ctx, int x, int y, int z, char previousLight):
     cdef set[coord] foundCells
     cdef deque[toScan_t] toScan
-    cdef char adjacentLight, adjacentOpacity
+    cdef short adjacentLight, adjacentOpacity
     cdef int i
     cdef coord this_coord, n_coord
     cdef toScan_t this_toScan
@@ -338,7 +336,7 @@ cdef set[coord] findFadedCells(RelightCtx ctx, int x, int y, int z, char previou
             else:
                 n_coord.z = z                
 
-            adjacentLight = int(ctx.getBlockLight(n_coord.x, n_coord.y, n_coord.z))
+            adjacentLight = ctx.getBlockLight(n_coord.x, n_coord.y, n_coord.z)
             adjacentOpacity = ctx.getBlockOpacity(n_coord.x, n_coord.y, n_coord.z)
 
             if previousLight - adjacentOpacity <= 0:
