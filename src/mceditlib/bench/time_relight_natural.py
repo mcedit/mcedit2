@@ -22,7 +22,7 @@ def natural_relight():
         cx, cy, cz = poses.next()
         indices = numpy.indices((16, 16, 16), numpy.int32)
         indices.shape = 3, 16*16*16
-        indices += ([cx], [cy], [cz])
+        indices += ([cx << 4], [cy << 4], [cz << 4])
         x, y, z = indices
 
         relight.updateLightsByCoord(dim, x, y, z)
