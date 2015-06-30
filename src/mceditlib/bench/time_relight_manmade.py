@@ -1,6 +1,7 @@
-from timeit import timeit
 
 import numpy
+import sys
+import time
 from mceditlib.selection import BoundingBox
 
 from mceditlib.worldeditor import WorldEditor
@@ -34,18 +35,33 @@ def manmade_relight():
 
     def do_relight():
         cx, cy, cz = poses.next()
-        print "Relighting section %s..." % ((cx, cy, cz),)
         indices = numpy.indices((16, 16, 16), numpy.int32)
         indices.shape = 3, 16*16*16
         indices += ([cx], [cy], [cz])
         x, y, z = indices
+
         relight.updateLightsByCoord(dim, x, y, z)
 
-    sectionCount = 5
-    t = timeit(do_relight, number=sectionCount)
-    print "Relight manmade building: %d chunk-sections in %.02f seconds (%dms per section)" % (sectionCount, t, 1000 * t / sectionCount)
+    # Find out how many sections we can do in `maxtime` seconds.
+    start = time.time()
+    count = 0
+    maxtime = 10
+    end = start + maxtime
+    while time.time() < end:
+        try:
+            do_relight()
+        except StopIteration:
+            break
+        count += 1
+    t = time.time() - start
+
+    print "Relight manmade building: %d chunk-sections in %.02f seconds (%f sections per second; %dms per section)" % (count, t, count / t, 1000 * t / count)
 
 if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        method = sys.argv[1]
+        print "Using method", method
+        relight.setMethod(method)
     manmade_relight()
 
 
