@@ -3,10 +3,10 @@
 """
     with_cython
 """
-
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 
+# unordered_map was twice as slow, at least with the MSVC 2008 from Python C++ Toolkit
 from libcpp.map cimport map
 from libcpp.set cimport set
 from libcpp.pair cimport pair
@@ -26,7 +26,7 @@ cdef struct RelightSection:
     unsigned char[:,:,:] BlockLight
     unsigned char[:,:,:] SkyLight
     # To keep the chunk "alive" while we edit its section arrays, we INCREF it and keep it here
-    # then DECREF it when the RelightCtxd dies and when it gets decached.
+    # then DECREF it when the RelightCtx dies and when it gets decached.
     # It must be a <void *> with manual refcounting because Cython won't let me store an <object>
     # in a struct.
     void * chunk
