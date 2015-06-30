@@ -8,6 +8,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 
 from libcpp.map cimport map
+from libcpp.set cimport set
+from libcpp.pair cimport pair
+from libcpp.deque cimport deque
+from libcpp cimport bool
+
 cimport numpy as cnp
 
 from cpython cimport Py_INCREF, Py_DECREF
@@ -15,7 +20,7 @@ from libc.stdlib cimport malloc, free
 
 log = logging.getLogger(__name__)
 
-OUTPUT_STATS = True
+OUTPUT_STATS = False
 
 cdef struct RelightSection:
     unsigned short[:,:,:] Blocks
@@ -222,59 +227,99 @@ cdef void spreadLight(RelightCtx ctx, int x, int y, int z):
 
 cdef void fadeLight(RelightCtx ctx, int x, int y, int z, char previousLight):
     ctx.fadeCount += 1
-    fadedCells = findFadedCells(ctx, x, y, z, previousLight)
-    for x, y, z in fadedCells:
-        ctx.setBlockLight(x, y, z, ctx.getBlockBrightness(x, y, z))
+    cdef set[coord] fadedCells = findFadedCells(ctx, x, y, z, previousLight)
+    cdef coord this_coord
+    for this_coord in fadedCells:
+        ctx.setBlockLight(this_coord.x,
+                          this_coord.y,
+                          this_coord.z,
+                          ctx.getBlockBrightness(x, y, z))
         # dim.setBlock(x, y, z, "glass")
-    for x, y, z in fadedCells:
-        drawLight(ctx, x, y, z)
-    for x, y, z in fadedCells:
-        spreadLight(ctx, x, y, z)
+    for this_coord in fadedCells:
+        drawLight(ctx,
+                  this_coord.x,
+                  this_coord.y,
+                  this_coord.z,
+                  )
+    for this_coord in fadedCells:
+        spreadLight(ctx,
+                    this_coord.x,
+                    this_coord.y,
+                    this_coord.z,
+                    )
+
+cdef struct coord:
+    int x, y, z
+
+cdef bool coord_operator_less "operator<"(const coord & lhs, const coord & rhs):
+    # warning: forcing 'int' to 'bool'
+    # cython's temp type for BinOpNode is 'int'
+    if lhs.x < rhs.x:
+        return True
+    elif lhs.x > rhs.x:
+        return False
+    elif lhs.y < rhs.y:
+        return True
+    elif lhs.y > rhs.y:
+        return False
+    elif lhs.z < rhs.z:
+        return True
+    else:
+        return False
 
 
-def relCoords(int ox, int oy, int oz, coords):
-    # for debugging
-    for x, y, z, l in coords:
-        yield x - ox, y - oy, z - oz
+ctypedef pair[coord, int] toScan_t
 
-
-cdef findFadedCells(RelightCtx ctx, int x, int y, int z, char previousLight):
-    foundCells = set()
-    toScan = [(x, y, z, previousLight)]
+cdef set[coord] findFadedCells(RelightCtx ctx, int x, int y, int z, char previousLight):
+    cdef set[coord] foundCells
+    cdef deque[toScan_t] toScan
     cdef char adjacentLight, adjacentOpacity
-    cdef int nx, ny, nz
     cdef int i
+    cdef coord this_coord, n_coord
+    cdef toScan_t this_toScan
+    this_coord = [x, y, z]
+    toScan.push_back(toScan_t(this_coord, previousLight))
 
-    while len(toScan):
+    while 1:
+        if toScan.empty():
+            break
 
-        x, y, z, previousLight = toScan.pop(0)
+        this_toScan = toScan.front()
+        toScan.pop_front()
+
+        this_coord = this_toScan.first
+        x, y, z = this_coord.x, this_coord.y, this_coord.z
+        previousLight = this_toScan.second
+
         for i in range(6):
             if i == 0:
-                nx = x - 1
+                n_coord.x = x - 1
             elif i == 1:
-                nx = x + 1
+                n_coord.x = x + 1
             else:
-                nx = x
+                n_coord.x = x
             if i == 2:
-                ny = y - 1
+                n_coord.y = y - 1
             elif i == 3:
-                ny = y + 1
+                n_coord.y = y + 1
             else:
-                ny = y            
+                n_coord.y = y            
             if i == 4:
-                nz = z - 1
+                n_coord.z = z - 1
             elif i == 5:
-                nz = z + 1
+                n_coord.z = z + 1
             else:
-                nz = z                
+                n_coord.z = z                
 
-            adjacentLight = int(ctx.getBlockLight(nx, ny, nz))
-            adjacentOpacity = ctx.getBlockOpacity(nx, ny, nz)
+            adjacentLight = int(ctx.getBlockLight(n_coord.x, n_coord.y, n_coord.z))
+            adjacentOpacity = ctx.getBlockOpacity(n_coord.x, n_coord.y, n_coord.z)
+
             if previousLight - adjacentOpacity <= 0:
                 continue
+
             if previousLight - adjacentOpacity == adjacentLight:
-                if (nx, ny, nz) not in foundCells:
-                    toScan.append((nx, ny, nz, adjacentLight))
-                    foundCells.add((nx, ny, nz))
+                if foundCells.count(n_coord) == 0:
+                    toScan.push_back(toScan_t(n_coord, adjacentLight))
+                    foundCells.insert(n_coord)
 
     return foundCells
