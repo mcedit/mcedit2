@@ -13,10 +13,8 @@ from libcpp.pair cimport pair
 from libcpp.deque cimport deque
 from libcpp cimport bool
 
-cimport numpy as cnp
-
+from cython.operator cimport dereference as deref
 from cpython cimport Py_INCREF, Py_DECREF
-from libc.stdlib cimport malloc, free
 
 log = logging.getLogger(__name__)
 
@@ -58,25 +56,24 @@ cdef class RelightCtx(object):
     cdef RelightSection * getSection(self, int cx, int cy, int cz):
         cdef long long key = section_key(cx, cy, cz)
         cdef map[long long, RelightSection].iterator i = self.section_cache.find(key)
-
+        cdef RelightSection * ret
         if i == self.section_cache.end():
-            if 0 == self.cacheSection(cx, cy, cz):
-                return NULL
+            ret = self.cacheSection(cx, cy, cz)
+        else:
+            ret = &(deref(i).second)
+        return ret
 
-        return &(self.section_cache[key])
-
-    cdef int cacheSection(self, int cx, int cy, int cz):
+    cdef RelightSection * cacheSection(self, int cx, int cy, int cz):
         # Initializer is *required* - if memoryview fields are uninitialized, they cannot be assigned
         # later as Cython attempts to decref the uninitialized memoryview and segfaults.
         cdef RelightSection cachedSection = [None, None, None, NULL, 0]
         cdef long long key = section_key(cx, cy, cz)
-
         if not self.dimension.containsChunk(cx, cz):
-            return 0
+            return NULL
         chunk = self.dimension.getChunk(cx, cz)
         section = chunk.getSection(cy)
         if section is None:
-            return 0
+            return NULL
         if self.section_cache.size() > CACHE_LIMIT:
             # xxx decache something!
             pass
@@ -85,8 +82,14 @@ cdef class RelightCtx(object):
         cachedSection.SkyLight = section.SkyLight
         cachedSection.chunk = <void *>chunk
         Py_INCREF(chunk)
-        self.section_cache[key] = cachedSection
-        return 1
+
+        # weird hack because in Python an assignment is a statement so we cannot write
+        # `return self.section_cache[key] = cachedSection` to return a reference to the
+        # RelightSection in the cache...
+        cdef RelightSection * ret
+        ret = &self.section_cache[key]
+        ret[0] = cachedSection
+        return ret
 
     def __dealloc__(self):
         cdef RelightSection cachedSection
