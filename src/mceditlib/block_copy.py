@@ -4,7 +4,7 @@
    Optimized functions for copying all world data (blocks, tile entities, entities, biomes) from
    one world or schematic file to another.
 """
-from datetime import datetime
+import time
 import logging
 from mceditlib.selection import BoundingBox, SectionBox
 
@@ -47,7 +47,7 @@ def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocks
 
     # needs work xxx
     log.info(u"Copying {0} blocks from {1} to {2}" .format(ly * lz * lx, sourceSelection, destinationPoint))
-    startTime = datetime.now()
+    startTime = time.time()
 
     destBox = BoundingBox(destinationPoint, sourceSelection.size)
     chunkCount = destBox.chunkCount
@@ -174,7 +174,9 @@ def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocks
                 newEntity = tileEntity.copyWithOffset(copyOffset)
                 destDim.addTileEntity(newEntity)
 
-    log.info("Duration: {0}".format(datetime.now() - startTime))
+    duration = time.time() - startTime
+    log.info("Duration: %0.3fs, %d/%d chunks, %0.2fms per chunk (%0.2f chunks per second)",
+        duration, i, sourceSelection.chunkCount, 1000 * duration/i, i/duration)
     log.info("Copied %d/%d entities and %d/%d tile entities", entitiesCopied, entitiesSeen, tileEntitiesCopied, tileEntitiesSeen)
 
 
