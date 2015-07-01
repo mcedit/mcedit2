@@ -40,7 +40,7 @@ def natural_relight():
         count += 1
     t = time.time() - start
 
-    print "Relight natural terrain: %d chunk-sections in %.02f seconds (%f sections per second; %dms per section)" % (count, t, count / t, 1000 * t / count)
+    print "Relight natural terrain: %d/%d chunk-sections in %.02f seconds (%f sections per second; %dms per section)" % (count, len(positions), t, count / t, 1000 * t / count)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
