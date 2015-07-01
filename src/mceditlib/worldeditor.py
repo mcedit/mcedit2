@@ -871,10 +871,9 @@ class WorldEditorDimension(object):
             sec = chunk.getSection(cy, create=True)
             if sec:
                 array = getattr(sec, arrayName)
-                assert array is not None
                 if array is not None:
                     array[y & 0xf, z & 0xf, x & 0xf] = value
-            chunk.dirty = True
+                chunk.dirty = True
 
     def getBlockLight(self, x, y, z, default=0):
         return self.getLight("BlockLight", x, y, z, default)
