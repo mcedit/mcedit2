@@ -6,6 +6,7 @@
 """
 import time
 import logging
+from mceditlib import relight
 from mceditlib.selection import BoundingBox, SectionBox
 
 log = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ def sourceMaskFunc(blocksToCopy):
     return unmaskedSourceMask
 
 
-def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocksToCopy=None, entities=True, create=False, biomes=False):
+def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocksToCopy=None, entities=True, create=False, biomes=False, updateLights=False):
     """
     Copy blocks and entities from the `sourceBox` area of `sourceDim` to `destDim` starting at `destinationPoint`.
 
@@ -57,6 +58,11 @@ def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocks
     entitiesSeen = 0
     tileEntitiesSeen = 0
 
+    if updateLights:
+        allChangedX = []
+        allChangedY = []
+        allChangedZ = []
+
     makeSourceMask = sourceMaskFunc(blocksToCopy)
 
     copyOffset = destBox.origin - sourceSelection.origin
@@ -79,8 +85,8 @@ def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocks
 
         i += 1
         yield (i, chunkCount)
-        if i % 100 == 0:
-            log.info("Copying: Chunk {0}...".format(i))
+        if i % 20 == 0:
+            log.info("Copying: Chunk {0}/{1}...".format(i, chunkCount))
 
         # Use sourceBiomeMask to accumulate a list of columns over all sections whose biomes should be copied.
         sourceBiomes = None
@@ -106,7 +112,7 @@ def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocks
                 sourceBiomeMask |= sourceMask.any(axis=0)
 
             # Find corresponding destination area(s)
-            sectionBox = SectionBox(sourceCpos[0], sourceCy, sourceCpos[1], sourceSection)
+            sectionBox = SectionBox(sourceCpos[0], sourceCy, sourceCpos[1])
             destBox = BoundingBox(sectionBox.origin + copyOffset, sectionBox.size)
 
             for destCpos in destBox.chunkPositions():
@@ -144,10 +150,45 @@ def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocks
 
                     # Convert blocks
                     convertedSourceBlocks, convertedSourceData = convertBlocks(sourceBlocks, sourceData)
+                    convertedSourceBlocksMasked = convertedSourceBlocks[sourceMaskPart]
+
+                    # Find blocks that need direct lighting update - block opacity or brightness changed
+
+                    oldBrightness = destDim.blocktypes.brightness[destSection.Blocks[destSlices][sourceMaskPart]]
+                    newBrightness = destDim.blocktypes.brightness[convertedSourceBlocksMasked]
+                    oldOpacity = destDim.blocktypes.opacity[destSection.Blocks[destSlices][sourceMaskPart]]
+                    newOpacity = destDim.blocktypes.opacity[convertedSourceBlocksMasked]
+                    changedLight = (oldBrightness != newBrightness) | (oldOpacity != newOpacity)
 
                     # Write blocks
                     destSection.Blocks[destSlices][sourceMaskPart] = convertedSourceBlocks[sourceMaskPart]
                     destSection.Data[destSlices][sourceMaskPart] = convertedSourceData[sourceMaskPart]
+
+                    if updateLights:
+                        # Find coordinates of lighting updates
+                        (changedFlat,) = changedLight.nonzero()
+                        # Since convertedSourceBlocksMasked is a 1d array, changedFlat is an index
+                        # into this array. Thus, changedFlat is also an index into the nonzero values
+                        # of sourceMaskPart.
+
+                        if len(changedFlat):
+                            x, y, z = sourceMaskPart.nonzero()
+                            changedX = x[changedFlat].astype('i4')
+                            changedY = y[changedFlat].astype('i4')
+                            changedZ = z[changedFlat].astype('i4')
+
+                            changedX += intersect.minx
+                            changedY += intersect.miny
+                            changedZ += intersect.minz
+                            if updateLights == "all":
+                                allChangedX.append(changedX)
+                                allChangedY.append(changedY)
+                                allChangedZ.append(changedZ)
+                            else:
+                                # log.info("Updating section lights in %s blocks... (ob %s)",
+                                #          changedFlat.shape,
+                                #          oldBrightness.shape)
+                                relight.updateLightsByCoord(destDim, changedX, changedY, changedZ)
 
                 destChunk.dirty = True
 
@@ -176,10 +217,27 @@ def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocks
 
     duration = time.time() - startTime
     log.info("Duration: %0.3fs, %d/%d chunks, %0.2fms per chunk (%0.2f chunks per second)",
-        duration, i, sourceSelection.chunkCount, 1000 * duration/i, i/duration)
-    log.info("Copied %d/%d entities and %d/%d tile entities", entitiesCopied, entitiesSeen, tileEntitiesCopied, tileEntitiesSeen)
+             duration, i, sourceSelection.chunkCount, 1000 * duration/i, i/duration)
+    log.info("Copied %d/%d entities and %d/%d tile entities",
+             entitiesCopied, entitiesSeen, tileEntitiesCopied, tileEntitiesSeen)
 
+    if updateLights == "all":
+        log.info("Updating all at once for %d sections (%d cells)", len(allChangedX), sum(len(a) for a in allChangedX))
 
+        startTime = time.time()
 
+        for i in range(len(allChangedX)):
+            x = allChangedX[i]
+            y = allChangedY[i]
+            z = allChangedZ[i]
+            relight.updateLightsByCoord(destDim, x, y, z)
+
+        i = i or 1
+        duration = time.time() - startTime
+        duration = duration or 1
+
+        log.info("Lighting complete.")
+        log.info("Duration: %0.3fs, %d sections, %0.2fms per section (%0.2f sections per second)",
+                 duration, i, 1000 * duration/i, i/duration)
 
 

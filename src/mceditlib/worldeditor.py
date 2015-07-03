@@ -739,14 +739,14 @@ class WorldEditorDimension(object):
 
     # --- Import/Export ---
 
-    def copyBlocksIter(self, sourceLevel, sourceSelection, destinationPoint, blocksToCopy=None, entities=True, create=False, biomes=False):
+    def copyBlocksIter(self, sourceLevel, sourceSelection, destinationPoint, blocksToCopy=None, entities=True, create=False, biomes=False, updateLights=False):
         return copyBlocksIter(self, sourceLevel, sourceSelection, destinationPoint, blocksToCopy, entities, create,
-                           biomes)
+                              biomes, updateLights)
 
 
-    def copyBlocks(self, sourceLevel, sourceSelection, destinationPoint, blocksToCopy=None, entities=True, create=False, biomes=False):
+    def copyBlocks(self, sourceLevel, sourceSelection, destinationPoint, blocksToCopy=None, entities=True, create=False, biomes=False, updateLights=False):
         return exhaust(self.copyBlocksIter(sourceLevel, sourceSelection, destinationPoint, blocksToCopy,
-                                           entities, create, biomes))
+                                           entities, create, biomes, updateLights))
 
     def exportSchematicIter(self, selection):
         schematic = createSchematic(shape=selection.size, blocktypes=self.blocktypes)
