@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 import uuid
+import os
 
 from PySide import QtGui
 from PySide.QtCore import Qt
@@ -143,7 +144,7 @@ class PlayerPanel(QtGui.QWidget):
 
     def updateNBTTree(self):
         self.nbtEditor.undoCommandPrefixText = ("Player %s: " % self.selectedUUID) if self.selectedUUID else "Single-player: "
-        self.nbtEditor.setRootTagRef(self.selectedPlayer)
+        self.nbtEditor.setRootTagRef(self.selectedPlayer, os.name == 'posix')   # Workround for bug 53
 
     def updateInventory(self):
         self.inventoryEditor.editorSession = self.editorSession
