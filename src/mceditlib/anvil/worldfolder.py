@@ -74,6 +74,15 @@ class AnvilWorldFolder(object):
             f.write(data)
 
     def listFolder(self, path):
+        """
+        Returns the path of each file or folder in the given folder. All paths returned
+        are relative to the world folder and use '/' as the path separator.
+
+        :param path: Folder to list
+        :type path: unicode
+        :return: List of file/folder paths
+        :rtype: Iterator[unicode]
+        """
         for filename in os.listdir(self.getFolderPath(path)):
             yield "%s/%s" % (path, filename)
 

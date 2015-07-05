@@ -733,7 +733,8 @@ class RevisionHistoryNode(object):
 
     def listFolder(self, path):
         """
-        List the contents of the given folder, reading all previous revisions. Ignores the REVINFO file.
+        List the contents of the given folder, reading all previous revisions.
+        Ignores the REVINFO file.
 
         rev1:
           level.dat
@@ -772,10 +773,14 @@ class RevisionHistoryNode(object):
           level.dat_old
           some.file
 
-        :param path:
-        :type path:
-        :return:
-        :rtype:
+
+        Returns the path of each file or folder in the given folder. All paths returned
+        are relative to the world folder.
+
+        :param path: Folder to list
+        :type path: unicode
+        :return: List of file/folder paths
+        :rtype: Iterator[unicode]
         """
         if self.invalid:
             raise RuntimeError("Accessing invalid node: %r" % self)

@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function
 import logging
 import os
 import random
+import re
 import struct
 import traceback
 import weakref
@@ -367,7 +368,7 @@ class AnvilWorldMetadata(object):
 
     generatorName = nbtattr.NBTAttr('generatorName', nbt.TAG_String, "default")
     generatorOptions = nbtattr.NBTAttr('generatorOptions', nbt.TAG_String, "") #Default is different for every generatorType
-    
+
     MapFeatures = nbtattr.NBTAttr('MapFeatures', nbt.TAG_Byte, 1)
 
     GameType = nbtattr.NBTAttr('GameType', nbt.TAG_Int, 0)  # 0 for survival, 1 for creative
@@ -958,6 +959,210 @@ class AnvilWorldAdapter(object):
             self.selectedRevision.writeFile(playerFilePath, playerTag.save())
 
         return self.getPlayer(playerUUID)
+
+    # --- Maps ---
+
+    def listMaps(self):
+        """
+        Return a list of map IDs for this world's map items.
+
+        :return: list[object]
+        """
+        mapRE = re.compile(r'map_(\d+)\.dat')
+        for filename in self.selectedRevision.listFolder("data"):
+            basename = filename.split("/")[-1]
+            match = mapRE.match(basename)
+            if match is None or len(match.groups()) == 0:
+                continue
+
+            mapID = match.group(1)
+            yield mapID
+
+    def getMap(self, mapID):
+        mapPath = "data/map_%s.dat" % mapID
+        if not self.selectedRevision.containsFile(mapPath):
+            raise KeyError("Map %s not found" % mapID)
+
+        mapData = self.selectedRevision.readFile(mapPath)
+        mapNBT = nbt.load(buf=mapData)
+        return AnvilMapData(mapNBT)
+
+
+class AnvilMapData(object):
+    def __init__(self, rootTag):
+        if "data" not in rootTag:
+            raise LevelFormatError("Map NBT is missing required tag 'data'")
+        self.rootTag = rootTag["data"]
+        if self._colors.shape[0] != self.width * self.height:
+            raise LevelFormatError("Map colors array does not match map size. (%dx%d != %d)"
+                                   % (self.width, self.height, self.colors.shape[0]))
+
+    dimension = nbtattr.NBTAttr('dimension', nbt.TAG_Byte)
+    height = nbtattr.NBTAttr('height', nbt.TAG_Short)
+    width = nbtattr.NBTAttr('width', nbt.TAG_Short)
+    scale = nbtattr.NBTAttr('scale', nbt.TAG_Byte)
+    xCenter = nbtattr.NBTAttr('xCenter', nbt.TAG_Int, 0)
+    zCenter = nbtattr.NBTAttr('zCenter', nbt.TAG_Int, 0)
+    _colors = nbtattr.NBTAttr('colors', nbt.TAG_Byte_Array)
+
+    @property
+    def colors(self):
+        return self._colors.reshape((self.height, self.width))
+
+    def getColorsAsRGBA(self):
+        # Note: on little endian systems, with relation to 32-bit values this is ABGR.
+
+        return self.colorTable[self.colors]
+
+    colorTable = numpy.array([
+        (0, 0, 0, 0),
+        (0, 0, 0, 0),
+        (0, 0, 0, 0),
+        (0, 0, 0, 0),
+        (88, 124, 39, 255),
+        (108, 151, 47, 255),
+        (125, 176, 55, 255),
+        (66, 93, 29, 255),
+        (172, 162, 114, 255),
+        (210, 199, 138, 255),
+        (244, 230, 161, 255),
+        (128, 122, 85, 255),
+        (138, 138, 138, 255),
+        (169, 169, 169, 255),
+        (197, 197, 197, 255),
+        (104, 104, 104, 255),
+        (178, 0, 0, 255),
+        (217, 0, 0, 255),
+        (252, 0, 0, 255),
+        (133, 0, 0, 255),
+        (111, 111, 178, 255),
+        (136, 136, 217, 255),
+        (158, 158, 252, 255),
+        (83, 83, 133, 255),
+        (116, 116, 116, 255),
+        (142, 142, 142, 255),
+        (165, 165, 165, 255),
+        (87, 87, 87, 255),
+        (0, 86, 0, 255),
+        (0, 105, 0, 255),
+        (0, 123, 0, 255),
+        (0, 64, 0, 255),
+        (178, 178, 178, 255),
+        (217, 217, 217, 255),
+        (252, 252, 252, 255),
+        (133, 133, 133, 255),
+        (114, 117, 127, 255),
+        (139, 142, 156, 255),
+        (162, 166, 182, 255),
+        (85, 87, 96, 255),
+        (105, 75, 53, 255),
+        (128, 93, 65, 255),
+        (149, 108, 76, 255),
+        (78, 56, 39, 255),
+        (78, 78, 78, 255),
+        (95, 95, 95, 255),
+        (111, 111, 111, 255),
+        (58, 58, 58, 255),
+        (44, 44, 178, 255),
+        (54, 54, 217, 255),
+        (63, 63, 252, 255),
+        (33, 33, 133, 255),
+        (99, 83, 49, 255),
+        (122, 101, 61, 255),
+        (141, 118, 71, 255),
+        (74, 62, 38, 255),
+        (178, 175, 170, 255),
+        (217, 214, 208, 255),
+        (252, 249, 242, 255),
+        (133, 131, 127, 255),
+        (150, 88, 36, 255),
+        (184, 108, 43, 255),
+        (213, 125, 50, 255),
+        (113, 66, 27, 255),
+        (124, 52, 150, 255),
+        (151, 64, 184, 255),
+        (176, 75, 213, 255),
+        (93, 39, 113, 255),
+        (71, 107, 150, 255),
+        (87, 130, 184, 255),
+        (101, 151, 213, 255),
+        (53, 80, 113, 255),
+        (159, 159, 36, 255),
+        (195, 195, 43, 255),
+        (226, 226, 50, 255),
+        (120, 120, 27, 255),
+        (88, 142, 17, 255),
+        (108, 174, 21, 255),
+        (125, 202, 25, 255),
+        (66, 107, 13, 255),
+        (168, 88, 115, 255),
+        (206, 108, 140, 255),
+        (239, 125, 163, 255),
+        (126, 66, 86, 255),
+        (52, 52, 52, 255),
+        (64, 64, 64, 255),
+        (75, 75, 75, 255),
+        (39, 39, 39, 255),
+        (107, 107, 107, 255),
+        (130, 130, 130, 255),
+        (151, 151, 151, 255),
+        (80, 80, 80, 255),
+        (52, 88, 107, 255),
+        (64, 108, 130, 255),
+        (75, 125, 151, 255),
+        (39, 66, 80, 255),
+        (88, 43, 124, 255),
+        (108, 53, 151, 255),
+        (125, 62, 176, 255),
+        (66, 33, 93, 255),
+        (36, 52, 124, 255),
+        (43, 64, 151, 255),
+        (50, 75, 176, 255),
+        (27, 39, 93, 255),
+        (71, 52, 36, 255),
+        (87, 64, 43, 255),
+        (101, 75, 50, 255),
+        (53, 39, 27, 255),
+        (71, 88, 36, 255),
+        (87, 108, 43, 255),
+        (101, 125, 50, 255),
+        (53, 66, 27, 255),
+        (107, 36, 36, 255),
+        (130, 43, 43, 255),
+        (151, 50, 50, 255),
+        (80, 27, 27, 255),
+        (17, 17, 17, 255),
+        (21, 21, 21, 255),
+        (25, 25, 25, 255),
+        (13, 13, 13, 255),
+        (174, 166, 53, 255),
+        (212, 203, 65, 255),
+        (247, 235, 76, 255),
+        (130, 125, 39, 255),
+        (63, 152, 148, 255),
+        (78, 186, 181, 255),
+        (91, 216, 210, 255),
+        (47, 114, 111, 255),
+        (51, 89, 178, 255),
+        (62, 109, 217, 255),
+        (73, 129, 252, 255),
+        (39, 66, 133, 255),
+        (0, 151, 39, 255),
+        (0, 185, 49, 255),
+        (0, 214, 57, 255),
+        (0, 113, 30, 255),
+        (90, 59, 34, 255),
+        (110, 73, 41, 255),
+        (127, 85, 48, 255),
+        (67, 44, 25, 255),
+        (78, 1, 0, 255),
+        (95, 1, 0, 255),
+        (111, 2, 0, 255),
+        (58, 1, 0, 255)
+    ], dtype=numpy.uint8)
+
+
+
 
 
 class PlayerAbilitiesRef(nbtattr.NBTCompoundRef):
