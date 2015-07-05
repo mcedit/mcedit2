@@ -19,8 +19,6 @@ import sys
 # I think 4 is the best.
 from mcedit2.util import resources
 
-PORTABLE_INSTALL = True
-
 _userFilesDirectory = None
 def getUserFilesDirectory():
     global _userFilesDirectory

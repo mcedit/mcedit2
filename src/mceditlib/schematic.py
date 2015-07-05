@@ -316,9 +316,6 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
     def __repr__(self):
         return u"SchematicFileAdapter(shape={0}, blocktypes={2}, filename=\"{1}\")".format(self.size, self.filename or u"", self.Materials)
 
-    # these refer to the blocks array instead of the file's height because rotation swaps the axes
-    # this will have an impact later on when editing schematics instead of just importing/exporting
-
     minHeight = 0
 
     def getDimensionBounds(self, dimName=""):
