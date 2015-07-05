@@ -17,6 +17,9 @@ cimport cython
 from cython.operator cimport dereference as deref
 from cpython cimport Py_INCREF, Py_DECREF
 
+import numpy as np
+cimport numpy as cnp
+
 log = logging.getLogger(__name__)
 
 DEF OUTPUT_STATS = False
@@ -58,8 +61,8 @@ cdef class RelightCtx(object):
             self.spreadCount = self.drawCount = self.fadeCount = 0
 
     cdef RelightSection * getSection(self, int cx, int cy, int cz):
-        cdef long long key = section_key(cx, cy, cz)
-        cdef map[long long, RelightSection].iterator i = self.section_cache.find(key)
+        cdef section_key_t key = section_key(cx, cy, cz)
+        cdef map[section_key_t, RelightSection].iterator i = self.section_cache.find(key)
         cdef RelightSection * ret
         if i == self.section_cache.end():
             ret = self.cacheSection(cx, cy, cz)
@@ -154,9 +157,22 @@ cdef class RelightCtx(object):
 
 
 def updateLightsByCoord(dim, x, y, z):
+    x = np.asarray(x, 'i32').ravel()
+    y = np.asarray(y, 'i32').ravel()
+    z = np.asarray(z, 'i32').ravel()
+    cdef cnp.ndarray[ndim=1, dtype=int] ax = x
+    cdef cnp.ndarray[ndim=1, dtype=int] ay = y
+    cdef cnp.ndarray[ndim=1, dtype=int] az = z
+
+    if not (x.shape == y.shape == z.shape):
+        raise ValueError("All coord arrays must be the same size. (No broadcasting.)")
+
     ctx = RelightCtx(dim)
-    for i in range(len(x)):
-        updateLights(ctx, x[i], y[i], z[i])
+    cdef size_t i;
+
+    for i in range(<size_t>len(ax)):
+        updateLights(ctx, ax[i], ay[i], az[i])
+
 
 def updateLightsInSelection(dim, selection):
     ctx = RelightCtx(dim)
