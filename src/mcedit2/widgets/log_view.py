@@ -75,11 +75,14 @@ class LogModel(QtCore.QAbstractTableModel):
 
         item = QtGui.QStandardItem(clean_msg(record.getMessage()))
 
-        item.setForeground(QtGui.QBrush(fg))
-        item.setBackground(QtGui.QBrush(bg))
-        item.record_levelno = record.levelno
-        item.record_name = record.name
-
+        try:
+            item.setForeground(QtGui.QBrush(fg))
+            item.setBackground(QtGui.QBrush(bg))
+            item.record_levelno = record.levelno
+            item.record_name = record.name
+        except AttributeError as e:
+            # WTF: AttributeError: 'PySide.QtOpenGL.QGLContext' object has no attribute 'setData'
+            import pdb; pdb.set_trace()
 
         self.beginInsertRows(QtCore.QModelIndex(), len(self.records), len(self.records))
         self.records.append(item)
