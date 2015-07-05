@@ -1,5 +1,5 @@
 # distutils: language = c++
-# cython: profile = True, boundscheck=False, initializedcheck=False
+# cython: profile = False, boundscheck=False, initializedcheck=False
 """
     with_cython
 """
