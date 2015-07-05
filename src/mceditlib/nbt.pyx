@@ -30,6 +30,8 @@ Copyright 2012 David Rio Vierra
 #
 # When UNICODE_NAMES is True, follows the NBT spec exactly and decodes all tag names to 'unicode' objects
 # When UNICODE_NAMES is False, reads tag names as 'str' objects
+from mceditlib.exceptions import LevelFormatError
+
 DEF UNICODE_NAMES = True
 
 #  UNICODE_CACHE
@@ -90,7 +92,7 @@ ID_INT_ARRAY = _ID_INT_ARRAY
 ID_SHORT_ARRAY = _ID_SHORT_ARRAY
 ID_MAX = _ID_MAX
 
-class NBTFormatError (ValueError):
+class NBTFormatError (LevelFormatError):
     """Indicates the NBT format is invalid."""
 
 # NBT spec requires the data to be gzipped.
