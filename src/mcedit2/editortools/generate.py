@@ -235,6 +235,7 @@ class GenerateTool(EditorTool):
         _GeneratePlugins.instance.pluginRemoved.connect(self.removePlugin)
 
     def removePlugin(self, cls):
+        log.info("Removing plugin %s", cls.__name__)
         self.generatorTypes[:] = [gt for gt in self.generatorTypes if not isinstance(gt, cls)]
         self.generatorTypesChanged()
         if self.currentGenerator not in self.generatorTypes:
@@ -243,6 +244,7 @@ class GenerateTool(EditorTool):
             self._lastTypeName = lastTypeName
 
     def addPlugin(self, cls):
+        log.info("Adding plugin %s", cls.__name__)
         self.generatorTypes.append(cls(self))
         self.generatorTypesChanged()
         if self._lastTypeName is not None:
@@ -250,6 +252,7 @@ class GenerateTool(EditorTool):
                 self.currentTypeChanged(len(self.generatorTypes)-1)
 
     def generatorTypesChanged(self):
+        self.generatorTypeInput.clear()
         for gt in self.generatorTypes:
             if hasattr(gt, 'displayName'):
                 displayName = gt.displayName
@@ -291,6 +294,8 @@ class GenerateTool(EditorTool):
             self.currentGenerator = None
             self.clearSchematic()
             self.clearNode()
+
+        log.info("Chose generator %s", repr(self.currentGenerator))
 
     def mousePress(self, event):
         self.boxHandleNode.mousePress(event)
