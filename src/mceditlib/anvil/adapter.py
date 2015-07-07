@@ -976,7 +976,7 @@ class AnvilWorldAdapter(object):
                 continue
 
             mapID = match.group(1)
-            yield mapID
+            yield int(mapID)
 
     def getMap(self, mapID):
         mapPath = "data/map_%s.dat" % mapID

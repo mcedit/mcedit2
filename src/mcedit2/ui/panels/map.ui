@@ -6,64 +6,207 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>807</width>
-    <height>690</height>
+    <width>1137</width>
+    <height>826</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Edit Maps</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout_2">
+  <layout class="QVBoxLayout" name="verticalLayout_5">
    <item>
-    <widget class="QLabel" name="mapImageLabel">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-       <horstretch>1</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+     <property name="childrenCollapsible">
+      <bool>false</bool>
      </property>
-     <property name="frameShadow">
-      <enum>QFrame::Sunken</enum>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <layout class="QVBoxLayout" name="verticalLayout">
-     <item>
-      <widget class="QListView" name="mapListView">
-       <property name="movement">
-        <enum>QListView::Static</enum>
+     <widget class="QWidget" name="left" native="true">
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <property name="margin">
+        <number>0</number>
        </property>
-       <property name="viewMode">
-        <enum>QListView::IconMode</enum>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
-        <widget class="QPushButton" name="deleteMapButton">
-         <property name="text">
-          <string>Delete Map</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="importImageButton">
-         <property name="text">
-          <string>Import Image...</string>
-         </property>
-        </widget>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QGraphicsView" name="mapGraphicsView"/>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>Width:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="widthLabel">
+             <property name="text">
+              <string>xx</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>Height: </string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="heightLabel">
+             <property name="text">
+              <string>xx</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QLabel" name="currentlyEditingLabel">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="text">
+              <string>Currently editing in external editor.</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Dimension: </string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="dimensionLabel">
+             <property name="text">
+              <string>xx</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_4">
+             <property name="text">
+              <string>Scale: </string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="scaleLabel">
+             <property name="text">
+              <string>xx</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton">
+             <property name="text">
+              <string>Edit in External Editor...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
        </item>
       </layout>
-     </item>
-    </layout>
+     </widget>
+     <widget class="QWidget" name="right" native="true">
+      <property name="minimumSize">
+       <size>
+        <width>175</width>
+        <height>0</height>
+       </size>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <property name="margin">
+        <number>0</number>
+       </property>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QListView" name="mapListView">
+           <property name="minimumSize">
+            <size>
+             <width>275</width>
+             <height>100</height>
+            </size>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>128</width>
+             <height>128</height>
+            </size>
+           </property>
+           <property name="movement">
+            <enum>QListView::Static</enum>
+           </property>
+           <property name="flow">
+            <enum>QListView::LeftToRight</enum>
+           </property>
+           <property name="resizeMode">
+            <enum>QListView::Adjust</enum>
+           </property>
+           <property name="viewMode">
+            <enum>QListView::IconMode</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <item>
+            <widget class="QPushButton" name="deleteMapButton">
+             <property name="text">
+              <string>Delete Map</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="importImageButton">
+             <property name="text">
+              <string>Import Image...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </widget>
    </item>
   </layout>
  </widget>
