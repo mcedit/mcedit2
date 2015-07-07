@@ -171,7 +171,7 @@ class WorldScene(scenegraph.Node):
 
         self.groupNodes = {}  # by renderstate
         self.chunkRenderInfo = {}
-        self.visibleLayers = set(Layer.AllLayers)
+        self.visibleLayers = set(Layer.DefaultVisibleLayers)
 
         self.updateTask = SceneUpdateTask(self, textureAtlas, bounds)
 

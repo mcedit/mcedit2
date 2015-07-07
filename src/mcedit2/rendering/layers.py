@@ -15,3 +15,4 @@ class Layer:
     TerrainPopulated = "TerrainPopulated"
     ChunkSections = "ChunkSections"
     AllLayers = (Blocks, Entities, Items, TileEntities, TileTicks, ChunkSections)
+    DefaultVisibleLayers = (Blocks, Entities, Items, TileEntities)
