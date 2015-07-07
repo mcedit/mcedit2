@@ -140,8 +140,11 @@ class LSystemPlugin(GeneratePlugin):
 
         log.info("Rendering symbols to OpenGL")
 
-        sceneNodes = renderSceneNodes(symbol_list)
+        sceneNodes = self.renderSceneNodes(symbol_list)
         return sceneNodes
+
+    def renderSceneNodes(self, symbol_list):
+        return renderSceneNodes(symbol_list)
 
     def generateInSchematic(self, dimension, originalBounds):
         symbol_list = self.createSymbolList(originalBounds)
@@ -150,7 +153,7 @@ class LSystemPlugin(GeneratePlugin):
 
         log.info("Rendering symbols to blocks")
 
-        rendering = renderBlocks(symbol_list)
+        rendering = self.renderBlocks(symbol_list)
 
         log.info("Editing %d blocks" % len(rendering))
         for x, y, z, blockType in rendering:
@@ -159,4 +162,7 @@ class LSystemPlugin(GeneratePlugin):
             z -= originalBounds.minz
 
             dimension.setBlock(x, y, z, blockType)
+
+    def renderBlocks(self, symbol_list):
+        return renderBlocks(symbol_list)
 
