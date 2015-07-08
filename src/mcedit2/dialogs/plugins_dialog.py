@@ -6,6 +6,7 @@ import logging
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
 from mcedit2 import plugins
+from mcedit2.dialogs.error_dialog import showErrorDialog
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.resources import resourcePath
 
@@ -77,9 +78,13 @@ class PluginsTableModel(QtCore.QAbstractTableModel):
         pluginRef.enabled = value
 
         if value:
-            pluginRef.load()
+            if not pluginRef.load():
+                showErrorDialog("%s while loading plugin \"%s\"" % (pluginRef.loadError[0].__name__, pluginRef.displayName), pluginRef.loadError, False)
+
         else:
-            pluginRef.unload()
+            if not pluginRef.unload():
+                showErrorDialog("%s while unloading plugin \"%s\"" % (pluginRef.unloadError[0].__name__, pluginRef.displayName), pluginRef.unloadError, False)
+
 
         self.dataChanged.emit(index, index)
 

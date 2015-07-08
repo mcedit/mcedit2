@@ -121,13 +121,16 @@ class PluginRef(object):
 
             log.info("Loaded %s (%s)", self.filename, self.displayName)
         except Exception as e:
-            self.loadError = traceback.format_exc()
+            self.loadError = sys.exc_info()
             log.exception("Error while loading plugin from %s: %r", self.filename, e)
+            return False
         else:
             self.loadError = None
         finally:
             if io:
                 io.close()
+
+        return True
 
     def unload(self):
         if self.pluginModule is None:
@@ -139,12 +142,14 @@ class PluginRef(object):
                     sys.modules.pop(k)
                     break
         except Exception as e:
-            self.unloadError = traceback.format_exc()
+            self.loadError = sys.exc_info()
             log.exception("Error while unloading plugin from %s: %r", self.filename, e)
+            return False
         else:
             self.unloadError = None
 
         self.pluginModule = None
+        return True
 
     @property
     def isLoaded(self):

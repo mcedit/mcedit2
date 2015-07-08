@@ -12,6 +12,7 @@ import numpy
 import sys
 from mcedit2 import plugins
 from mcedit2.appsettings import RecentFilesSetting, EnableLightingSetting, DevModeSetting
+from mcedit2.dialogs.error_dialog import showErrorDialog
 from mcedit2.dialogs.plugins_dialog import PluginsDialog
 from mcedit2.library import LibraryWidget
 
@@ -339,7 +340,8 @@ class MCEditApp(QtGui.QApplication):
 
         for pluginRef in plugins.getAllPlugins():
             if pluginRef.enabled:
-                pluginRef.load()
+                if not pluginRef.load():
+                    showErrorDialog("%s while loading plugin \"%s\"" % (pluginRef.loadError[0].__name__, pluginRef.displayName), pluginRef.loadError, False)
 
         log.info("Opening worlds from command line.")
 
@@ -956,5 +958,7 @@ class MCEditApp(QtGui.QApplication):
         for pluginRef in plugins.getAllPlugins():
             if pluginRef.checkTimestamps():
                 log.info("Plugin %s changed. Reloading plugin module...", pluginRef.displayName)
-                pluginRef.unload()
-                pluginRef.load()
+                if not pluginRef.unload():
+                    showErrorDialog("%s while unloading plugin \"%s\"" % (pluginRef.unloadError[0].__name__, pluginRef.displayName), pluginRef.unloadError, False)
+                    if not pluginRef.load():
+                        showErrorDialog("%s while loading plugin \"%s\"" % (pluginRef.loadError[0].__name__, pluginRef.displayName), pluginRef.loadError, False)

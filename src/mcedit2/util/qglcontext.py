@@ -9,6 +9,11 @@ import re
 
 log = logging.getLogger(__name__)
 
+_lastAcquiredContextInfo = None
+
+def getContextInfo():
+    return _lastAcquiredContextInfo
+
 def setDefaultFormat():
     oglFormat = QtOpenGL.QGLFormat()
     oglFormat.setVersion(1, 3)
@@ -17,6 +22,7 @@ def setDefaultFormat():
 
 def validateQGLContext(context):
     context.makeCurrent()
+
     versionFlags = QtOpenGL.QGLFormat.openGLVersionFlags()
     log.info("OpenGL Version Info:")
     for flag in (
@@ -61,6 +67,8 @@ def validateQGLContext(context):
     detailedText += "GL_RENDERER: %s\n" % GL.glGetString(GL.GL_RENDERER)
 
     log.info("%s", detailedText)
+    global _lastAcquiredContextInfo
+    _lastAcquiredContextInfo = detailedText
 
     if (not context.isValid() or not actualFormat.directRendering()
         or not versionFlags & QtOpenGL.QGLFormat.OpenGL_Version_1_3
