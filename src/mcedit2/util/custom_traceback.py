@@ -64,10 +64,10 @@ def format_list(extracted_list):
     whose source text line is not None.
 
     This function is modified to include the 5th item of the tuple as
-    the name of the class of the 'self' parameter
+    the name of the class of the 'self' parameter.
     """
     list = []
-    for filename, lineno, name, line, selfstr in reversed(extracted_list):
+    for filename, lineno, name, line, selfstr in extracted_list:
         item = '  File "%s", line %d, in %s %s\n' % (filename, lineno, name, selfstr[:60])
         if line:
             item = item + '    %s\n' % line.strip()
