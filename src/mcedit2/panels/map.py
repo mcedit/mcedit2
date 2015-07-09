@@ -6,9 +6,11 @@ import logging
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
 import numpy
+from mcedit2.command import SimpleRevisionCommand
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.screen import centerWidgetInScreen
 from mceditlib.anvil.adapter import AnvilMapData
+from mceditlib.exceptions import LevelFormatError
 
 log = logging.getLogger(__name__)
 
@@ -41,11 +43,21 @@ class MapListModel(QtCore.QAbstractListModel):
         return self.editorSession.worldEditor.getMap(mapID)
 
     def imageForMapID(self, mapID):
-        map = self.getMap(mapID)
-        colorsRGBA = map.getColorsAsRGBA()
-        colorsBGRA = numpy.ascontiguousarray(numpy.roll(colorsRGBA, 1, -1)[..., ::-1])
-        image = QtGui.QImage(colorsBGRA, map.width, map.height, QtGui.QImage.Format_ARGB32)
+        try:
+            mapData = self.getMap(mapID)
+        except LevelFormatError as e:
+            log.exception("Invalid map for ID %s (while getting map image)", mapID)
+            return None
+
+        colorsRGBA = mapData.getColorsAsRGBA()
+        colorsBGRA = rgbaToBgra(colorsRGBA)
+        image = QtGui.QImage(colorsBGRA, mapData.width, mapData.height, QtGui.QImage.Format_ARGB32)
         return image
+
+def rgbaToBgra(colors):
+    return numpy.ascontiguousarray(numpy.roll(colors, 1, -1)[..., ::-1])
+
+bgraToRgba = rgbaToBgra
 
 class MapPanel(QtGui.QWidget):
     def __init__(self, editorSession):
@@ -58,6 +70,7 @@ class MapPanel(QtGui.QWidget):
 
         self.editorSession = editorSession
         self.pixmapItem = None
+        self.mapListModel = None
 
         load_ui("panels/map.ui", baseinstance=self)
 
@@ -67,9 +80,8 @@ class MapPanel(QtGui.QWidget):
         action.triggered.connect(self.toggleView)
         self._toggleViewAction = action
 
-        self.mapListModel = MapListModel(self.editorSession)
+        self.reloadModel()
 
-        self.mapListView.setModel(self.mapListModel)
         self.mapListView.clicked.connect(self.mapListClicked)
 
         self.splitter.splitterMoved.connect(self.updatePixmapSize)
@@ -106,17 +118,25 @@ class MapPanel(QtGui.QWidget):
 
     def displayMapID(self, mapID):
         if mapID is None:
+            mapData = None
+        else:
+            try:
+                mapData = self.mapListModel.getMap(mapID)
+            except LevelFormatError as e:
+                log.exception("Invalid data for map ID %s (while getting map info)", mapID)
+                mapData = None
+
+        if mapData is None:
             self.widthLabel.setText("(N/A)")
             self.heightLabel.setText("(N/A)")
             self.dimensionLabel.setText("(N/A)")
             self.scaleLabel.setText("(N/A)")
             self.mapGraphicsView.setScene(None)
         else:
-            map = self.mapListModel.getMap(mapID)
-            self.widthLabel.setText(str(map.width))
-            self.heightLabel.setText(str(map.height))
-            self.dimensionLabel.setText(str(map.dimension))
-            self.scaleLabel.setText(str(map.scale))
+            self.widthLabel.setText(str(mapData.width))
+            self.heightLabel.setText(str(mapData.height))
+            self.dimensionLabel.setText(str(mapData.dimension))
+            self.scaleLabel.setText(str(mapData.scale))
             self.updateScene(mapID)
 
     def updateScene(self, mapID):
@@ -149,15 +169,29 @@ class MapPanel(QtGui.QWidget):
             if filename:
                 colorTable = AnvilMapData.colorTable  # xxxx dispatch through WorldEditor
                 dialog = ImportMapDialog(filename, colorTable)
-                dialog.importDone.connect(self.importImageDone)
                 dialog.exec_()
+                if dialog.result():
+                    convertedImages = dialog.getConvertedImages()
+                    command = MapImportCommand(self.editorSession, self.tr("Import Image as Map"))
+                    with command.begin():
+                        for x, y, image in convertedImages:
+                            colors = numpy.fromstring(image.bits(), dtype=numpy.uint8)
+                            colors.shape = 128, 128
+                            newMap = self.editorSession.worldEditor.createMap()
+                            newMap.colors[:] = colors
+                            newMap.save()
 
-    def importImageDone(self, importInfo):
-        """ImportMapCommand"""
+                        self.reloadModel()
 
+    def reloadModel(self):
+        self.mapListModel = MapListModel(self.editorSession)
+        self.mapListView.setModel(self.mapListModel)
+
+
+class MapImportCommand(SimpleRevisionCommand):
+    pass
 
 class ImportMapDialog(QtGui.QDialog):
-    importDone = QtCore.Signal(object)
 
     def __init__(self, imageFilename, colorTable):
         super(ImportMapDialog, self).__init__()
@@ -172,6 +206,7 @@ class ImportMapDialog(QtGui.QDialog):
 
         self.lines = []
         self.previewGroupItems = []
+        self.convertedImages = []
 
         self.colorTable = [(255)] * 256
         colorTable = numpy.array(colorTable)
@@ -205,6 +240,8 @@ class ImportMapDialog(QtGui.QDialog):
         for item in self.previewGroupItems:
             self.previewGroup.removeFromGroup(item)
         self.previewGroupItems[:] = []
+
+        self.convertedImages[:] = []
 
         tilesWide = self.tilesWideSpinbox.value()
         tilesHigh = self.tilesHighSpinbox.value()
@@ -252,6 +289,8 @@ class ImportMapDialog(QtGui.QDialog):
                                            Qt.KeepAspectRatio if not expandImage else Qt.IgnoreAspectRatio)
             convertedImage = scaledImage.convertToFormat(QtGui.QImage.Format_Indexed8, self.colorTable)
             convertedPixmap = QtGui.QPixmap.fromImage(convertedImage)
+            self.convertedImages.append((x, y, convertedImage))
+
             convertedPixmapItem = QtGui.QGraphicsPixmapItem(convertedPixmap)
             convertedPixmapItem.setPos(x * tileOffset, y * tileOffset)
             self.previewGroup.addToGroup(convertedPixmapItem)
@@ -285,3 +324,5 @@ class ImportMapDialog(QtGui.QDialog):
     def showEvent(self, event):
         self.updateImageSize()
 
+    def getConvertedImages(self):
+        return list(self.convertedImages)

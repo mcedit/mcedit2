@@ -215,7 +215,6 @@ class WorldEditor(object):
         :rtype: WorldEditor
         """
         self.playerCache = {}
-        self.mapCache = {}
         assert not (create and readonly)
         assert not create or adapterClass, "create=True requires an adapterClass"
 
@@ -565,11 +564,10 @@ class WorldEditor(object):
         :param mapID: Map ID returned by listMaps
         :return:
         """
-        map = self.mapCache.get(mapID)
-        if map is None:
-            map = self.adapter.getMap(mapID)
-            self.mapCache[mapID] = map
-        return map
+        return self.adapter.getMap(mapID)
+
+    def createMap(self):
+        return self.adapter.createMap()
 
     # --- Players ---
 

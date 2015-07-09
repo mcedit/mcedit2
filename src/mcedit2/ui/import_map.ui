@@ -132,5 +132,38 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>pushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>Dialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>742</x>
+     <y>722</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>527</x>
+     <y>-15</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_2</sender>
+   <signal>clicked()</signal>
+   <receiver>Dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>651</x>
+     <y>716</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>373</x>
+     <y>-15</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

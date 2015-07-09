@@ -979,27 +979,78 @@ class AnvilWorldAdapter(object):
             yield int(mapID)
 
     def getMap(self, mapID):
+        return AnvilMapData(self.getMapTag(mapID), mapID, self)
+
+    def getMapTag(self, mapID):
         mapPath = "data/map_%s.dat" % mapID
         if not self.selectedRevision.containsFile(mapPath):
             raise KeyError("Map %s not found" % mapID)
 
         mapData = self.selectedRevision.readFile(mapPath)
         mapNBT = nbt.load(buf=mapData)
-        return AnvilMapData(mapNBT)
+        return mapNBT
+
+    def saveMapTag(self, mapID, mapTag):
+        mapPath = "data/map_%s.dat" % mapID
+        self.selectedRevision.writeFile(mapPath, mapTag.save())
+
+    def createMap(self):
+        # idcounts.dat should hold the ID number of the last created map
+        # but we can't trust it because of bugs in the old map import filters
+        mapIDs = list(self.listMaps())
+        if len(mapIDs):
+            maximumID = max()
+            mapID = maximumID + 1
+        else:
+            mapID = 0
+
+        idcountsTag = nbt.TAG_Compound()
+        idcountsTag["map"] = nbt.TAG_Short(mapID)
+
+        # idcounts.dat is not compressed.
+        self.selectedRevision.writeFile("data/idcounts.dat", idcountsTag.save(compressed=False))
+
+        mapData = AnvilMapData.create(mapID, self)
+
+        mapData.save()
+        return mapData
+
 
 
 class AnvilMapData(object):
-    def __init__(self, rootTag):
-        if "data" not in rootTag:
+    def __init__(self, mapTag, mapID, adapter):
+        if "data" not in mapTag:
             raise LevelFormatError("Map NBT is missing required tag 'data'")
-        self.rootTag = rootTag["data"]
+        self.mapTag = mapTag
+        self.rootTag = mapTag["data"]
         if self._colors.shape[0] != self.width * self.height:
             raise LevelFormatError("Map colors array does not match map size. (%dx%d != %d)"
                                    % (self.width, self.height, self.colors.shape[0]))
 
+        self.mapID = mapID
+        self.adapter = adapter
+
+    @classmethod
+    def create(cls, mapID, adapter, width=128, height=128):
+        mapTag = nbt.TAG_Compound()
+        mapDataTag = nbt.TAG_Compound()
+        mapTag["data"] = mapDataTag
+        mapDataTag["colors"] = nbt.TAG_Byte_Array(numpy.zeros((width * height,), dtype=numpy.uint8))
+        mapData = cls(mapTag, mapID, adapter)
+        mapData.dimension = 0
+        mapData.width = width
+        mapData.height = height
+        mapData.scale = 1
+        mapData.xCenter = -1 << 30
+        mapData.zCenter = -1 << 30
+        return mapData
+
+    def save(self):
+        self.adapter.saveMapTag(self.mapID, self.mapTag)
+
     dimension = nbtattr.NBTAttr('dimension', nbt.TAG_Byte)
-    height = nbtattr.NBTAttr('height', nbt.TAG_Short)
-    width = nbtattr.NBTAttr('width', nbt.TAG_Short)
+    height = nbtattr.NBTAttr('height', nbt.TAG_Short, 128)
+    width = nbtattr.NBTAttr('width', nbt.TAG_Short, 128)
     scale = nbtattr.NBTAttr('scale', nbt.TAG_Byte)
     xCenter = nbtattr.NBTAttr('xCenter', nbt.TAG_Int, 0)
     zCenter = nbtattr.NBTAttr('zCenter', nbt.TAG_Int, 0)
