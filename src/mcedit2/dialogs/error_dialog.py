@@ -45,9 +45,10 @@ class ErrorDialog(QtGui.QDialog):
                  "\n" \
                  "%s\n" \
                  "------\n\n" \
+                 "%s\n\n" \
                  "%s" % (__version__, sys.version, sys.platform,
                          platform.platform(), platform.processor(),
-                         contextInfo, tbText)
+                         contextInfo, text, tbText)
         self.tracebackView.setText(tbText)
 
         self.restartMCEditLabel.setVisible(fatal)
