@@ -706,7 +706,7 @@ cdef elementRotation(dict rotation):
     angle = rotation["angle"]
     rescale = rotation.get("rescale", False)
 
-    matrix = npRotate(axis, angle, rescale)
+    matrix = npRotate(axis, -angle, rescale)
     ox, oy, oz = origin
     return ox / 16., oy / 16., oz / 16., matrix[:3, :3]
 
