@@ -15,7 +15,7 @@ import numpy
 
 from mceditlib.anvil.adapter import VERSION_1_7, VERSION_1_8
 from mceditlib.anvil.entities import PCEntityRef, PCTileEntityRef, \
-    ItemStackRef
+    ItemStackRef, ItemRef
 from mceditlib.exceptions import PlayerNotFound, LevelFormatError
 from mceditlib.selection import BoundingBox
 from mceditlib.fakechunklevel import FakeChunkedLevelAdapter, FakeChunkData
@@ -233,7 +233,7 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
     def getItemStackVersionFromEntities(self):
         for listTag in self.rootTag["Entities"], self.rootTag["TileEntities"]:
             for name, tag, path in nbt.walk(listTag):
-                if ItemStackRef.tagIsItemStack(tag):
+                if ItemRef.tagIsItem(tag):
                     if tag["id"].tagID == nbt.ID_STRING:
                         return VERSION_1_8
                     if tag["id"].tagID == nbt.ID_SHORT:

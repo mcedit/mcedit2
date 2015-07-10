@@ -122,18 +122,17 @@ class NoParentError(RuntimeError):
     Raised when setting the `id` of an ItemStack with no parent.
     """
 
-
-class ItemStackRef(nbtattr.NBTCompoundRef):
+class ItemRef(nbtattr.NBTCompoundRef):
     def __init__(self, rootTag=None, parent=None):
         if rootTag is None:
             rootTag = nbt.TAG_Compound()
             nbtattr.SetNBTDefaults(self)
 
-        super(ItemStackRef, self).__init__(rootTag, parent)
+        super(ItemRef, self).__init__(rootTag, parent)
 
     Damage = nbtattr.NBTAttr("Damage", nbt.TAG_Short, 0)
     Count = nbtattr.NBTAttr("Count", nbt.TAG_Byte, 1)
-    Slot = nbtattr.NBTAttr("Slot", nbt.TAG_Byte)
+    tag = nbtattr.NBTAttr("tag", nbt.TAG_Compound, 1)
 
     @property
     def id(self):
@@ -200,7 +199,6 @@ class ItemStackRef(nbtattr.NBTCompoundRef):
             raise TypeError("Expected ItemType, got %r", type(value))
         self.id = value
 
-
     @property
     def raw_id(self):
         return self.rootTag["id"].value
@@ -217,11 +215,13 @@ class ItemStackRef(nbtattr.NBTCompoundRef):
         self.dirty = True
 
     @staticmethod
-    def tagIsItemStack(tag):
+    def tagIsItem(tag):
         if tag.tagID != nbt.ID_COMPOUND:
             return False
         return "id" in tag and "Damage" in tag and "Count" in tag
 
+class ItemStackRef(ItemRef):
+    Slot = nbtattr.NBTAttr("Slot", nbt.TAG_Byte)
 
 class SlotsListProxy(nbtattr.NBTListProxy):
     def putItemInSlot(self, item, slot):

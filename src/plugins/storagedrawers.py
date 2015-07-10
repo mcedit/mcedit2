@@ -85,10 +85,10 @@ class DrawerItemStackRef(nbtattr.NBTCompoundRef):
         self.dirty = True
 
     @staticmethod
-    def tagIsItemStack(tag):
+    def tagIsItem(tag):
         if tag.tagID != nbt.ID_COMPOUND:
             return False
-        return "Item" in tag and "Damage" in tag and "Count" in tag
+        return "Item" in tag and "Meta" in tag and "Count" in tag
 
 
 class DrawerSlotsListProxy(nbtattr.NBTListProxy):
