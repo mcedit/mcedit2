@@ -255,7 +255,7 @@ class NBTCompoundAttr(NBTAttr):
         tag = instance.rootTag
         if self.name not in tag:
             tag[self.name] = self.tagType(value=self.default)
-        return self.compoundRefClass(tag[self.name])
+        return self.compoundRefClass(tag[self.name], instance)
 
     def __set__(self, instance, value):
         """
