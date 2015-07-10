@@ -10,6 +10,7 @@ from mcedit2.rendering.blockmeshes import ChunkMeshBase
 from mcedit2.rendering.layers import Layer
 from mcedit2.rendering.slices import _XYZ
 from mcedit2.rendering.vertexarraybuffer import QuadVertexArrayBuffer
+from mceditlib.anvil.entities import PCPaintingEntityRefBase
 
 log = logging.getLogger(__name__)
 
@@ -62,9 +63,67 @@ class TileEntityMesh(EntityMeshBase):
 
 
 
+class ItemFrameMesh(EntityMeshBase):
+    layer = Layer.ItemFrames
+
+    def makeChunkVertices(self, chunk, limitBox):
+        mapTiles = []
+        for i, ref in enumerate(chunk.Entities):
+            if ref.id != "ItemFrame":
+                continue
+
+            if i % 10 == 0:
+                yield
+
+            if limitBox and ref.Position not in limitBox:
+                continue
+
+            item = ref.Item
+            if item.itemType.internalName != "minecraft:filled_map":
+                continue
+
+            mapID = item.Damage
+
+            mapTex = self.chunkUpdate.updateTask.getMapTexture(mapID)
+
+            # xxxx assumes 1.8 TilePos - fix this in ref??
+            mapTiles.append((mapTex, ref.TilePos, ref.Facing))
+
+        nodes = []
+
+        for mapTex, (x, y, z), facing in mapTiles:
+            vertexBuffer = QuadVertexArrayBuffer(1, lights=False, textures=True)
+
+            # chunk is already translated - why?
+            x -= chunk.cx << 4
+            z -= chunk.cz << 4
+
+            vertexBuffer.vertex[:] = x, y, z
+            corners = self.faceCorners[facing]
+            vertexBuffer.vertex[:] += corners
+            texCorners = [(0, 0), (0, 1), (1, 1), (1, 0)]
+            vertexBuffer.texcoord[:] += texCorners
+
+            vertexNode = scenegraph.VertexNode([vertexBuffer])
+            bindTexNode = scenegraph.BindTextureNode(mapTex)
+            bindTexNode.addChild(vertexNode)
+            nodes.append(bindTexNode)
+
+
+        self.sceneNode = scenegraph.Node()
+        for node in nodes:
+            self.sceneNode.addChild(node)
+
+    faceCorners = {  # xxx polygon offset?
+        PCPaintingEntityRefBase.SouthFacing: ((0, 0, 0.01), (0, 1, 0.01), (1, 1, 0.01), (1, 0, 0.01)),
+        PCPaintingEntityRefBase.WestFacing: ((0.01, 0, 0), (0.01, 1, 0), (0.01, 1, 1), (0.01, 0, 1)),
+        PCPaintingEntityRefBase.NorthFacing: ((0, 0, 0.99), (0, 1, 0.99), (1, 1, 0.99), (1, 0, 0.99)),
+        PCPaintingEntityRefBase.EastFacing: ((0.99, 0, 0), (0.99, 1, 0), (0.99, 1, 1), (0.99, 0, 1)),
+    }
+
 class MonsterRenderer(EntityMeshBase):
     layer = Layer.Entities  # xxx Monsters
-    notMonsters = {"Item", "XPOrb", "Painting"}
+    notMonsters = {"Item", "XPOrb", "Painting", "ItemFrame"}
 
     def makeChunkVertices(self, chunk, limitBox):
         monsterPositions = []

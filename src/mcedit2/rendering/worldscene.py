@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import sys
 import collections
+from OpenGL import GL
 import numpy
 import itertools
 
@@ -15,6 +16,7 @@ from mcedit2.rendering.chunknode import ChunkNode, ChunkGroupNode
 from mcedit2.rendering.chunkupdate import ChunkRenderInfo
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.geometrycache import GeometryCache
+from mcedit2.util.glutils import Texture
 from mceditlib.anvil.biome_types import BiomeTypes
 
 log = logging.getLogger(__name__)
@@ -59,6 +61,7 @@ class SceneUpdateTask(object):
         self.alpha = 255
 
         self.textureAtlas = textureAtlas
+        self.mapTextures = {}
 
         self.renderType = numpy.zeros((256*256,), 'uint8')
         self.renderType[:] = 3
@@ -150,6 +153,28 @@ class SceneUpdateTask(object):
         for renderstate in renderstates.allRenderstates:
             groupNode = self.worldScene.getRenderstateGroup(renderstate)
             groupNode.discardChunkNode(cx, cz)
+
+    def getMapTexture(self, mapID):
+        def _loadFunc(colors):
+            def _load():
+                w = colors.shape[1]
+                h = colors.shape[0]
+                GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, w, h, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, colors.ravel())
+            return _load
+
+        if mapID in self.mapTextures:
+            return self.mapTextures[mapID]
+        try:
+            mapData = self.worldScene.dimension.worldEditor.getMap(mapID)
+        except Exception as e:
+            log.exception("Map %s could not be loaded (while loading GL texture)", mapID)
+        else:
+            colors = mapData.getColorsAsRGBA()
+
+            mapTex = Texture(_loadFunc(colors))
+            self.mapTextures[mapID] = mapTex
+            return mapTex
+
 
 class WorldScene(scenegraph.Node):
     def __init__(self, dimension, textureAtlas=None, geometryCache=None, bounds=None):

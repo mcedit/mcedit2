@@ -11,8 +11,9 @@ class Layer:
     Monsters = "Monsters"
     Items = "Items"
     TileEntities = "TileEntities"
+    ItemFrames = "ItemFrames"
     TileTicks = "TileTicks"
     TerrainPopulated = "TerrainPopulated"
     ChunkSections = "ChunkSections"
-    AllLayers = (Blocks, Entities, Items, TileEntities, TileTicks, ChunkSections)
-    DefaultVisibleLayers = (Blocks, Entities, Items, TileEntities)
+    AllLayers = (Blocks, Entities, Items, TileEntities, ItemFrames, TileTicks, ChunkSections)
+    DefaultVisibleLayers = (Blocks, Entities, Items, TileEntities, ItemFrames)
