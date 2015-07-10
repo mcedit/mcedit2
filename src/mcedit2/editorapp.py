@@ -146,14 +146,14 @@ class MCEditApp(QtGui.QApplication):
         mainWindow.panelsToolBar.addAction(self.logViewDockWidget.toggleViewAction())
         self.logViewDockWidget.close()
 
-        self.libraryView = LibraryWidget()
+        self.libraryWidget = LibraryWidget()
         self.libraryDockWidget = QtGui.QDockWidget("Library", mainWindow, objectName="LibraryWidget")
-        self.libraryDockWidget.setWidget(self.libraryView)
+        self.libraryDockWidget.setWidget(self.libraryWidget)
         mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.libraryDockWidget)
         mainWindow.panelsToolBar.addAction(self.libraryDockWidget.toggleViewAction())
         self.libraryDockWidget.close()
 
-        self.libraryView.doubleClicked.connect(self.libraryItemDoubleClicked)
+        self.libraryWidget.doubleClicked.connect(self.libraryItemDoubleClicked)
 
         self.globalPanels = [self.undoDockWidget, self.logViewDockWidget, self.libraryDockWidget]
 
