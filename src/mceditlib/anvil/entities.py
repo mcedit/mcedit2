@@ -11,111 +11,6 @@ from mceditlib import nbtattr
 
 log = logging.getLogger(__name__)
 
-def PCEntityRef(rootTag, chunk=None):
-    # xxx dispatch on rootTag["id"]
-    return PCEntityRefBase(rootTag, chunk)
-
-class PCEntityRefBase(object):
-    def __init__(self, rootTag, chunk=None):
-        self.rootTag = rootTag
-        self.chunk = chunk
-
-    def raw_tag(self):
-        return self.rootTag
-
-    id = nbtattr.NBTAttr("id", nbt.TAG_String)
-    Position = nbtattr.NBTVectorAttr("Pos", nbt.TAG_Double)
-    Motion = nbtattr.NBTVectorAttr("Motion", nbt.TAG_Double)
-    Rotation = nbtattr.NBTListAttr("Rotation", nbt.TAG_Float)
-    UUID = nbtattr.NBTUUIDAttr()
-
-    def copy(self):
-        return self.copyWithOffset(Vector(0, 0, 0))
-
-    def copyWithOffset(self, copyOffset, newEntityClass=None):
-        if newEntityClass is None:
-            newEntityClass = self.__class__
-        tag = self.rootTag.copy()
-        entity = newEntityClass(tag)
-        entity.Position = self.Position + copyOffset
-
-        return self.__class__(tag)
-
-    def dirty(self):
-        self.chunk.dirty = True
-
-    @property
-    def blockTypes(self):
-        return self.chunk.blocktypes
-
-def PCTileEntityRef(rootTag, chunk=None):
-    id = rootTag["id"].value
-    cls = _tileEntityClasses.get(id, PCTileEntityRefBase)
-    return cls(rootTag, chunk)
-
-
-class PCTileEntityRefBase(object):
-    def __init__(self, rootTag, chunk=None):
-        self.rootTag = rootTag
-        self.chunk = chunk
-
-    def raw_tag(self):
-        return self.rootTag
-
-    id = nbtattr.NBTAttr("id", nbt.TAG_String)
-    Position = nbtattr.KeyedVectorAttr('x', 'y', 'z', nbt.TAG_Int, 0)
-
-    def copy(self):
-        return self.copyWithOffset(Vector(0, 0, 0))
-
-    def copyWithOffset(self, copyOffset, newEntityClass=None):
-        if newEntityClass is None:
-            newEntityClass = self.__class__
-        tag = self.rootTag.copy()
-        entity = newEntityClass(tag)
-        entity.Position = self.Position + copyOffset
-
-        if tag["id"].value in ("Painting", "ItemFrame"):
-            tag["TileX"].value += copyOffset[0]
-            tag["TileY"].value += copyOffset[1]
-            tag["TileZ"].value += copyOffset[2]
-
-        return self.__class__(tag)
-
-    def dirty(self):
-        self.chunk.dirty = True
-
-    @property
-    def blockTypes(self):
-        return self.chunk.blocktypes
-
-
-def convertStackTo17(stack, blocktypes):
-    if stack["id"].tagID == nbt.ID_STRING:
-        stack["id"] = nbt.TAG_Short(blocktypes.itemTypes.internalNamesByID[stack["id"].value])
-
-
-def convertStackTo18(stack, blocktypes):
-    if stack["id"].tagID == nbt.ID_SHORT:
-        stack["id"] = nbt.TAG_Short(blocktypes.itemTypes[stack["id"].value].ID)
-
-
-def convertAllStacks(tags, blocktypes, version):
-    if version == VERSION_1_7:
-        convertStack = convertStackTo17
-    elif version == VERSION_1_8:
-        convertStack = convertStackTo18
-    else:
-        raise ValueError("Unknown item stack version %d" % version)
-
-    for tag in tags:
-        if ItemStackRef.tagIsItemStack(tag):
-            convertStack(tag)
-        if tag.tagID == nbt.ID_COMPOUND:
-            convertAllStacks(tag.itervalues(), blocktypes, version)
-        if tag.tagID == nbt.ID_LIST and tag.list_type in (nbt.ID_LIST, nbt.ID_COMPOUND):
-            convertAllStacks(tag, blocktypes, version)
-
 
 class NoParentError(RuntimeError):
     """
@@ -255,6 +150,139 @@ class SlottedInventoryAttr(nbtattr.NBTCompoundListAttr):
         self.listProxyClass = SlotsListProxy
 
 
+def PCEntityRef(rootTag, chunk=None):
+    id = rootTag["id"].value
+    cls = _entityClasses.get(id, PCEntityRefBase)
+    return cls(rootTag, chunk)
+
+class PCEntityRefBase(object):
+    def __init__(self, rootTag, chunk=None):
+        self.rootTag = rootTag
+        self.chunk = chunk
+
+    def raw_tag(self):
+        return self.rootTag
+
+    id = nbtattr.NBTAttr("id", nbt.TAG_String)
+    Position = nbtattr.NBTVectorAttr("Pos", nbt.TAG_Double)
+    Motion = nbtattr.NBTVectorAttr("Motion", nbt.TAG_Double)
+    Rotation = nbtattr.NBTListAttr("Rotation", nbt.TAG_Float)
+    UUID = nbtattr.NBTUUIDAttr()
+
+    def copy(self):
+        return self.copyWithOffset(Vector(0, 0, 0))
+
+    def copyWithOffset(self, copyOffset, newEntityClass=None):
+        if newEntityClass is None:
+            newEntityClass = self.__class__
+        tag = self.rootTag.copy()
+        entity = newEntityClass(tag)
+        entity.Position = self.Position + copyOffset
+
+        return self.__class__(tag)
+
+    def dirty(self):
+        self.chunk.dirty = True
+
+    @property
+    def blockTypes(self):
+        return self.chunk.blocktypes
+
+class PCPaintingEntityRefBase(PCEntityRefBase):
+    # XXXXXXXXX
+    # in 1.8, TilePos is the block the painting is IN
+    # in 1.7, TilePos is the block the painting is ON
+    TilePos = nbtattr.KeyedVectorAttr('TileX', 'TileY', 'TileZ', nbt.TAG_Int, 0)
+
+    # XXXXXXXXXXX
+    # in 1.7 and before, this tag is called "Direction"
+    # in some version before that, it is called "Dir" and its enums are different!
+    Facing = nbtattr.NBTAttr('Facing', nbt.TAG_Byte)
+
+    SouthFacing = 0
+    WestFacing = 1
+    NorthFacing = 2
+    EastFacing = 3
+
+class PCPaintingEntityRef(PCPaintingEntityRefBase):
+    Motive = nbtattr.NBTAttr("Motive", nbt.TAG_String)
+
+class PCItemFrameEntityRef(PCPaintingEntityRefBase):
+    Item = nbtattr.NBTCompoundAttr("Item", ItemRef)
+
+_entityClasses = {
+    "ItemFrame": PCItemFrameEntityRef
+}
+
+def PCTileEntityRef(rootTag, chunk=None):
+    id = rootTag["id"].value
+    cls = _tileEntityClasses.get(id, PCTileEntityRefBase)
+    return cls(rootTag, chunk)
+
+
+class PCTileEntityRefBase(object):
+    def __init__(self, rootTag, chunk=None):
+        self.rootTag = rootTag
+        self.chunk = chunk
+
+    def raw_tag(self):
+        return self.rootTag
+
+    id = nbtattr.NBTAttr("id", nbt.TAG_String)
+    Position = nbtattr.KeyedVectorAttr('x', 'y', 'z', nbt.TAG_Int, 0)
+
+    def copy(self):
+        return self.copyWithOffset(Vector(0, 0, 0))
+
+    def copyWithOffset(self, copyOffset, newEntityClass=None):
+        if newEntityClass is None:
+            newEntityClass = self.__class__
+        tag = self.rootTag.copy()
+        entity = newEntityClass(tag)
+        entity.Position = self.Position + copyOffset
+
+        if tag["id"].value in ("Painting", "ItemFrame"):
+            tag["TileX"].value += copyOffset[0]
+            tag["TileY"].value += copyOffset[1]
+            tag["TileZ"].value += copyOffset[2]
+
+        return self.__class__(tag)
+
+    def dirty(self):
+        self.chunk.dirty = True
+
+    @property
+    def blockTypes(self):
+        return self.chunk.blocktypes
+
+
+def convertStackTo17(stack, blocktypes):
+    if stack["id"].tagID == nbt.ID_STRING:
+        stack["id"] = nbt.TAG_Short(blocktypes.itemTypes.internalNamesByID[stack["id"].value])
+
+
+def convertStackTo18(stack, blocktypes):
+    if stack["id"].tagID == nbt.ID_SHORT:
+        stack["id"] = nbt.TAG_Short(blocktypes.itemTypes[stack["id"].value].ID)
+
+
+def convertAllStacks(tags, blocktypes, version):
+    if version == VERSION_1_7:
+        convertStack = convertStackTo17
+    elif version == VERSION_1_8:
+        convertStack = convertStackTo18
+    else:
+        raise ValueError("Unknown item stack version %d" % version)
+
+    for tag in tags:
+        if ItemRef.tagIsItem(tag):
+            convertStack(tag)
+        if tag.tagID == nbt.ID_COMPOUND:
+            convertAllStacks(tag.itervalues(), blocktypes, version)
+        if tag.tagID == nbt.ID_LIST and tag.list_type in (nbt.ID_LIST, nbt.ID_COMPOUND):
+            convertAllStacks(tag, blocktypes, version)
+
+
 class PCTileEntityChestRef(PCTileEntityRefBase):
     Items = SlottedInventoryAttr("Items")
 
@@ -275,6 +303,15 @@ _tileEntityClasses = {
     "Trap": PCTileEntityChestRef,
     "Hopper": PCTileEntityChestRef,
 }
+
+def validate(ref):
+    """
+    xxx search attributes of ref.__class__ for NBTAttrs, check ref's tag contains a tag
+    for that attr is present and matches the tag type
+    :param ref: nbtattr.NBTCompoundRef
+    :return:
+    """
+    raise NotImplementedError
 
 def registerTileEntityRefClass(ID, refClass):
     _tileEntityClasses[ID] = refClass
