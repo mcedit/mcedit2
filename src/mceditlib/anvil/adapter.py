@@ -21,6 +21,7 @@ from mceditlib.anvil.worldfolder import AnvilWorldFolder
 from mceditlib.blocktypes import PCBlockTypeSet, BlockType, VERSION_1_8, VERSION_1_7
 from mceditlib.geometry import Vector
 from mceditlib.nbt import NBTFormatError
+from mceditlib.nbtattr import NBTCompoundRef
 from mceditlib.selection import BoundingBox
 from mceditlib import nbtattr
 from mceditlib.exceptions import PlayerNotFound, ChunkNotPresent, LevelFormatError
@@ -1017,12 +1018,12 @@ class AnvilWorldAdapter(object):
 
 
 
-class AnvilMapData(object):
+class AnvilMapData(NBTCompoundRef):
     def __init__(self, mapTag, mapID, adapter):
         if "data" not in mapTag:
             raise LevelFormatError("Map NBT is missing required tag 'data'")
+        super(AnvilMapData, self).__init__(mapTag["data"], adapter)
         self.mapTag = mapTag
-        self.rootTag = mapTag["data"]
         if self._colors.shape[0] != self.width * self.height:
             raise LevelFormatError("Map colors array does not match map size. (%dx%d != %d)"
                                    % (self.width, self.height, self.colors.shape[0]))
