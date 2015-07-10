@@ -222,6 +222,17 @@ class VertexNode(Node):
             vertexArrays = [vertexArrays]
         self.vertexArrays = vertexArrays
 
+class BindTextureNode(Node):
+    RenderNodeClass = rendergraph.BindTextureRenderNode
+
+    def __init__(self, texture):
+        """
+
+        :type texture: glutils.Texture
+        """
+        super(BindTextureNode, self).__init__()
+        self.texture = texture
+        # changing texture not implemented
 
 class MatrixRenderNode(rendergraph.RenderstateRenderNode):
     def enter(self):

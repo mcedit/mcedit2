@@ -129,11 +129,24 @@ class RenderstateRenderNode(RenderNode):
     def exit(self):
         raise NotImplementedError
 
-class TextureAtlasRenderNode(RenderstateRenderNode):
-    def __init__(self, sceneNode):
-        super(TextureAtlasRenderNode, self).__init__(sceneNode)
-        self.sceneNode = sceneNode
+class BindTextureRenderNode(RenderstateRenderNode):
+    def enter(self):
+        GL.glPushAttrib(GL.GL_ENABLE_BIT | GL.GL_TEXTURE_BIT)
+        GL.glMatrixMode(GL.GL_TEXTURE)
+        GL.glPushMatrix()
+        GL.glLoadIdentity()
+        glutils.glActiveTexture(GL.GL_TEXTURE0)
+        GL.glEnable(GL.GL_TEXTURE_2D)
+        self.sceneNode.texture.bind()
 
+    def exit(self):
+        GL.glMatrixMode(GL.GL_TEXTURE)
+        GL.glPopMatrix()
+        GL.glPopAttrib()
+
+
+
+class TextureAtlasRenderNode(RenderstateRenderNode):
     def enter(self):
         if self.sceneNode.textureAtlas is None:
             return
