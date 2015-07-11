@@ -7,6 +7,7 @@ from mceditlib import nbt
 from mceditlib.blocktypes import VERSION_1_7, VERSION_1_8
 from mceditlib.blocktypes.itemtypes import ItemType
 from mceditlib.geometry import Vector
+from mceditlib import faces
 from mceditlib import nbtattr
 
 log = logging.getLogger(__name__)
@@ -240,6 +241,16 @@ class PCPaintingEntityRefBase(PCEntityRefBase):
     WestFacing = 1
     NorthFacing = 2
     EastFacing = 3
+
+    _mceditFacings = {
+        faces.FaceSouth: SouthFacing,
+        faces.FaceWest: WestFacing,
+        faces.FaceNorth: NorthFacing,
+        faces.FaceEast: EastFacing,
+
+    }
+    def facingForMCEditFace(self, face):
+        return self._mceditFacings.get(face, None)
 
 class PCPaintingEntityRef(PCPaintingEntityRefBase):
     Motive = nbtattr.NBTAttr("Motive", nbt.TAG_String)
