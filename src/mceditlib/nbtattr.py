@@ -313,5 +313,9 @@ def SetNBTDefaults(ref):
     """
     cls = ref.__class__
     for k, v in cls.__dict__.iteritems():
-        if isinstance(v, (NBTAttr, NBTListAttr)):
-            setattr(ref, k, v.default)
+        if isinstance(v, NBTCompoundAttr):
+            ref.rootTag[k] = nbt.TAG_Compound()
+            SetNBTDefaults(getattr(ref, k))
+        elif isinstance(v, (NBTAttr, NBTListAttr)):
+            if v.default is not None:
+                setattr(ref, k, v.default)
