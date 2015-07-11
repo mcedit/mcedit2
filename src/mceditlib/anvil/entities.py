@@ -27,7 +27,7 @@ class ItemRef(nbtattr.NBTCompoundRef):
 
     Damage = nbtattr.NBTAttr("Damage", nbt.TAG_Short, 0)
     Count = nbtattr.NBTAttr("Count", nbt.TAG_Byte, 1)
-    tag = nbtattr.NBTAttr("tag", nbt.TAG_Compound, 1)
+    tag = nbtattr.NBTAttr("tag", nbt.TAG_Compound)
 
     @property
     def id(self):
