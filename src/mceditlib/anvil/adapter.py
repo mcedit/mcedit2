@@ -1000,7 +1000,7 @@ class AnvilWorldAdapter(object):
         # but we can't trust it because of bugs in the old map import filters
         mapIDs = list(self.listMaps())
         if len(mapIDs):
-            maximumID = max()
+            maximumID = max(mapIDs)
             mapID = maximumID + 1
         else:
             mapID = 0
