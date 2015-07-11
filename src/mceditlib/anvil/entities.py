@@ -72,7 +72,7 @@ class ItemRef(nbtattr.NBTCompoundRef):
                 self.rootTag["id"].value = value
             elif idTag.tagID == nbt.ID_STRING:
                 if self.blockTypes is None:
-                    raise NoParentError("ItemStack must be parented to a world before assigning numeric IDs to an 1.8 ItemStack.")
+                    raise NoParentError("ItemRef must be parented to a world before assigning numeric IDs to an 1.8 ItemStack.")
 
                 itemType = self.blockTypes.itemTypes[value]
                 self.rootTag["id"].value = itemType.internalName
@@ -81,24 +81,25 @@ class ItemRef(nbtattr.NBTCompoundRef):
                 self.rootTag["id"].value = value
             elif idTag.tagID == nbt.ID_SHORT:
                 if self.blockTypes is None:
-                    raise NoParentError("ItemStack must be parented to a world before assigning textual IDs to an 1.7 ItemStack.")
+                    raise NoParentError("ItemRef must be parented to a world before assigning textual IDs to an 1.7 ItemStack.")
 
                 itemType = self.blockTypes.itemTypes[value]
                 self.rootTag["id"].value = itemType.ID
         else:
-            raise TypeError("Invalid type for ItemStackRef.id: %r", type(value))
+            raise TypeError("Invalid type for ItemRef.id: %r", type(value))
 
         self.dirty = True
 
     @property
     def itemType(self):
+        ID = self.rootTag["id"].value
         if self.blockTypes is None:
             raise ValueError("Cannot get itemType for this item. BlockTypes not set. ")
         try:
-            itemType = self.blockTypes.itemTypes[self.rootTag["id"].value, self.Damage]
+            itemType = self.blockTypes.itemTypes[ID, self.Damage]
             return itemType
         except KeyError:
-            raise ValueError("Cannot get itemType for this item. BlockTypes has no item for %s." % self.rootTag["id"].value)
+            raise ValueError("Cannot get itemType for this item. BlockTypes has no item for %s." % ID)
 
     @itemType.setter
     def itemType(self, value):
@@ -117,7 +118,7 @@ class ItemRef(nbtattr.NBTCompoundRef):
         elif isinstance(value, basestring):
             self.rootTag["id"] = nbt.TAG_String(value)
         else:
-            raise TypeError("Invalid type for ItemStack.id: %r", type(value))
+            raise TypeError("Invalid type for ItemRef.id: %r", type(value))
 
         self.dirty = True
 
