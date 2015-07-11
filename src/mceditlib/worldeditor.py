@@ -627,6 +627,23 @@ class WorldEditor(object):
             raise ValueError("Could not parse a dimension number from %s", dimName)
         return int(matches[-1])
 
+    # --- Entity Creation ---
+
+    def createEntity(self, entityID):
+        """
+        Create a new EntityRef subclass matching the given entity ID.
+        If no subclass matches, return None.
+
+        Does not add the EntityRef to this world.
+
+        :param entityID:
+        :return:
+        """
+        ref = self.adapter.EntityRef.create(entityID)
+        ref.parent = self  # make blockTypes available for item IDs
+        return ref
+
+
 class WorldEditorDimension(object):
     def __init__(self, worldEditor, dimName):
         self.worldEditor = worldEditor

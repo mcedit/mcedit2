@@ -47,6 +47,18 @@ class ItemRef(nbtattr.NBTCompoundRef):
 
     @id.setter
     def id(self, value):
+        if "id" not in self.rootTag:
+            # no id tag - freshly minted item tag
+            # get proper tag type from blocktypes
+            if self.blockTypes is None:
+                raise NoParentError("ItemRef must be parented to a world before assigning id for the first time.")
+            if self.blockTypes.itemStackVersion == VERSION_1_7:
+                self.rootTag["id"] = nbt.TAG_Short(0)
+            elif self.blockTypes.itemStackVersion == VERSION_1_8:
+                self.rootTag["id"] = nbt.TAG_String("minecraft:air")
+            else:
+                raise AssertionError("Unexpected itemStackVersion: %s", self.blockTypes.itemStackVersion)
+
         idTag = self.rootTag["id"]
         if isinstance(value, ItemType):
             if idTag.tagID == nbt.ID_STRING:
@@ -149,19 +161,39 @@ class SlottedInventoryAttr(nbtattr.NBTCompoundListAttr):
         super(SlottedInventoryAttr, self).__init__(name, ItemStackRef)
         self.listProxyClass = SlotsListProxy
 
+class _PCEntityRef(object):
 
-def PCEntityRef(rootTag, chunk=None):
-    id = rootTag["id"].value
-    cls = _entityClasses.get(id, PCEntityRefBase)
-    return cls(rootTag, chunk)
+    def create(self, entityID):
+        cls = _entityClasses.get(entityID)
+        if cls is None:
+            log.info("No PC entity ref class found for %s", entityID)
+            return None
+        ref = cls.create()
+        ref.id = entityID
+        return ref
+
+    def __call__(self, rootTag, chunk=None):
+        id = rootTag["id"].value
+        cls = _entityClasses.get(id, PCEntityRefBase)
+        return cls(rootTag, chunk)
+
+PCEntityRef = _PCEntityRef()
 
 class PCEntityRefBase(object):
     def __init__(self, rootTag, chunk=None):
         self.rootTag = rootTag
         self.chunk = chunk
+        self.parent = None  # xxx used by WorldEditor for newly created, non-chunked refs
 
     def raw_tag(self):
         return self.rootTag
+
+    @classmethod
+    def create(cls):
+        rootTag = nbt.TAG_Compound()
+        ref = cls(rootTag)
+        nbtattr.SetNBTDefaults(ref)
+        return ref
 
     id = nbtattr.NBTAttr("id", nbt.TAG_String)
     Position = nbtattr.NBTVectorAttr("Pos", nbt.TAG_Double)
@@ -186,7 +218,11 @@ class PCEntityRefBase(object):
 
     @property
     def blockTypes(self):
-        return self.chunk.blocktypes
+        if self.chunk:
+            return self.chunk.blocktypes
+        if self.parent:
+            return self.parent.blocktypes
+        return None
 
 class PCPaintingEntityRefBase(PCEntityRefBase):
     # XXXXXXXXX
