@@ -152,6 +152,7 @@ class MCEditApp(QtGui.QApplication):
         mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.libraryDockWidget)
         mainWindow.panelsToolBar.addAction(self.libraryDockWidget.toggleViewAction())
         self.libraryDockWidget.close()
+        self.sessionChanged.connect(self.libraryWidget.sessionDidChange)
 
         self.libraryWidget.doubleClicked.connect(self.libraryItemDoubleClicked)
 

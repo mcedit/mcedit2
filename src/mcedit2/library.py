@@ -5,41 +5,87 @@ from __future__ import absolute_import, division, print_function
 import logging
 import os
 from PySide import QtGui, QtCore
+from PySide.QtCore import Qt
+from mcedit2.panels.map import MapListModel
 from mcedit2.util.directories import getUserSchematicsDirectory
+from mcedit2.util.load_ui import load_ui
+from mcedit2.util.mimeformats import MimeFormats
 from mcedit2.widgets.layout import Column
+from mceditlib.util.lazyprop import weakrefprop
 
 log = logging.getLogger(__name__)
 
-class LibraryTreeModel(QtGui.QFileSystemModel):
+class LibraryMapListModel(MapListModel):
+    def flags(self, index):
+        return super(LibraryMapListModel, self).flags(index) | Qt.ItemIsDragEnabled
+
+    def mimeData(self, indices):
+        mimeData = QtCore.QMimeData()
+        mapItemData = ", ".join(str(index.data(self.MapIDRole)) for index in indices)
+        mimeData.setData(MimeFormats.MapItem,
+                         mapItemData)
+        return mimeData
+
+
+class LibrarySchematicsTreeModel(QtGui.QFileSystemModel):
     def columnCount(self, *args, **kwargs):
         return 1
 
+    def mimeData(self, indices):
+        mimeData = QtCore.QMimeData()
+        mimeData.setUrls([QtCore.QUrl.fromLocalFile(self.filePath(index)) for index in indices])
+        return mimeData
+
+    def mimeTypes(self, indices):
+        return ["text/uri-list"]
+
 class LibraryWidget(QtGui.QWidget):
+    editorSession = weakrefprop()
+
     def __init__(self):
         super(LibraryWidget, self).__init__()
+        load_ui("library.ui", baseinstance=self)
 
         self.folderPath = getUserSchematicsDirectory()
         if not os.path.exists(self.folderPath):
             os.makedirs(self.folderPath)
 
-        self.treeView = QtGui.QTreeView()
-        self.model = LibraryTreeModel()
-        self.model.setRootPath(self.folderPath)
-        self.treeView.setModel(self.model)
-        self.treeView.setRootIndex(self.model.index(self.folderPath))
+        self.schematicsModel = LibrarySchematicsTreeModel()
+        self.schematicsModel.setRootPath(self.folderPath)
+        self.schematicsTreeView.setModel(self.schematicsModel)
+        self.schematicsTreeView.setRootIndex(self.schematicsModel.index(self.folderPath))
 
-        self.treeView.doubleClicked.connect(self.itemDoubleClicked)
+        self.schematicsTreeView.doubleClicked.connect(self.itemDoubleClicked)
 
-        openLibraryButton = QtGui.QPushButton("Open Schematics Folder")
-        openLibraryButton.clicked.connect(self.openFolder)
+        self.mapListModel = None
+        self.editorSession = None
 
-        self.setLayout(Column(self.treeView, openLibraryButton))
+        self.openLibraryButton.clicked.connect(self.openFolder)
 
     def openFolder(self):
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.folderPath))
 
     def itemDoubleClicked(self, index):
-        filename = self.model.filePath(index)
+        filename = self.schematicsModel.filePath(index)
         self.doubleClicked.emit(filename)
 
-    doubleClicked = QtCore.Signal(str)
+    doubleClicked = QtCore.Signal(unicode)
+
+    def sessionDidChange(self, session):
+        self.editorSession = session
+        if session is None:
+            self.mapListView.setModel(None)
+            self.mapListModel = None
+
+        else:
+            self.mapListModel = LibraryMapListModel(session)
+            self.mapListView.setModel(self.mapListModel)
+            session.revisionChanged.connect(self.revisionDidChange)
+
+    def revisionDidChange(self, revisionChanges):
+        # xxxx inspect revisionChanges! in fact, create AnvilRevisionChanges so
+        # we don't have to match `data/map_\d+.dat`!!
+        session = self.editorSession
+        if session:
+            self.mapListModel = LibraryMapListModel(session)
+            self.mapListView.setModel(self.mapListModel)
