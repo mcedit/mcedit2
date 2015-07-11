@@ -23,6 +23,7 @@ from mcedit2.rendering.textureatlas import TextureAtlas
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 from mcedit2.rendering import scenegraph, rendergraph
 from mcedit2.util import profiler, raycast
+from mcedit2.util.mimeformats import MimeFormats
 from mcedit2.util.qglcontext import validateQGLContext
 from mcedit2.util.settings import Settings
 from mcedit2.widgets.infopanel import InfoPanel
@@ -72,6 +73,9 @@ class WorldView(QGLWidget):
     viewportMoved = QtCore.Signal(QtGui.QWidget)
     cursorMoved = QtCore.Signal(QtGui.QMouseEvent)
 
+    urlsDropped = QtCore.Signal(QtCore.QMimeData, Vector, faces.Face)
+    mapItemDropped = QtCore.Signal(QtCore.QMimeData, Vector, faces.Face)
+
     mouseBlockPos = Vector(0, 0, 0)
     mouseBlockFace = faces.FaceYIncreasing
 
@@ -92,6 +96,7 @@ class WorldView(QGLWidget):
         QGLWidget.__init__(self, shareWidget=sharedGLWidget)
         validateQGLContext(self.context())
 
+        self.setAcceptDrops(True)
         self.setSizePolicy(QtGui.QSizePolicy.Policy.Expanding, QtGui.QSizePolicy.Policy.Expanding)
         self.setFocusPolicy(Qt.ClickFocus)
 
@@ -137,6 +142,32 @@ class WorldView(QGLWidget):
         self.cursorNode = None
 
         self.setDimension(dimension)
+
+    acceptableMimeTypes = [
+        MimeFormats.MapItem,
+    ]
+
+    def dragEnterEvent(self, event):
+        # xxx show drop preview as scene node
+        print("DRAG ENTER. FORMATS:\n%s" % event.mimeData().formats())
+        for mimeType in self.acceptableMimeTypes:
+            if event.mimeData().hasFormat(mimeType):
+                event.acceptProposedAction()
+                return
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        mimeData = event.mimeData()
+        x = event.pos().x()
+        y = event.pos().y()
+        ray = self.rayAtPosition(x, y)
+        dropPosition, face = self.rayCastInView(ray)
+
+        if mimeData.hasFormat(MimeFormats.MapItem):
+            self.mapItemDropped.emit(mimeData, dropPosition, face)
+        elif mimeData.hasUrls:
+            self.urlsDropped.emit(mimeData, dropPosition, face)
 
     def setDimension(self, dimension):
         """
@@ -456,6 +487,13 @@ class WorldView(QGLWidget):
         event.ray = ray
         event.view = self
 
+        position, face = self.rayCastInView(ray)
+
+        self.mouseBlockPos = event.blockPosition = position
+        self.mouseBlockFace = event.blockFace = face
+        self.mouseRay = ray
+
+    def rayCastInView(self, ray):
         try:
             result = raycast.rayCastInBounds(ray, self.dimension, maxDistance=2000)
             position, face = result
@@ -472,9 +510,7 @@ class WorldView(QGLWidget):
             position = (ray.point + ray.vector * defaultDistance).intfloor()
             face = faces.FaceUp
 
-        self.mouseBlockPos = event.blockPosition = position
-        self.mouseBlockFace = event.blockFace = face
-        self.mouseRay = ray
+        return position, face
 
     maxFPS = 30
 

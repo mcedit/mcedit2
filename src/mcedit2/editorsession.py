@@ -17,6 +17,7 @@ from mcedit2.panels.map import MapPanel
 from mcedit2.panels.worldinfo import WorldInfoPanel
 from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.directories import getUserSchematicsDirectory
+from mcedit2.util.mimeformats import MimeFormats
 from mceditlib.util import exhaust
 from mceditlib.util.lazyprop import weakrefprop
 from mcedit2.util.raycast import rayCastInBounds
@@ -33,13 +34,13 @@ from mcedit2.worldview.camera import CameraWorldViewFrame
 from mcedit2.worldview.cutaway import CutawayWorldViewFrame
 from mcedit2.worldview.minimap import MinimapWorldView
 from mcedit2.worldview.overhead import OverheadWorldViewFrame
-from mceditlib import util
+from mceditlib import util, nbt, faces
 from mceditlib.anvil.biome_types import BiomeTypes
 from mceditlib.geometry import Vector
 from mceditlib.operations import ComposeOperations
 from mceditlib.operations.entity import RemoveEntitiesOperation
 from mceditlib.selection import BoundingBox
-from mceditlib.exceptions import PlayerNotFound
+from mceditlib.exceptions import PlayerNotFound, ChunkNotPresent
 from mceditlib.revisionhistory import UndoFolderExists, RevisionChanges
 from mceditlib.worldeditor import WorldEditor
 from mceditlib.blocktypes import BlockType
@@ -367,6 +368,9 @@ class EditorSession(QtCore.QObject):
         self.editorTab = EditorTab(self)
         self.toolChanged.connect(self.toolDidChange)
 
+        self.editorTab.urlsDropped.connect(self.urlsWereDropped)
+        self.editorTab.mapItemDropped.connect(self.mapItemWasDropped)
+
         self.undoStack.indexChanged.connect(self.undoIndexChanged)
 
         self.findReplaceDialog = FindReplaceDialog(self)
@@ -667,6 +671,52 @@ class EditorSession(QtCore.QObject):
                 task = self.currentDimension.exportSchematicIter(self.currentSelection)
                 schematic = showProgress("Copying...", task)
                 schematic.saveToFile(filename)
+
+    # --- Drag-and-drop ---
+
+    def urlsWereDropped(self, mimeData, position, face):
+        log.info("URLs dropped:\n%s", mimeData.urls())
+
+    def mapItemWasDropped(self, mimeData, position, face):
+        log.info("Map item dropped.")
+        assert mimeData.hasFormat(MimeFormats.MapItem)
+        mapIDString = mimeData.data(MimeFormats.MapItem).data()
+        mapIDs = mapIDString.split(", ")
+        mapIDs = [int(m) for m in mapIDs]
+        mapID = mapIDs[0]  # xxx only one at a time for now
+
+        position = position + face.vector
+        x, y, z = position
+        cx = x >> 4
+        cz = z >> 4
+        try:
+            chunk = self.currentDimension.getChunk(cx, cz)
+        except ChunkNotPresent:
+            log.info("Refusing to import map into non-existent chunk %s", (cx, cz))
+            return
+
+        ref = self.worldEditor.createEntity("ItemFrame")
+        if ref is None:
+            return
+
+        facing = ref.facingForMCEditFace(face)
+        if facing is None:
+            # xxx by camera vector?
+            facing = ref.SouthFacing
+
+        ref.Item.Damage = mapID
+        ref.Item.id = "minecraft:filled_map"
+        ref.Position = position + (0.5, 0.5, 0.5)
+        ref.TilePos = position  # 1.7/1.8 issues should be handled by ref...
+        ref.Facing = facing
+
+        log.info("Created map ItemFrame with ID %s, importing...", mapID)
+
+        command = SimpleRevisionCommand(self, self.tr("Import map %(mapID)s") % {"mapID": mapID})
+        with command.begin():
+            chunk.addEntity(ref)
+            log.info(nbt.nested_string(ref.rootTag))
+        self.pushCommand(command)
 
     # --- Library support ---
 
@@ -1000,6 +1050,9 @@ class EditorTab(QtGui.QWidget):
 
     editorSession = weakrefprop()
 
+    urlsDropped = QtCore.Signal(QtCore.QMimeData, Vector, faces.Face)
+    mapItemDropped = QtCore.Signal(QtCore.QMimeData, Vector, faces.Face)
+
     def configuredBlocksDidChange(self):
         for view in self.views:
             view.setTextureAtlas(self.editorSession.textureAtlas)
@@ -1057,6 +1110,8 @@ class EditorTab(QtGui.QWidget):
             UseToolMouseAction(self),
             TrackingMouseAction(self)
         ])
+        frame.worldView.urlsDropped.connect(self.urlsDropped.emit)
+        frame.worldView.mapItemDropped.connect(self.mapItemDropped.emit)
 
     def currentView(self):
         """
