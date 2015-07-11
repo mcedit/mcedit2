@@ -212,6 +212,15 @@ class TranslateRenderNode(RenderstateRenderNode):
         GL.glPopMatrix()
 
 
+class PolygonModeRenderNode(RenderstateRenderNode):
+    def enter(self):
+        GL.glPushAttrib(GL.GL_POLYGON_BIT)
+        GL.glPolygonMode(self.sceneNode.face, self.sceneNode.mode)
+
+    def exit(self):
+        GL.glPopAttrib()
+
+
 class VertexRenderNode(RenderNode):
     def __init__(self, sceneNode):
         """

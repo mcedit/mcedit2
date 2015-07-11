@@ -208,6 +208,13 @@ class OrthoNode(Node):
         self._size = value
         self.dirty = True
 
+class PolygonModeNode(Node):
+    RenderNodeClass = rendergraph.PolygonModeRenderNode
+    def __init__(self, face, mode):
+        super(PolygonModeNode, self).__init__()
+        self.face = face
+        self.mode = mode
+
 
 class VertexNode(Node):
     RenderNodeClass = rendergraph.VertexRenderNode

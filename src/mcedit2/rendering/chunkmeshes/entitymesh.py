@@ -3,11 +3,13 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+from OpenGL import GL
 import numpy
 from mcedit2.rendering import renderstates, scenegraph
 from mcedit2.rendering.blockmeshes import standardCubeTemplates
 from mcedit2.rendering.blockmeshes import ChunkMeshBase
 from mcedit2.rendering.layers import Layer
+from mcedit2.rendering.scenegraph import PolygonModeNode
 from mcedit2.rendering.slices import _XYZ
 from mcedit2.rendering.vertexarraybuffer import QuadVertexArrayBuffer
 from mceditlib.anvil.entities import PCPaintingEntityRefBase
@@ -147,7 +149,10 @@ class MonsterRenderer(EntityMeshBase):
                                          offset=True,
                                          chunkPosition=chunk.chunkPosition)
         yield
-        self.sceneNode = scenegraph.VertexNode(monsters)
+
+        vertexNode = scenegraph.VertexNode(monsters)
+        self.sceneNode = PolygonModeNode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
+        self.sceneNode.addChild(vertexNode)
 
 
 
