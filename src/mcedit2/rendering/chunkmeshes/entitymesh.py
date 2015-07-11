@@ -85,6 +85,7 @@ class ItemFrameMesh(EntityMeshBase):
             mapID = item.Damage
 
             mapTex = self.chunkUpdate.updateTask.getMapTexture(mapID)
+            # xxx if mapTex is None: mapTex = missingNoTex
 
             # xxxx assumes 1.8 TilePos - fix this in ref??
             mapTiles.append((mapTex, ref.TilePos, ref.Facing))
@@ -101,24 +102,26 @@ class ItemFrameMesh(EntityMeshBase):
             vertexBuffer.vertex[:] = x, y, z
             corners = self.faceCorners[facing]
             vertexBuffer.vertex[:] += corners
-            texCorners = [(0, 0), (0, 1), (1, 1), (1, 0)]
+            texCorners = [(1, 1), (1, 0), (0, 0), (0, 1)]
             vertexBuffer.texcoord[:] += texCorners
 
             vertexNode = scenegraph.VertexNode([vertexBuffer])
-            bindTexNode = scenegraph.BindTextureNode(mapTex)
-            bindTexNode.addChild(vertexNode)
-            nodes.append(bindTexNode)
-
+            if mapTex is not None:
+                bindTexNode = scenegraph.BindTextureNode(mapTex)
+                bindTexNode.addChild(vertexNode)
+                nodes.append(bindTexNode)
+            else:
+                nodes.append(vertexNode)
 
         self.sceneNode = scenegraph.Node()
         for node in nodes:
             self.sceneNode.addChild(node)
 
     faceCorners = {  # xxx polygon offset?
-        PCPaintingEntityRefBase.SouthFacing: ((0, 0, 0.01), (0, 1, 0.01), (1, 1, 0.01), (1, 0, 0.01)),
-        PCPaintingEntityRefBase.WestFacing: ((0.01, 0, 0), (0.01, 1, 0), (0.01, 1, 1), (0.01, 0, 1)),
+        PCPaintingEntityRefBase.SouthFacing: ((1, 0, 0.01), (1, 1, 0.01), (0, 1, 0.01), (0, 0, 0.01)),
+        PCPaintingEntityRefBase.WestFacing: ((0.99, 0, 1), (0.99, 1, 1), (0.99, 1, 0), (0.99, 0, 0)),
         PCPaintingEntityRefBase.NorthFacing: ((0, 0, 0.99), (0, 1, 0.99), (1, 1, 0.99), (1, 0, 0.99)),
-        PCPaintingEntityRefBase.EastFacing: ((0.99, 0, 0), (0.99, 1, 0), (0.99, 1, 1), (0.99, 0, 1)),
+        PCPaintingEntityRefBase.EastFacing: ((0.01, 0, 0), (0.01, 1, 0), (0.01, 1, 1), (0.01, 0, 1)),
     }
 
 class MonsterRenderer(EntityMeshBase):
