@@ -229,7 +229,7 @@ class PCPaintingEntityRefBase(PCEntityRefBase):
     # XXXXXXXXX
     # in 1.8, TilePos is the block the painting is IN
     # in 1.7, TilePos is the block the painting is ON
-    TilePos = nbtattr.KeyedVectorAttr('TileX', 'TileY', 'TileZ', nbt.TAG_Int, 0)
+    TilePos = nbtattr.KeyedVectorAttr('TileX', 'TileY', 'TileZ', nbt.TAG_Int, (0, 0, 0))
 
     # XXXXXXXXXXX
     # in 1.7 and before, this tag is called "Direction"
