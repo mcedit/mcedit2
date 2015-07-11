@@ -34,7 +34,7 @@ class EntityMeshBase(ChunkMeshBase):
             positions = numpy.array(positions, dtype=float)
             positions[:, (0, 2)] -= (x, z)
             if offset:
-                positions -= 0.5
+                positions -= (0.5, 0.0, 0.5)
 
             vertexBuffer.rgba[:] = colors
             vertexBuffer.vertex[:] = positions[:, numpy.newaxis, numpy.newaxis, :]
