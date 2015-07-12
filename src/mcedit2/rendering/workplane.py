@@ -7,6 +7,8 @@ import logging
 from OpenGL import GL
 
 from mcedit2.rendering.scenegraph import scenenode
+import mcedit2.rendering.scenegraph.matrix
+import mcedit2.rendering.scenegraph.vertex_array
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 
 log = logging.getLogger(__name__)
@@ -17,7 +19,7 @@ class WorkplaneNode(scenenode.Node):
 
     def __init__(self):
         super(WorkplaneNode, self).__init__()
-        self.translateNode = scenenode.TranslateNode()
+        self.translateNode = mcedit2.rendering.scenegraph.matrix.TranslateNode()
         self.addChild(self.translateNode)
         self.axis = 1
 
@@ -67,7 +69,7 @@ class WorkplaneNode(scenenode.Node):
 
         if self.vertexNode:
             self.translateNode.removeChild(self.vertexNode)
-        self.vertexNode = scenenode.VertexNode([gridArrayBuffer])
+        self.vertexNode = mcedit2.rendering.scenegraph.vertex_array.VertexNode([gridArrayBuffer])
         self.translateNode.addChild(self.vertexNode)
 
     @property

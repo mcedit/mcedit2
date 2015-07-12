@@ -20,6 +20,9 @@ from mcedit2.rendering.chunknode import ChunkNode
 from mcedit2.rendering.frustum import Frustum
 from mcedit2.rendering.geometrycache import GeometryCache
 from mcedit2.rendering.layers import Layer
+import mcedit2.rendering.scenegraph.matrix
+import mcedit2.rendering.scenegraph.misc
+import mcedit2.rendering.scenegraph.vertex_array
 from mcedit2.rendering.textureatlas import TextureAtlas
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 from mcedit2.rendering.scenegraph import scenenode, rendernode
@@ -45,7 +48,8 @@ def worldMeshVertexSize(worldMesh):
         for cm in worldMesh.chunkGroupNode.children:
             assert isinstance(cm, ChunkNode)
             for bm in cm.getChunkVertexNodes():
-                assert isinstance(bm, scenenode.VertexNode)
+                assert isinstance(bm,
+                                  mcedit2.rendering.scenegraph.vertex_array.VertexNode)
                 for va in bm.vertexArrays:
                     assert isinstance(va, VertexArrayBuffer)
                     yield va.buffer.nbytes
@@ -117,7 +121,7 @@ class WorldView(QGLWidget):
         self.autoUpdateInterval = 0.5  # frequency of screen redraws in response to loaded chunks
 
         self.compassNode = self.createCompass()
-        self.compassOrthoNode = scenenode.OrthoNode((1, float(self.height()) / self.width()))
+        self.compassOrthoNode = mcedit2.rendering.scenegraph.matrix.OrthoNode((1, float(self.height()) / self.width()))
         self.compassOrthoNode.addChild(self.compassNode)
 
         self.viewActions = []
@@ -219,11 +223,11 @@ class WorldView(QGLWidget):
         self.worldScene = self.createWorldScene()
         self.worldScene.setVisibleLayers(self.layerToggleGroup.getVisibleLayers())
 
-        clearNode = scenenode.ClearNode()
+        clearNode = mcedit2.rendering.scenegraph.misc.ClearNode()
         skyNode = sky.SkyNode()
         self.loadableChunksNode = loadablechunks.LoadableChunksNode(self.dimension)
 
-        self.matrixNode = scenenode.MatrixNode()
+        self.matrixNode = mcedit2.rendering.scenegraph.matrix.MatrixNode()
         self._updateMatrices()
 
         self.matrixNode.addChild(self.loadableChunksNode)

@@ -18,6 +18,8 @@ from mcedit2.rendering.chunknode import ChunkNode, ChunkGroupNode
 from mcedit2.rendering.chunkupdate import ChunkRenderInfo
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.geometrycache import GeometryCache
+import mcedit2.rendering.scenegraph.depth_test
+import mcedit2.rendering.scenegraph.texture_atlas
 from mcedit2.util.glutils import Texture
 from mcedit2.util.load_png import loadPNGData
 from mceditlib.anvil.biome_types import BiomeTypes
@@ -207,10 +209,10 @@ class WorldScene(scenenode.Node):
 
         self.dimension = dimension
         self.textureAtlas = textureAtlas
-        self.depthOffsetNode = scenenode.DepthOffsetNode(DepthOffset.Renderer)
+        self.depthOffsetNode = mcedit2.rendering.scenegraph.depth_test.DepthOffsetNode(DepthOffset.Renderer)
         self.addChild(self.depthOffsetNode)
 
-        self.textureAtlasNode = scenenode.TextureAtlasNode(textureAtlas)
+        self.textureAtlasNode = mcedit2.rendering.scenegraph.texture_atlas.TextureAtlasNode(textureAtlas)
         self.depthOffsetNode.addChild(self.textureAtlasNode)
 
         self.renderstateNodes = {}

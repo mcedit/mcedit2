@@ -10,6 +10,7 @@ from PySide.QtCore import Qt
 from mcedit2.editorsession import PendingImport
 from mcedit2.editortools import EditorTool
 from mcedit2.command import SimpleRevisionCommand
+import mcedit2.rendering.scenegraph.matrix
 from mcedit2.rendering.selection import SelectionBoxNode, SelectionFaceNode, boxFaceUnderCursor
 from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.depths import DepthOffset
@@ -119,7 +120,7 @@ class CoordinateWidget(QtGui.QWidget):
         x, y, z = self.point
         self.point = Vector(x, y, value)
 
-class PendingImportNode(scenenode.TranslateNode):
+class PendingImportNode(mcedit2.rendering.scenegraph.matrix.TranslateNode):
     def __init__(self, pendingImport, textureAtlas):
         super(PendingImportNode, self).__init__()
         self.pendingImport = pendingImport

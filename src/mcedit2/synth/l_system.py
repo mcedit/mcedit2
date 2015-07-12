@@ -6,7 +6,7 @@ import logging
 
 from OpenGL import GL
 
-from mcedit2.rendering.scenegraph.scenenode import VertexNode
+from mcedit2.rendering.scenegraph.vertex_array import VertexNode
 from mcedit2.rendering.selection import SelectionBoxNode
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 from mcedit2.util import bresenham

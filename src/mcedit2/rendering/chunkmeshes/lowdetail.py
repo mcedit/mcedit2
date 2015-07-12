@@ -10,6 +10,7 @@ from mcedit2.rendering import renderstates
 from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.blockmeshes import standardCubeTemplates
 from mcedit2.rendering.blockmeshes import ChunkMeshBase
+import mcedit2.rendering.scenegraph.vertex_array
 from mcedit2.rendering.vertexarraybuffer import QuadVertexArrayBuffer
 from mceditlib import faces
 
@@ -101,7 +102,7 @@ class LowDetailBlockMesh(ChunkMeshBase):
 
         yield
         if self.detailLevel == 2:
-            self.sceneNode = scenenode.VertexNode(va0)
+            self.sceneNode = mcedit2.rendering.scenegraph.vertex_array.VertexNode(va0)
             return
 
         # Calculate how deep each column needs to go to be flush with the adjacent column;
@@ -136,7 +137,7 @@ class LowDetailBlockMesh(ChunkMeshBase):
         va2.vertex[:, (0, 3), 0] -= 1.0  # turn diagonally
 
 
-        nodes = [scenenode.VertexNode(v) for v in (va1, va2, va0)]
+        nodes = [mcedit2.rendering.scenegraph.vertex_array.VertexNode(v) for v in (va1, va2, va0)]
 
         self.sceneNode = scenenode.Node()
         for node in nodes:

@@ -4,13 +4,14 @@
 from __future__ import absolute_import, division, print_function
 import logging
 import weakref
+
 from OpenGL import GL
 import numpy
+
 from mcedit2.rendering import cubes
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.util import profiler
-from mcedit2.util import glutils
-from mcedit2.util.glutils import DisplayList, gl
+from mcedit2.util.glutils import DisplayList
 
 log = logging.getLogger(__name__)
 
@@ -129,234 +130,8 @@ class RenderstateRenderNode(RenderNode):
     def exit(self):
         raise NotImplementedError
 
-class BindTextureRenderNode(RenderstateRenderNode):
-    def enter(self):
-        GL.glPushAttrib(GL.GL_ENABLE_BIT | GL.GL_TEXTURE_BIT)
-        GL.glMatrixMode(GL.GL_TEXTURE)
-        GL.glPushMatrix()
-        GL.glLoadIdentity()
-        scale = self.sceneNode.scale
-        if scale is not None:
-            GL.glScale(*scale)
-        glutils.glActiveTexture(GL.GL_TEXTURE0)
-        GL.glEnable(GL.GL_TEXTURE_2D)
-        self.sceneNode.texture.bind()
-
-    def exit(self):
-        GL.glMatrixMode(GL.GL_TEXTURE)
-        GL.glPopMatrix()
-        GL.glPopAttrib()
-
-
-
-class TextureAtlasRenderNode(RenderstateRenderNode):
-    def enter(self):
-        if self.sceneNode.textureAtlas is None:
-            return
-
-        GL.glColor(1., 1., 1., 1.)
-        textureAtlas = self.sceneNode.textureAtlas
-        glutils.glActiveTexture(GL.GL_TEXTURE0)
-        GL.glEnable(GL.GL_TEXTURE_2D)
-        textureAtlas.bindTerrain()
-
-        GL.glMatrixMode(GL.GL_TEXTURE)
-        GL.glPushMatrix()
-        GL.glLoadIdentity()
-        GL.glScale(1. / textureAtlas.width, 1. / textureAtlas.height, 1.)
-
-        glutils.glActiveTexture(GL.GL_TEXTURE1)
-        GL.glEnable(GL.GL_TEXTURE_2D)
-        textureAtlas.bindLight()
-
-        GL.glMatrixMode(GL.GL_TEXTURE)
-        GL.glPushMatrix()
-        GL.glLoadIdentity()
-        GL.glScale(1. / 16, 1. / 16, 1.)
-
-        glutils.glActiveTexture(GL.GL_TEXTURE0)
-        GL.glEnable(GL.GL_CULL_FACE)
-
-    def exit(self):
-        if self.sceneNode.textureAtlas is None:
-            return
-
-        GL.glDisable(GL.GL_CULL_FACE)
-        glutils.glActiveTexture(GL.GL_TEXTURE1)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
-        GL.glDisable(GL.GL_TEXTURE_2D)
-        GL.glMatrixMode(GL.GL_TEXTURE)
-        GL.glPopMatrix()
-
-        glutils.glActiveTexture(GL.GL_TEXTURE0)
-        GL.glDisable(GL.GL_TEXTURE_2D)
-        GL.glMatrixMode(GL.GL_TEXTURE)
-        GL.glPopMatrix()
-
-
-class TranslateRenderNode(RenderstateRenderNode):
-    def __init__(self, sceneNode):
-        """
-
-        :type sceneNode: TranslateNode
-        """
-        super(TranslateRenderNode, self).__init__(sceneNode)
-
-    def __repr__(self):
-        return "TranslateRenderNode(%s)" % (self.sceneNode.translateOffset,)
-
-    def enter(self):
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glPushMatrix()
-        GL.glTranslate(*self.sceneNode.translateOffset)
-
-    def exit(self):
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glPopMatrix()
-
-class RotateRenderNode(RenderstateRenderNode):
-    def __init__(self, sceneNode):
-        """
-
-        :type sceneNode: TranslateNode
-        """
-        super(RotateRenderNode, self).__init__(sceneNode)
-
-    def __repr__(self):
-        return "RotateRenderNode(%s, %s)" % (self.sceneNode.degrees,self.sceneNode.axis)
-
-    def enter(self):
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glPushMatrix()
-        GL.glRotate(self.sceneNode.degrees, *self.sceneNode.axis)
-
-    def exit(self):
-        GL.glMatrixMode(GL.GL_MODELVIEW)
-        GL.glPopMatrix()
-
-
-class PolygonModeRenderNode(RenderstateRenderNode):
-    def enter(self):
-        GL.glPushAttrib(GL.GL_POLYGON_BIT)
-        GL.glPolygonMode(self.sceneNode.face, self.sceneNode.mode)
-
-    def exit(self):
-        GL.glPopAttrib()
-
-
-class VertexRenderNode(RenderNode):
-    def __init__(self, sceneNode):
-        """
-
-        :type sceneNode: VertexNode
-        """
-        super(VertexRenderNode, self).__init__(sceneNode)
-
-        self.didDraw = False
-
-    def invalidate(self):
-        if self.didDraw:
-            assert False
-        super(VertexRenderNode, self).invalidate()
-
-
-    def drawSelf(self):
-        self.didDraw = True
-        bare = []
-        withTex = []
-        withLights = []
-        for array in self.sceneNode.vertexArrays:
-            if array.lights:
-                withLights.append(array)
-            elif array.textures:
-                withTex.append(array)
-            else:
-                bare.append(array)
-
-        with gl.glPushAttrib(GL.GL_ENABLE_BIT):
-            GL.glDisable(GL.GL_TEXTURE_2D)
-            self.drawArrays(bare, False, False)
-            GL.glEnable(GL.GL_TEXTURE_2D)
-            self.drawArrays(withTex, True, False)
-            self.drawArrays(withLights, True, True)
-
-    def drawArrays(self, vertexArrays, textures, lights):
-        if textures:
-            GL.glClientActiveTexture(GL.GL_TEXTURE0)
-            GL.glEnableClientState(GL.GL_TEXTURE_COORD_ARRAY)
-        if lights:
-            GL.glClientActiveTexture(GL.GL_TEXTURE1)
-            GL.glEnableClientState(GL.GL_TEXTURE_COORD_ARRAY)
-        else:
-            GL.glMultiTexCoord2d(GL.GL_TEXTURE1, 15, 15)
-
-        GL.glEnableClientState(GL.GL_COLOR_ARRAY)
-
-        for array in vertexArrays:
-            if 0 == len(array.buffer):
-                continue
-            stride = 4 * array.elements
-
-            buf = array.buffer.ravel()
-
-            GL.glVertexPointer(3, GL.GL_FLOAT, stride, buf)
-            if textures:
-                GL.glClientActiveTexture(GL.GL_TEXTURE0)
-                GL.glTexCoordPointer(2, GL.GL_FLOAT, stride, (buf[array.texOffset:]))
-            if lights:
-                GL.glClientActiveTexture(GL.GL_TEXTURE1)
-                GL.glTexCoordPointer(2, GL.GL_FLOAT, stride, (buf[array.lightOffset:]))
-            GL.glColorPointer(4, GL.GL_UNSIGNED_BYTE, stride, (buf.view(dtype=numpy.uint8)[array.rgbaOffset*4:]))
-
-            vertexCount = int(array.buffer.size / array.elements)
-            GL.glDrawArrays(array.gl_type, 0, vertexCount)
-
-        GL.glDisableClientState(GL.GL_COLOR_ARRAY)
-
-        if lights:
-            GL.glDisableClientState(GL.GL_TEXTURE_COORD_ARRAY)
-
-        if textures:
-            GL.glClientActiveTexture(GL.GL_TEXTURE0)
-            GL.glDisableClientState(GL.GL_TEXTURE_COORD_ARRAY)
-
-class OrthoRenderNode(RenderstateRenderNode):
-    def enter(self):
-        w, h = self.sceneNode.size
-        GL.glMatrixMode(GL.GL_PROJECTION)
-        GL.glPushMatrix()
-        GL.glLoadIdentity()
-        GL.glOrtho(0., w, 0., h, -200, 200)
-
-    def exit(self):
-        GL.glMatrixMode(GL.GL_PROJECTION)
-        GL.glPopMatrix()
-
-
-class ClearRenderNode(RenderNode):
-    def drawSelf(self):
-        color = self.sceneNode.clearColor
-        if color is None:
-            GL.glClear(GL.GL_DEPTH_BUFFER_BIT)
-        else:
-            GL.glClearColor(*color)
-            GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-
-class DepthMaskRenderNode(RenderstateRenderNode):
-    def enter(self):
-        GL.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT)
-        GL.glDepthMask(self.sceneNode.mask)
-
-    def exit(self):
-        GL.glPopAttrib()
-
-class DepthFuncRenderNode(RenderstateRenderNode):
-    def enter(self):
-        GL.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT)
-        GL.glDepthFunc(self.sceneNode.func)
-
-    def exit(self):
-        GL.glPopAttrib()
+"""
+UNUSED??
 
 class BoxRenderNode(RenderNode):
     def drawSelf(self):
@@ -375,16 +150,7 @@ class BoxFaceRenderNode(RenderNode):
         GL.glLineWidth(2.0)
         cubes.drawFace(box, face, elementType=GL.GL_LINE_STRIP)
         GL.glDisable(GL.GL_BLEND)
-
-
-class DepthOffsetRenderNode(RenderstateRenderNode):
-    def enter(self):
-        GL.glPushAttrib(GL.GL_POLYGON_BIT)
-        GL.glPolygonOffset(self.sceneNode.depthOffset, self.sceneNode.depthOffset)
-        GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
-
-    def exit(self):
-        GL.glPopAttrib()
+"""
 
 def updateRenderNode(renderNode):
     """

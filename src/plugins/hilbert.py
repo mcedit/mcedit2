@@ -10,7 +10,7 @@ from OpenGL import GL
 from PySide import QtGui
 
 from mcedit2.plugins import registerGeneratePlugin
-from mcedit2.rendering.scenegraph.scenenode import VertexNode
+from mcedit2.rendering.scenegraph.vertex_array import VertexNode
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 from mcedit2.synth.l_system import Geometric, Symbol
 from mcedit2.synth.l_system_plugin import LSystemPlugin

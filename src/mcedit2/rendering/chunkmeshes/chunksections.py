@@ -12,6 +12,7 @@ from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.blockmeshes import standardCubeTemplates
 from mcedit2.rendering.blockmeshes import ChunkMeshBase
 from mcedit2.rendering.layers import Layer
+import mcedit2.rendering.scenegraph.vertex_array
 from mcedit2.rendering.slices import _XYZ, _RGBA
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 
@@ -35,6 +36,6 @@ class ChunkSectionsRenderer(ChunkMeshBase):
             buffer.buffer[i, :] = self.vertexTemplate
             buffer.vertex[i, ..., 1] += cy * 16
 
-        self.sceneNode = scenenode.VertexNode(buffer)
+        self.sceneNode = mcedit2.rendering.scenegraph.vertex_array.VertexNode(buffer)
 
         yield
