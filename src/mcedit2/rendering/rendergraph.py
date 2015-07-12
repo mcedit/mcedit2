@@ -211,6 +211,26 @@ class TranslateRenderNode(RenderstateRenderNode):
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glPopMatrix()
 
+class RotateRenderNode(RenderstateRenderNode):
+    def __init__(self, sceneNode):
+        """
+
+        :type sceneNode: TranslateNode
+        """
+        super(RotateRenderNode, self).__init__(sceneNode)
+
+    def __repr__(self):
+        return "RotateRenderNode(%s, %s)" % (self.sceneNode.degrees,self.sceneNode.axis)
+
+    def enter(self):
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glPushMatrix()
+        GL.glRotate(self.sceneNode.degrees, *self.sceneNode.axis)
+
+    def exit(self):
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glPopMatrix()
+
 
 class PolygonModeRenderNode(RenderstateRenderNode):
     def enter(self):
@@ -323,6 +343,14 @@ class DepthMaskRenderNode(RenderstateRenderNode):
     def enter(self):
         GL.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT)
         GL.glDepthMask(self.sceneNode.mask)
+
+    def exit(self):
+        GL.glPopAttrib()
+
+class DepthFuncRenderNode(RenderstateRenderNode):
+    def enter(self):
+        GL.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT)
+        GL.glDepthFunc(self.sceneNode.func)
 
     def exit(self):
         GL.glPopAttrib()

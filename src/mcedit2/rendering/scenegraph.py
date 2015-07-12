@@ -179,11 +179,27 @@ class TranslateNode(Node):
         self._translateOffset = value
         self.dirty = True
 
+class RotateNode(Node):
+    RenderNodeClass = rendergraph.RotateRenderNode
+
+    def __init__(self, degrees, axis):
+        super(RotateNode, self).__init__()
+        self.degrees = degrees
+        self.axis = axis
+
+
 
 class DepthMaskNode(Node):
     RenderNodeClass = rendergraph.DepthMaskRenderNode
     mask = False
 
+
+class DepthFuncNode(Node):
+    RenderNodeClass = rendergraph.DepthFuncRenderNode
+
+    def __init__(self, func=GL.GL_LESS):
+        super(DepthFuncNode, self).__init__()
+        self.func = func
 
 class ClearNode(Node):
     RenderNodeClass = rendergraph.ClearRenderNode
