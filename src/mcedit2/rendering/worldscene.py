@@ -17,6 +17,7 @@ from mcedit2.rendering.chunkupdate import ChunkRenderInfo
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.geometrycache import GeometryCache
 from mcedit2.util.glutils import Texture
+from mcedit2.util.load_png import loadPNGData
 from mceditlib.anvil.biome_types import BiomeTypes
 
 log = logging.getLogger(__name__)
@@ -37,6 +38,7 @@ def layerProperty(layer, default=True):
     return property(_get, _set)
 
 DEBUG_WORLDMESH_LISTS = "-debuglists" in sys.argv
+
 
 class SceneUpdateTask(object):
     showRedraw = True
@@ -62,6 +64,7 @@ class SceneUpdateTask(object):
 
         self.textureAtlas = textureAtlas
         self.mapTextures = {}
+        self.modelTextures = {}
 
         self.renderType = numpy.zeros((256*256,), 'uint8')
         self.renderType[:] = 3
@@ -174,6 +177,26 @@ class SceneUpdateTask(object):
             mapTex = Texture(_loadFunc(colors))
             self.mapTextures[mapID] = mapTex
             return mapTex
+
+    def getModelTexture(self, texturePath):
+        if texturePath in self.modelTextures:
+            return self.modelTextures[texturePath]
+
+        try:
+            w, h, rgba = loadPNGData(self.textureAtlas.resourceLoader.openStream(texturePath).read())
+        except Exception as e:
+            log.exception("Model texture %s could not be loaded", texturePath)
+        else:
+            def _load():
+                GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, w, h, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, rgba[::-1])
+
+            modelTex = Texture(_load)
+            modelTex.w = w  # ewwwww
+            modelTex.h = h
+            self.modelTextures[texturePath] = modelTex
+            return modelTex
+
+
 
 
 class WorldScene(scenegraph.Node):

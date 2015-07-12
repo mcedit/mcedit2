@@ -83,7 +83,7 @@ class TextureAtlas(object):
         self.blockModels = blockModels
         self.blocktypes = world.blocktypes
         self._filename = world.filename
-        self._resourceLoader = resourceLoader
+        self.resourceLoader = resourceLoader
         self._lightTexture = None
         self._terrainTexture = None
         self._maxLOD = maxLOD
@@ -212,7 +212,7 @@ class TextureAtlas(object):
         if name == "MCEDIT_UNKNOWN":
             block_unknown = resourcePath("mcedit2/assets/mcedit2/block_unknown.png")
             return file(block_unknown, "rb")
-        return self._resourceLoader.openStream(name)
+        return self.resourceLoader.openStream(name)
 
     def bindTerrain(self):
         self._terrainTexture.bind()
