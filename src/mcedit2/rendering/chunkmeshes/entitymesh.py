@@ -8,6 +8,7 @@ import numpy
 from mcedit2.rendering import renderstates, scenegraph
 from mcedit2.rendering.blockmeshes import standardCubeTemplates
 from mcedit2.rendering.blockmeshes import ChunkMeshBase
+from mcedit2.rendering.chunkmeshes.entity import models
 from mcedit2.rendering.layers import Layer
 from mcedit2.rendering.scenegraph import PolygonModeNode, DepthFuncNode
 from mcedit2.rendering.slices import _XYZ
@@ -125,6 +126,46 @@ class ItemFrameMesh(EntityMeshBase):
         PCPaintingEntityRefBase.NorthFacing: ((0, 0, 0.99), (0, 1, 0.99), (1, 1, 0.99), (1, 0, 0.99)),
         PCPaintingEntityRefBase.EastFacing: ((0.01, 0, 0), (0.01, 1, 0), (0.01, 1, 1), (0.01, 0, 1)),
     }
+
+
+class MonsterModelRenderer(ChunkMeshBase):
+    def makeChunkVertices(self, chunk, limitBox):
+        sceneNode = scenegraph.Node()
+        for i, ref in enumerate(chunk.Entities):
+            ID = ref.id
+            if ID not in models.cookedModels:
+                assert ID != "Zombie"
+                ID = "Creeper"
+
+            model = models.cookedModels[ID]
+
+            modelVerts = numpy.array(model)
+            modelVerts.shape = modelVerts.shape[0]/4, 4, modelVerts.shape[1]
+            # scale down
+            modelVerts[..., :3] *= 1/16.
+            modelVerts[..., 1] = -modelVerts[..., 1] + 1.5 + 1/64.
+            modelVerts[..., 0] = -modelVerts[..., 0]
+
+            vertexBuffer = QuadVertexArrayBuffer(len(modelVerts), lights=False, textures=True)
+            vertexBuffer.vertex[:] = modelVerts[..., :3]
+            vertexBuffer.texcoord[:] = modelVerts[..., 3:5]
+
+            node = scenegraph.VertexNode(vertexBuffer)
+            rotateNode = scenegraph.RotateNode(ref.Rotation[0], (0., 1., 0.))
+            rotateNode.addChild(node)
+            translateNode = scenegraph.TranslateNode((ref.Position - (chunk.cx << 4, 0, chunk.cz << 4)))
+            translateNode.addChild(rotateNode)
+
+            modelTex = self.chunkUpdate.updateTask.getModelTexture(models.textures[ID])
+
+            textureNode = scenegraph.BindTextureNode(modelTex, (1./modelTex.w, 1./modelTex.h, 1))
+            textureNode.addChild(translateNode)
+            sceneNode.addChild(textureNode)
+
+            yield
+
+        self.sceneNode = sceneNode
+
 
 class MonsterRenderer(EntityMeshBase):
     layer = Layer.Entities  # xxx Monsters
