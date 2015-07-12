@@ -74,6 +74,11 @@ class BlockModelMesh(object):
         cdef unsigned short waterFlowID = blocktypes["minecraft:flowing_water"].ID
         cdef unsigned short lavaID = blocktypes["minecraft:lava"].ID
         cdef unsigned short lavaFlowID = blocktypes["minecraft:flowing_lava"].ID
+
+        # glass, stained glass are special cased to return False for `shouldSideBeRendered`
+        cdef unsigned short glassID = blocktypes["minecraft:glass"].ID
+        cdef unsigned short stainedGlassID = blocktypes.get("minecraft:stained_glass", blocktypes["minecraft:glass"]).ID
+
         waterTexTuple = self.sectionUpdate.chunkUpdate.textureAtlas.texCoordsByName["assets/minecraft/textures/blocks/water_still.png"]
         cdef float[4] waterTex
         waterTex[0] = waterTexTuple[0]
@@ -142,6 +147,9 @@ class BlockModelMesh(object):
                                 nz = z + quad.cullface[3]
                                 nID = areaBlocks[ny, nz, nx]
                                 if opaqueCube[nID]:
+                                    # xxx inspect neighbor model!!
+                                    continue
+                                elif (ID == glassID or ID == stainedGlassID) and (nID == glassID or nID == stainedGlassID):
                                     continue
 
                             nx = x + quad.quadface[1]
