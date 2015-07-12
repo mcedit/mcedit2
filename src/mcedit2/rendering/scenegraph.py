@@ -248,13 +248,14 @@ class VertexNode(Node):
 class BindTextureNode(Node):
     RenderNodeClass = rendergraph.BindTextureRenderNode
 
-    def __init__(self, texture):
+    def __init__(self, texture, scale=None):
         """
 
         :type texture: glutils.Texture
         """
         super(BindTextureNode, self).__init__()
         self.texture = texture
+        self.scale = scale
         # changing texture not implemented
 
 class MatrixRenderNode(rendergraph.RenderstateRenderNode):
