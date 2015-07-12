@@ -3,10 +3,10 @@
 """
 from __future__ import absolute_import, division, print_function
 import logging
-import pprint
-from math import floor
+
 from OpenGL import GL
-from mcedit2.rendering.scenegraph import Node, VertexNode
+
+from mcedit2.rendering.scenegraph.scenenode import VertexNode
 from mcedit2.rendering.selection import SelectionBoxNode
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 from mcedit2.util import bresenham

@@ -5,15 +5,14 @@ from __future__ import absolute_import, division, print_function
 import logging
 import weakref
 
-from mcedit2.rendering import rendergraph
-
+from mcedit2.rendering.scenegraph import rendernode
 
 log = logging.getLogger(__name__)
 
 from OpenGL import GL
 
 class Node(object):
-    RenderNodeClass = rendergraph.RenderNode
+    RenderNodeClass = rendernode.RenderNode
 
     def __init__(self):
         super(Node, self).__init__()
@@ -101,7 +100,7 @@ class Node(object):
             self.parent.dirty = True
 
 class NamedChildrenNode(Node):
-    RenderNodeClass = rendergraph.RenderNode
+    RenderNodeClass = rendernode.RenderNode
 
     def __init__(self):
         super(NamedChildrenNode, self).__init__()
@@ -148,7 +147,7 @@ class RenderstateNode(Node):
 
 
 class TextureAtlasNode(Node):
-    RenderNodeClass = rendergraph.TextureAtlasRenderNode
+    RenderNodeClass = rendernode.TextureAtlasRenderNode
 
     def __init__(self, textureAtlas=None):
         super(TextureAtlasNode, self).__init__()
@@ -164,7 +163,7 @@ class TextureAtlasNode(Node):
         self.dirty = True
 
 class TranslateNode(Node):
-    RenderNodeClass = rendergraph.TranslateRenderNode
+    RenderNodeClass = rendernode.TranslateRenderNode
 
     def __init__(self, translateOffset=(0., 0., 0.)):
         super(TranslateNode, self).__init__()
@@ -180,7 +179,7 @@ class TranslateNode(Node):
         self.dirty = True
 
 class RotateNode(Node):
-    RenderNodeClass = rendergraph.RotateRenderNode
+    RenderNodeClass = rendernode.RotateRenderNode
 
     def __init__(self, degrees, axis):
         super(RotateNode, self).__init__()
@@ -190,26 +189,26 @@ class RotateNode(Node):
 
 
 class DepthMaskNode(Node):
-    RenderNodeClass = rendergraph.DepthMaskRenderNode
+    RenderNodeClass = rendernode.DepthMaskRenderNode
     mask = False
 
 
 class DepthFuncNode(Node):
-    RenderNodeClass = rendergraph.DepthFuncRenderNode
+    RenderNodeClass = rendernode.DepthFuncRenderNode
 
     def __init__(self, func=GL.GL_LESS):
         super(DepthFuncNode, self).__init__()
         self.func = func
 
 class ClearNode(Node):
-    RenderNodeClass = rendergraph.ClearRenderNode
+    RenderNodeClass = rendernode.ClearRenderNode
 
     def __init__(self, clearColor=(0, 0, 0, 1)):
         super(ClearNode, self).__init__()
         self.clearColor = clearColor
 
 class OrthoNode(Node):
-    RenderNodeClass = rendergraph.OrthoRenderNode
+    RenderNodeClass = rendernode.OrthoRenderNode
 
     def __init__(self, size=(1, 1)):
         super(OrthoNode, self).__init__()
@@ -225,7 +224,7 @@ class OrthoNode(Node):
         self.dirty = True
 
 class PolygonModeNode(Node):
-    RenderNodeClass = rendergraph.PolygonModeRenderNode
+    RenderNodeClass = rendernode.PolygonModeRenderNode
     def __init__(self, face, mode):
         super(PolygonModeNode, self).__init__()
         self.face = face
@@ -233,7 +232,7 @@ class PolygonModeNode(Node):
 
 
 class VertexNode(Node):
-    RenderNodeClass = rendergraph.VertexRenderNode
+    RenderNodeClass = rendernode.VertexRenderNode
 
     def __init__(self, vertexArrays):
         """
@@ -246,7 +245,7 @@ class VertexNode(Node):
         self.vertexArrays = vertexArrays
 
 class BindTextureNode(Node):
-    RenderNodeClass = rendergraph.BindTextureRenderNode
+    RenderNodeClass = rendernode.BindTextureRenderNode
 
     def __init__(self, texture, scale=None):
         """
@@ -258,7 +257,7 @@ class BindTextureNode(Node):
         self.scale = scale
         # changing texture not implemented
 
-class MatrixRenderNode(rendergraph.RenderstateRenderNode):
+class MatrixRenderNode(rendernode.RenderstateRenderNode):
     def enter(self):
         projection = self.sceneNode.projection
         if projection is not None:
@@ -323,7 +322,7 @@ class MatrixNode(Node):
         self.dirty = True
 
 class DepthOffsetNode(Node):
-    RenderNodeClass = rendergraph.DepthOffsetRenderNode
+    RenderNodeClass = rendernode.DepthOffsetRenderNode
     def __init__(self, depthOffset):
         super(DepthOffsetNode, self).__init__()
         self.depthOffset = depthOffset

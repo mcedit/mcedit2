@@ -8,7 +8,6 @@ from OpenGL import GL
 from PySide import QtGui, QtCore
 
 from mcedit2.editortools import EditorTool
-from mcedit2.editortools.brush import shapes
 from mcedit2.editortools.brush.shapes import ChunkShape
 from mcedit2.handles.boxhandle import BoxHandle
 from mcedit2.rendering import cubes
@@ -16,13 +15,12 @@ from mcedit2.rendering.selection import SelectionScene, SelectionFaceNode
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.glutils import gl
 from mcedit2.rendering.depths import DepthOffset
-from mcedit2.rendering import scenegraph, rendergraph
+from mcedit2.rendering.scenegraph import scenenode, rendernode
 from mcedit2.widgets.layout import Column
 from mcedit2.widgets.shapewidget import ShapeWidget
 from mceditlib import faces
 from mceditlib.geometry import Vector
 from mceditlib.selection import BoundingBox
-from mceditlib import selection
 
 log = logging.getLogger(__name__)
 
@@ -184,7 +182,7 @@ class SelectionTool(EditorTool):
                                          None))
 
         self.cursorNode = SelectionCursor()
-        self.overlayNode = scenegraph.Node()
+        self.overlayNode = scenenode.Node()
         self.faceHoverNode = SelectionFaceNode()
         self.selectionNode = SelectionScene()
         self.overlayNode.addChild(self.selectionNode)
@@ -290,7 +288,7 @@ class SelectionTool(EditorTool):
     def createShapedSelection(self, box):
         return self.shapeInput.currentShape.createShapedSelection(box, self.editorSession.currentDimension)
 
-class SelectionCursorRenderNode(rendergraph.RenderNode):
+class SelectionCursorRenderNode(rendernode.RenderNode):
     def drawSelf(self):
         point = self.sceneNode.point
         if point is None:
@@ -315,7 +313,7 @@ class SelectionCursorRenderNode(rendergraph.RenderNode):
 
 
 
-class SelectionCursor(scenegraph.Node):
+class SelectionCursor(scenenode.Node):
     RenderNodeClass = SelectionCursorRenderNode
     def __init__(self, point=Vector(0, 0, 0), face=faces.FaceXDecreasing, color=(.3, .3, 1)):
         super(SelectionCursor, self).__init__()

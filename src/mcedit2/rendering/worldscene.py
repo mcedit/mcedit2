@@ -5,12 +5,14 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import sys
 import collections
-from OpenGL import GL
-import numpy
 import itertools
 
+from OpenGL import GL
+import numpy
+
 from mcedit2.rendering.layers import Layer
-from mcedit2.rendering import chunkupdate, scenegraph
+from mcedit2.rendering import chunkupdate
+from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering import renderstates
 from mcedit2.rendering.chunknode import ChunkNode, ChunkGroupNode
 from mcedit2.rendering.chunkupdate import ChunkRenderInfo
@@ -199,21 +201,21 @@ class SceneUpdateTask(object):
 
 
 
-class WorldScene(scenegraph.Node):
+class WorldScene(scenenode.Node):
     def __init__(self, dimension, textureAtlas=None, geometryCache=None, bounds=None):
         super(WorldScene, self).__init__()
 
         self.dimension = dimension
         self.textureAtlas = textureAtlas
-        self.depthOffsetNode = scenegraph.DepthOffsetNode(DepthOffset.Renderer)
+        self.depthOffsetNode = scenenode.DepthOffsetNode(DepthOffset.Renderer)
         self.addChild(self.depthOffsetNode)
 
-        self.textureAtlasNode = scenegraph.TextureAtlasNode(textureAtlas)
+        self.textureAtlasNode = scenenode.TextureAtlasNode(textureAtlas)
         self.depthOffsetNode.addChild(self.textureAtlasNode)
 
         self.renderstateNodes = {}
         for rsClass in renderstates.allRenderstates:
-            rsNode = scenegraph.RenderstateNode(rsClass)
+            rsNode = scenenode.RenderstateNode(rsClass)
             self.textureAtlasNode.addChild(rsNode)
             self.renderstateNodes[rsClass] = rsNode
 

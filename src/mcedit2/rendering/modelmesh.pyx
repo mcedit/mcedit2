@@ -5,10 +5,10 @@
 from __future__ import absolute_import, division, print_function
 import logging
 
-import numpy
 cimport numpy
 
-from mcedit2.rendering import renderstates, scenegraph
+from mcedit2.rendering import renderstates
+from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.layers import Layer
 from mcedit2.rendering.vertexarraybuffer import QuadVertexArrayBuffer
 cimport mcedit2.rendering.blockmodels as blockmodels
@@ -304,5 +304,5 @@ class BlockModelMesh(object):
             vertexArray = QuadVertexArrayBuffer(buffer_ptr)
             vabuffer = vertexArray.buffer
             memcpy(vabuffer.data, vertexBuffer, buffer_ptr * sizeof(float) * quadFloats)
-            self.sceneNode = scenegraph.VertexNode(vertexArray)
+            self.sceneNode = scenenode.VertexNode(vertexArray)
         free(vertexBuffer)

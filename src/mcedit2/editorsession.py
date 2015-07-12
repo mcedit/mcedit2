@@ -4,6 +4,7 @@ import os
 
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
+
 from mcedit2.rendering.blockmodels import BlockModels
 
 from mcedit2 import editortools
@@ -25,7 +26,8 @@ from mcedit2.util.showprogress import showProgress
 from mcedit2.util.undostack import MCEUndoStack
 from mcedit2.widgets.inspector import InspectorWidget
 from mcedit2.worldview.viewaction import UseToolMouseAction, TrackingMouseAction
-from mcedit2.rendering import chunkloader, scenegraph
+from mcedit2.rendering import chunkloader
+from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.geometrycache import GeometryCache
 from mcedit2.rendering.textureatlas import TextureAtlas
 from mcedit2.widgets.layout import Column, Row
@@ -307,7 +309,7 @@ class EditorSession(QtCore.QObject):
         progress("Loading textures and models...")
         self.setConfiguredBlocks(configuredBlocks)  # Must be called after resourceLoader is in place
 
-        self.editorOverlay = scenegraph.Node()
+        self.editorOverlay = scenenode.Node()
 
         self.biomeTypes = BiomeTypes()
 

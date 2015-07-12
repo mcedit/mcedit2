@@ -10,7 +10,8 @@ from mcedit2.editortools import EditorTool
 from mcedit2.command import SimplePerformCommand
 from mcedit2.editortools.brush.masklevel import FakeBrushSection
 from mcedit2.editortools.brush.modes import BrushModes
-from mcedit2.rendering import worldscene, scenegraph
+from mcedit2.rendering import worldscene
+from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.selection import SelectionBoxNode
 from mcedit2.util.load_ui import load_ui, registerCustomWidget
@@ -103,7 +104,7 @@ class BrushTool(EditorTool):
         BrushModeSetting.connectAndCall(self.modeSettingChanged)
 
         self.cursorWorldScene = None
-        self.cursorNode = scenegraph.TranslateNode()
+        self.cursorNode = scenenode.TranslateNode()
 
         self.toolWidget.xSpinSlider.setMinimum(1)
         self.toolWidget.ySpinSlider.setMinimum(1)

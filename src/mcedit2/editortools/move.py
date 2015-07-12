@@ -6,13 +6,12 @@ import logging
 
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
-from mcedit2.editorsession import PendingImport
 
+from mcedit2.editorsession import PendingImport
 from mcedit2.editortools import EditorTool
 from mcedit2.command import SimpleRevisionCommand
-from mcedit2.editortools.select import SelectionFaceNode
 from mcedit2.rendering.selection import SelectionBoxNode, SelectionFaceNode, boxFaceUnderCursor
-from mcedit2.rendering import scenegraph
+from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.worldscene import WorldScene
 from mcedit2.util.load_ui import load_ui
@@ -120,7 +119,7 @@ class CoordinateWidget(QtGui.QWidget):
         x, y, z = self.point
         self.point = Vector(x, y, value)
 
-class PendingImportNode(scenegraph.TranslateNode):
+class PendingImportNode(scenenode.TranslateNode):
     def __init__(self, pendingImport, textureAtlas):
         super(PendingImportNode, self).__init__()
         self.pendingImport = pendingImport
@@ -167,7 +166,7 @@ class MoveTool(EditorTool):
 
     def __init__(self, editorSession, *args, **kwargs):
         super(MoveTool, self).__init__(editorSession, *args, **kwargs)
-        self.overlayNode = scenegraph.Node()
+        self.overlayNode = scenenode.Node()
 
         self.loader = None
         self.dragStartFace = None

@@ -3,14 +3,17 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+
 from OpenGL import GL
 import numpy
-from mcedit2.rendering import renderstates, scenegraph
+
+from mcedit2.rendering import renderstates
+from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.blockmeshes import standardCubeTemplates
 from mcedit2.rendering.blockmeshes import ChunkMeshBase
 from mcedit2.rendering.chunkmeshes.entity import models
 from mcedit2.rendering.layers import Layer
-from mcedit2.rendering.scenegraph import PolygonModeNode, DepthFuncNode
+from mcedit2.rendering.scenegraph.scenenode import PolygonModeNode, DepthFuncNode
 from mcedit2.rendering.slices import _XYZ
 from mcedit2.rendering.vertexarraybuffer import QuadVertexArrayBuffer
 from mceditlib.anvil.entities import PCPaintingEntityRefBase
@@ -62,7 +65,7 @@ class TileEntityMesh(EntityMeshBase):
 
         tiles = self._computeVertices(tilePositions, (0xff, 0xff, 0x33, 0x44), chunkPosition=chunk.chunkPosition)
         yield
-        self.sceneNode = scenegraph.VertexNode(tiles)
+        self.sceneNode = scenenode.VertexNode(tiles)
 
 
 
@@ -108,15 +111,15 @@ class ItemFrameMesh(EntityMeshBase):
             texCorners = [(1, 1), (1, 0), (0, 0), (0, 1)]
             vertexBuffer.texcoord[:] += texCorners
 
-            vertexNode = scenegraph.VertexNode([vertexBuffer])
+            vertexNode = scenenode.VertexNode([vertexBuffer])
             if mapTex is not None:
-                bindTexNode = scenegraph.BindTextureNode(mapTex)
+                bindTexNode = scenenode.BindTextureNode(mapTex)
                 bindTexNode.addChild(vertexNode)
                 nodes.append(bindTexNode)
             else:
                 nodes.append(vertexNode)
 
-        self.sceneNode = scenegraph.Node()
+        self.sceneNode = scenenode.Node()
         for node in nodes:
             self.sceneNode.addChild(node)
 
@@ -130,7 +133,7 @@ class ItemFrameMesh(EntityMeshBase):
 
 class MonsterModelRenderer(ChunkMeshBase):
     def makeChunkVertices(self, chunk, limitBox):
-        sceneNode = scenegraph.Node()
+        sceneNode = scenenode.Node()
         for i, ref in enumerate(chunk.Entities):
             ID = ref.id
             if ID not in models.cookedModels:
@@ -150,15 +153,15 @@ class MonsterModelRenderer(ChunkMeshBase):
             vertexBuffer.vertex[:] = modelVerts[..., :3]
             vertexBuffer.texcoord[:] = modelVerts[..., 3:5]
 
-            node = scenegraph.VertexNode(vertexBuffer)
-            rotateNode = scenegraph.RotateNode(ref.Rotation[0], (0., 1., 0.))
+            node = scenenode.VertexNode(vertexBuffer)
+            rotateNode = scenenode.RotateNode(ref.Rotation[0], (0., 1., 0.))
             rotateNode.addChild(node)
-            translateNode = scenegraph.TranslateNode((ref.Position - (chunk.cx << 4, 0, chunk.cz << 4)))
+            translateNode = scenenode.TranslateNode((ref.Position - (chunk.cx << 4, 0, chunk.cz << 4)))
             translateNode.addChild(rotateNode)
 
             modelTex = self.chunkUpdate.updateTask.getModelTexture(models.textures[ID])
 
-            textureNode = scenegraph.BindTextureNode(modelTex, (1./modelTex.w, 1./modelTex.h, 1))
+            textureNode = scenenode.BindTextureNode(modelTex, (1./modelTex.w, 1./modelTex.h, 1))
             textureNode.addChild(translateNode)
             sceneNode.addChild(textureNode)
 
@@ -191,7 +194,7 @@ class MonsterRenderer(EntityMeshBase):
                                          chunkPosition=chunk.chunkPosition)
         yield
 
-        vertexNode = scenegraph.VertexNode(monsters)
+        vertexNode = scenenode.VertexNode(monsters)
         polyNode = PolygonModeNode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
         polyNode.addChild(vertexNode)
         depthNode = DepthFuncNode(GL.GL_ALWAYS)
@@ -229,5 +232,5 @@ class ItemRenderer(EntityMeshBase):
                                          numpy.array(entityColors, dtype='uint8')[:, numpy.newaxis, numpy.newaxis],
                                          offset=True, chunkPosition=chunk.chunkPosition)
         yield
-        self.sceneNode = scenegraph.VertexNode(items)
+        self.sceneNode = scenenode.VertexNode(items)
 

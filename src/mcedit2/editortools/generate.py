@@ -6,11 +6,11 @@ import logging
 import traceback
 
 from PySide import QtCore, QtGui
-from mcedit2.command import SimpleRevisionCommand
 
+from mcedit2.command import SimpleRevisionCommand
 from mcedit2.editortools import EditorTool
 from mcedit2.handles.boxhandle import BoxHandle
-from mcedit2.rendering import scenegraph
+from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.worldscene import WorldScene
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
@@ -206,9 +206,9 @@ class GenerateTool(EditorTool):
 
         self.toolWidget.setLayout(Column(*column))
 
-        self.overlayNode = scenegraph.Node()
+        self.overlayNode = scenenode.Node()
 
-        self.sceneHolderNode = scenegraph.TranslateNode()
+        self.sceneHolderNode = scenenode.TranslateNode()
         self.overlayNode.addChild(self.sceneHolderNode)
 
         self.previewNode = None
@@ -368,7 +368,7 @@ class GenerateTool(EditorTool):
 
                     if isinstance(node, list):
                         nodes = node
-                        node = scenegraph.Node()
+                        node = scenenode.Node()
                         for c in nodes:
                             node.addChild(c)
 

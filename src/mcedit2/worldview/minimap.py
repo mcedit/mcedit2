@@ -3,16 +3,20 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 from collections import namedtuple
-from OpenGL import GL
-from PySide import QtCore, QtGui
 import logging
+
+from OpenGL import GL
+
+from PySide import QtCore, QtGui
 import numpy
-from mcedit2.rendering import compass, scenegraph, rendergraph
+
+from mcedit2.rendering import compass
+from mcedit2.rendering.scenegraph import scenenode, rendernode
 from mcedit2.rendering.layers import Layer
 from mcedit2.util.glutils import gl
 from mcedit2.util.raycast import rayCastInBounds, MaxDistanceError
 from mcedit2.worldview.worldview import WorldView
-from mceditlib.geometry import Vector, Ray
+from mceditlib.geometry import Ray
 
 log = logging.getLogger(__name__)
 
@@ -27,7 +31,7 @@ class LineSegment(namedtuple("LineSegment", "p1 p2")):
         return r.atHeight(y)
 
 
-class ViewCornersRenderNode(rendergraph.RenderNode):
+class ViewCornersRenderNode(rendernode.RenderNode):
 
     #
     # Renders the intersection of a horizontal plane with the view frustum
@@ -105,7 +109,7 @@ class ViewCornersRenderNode(rendergraph.RenderNode):
             GL.glDrawArrays(GL.GL_LINE_STRIP, 0, len(points))
 
 
-class ViewCornersNode(scenegraph.Node):
+class ViewCornersNode(scenenode.Node):
     RenderNodeClass = ViewCornersRenderNode
 
     _corners = None

@@ -2,15 +2,19 @@
     selection
 """
 from __future__ import absolute_import, division, print_function
-from OpenGL import GL
-from PySide import QtCore
 import logging
+
+from OpenGL import GL
+
+from PySide import QtCore
 import numpy
-from mcedit2.rendering import scenegraph, rendergraph, cubes
+
+from mcedit2.rendering import cubes
+from mcedit2.rendering.scenegraph import scenenode, rendernode
 from mcedit2.rendering.chunknode import ChunkGroupNode, ChunkNode
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.renderstates import _RenderstateAlphaBlendNode
-from mcedit2.rendering.scenegraph import VertexNode, RenderstateNode
+from mcedit2.rendering.scenegraph.scenenode import VertexNode, RenderstateNode
 from mcedit2.rendering.vertexarraybuffer import QuadVertexArrayBuffer
 from mcedit2.util import profiler
 from mcedit2.util.glutils import gl
@@ -22,7 +26,7 @@ from mceditlib.util import exhaust
 log = logging.getLogger(__name__)
 
 
-class CullFaceRenderNode(rendergraph.RenderstateRenderNode):
+class CullFaceRenderNode(rendernode.RenderstateRenderNode):
     def enter(self):
         GL.glEnable(GL.GL_CULL_FACE)
 
@@ -92,7 +96,7 @@ class NonAirMaskSelection(SelectionBox):
 
 
 
-class SelectionScene(scenegraph.Node):
+class SelectionScene(scenenode.Node):
     def __init__(self):
         """
 
@@ -254,7 +258,7 @@ faceShades = {
     faces.FaceDown:  (0x22, 0x22, 0x77),
 }
 
-class SelectionBoxRenderNode(rendergraph.RenderNode):
+class SelectionBoxRenderNode(rendernode.RenderNode):
     def drawSelf(self):
         box = self.sceneNode.selectionBox
         if box is None:
@@ -281,7 +285,7 @@ class SelectionBoxRenderNode(rendergraph.RenderNode):
                 GL.glLineWidth(1.0)
                 cubes.drawBox(box, cubeType=GL.GL_LINES)
 
-class SelectionBoxNode(scenegraph.Node):
+class SelectionBoxNode(scenenode.Node):
     RenderNodeClass = SelectionBoxRenderNode
     _selectionBox = None
     depth = DepthOffset.Selection
@@ -327,7 +331,7 @@ class SelectionBoxNode(scenegraph.Node):
         self.dirty = True
 
 
-class SelectionFaceRenderNode(rendergraph.RenderNode):
+class SelectionFaceRenderNode(rendernode.RenderNode):
     def drawSelf(self):
         box = self.sceneNode.selectionBox
         if box is None:
@@ -349,7 +353,7 @@ class SelectionFaceRenderNode(rendergraph.RenderNode):
             cubes.drawFace(box, self.sceneNode.face)
 
 
-class SelectionFaceNode(scenegraph.Node):
+class SelectionFaceNode(scenenode.Node):
     RenderNodeClass = SelectionFaceRenderNode
     _selectionBox = None
     _face = faces.FaceYIncreasing

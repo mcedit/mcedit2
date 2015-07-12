@@ -6,11 +6,13 @@ import contextlib
 import inspect
 import os
 import tempfile
-from PySide import QtGui, QtCore
 import logging
-from PySide.QtCore import Qt
 import gc
-from mcedit2.rendering import rendergraph
+
+from PySide import QtGui, QtCore
+from PySide.QtCore import Qt
+
+from mcedit2.rendering.scenegraph import rendernode
 from mcedit2.util import settings
 from mcedit2.widgets.layout import Column, Row
 
@@ -123,7 +125,7 @@ class ObjGraphWidget(QtGui.QWidget):
             traceback.print_exc()
             return
 
-        if isinstance(obj, rendergraph.RenderNode):
+        if isinstance(obj, rendernode.RenderNode):
             def edge_func(x):
                 return x.children
         else:

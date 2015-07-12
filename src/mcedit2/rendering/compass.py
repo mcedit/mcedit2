@@ -3,8 +3,10 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+
 from OpenGL import GL
-from mcedit2.rendering import scenegraph, rendergraph
+
+from mcedit2.rendering.scenegraph import scenenode, rendernode
 from mcedit2.util.glutils import gl
 from mcedit2.util.load_png import loadPNGTexture
 
@@ -14,7 +16,7 @@ log = logging.getLogger(__name__)
 def makeQuad(minx, miny, width, height):
     return [minx, miny, minx+width, miny, minx+width, miny+height, minx, miny + height]
 
-class CompassRenderNode(rendergraph.RenderNode):
+class CompassRenderNode(rendernode.RenderNode):
     _tex = None
 
     def compile(self):
@@ -48,7 +50,7 @@ class CompassRenderNode(rendergraph.RenderNode):
                     with gl.glEnable(GL.GL_BLEND, GL.GL_TEXTURE_2D):
                         GL.glDrawArrays(GL.GL_QUADS, 0, 4)
 
-class CompassNode(scenegraph.Node):
+class CompassNode(scenenode.Node):
     _yawPitch = (0., 0.)
     RenderNodeClass = CompassRenderNode
     def __init__(self, small=False):

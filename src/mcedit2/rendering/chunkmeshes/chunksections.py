@@ -3,9 +3,12 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+
 from OpenGL import GL
 import numpy
-from mcedit2.rendering import renderstates, scenegraph
+
+from mcedit2.rendering import renderstates
+from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.blockmeshes import standardCubeTemplates
 from mcedit2.rendering.blockmeshes import ChunkMeshBase
 from mcedit2.rendering.layers import Layer
@@ -32,6 +35,6 @@ class ChunkSectionsRenderer(ChunkMeshBase):
             buffer.buffer[i, :] = self.vertexTemplate
             buffer.vertex[i, ..., 1] += cy * 16
 
-        self.sceneNode = scenegraph.VertexNode(buffer)
+        self.sceneNode = scenenode.VertexNode(buffer)
 
         yield

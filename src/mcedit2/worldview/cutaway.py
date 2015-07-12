@@ -7,7 +7,8 @@ import logging
 
 from PySide import QtGui
 
-from mcedit2.rendering import worldscene, scenegraph
+from mcedit2.rendering import worldscene
+from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.util import profiler
 from mcedit2.widgets.layout import Column, Row
 from mcedit2.worldview.viewcontrols import ViewControls
@@ -17,7 +18,6 @@ from mcedit2.worldview.viewaction import ViewAction, MoveViewMouseAction
 from mceditlib import faces
 from mceditlib.geometry import Vector
 from mceditlib.selection import BoundingBox
-
 
 log = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ def CutawayWorldViewFrame(dimension, textureAtlas, geometryCache, sharedGLWidget
     return viewFrame
 
 
-class SlicedWorldScene(scenegraph.Node):
+class SlicedWorldScene(scenenode.Node):
     def __init__(self, dimension, textureAtlas):
         super(SlicedWorldScene, self).__init__()
         self.sliceScenes = {}

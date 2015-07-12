@@ -3,8 +3,11 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+
 import numpy
-from mcedit2.rendering import renderstates, scenegraph
+
+from mcedit2.rendering import renderstates
+from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.blockmeshes import standardCubeTemplates
 from mcedit2.rendering.blockmeshes import ChunkMeshBase
 from mcedit2.rendering.layers import Layer
@@ -86,6 +89,6 @@ class TerrainPopulatedRenderer(ChunkMeshBase):
         verts = self.vertexTemplate[visibleFaces]
         buffer = QuadVertexArrayBuffer(0, textures=False, lights=False)
         buffer.buffer = verts
-        self.sceneNode = scenegraph.VertexNode(buffer)
+        self.sceneNode = scenenode.VertexNode(buffer)
 
         yield

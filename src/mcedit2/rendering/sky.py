@@ -7,13 +7,13 @@ import logging
 from OpenGL import GL
 import numpy
 
-from mcedit2.rendering import scenegraph, rendergraph
+from mcedit2.rendering.scenegraph import scenenode, rendernode
 from mcedit2.util.glutils import gl
 
 log = logging.getLogger(__name__)
 
 
-class SkyRenderNode(rendergraph.RenderNode):
+class SkyRenderNode(rendernode.RenderNode):
     def drawSelf(self):
         with gl.glPushMatrix(GL.GL_MODELVIEW):
             GL.glLoadIdentity()
@@ -35,5 +35,5 @@ class SkyRenderNode(rendergraph.RenderNode):
                         GL.glDrawArrays(GL.GL_QUADS, 0, 4)
 
 
-class SkyNode(scenegraph.Node):
+class SkyNode(scenenode.Node):
     RenderNodeClass = SkyRenderNode

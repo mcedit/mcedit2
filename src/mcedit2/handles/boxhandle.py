@@ -3,9 +3,11 @@
 """
 from __future__ import absolute_import, division, print_function
 import logging
+
 from PySide import QtCore
 import numpy
-from mcedit2.rendering import scenegraph
+
+from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.selection import SelectionBoxNode, SelectionFaceNode, boxFaceUnderCursor
 from mceditlib import faces
 from mceditlib.selection import BoundingBox
@@ -13,7 +15,7 @@ from mceditlib.selection import BoundingBox
 log = logging.getLogger(__name__)
 
 
-class BoxHandle(scenegraph.Node, QtCore.QObject):
+class BoxHandle(scenenode.Node, QtCore.QObject):
     # The face that was clicked on
     dragResizeFace = None
 

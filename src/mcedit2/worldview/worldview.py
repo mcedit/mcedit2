@@ -11,6 +11,7 @@ import itertools
 from OpenGL import GL
 from PySide import QtCore, QtGui
 from PySide.QtCore import Qt
+
 from PySide.QtOpenGL import QGLWidget
 import numpy
 
@@ -21,13 +22,13 @@ from mcedit2.rendering.geometrycache import GeometryCache
 from mcedit2.rendering.layers import Layer
 from mcedit2.rendering.textureatlas import TextureAtlas
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
-from mcedit2.rendering import scenegraph, rendergraph
+from mcedit2.rendering.scenegraph import scenenode, rendernode
 from mcedit2.util import profiler, raycast
 from mcedit2.util.mimeformats import MimeFormats
 from mcedit2.util.qglcontext import validateQGLContext
 from mcedit2.util.settings import Settings
 from mcedit2.widgets.infopanel import InfoPanel
-from mceditlib import faces, exceptions
+from mceditlib import faces
 from mceditlib.geometry import Vector, Ray
 from mceditlib.exceptions import LevelFormatError, ChunkNotPresent
 from mceditlib.util import displayName
@@ -44,7 +45,7 @@ def worldMeshVertexSize(worldMesh):
         for cm in worldMesh.chunkGroupNode.children:
             assert isinstance(cm, ChunkNode)
             for bm in cm.getChunkVertexNodes():
-                assert isinstance(bm, scenegraph.VertexNode)
+                assert isinstance(bm, scenenode.VertexNode)
                 for va in bm.vertexArrays:
                     assert isinstance(va, VertexArrayBuffer)
                     yield va.buffer.nbytes
@@ -116,7 +117,7 @@ class WorldView(QGLWidget):
         self.autoUpdateInterval = 0.5  # frequency of screen redraws in response to loaded chunks
 
         self.compassNode = self.createCompass()
-        self.compassOrthoNode = scenegraph.OrthoNode((1, float(self.height()) / self.width()))
+        self.compassOrthoNode = scenenode.OrthoNode((1, float(self.height()) / self.width()))
         self.compassOrthoNode.addChild(self.compassNode)
 
         self.viewActions = []
@@ -131,7 +132,7 @@ class WorldView(QGLWidget):
         self.geometryCache = geometryCache
 
         self.matrixNode = None
-        self.overlayNode = scenegraph.Node()
+        self.overlayNode = scenenode.Node()
 
         self.sceneGraph = None
         self.renderGraph = None
@@ -183,7 +184,7 @@ class WorldView(QGLWidget):
         if self.renderGraph:
             self.renderGraph.destroy()
         self.sceneGraph = self.createSceneGraph()
-        self.renderGraph = rendergraph.createRenderNode(self.sceneGraph)
+        self.renderGraph = rendernode.createRenderNode(self.sceneGraph)
         self.resetLoadOrder()
         self.update()
 
@@ -214,15 +215,15 @@ class WorldView(QGLWidget):
         return worldscene.WorldScene(self.dimension, self.textureAtlas, self.geometryCache)
 
     def createSceneGraph(self):
-        sceneGraph = scenegraph.Node()
+        sceneGraph = scenenode.Node()
         self.worldScene = self.createWorldScene()
         self.worldScene.setVisibleLayers(self.layerToggleGroup.getVisibleLayers())
 
-        clearNode = scenegraph.ClearNode()
+        clearNode = scenenode.ClearNode()
         skyNode = sky.SkyNode()
         self.loadableChunksNode = loadablechunks.LoadableChunksNode(self.dimension)
 
-        self.matrixNode = scenegraph.MatrixNode()
+        self.matrixNode = scenenode.MatrixNode()
         self._updateMatrices()
 
         self.matrixNode.addChild(self.loadableChunksNode)
@@ -526,7 +527,7 @@ class WorldView(QGLWidget):
             self.frameSamples.append(time.time())
 
             with profiler.context("renderScene"):
-                rendergraph.renderScene(self.renderGraph)
+                rendernode.renderScene(self.renderGraph)
 
 
 

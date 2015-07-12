@@ -6,8 +6,7 @@ import logging
 
 from mcedit2.editortools import EditorTool
 from mcedit2.rendering.selection import SelectionBoxNode
-from mcedit2.widgets.nbttree.nbttreemodel import NBTTreeModel
-from mcedit2.rendering import scenegraph
+from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.util.load_ui import load_ui
 
 
@@ -39,7 +38,7 @@ class ChunkTool(EditorTool):
 
         self.currentChunk = None
         self.selectionNode = None
-        self.overlayNode = scenegraph.Node()
+        self.overlayNode = scenenode.Node()
         self.updateChunkWidget()
         self.updateNBTView()
 

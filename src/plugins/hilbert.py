@@ -4,21 +4,18 @@
 """
 from __future__ import absolute_import, division, print_function
 import logging
-from math import pi, cos, sin
+import math
+
 from OpenGL import GL
 from PySide import QtGui
-import math
-from mcedit2.plugins import registerGeneratePlugin
-from mcedit2.rendering.scenegraph import VertexNode
-from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 
-from mcedit2.synth.l_system import Geometric, Line, Symbol
+from mcedit2.plugins import registerGeneratePlugin
+from mcedit2.rendering.scenegraph.scenenode import VertexNode
+from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
+from mcedit2.synth.l_system import Geometric, Symbol
 from mcedit2.synth.l_system_plugin import LSystemPlugin
 from mcedit2.util import bresenham
 from mcedit2.widgets.blockpicker import BlockTypeButton
-from mceditlib import faces
-from mceditlib.geometry import Vector
-
 
 log = logging.getLogger(__name__)
 """

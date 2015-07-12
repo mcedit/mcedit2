@@ -6,21 +6,21 @@ import logging
 
 from OpenGL import GL
 
-from mcedit2.rendering import rendergraph
+from mcedit2.rendering.scenegraph import rendernode
 from mcedit2.rendering.depths import DepthOffset
 
 log = logging.getLogger(__name__)
 
 
 
-class RenderstatePlainNode(rendergraph.RenderstateRenderNode):
+class RenderstatePlainNode(rendernode.RenderstateRenderNode):
     def enter(self):
         pass
 
     def exit(self):
         pass
 
-class RenderstateVinesNode(rendergraph.RenderstateRenderNode):
+class RenderstateVinesNode(rendernode.RenderstateRenderNode):
     def enter(self):
         GL.glPushAttrib(GL.GL_ENABLE_BIT)
         GL.glDisable(GL.GL_CULL_FACE)
@@ -29,7 +29,7 @@ class RenderstateVinesNode(rendergraph.RenderstateRenderNode):
     def exit(self):
         GL.glPopAttrib()
 
-class RenderstateLowDetailNode(rendergraph.RenderstateRenderNode):
+class RenderstateLowDetailNode(rendernode.RenderstateRenderNode):
     def enter(self):
         GL.glPushAttrib(GL.GL_ENABLE_BIT)
         GL.glDisable(GL.GL_CULL_FACE)
@@ -38,7 +38,7 @@ class RenderstateLowDetailNode(rendergraph.RenderstateRenderNode):
     def exit(self):
         GL.glPopAttrib()
 
-class RenderstateAlphaTestNode(rendergraph.RenderstateRenderNode):
+class RenderstateAlphaTestNode(rendernode.RenderstateRenderNode):
     def enter(self):
         GL.glPushAttrib(GL.GL_ENABLE_BIT)
         GL.glEnable(GL.GL_ALPHA_TEST)
@@ -46,7 +46,7 @@ class RenderstateAlphaTestNode(rendergraph.RenderstateRenderNode):
     def exit(self):
         GL.glPopAttrib()
 
-class _RenderstateAlphaBlendNode(rendergraph.RenderstateRenderNode):
+class _RenderstateAlphaBlendNode(rendernode.RenderstateRenderNode):
     def enter(self):
         GL.glPushAttrib(GL.GL_ENABLE_BIT)
         GL.glEnable(GL.GL_BLEND)
@@ -60,7 +60,7 @@ class RenderstateWaterNode(_RenderstateAlphaBlendNode):
 class RenderstateIceNode(_RenderstateAlphaBlendNode):
     pass
 
-class RenderstateEntityNode(rendergraph.RenderstateRenderNode):
+class RenderstateEntityNode(rendernode.RenderstateRenderNode):
     def enter(self):
         GL.glPushAttrib(GL.GL_ENABLE_BIT | GL.GL_POLYGON_BIT)
         GL.glPolygonOffset(DepthOffset.Renderer-1, DepthOffset.Renderer-1)

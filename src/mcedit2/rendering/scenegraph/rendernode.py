@@ -389,7 +389,7 @@ class DepthOffsetRenderNode(RenderstateRenderNode):
 def updateRenderNode(renderNode):
     """
 
-    :type renderNode: mcedit2.rendering.rendergraph.RenderNode
+    :type renderNode: mcedit2.rendering.rendernode.RenderNode
     """
     sceneNode = renderNode.sceneNode
 
@@ -406,7 +406,7 @@ def createRenderNode(sceneNode):
     """
 
     :type sceneNode: Node
-    :rtype: mcedit2.rendering.rendergraph.RenderNode
+    :rtype: mcedit2.rendering.rendernode.RenderNode
     """
     renderNode = sceneNode.RenderNodeClass(sceneNode)
     updateChildren(renderNode)
@@ -416,7 +416,7 @@ def createRenderNode(sceneNode):
 def updateChildren(renderNode):
     """
 
-    :type renderNode: mcedit2.rendering.rendergraph.RenderNode
+    :type renderNode: mcedit2.rendering.rendernode.RenderNode
     :return:
     :rtype:
     """

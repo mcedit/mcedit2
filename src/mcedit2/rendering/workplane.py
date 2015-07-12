@@ -3,19 +3,21 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+
 from OpenGL import GL
-from mcedit2.rendering import scenegraph, rendergraph
+
+from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 
 log = logging.getLogger(__name__)
 
 
 
-class WorkplaneNode(scenegraph.Node):
+class WorkplaneNode(scenenode.Node):
 
     def __init__(self):
         super(WorkplaneNode, self).__init__()
-        self.translateNode = scenegraph.TranslateNode()
+        self.translateNode = scenenode.TranslateNode()
         self.addChild(self.translateNode)
         self.axis = 1
 
@@ -65,7 +67,7 @@ class WorkplaneNode(scenegraph.Node):
 
         if self.vertexNode:
             self.translateNode.removeChild(self.vertexNode)
-        self.vertexNode = scenegraph.VertexNode([gridArrayBuffer])
+        self.vertexNode = scenenode.VertexNode([gridArrayBuffer])
         self.translateNode.addChild(self.vertexNode)
 
     @property

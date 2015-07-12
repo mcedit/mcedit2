@@ -8,13 +8,13 @@ import logging
 import numpy
 from OpenGL import GL
 
-from mcedit2.rendering import scenegraph, rendergraph
+from mcedit2.rendering.scenegraph import scenenode, rendernode
 from mcedit2.util.glutils import Texture, gl
 from mcedit2.rendering.depths import DepthOffset
 
 log = logging.getLogger(__name__)
 
-class LoadableChunksRenderNode(rendergraph.RenderNode):
+class LoadableChunksRenderNode(rendernode.RenderNode):
 
     def drawSelf(self):
         with gl.glPushAttrib(GL.GL_FOG_BIT | GL.GL_ENABLE_BIT):
@@ -47,7 +47,7 @@ class LoadableChunksRenderNode(rendergraph.RenderNode):
         return self._floorTexture
 
 
-class LoadableChunksNode(scenegraph.Node):
+class LoadableChunksNode(scenenode.Node):
     skipLargeLevels = False
     RenderNodeClass = LoadableChunksRenderNode
 
