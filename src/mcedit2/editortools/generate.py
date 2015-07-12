@@ -11,7 +11,7 @@ from mcedit2.command import SimpleRevisionCommand
 from mcedit2.editortools import EditorTool
 from mcedit2.handles.boxhandle import BoxHandle
 from mcedit2.rendering.scenegraph import scenenode
-import mcedit2.rendering.scenegraph.matrix
+from mcedit2.rendering.scenegraph.matrix import TranslateNode
 from mcedit2.rendering.worldscene import WorldScene
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
@@ -209,7 +209,7 @@ class GenerateTool(EditorTool):
 
         self.overlayNode = scenenode.Node()
 
-        self.sceneHolderNode = mcedit2.rendering.scenegraph.matrix.TranslateNode()
+        self.sceneHolderNode = TranslateNode()
         self.overlayNode.addChild(self.sceneHolderNode)
 
         self.previewNode = None

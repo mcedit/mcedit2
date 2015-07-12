@@ -4,15 +4,15 @@
 from __future__ import absolute_import, division, print_function
 import logging
 
-from mcedit2.rendering.scenegraph import scenenode, rendernode
-import mcedit2.rendering.scenegraph.matrix
+from mcedit2.rendering.scenegraph import scenenode
+from mcedit2.rendering.scenegraph.matrix import TranslateRenderNode
 from mcedit2.rendering.scenegraph.scenenode import NamedChildrenNode
-
 
 log = logging.getLogger(__name__)
 
+
 class ChunkNode(scenenode.Node):
-    RenderNodeClass = mcedit2.rendering.scenegraph.matrix.TranslateRenderNode
+    RenderNodeClass = TranslateRenderNode
 
     def __init__(self, chunkPosition):
         """

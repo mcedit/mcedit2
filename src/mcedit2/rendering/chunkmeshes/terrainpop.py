@@ -11,7 +11,7 @@ from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.blockmeshes import standardCubeTemplates
 from mcedit2.rendering.blockmeshes import ChunkMeshBase
 from mcedit2.rendering.layers import Layer
-import mcedit2.rendering.scenegraph.vertex_array
+from mcedit2.rendering.scenegraph.vertex_array import VertexNode
 from mcedit2.rendering.slices import _XYZ, _RGBA
 from mcedit2.rendering.vertexarraybuffer import QuadVertexArrayBuffer
 from mceditlib import faces
@@ -90,6 +90,6 @@ class TerrainPopulatedRenderer(ChunkMeshBase):
         verts = self.vertexTemplate[visibleFaces]
         buffer = QuadVertexArrayBuffer(0, textures=False, lights=False)
         buffer.buffer = verts
-        self.sceneNode = mcedit2.rendering.scenegraph.vertex_array.VertexNode(buffer)
+        self.sceneNode = VertexNode(buffer)
 
         yield

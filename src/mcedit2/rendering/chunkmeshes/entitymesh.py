@@ -13,11 +13,11 @@ from mcedit2.rendering.blockmeshes import standardCubeTemplates
 from mcedit2.rendering.blockmeshes import ChunkMeshBase
 from mcedit2.rendering.chunkmeshes.entity import models
 from mcedit2.rendering.layers import Layer
-import mcedit2.rendering.scenegraph.bind_texture
-import mcedit2.rendering.scenegraph.matrix
+from mcedit2.rendering.scenegraph.bind_texture import BindTextureNode
+from mcedit2.rendering.scenegraph.matrix import TranslateNode, RotateNode
 from mcedit2.rendering.scenegraph.misc import PolygonModeNode
 from mcedit2.rendering.scenegraph.depth_test import DepthFuncNode
-import mcedit2.rendering.scenegraph.vertex_array
+from mcedit2.rendering.scenegraph.vertex_array import VertexNode
 from mcedit2.rendering.slices import _XYZ
 from mcedit2.rendering.vertexarraybuffer import QuadVertexArrayBuffer
 from mceditlib.anvil.entities import PCPaintingEntityRefBase
@@ -69,7 +69,7 @@ class TileEntityMesh(EntityMeshBase):
 
         tiles = self._computeVertices(tilePositions, (0xff, 0xff, 0x33, 0x44), chunkPosition=chunk.chunkPosition)
         yield
-        self.sceneNode = mcedit2.rendering.scenegraph.vertex_array.VertexNode(tiles)
+        self.sceneNode = VertexNode(tiles)
 
 
 
@@ -115,9 +115,9 @@ class ItemFrameMesh(EntityMeshBase):
             texCorners = [(1, 1), (1, 0), (0, 0), (0, 1)]
             vertexBuffer.texcoord[:] += texCorners
 
-            vertexNode = mcedit2.rendering.scenegraph.vertex_array.VertexNode([vertexBuffer])
+            vertexNode = VertexNode([vertexBuffer])
             if mapTex is not None:
-                bindTexNode = mcedit2.rendering.scenegraph.bind_texture.BindTextureNode(mapTex)
+                bindTexNode = BindTextureNode(mapTex)
                 bindTexNode.addChild(vertexNode)
                 nodes.append(bindTexNode)
             else:
@@ -157,15 +157,15 @@ class MonsterModelRenderer(ChunkMeshBase):
             vertexBuffer.vertex[:] = modelVerts[..., :3]
             vertexBuffer.texcoord[:] = modelVerts[..., 3:5]
 
-            node = mcedit2.rendering.scenegraph.vertex_array.VertexNode(vertexBuffer)
-            rotateNode = mcedit2.rendering.scenegraph.matrix.RotateNode(ref.Rotation[0], (0., 1., 0.))
+            node = VertexNode(vertexBuffer)
+            rotateNode = RotateNode(ref.Rotation[0], (0., 1., 0.))
             rotateNode.addChild(node)
-            translateNode = mcedit2.rendering.scenegraph.matrix.TranslateNode((ref.Position - (chunk.cx << 4, 0, chunk.cz << 4)))
+            translateNode = TranslateNode((ref.Position - (chunk.cx << 4, 0, chunk.cz << 4)))
             translateNode.addChild(rotateNode)
 
             modelTex = self.chunkUpdate.updateTask.getModelTexture(models.textures[ID])
 
-            textureNode = mcedit2.rendering.scenegraph.bind_texture.BindTextureNode(modelTex, (1./modelTex.w, 1./modelTex.h, 1))
+            textureNode = BindTextureNode(modelTex, (1./modelTex.w, 1./modelTex.h, 1))
             textureNode.addChild(translateNode)
             sceneNode.addChild(textureNode)
 
@@ -198,7 +198,7 @@ class MonsterRenderer(EntityMeshBase):
                                          chunkPosition=chunk.chunkPosition)
         yield
 
-        vertexNode = mcedit2.rendering.scenegraph.vertex_array.VertexNode(monsters)
+        vertexNode = VertexNode(monsters)
         polyNode = PolygonModeNode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
         polyNode.addChild(vertexNode)
         depthNode = DepthFuncNode(GL.GL_ALWAYS)
@@ -236,5 +236,5 @@ class ItemRenderer(EntityMeshBase):
                                          numpy.array(entityColors, dtype='uint8')[:, numpy.newaxis, numpy.newaxis],
                                          offset=True, chunkPosition=chunk.chunkPosition)
         yield
-        self.sceneNode = mcedit2.rendering.scenegraph.vertex_array.VertexNode(items)
+        self.sceneNode = VertexNode(items)
 
