@@ -9,7 +9,7 @@ from mcedit2.rendering import renderstates, scenegraph
 from mcedit2.rendering.blockmeshes import standardCubeTemplates
 from mcedit2.rendering.blockmeshes import ChunkMeshBase
 from mcedit2.rendering.layers import Layer
-from mcedit2.rendering.scenegraph import PolygonModeNode
+from mcedit2.rendering.scenegraph import PolygonModeNode, DepthFuncNode
 from mcedit2.rendering.slices import _XYZ
 from mcedit2.rendering.vertexarraybuffer import QuadVertexArrayBuffer
 from mceditlib.anvil.entities import PCPaintingEntityRefBase
@@ -151,8 +151,12 @@ class MonsterRenderer(EntityMeshBase):
         yield
 
         vertexNode = scenegraph.VertexNode(monsters)
-        self.sceneNode = PolygonModeNode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
-        self.sceneNode.addChild(vertexNode)
+        polyNode = PolygonModeNode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
+        polyNode.addChild(vertexNode)
+        depthNode = DepthFuncNode(GL.GL_ALWAYS)
+        depthNode.addChild(polyNode)
+
+        self.sceneNode = depthNode
 
 
 
