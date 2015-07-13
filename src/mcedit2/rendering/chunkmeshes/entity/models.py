@@ -8,6 +8,7 @@ import numpy
 from mcedit2.rendering.chunkmeshes.entity.biped import ModelZombie, ModelSkeleton, \
     ModelPigZombie
 from mcedit2.rendering.chunkmeshes.entity.creeper import ModelCreeper
+from mcedit2.rendering.chunkmeshes.entity.quadruped import ModelPig, ModelCow, ModelSheep
 from mcedit2.rendering.chunkmeshes.entity.spider import ModelSpider
 
 log = logging.getLogger(__name__)
@@ -22,7 +23,8 @@ def makeQuad(c1, c2, c3, c4, u1, v1, u2, v2):
     ]
 
 
-def makeBoxQuads(u, v, box):
+def makeBoxQuads(box):
+    u, v = box.u, box.v
     x, y, z = box.x, box.y, box.z
     x2, y2, z2 = box.x2, box.y2, box.z2
     expandOffset = box.expandOffset
@@ -48,12 +50,23 @@ def makeBoxQuads(u, v, box):
     dx, dy, dz = box.dx, box.dy, box.dz
 
     quadArgs = [
-        (x2yz2, x2yz, x2y2z, x2y2z2,   u + dz + dx,        v + dz, u + dz + dx + dz,       v + dz + dy),
-        (xyz, xyz2, xy2z2, xy2z,       u,                  v + dz, u + dz,                 v + dz + dy),
-        (x2yz2, xyz2, xyz, x2yz,       u + dz,             v,      u + dz + dx,            v + dz     ),
-        (x2y2z, xy2z, xy2z2, x2y2z2,   u + dz + dx,        v + dz, u + dz + dx + dx,       v          ),
-        (x2yz, xyz, xy2z, x2y2z,       u + dz,             v + dz, u + dz + dx,            v + dz + dy),
-        (xyz2, x2yz2, x2y2z2, xy2z2,   u + dz + dx + dz,   v + dz, u + dz + dx + dz + dx,  v + dz + dy),
+        (x2yz2, x2yz, x2y2z, x2y2z2,
+         u + dz + dx,        v + dz, u + dz + dx + dz,       v + dz + dy),
+
+        (xyz, xyz2, xy2z2, xy2z,
+         u,                  v + dz, u + dz,                 v + dz + dy),
+
+        (x2yz2, xyz2, xyz, x2yz,
+         u + dz,             v,      u + dz + dx,            v + dz),
+
+        (x2y2z, xy2z, xy2z2, x2y2z2,
+         u + dz + dx,        v + dz, u + dz + dx + dx,       v),
+
+        (x2yz, xyz, xy2z, x2y2z,
+         u + dz,             v + dz, u + dz + dx,            v + dz + dy),
+
+        (xyz2, x2yz2, x2y2z2, xy2z2,
+         u + dz + dx + dz,   v + dz, u + dz + dx + dz + dx,  v + dz + dy),
     ]
     quads = []
     for a in quadArgs:
@@ -98,12 +111,11 @@ def cookEntityModel(model):
     allVerts = []
     for part in model.parts:
         partVerts = []
-        u, v = part.u, part.v
         for box in part.boxes:
-            partVerts.extend(makeBoxQuads(u, v, box))
+            partVerts.extend(makeBoxQuads(box))
 
-        cx, cy, cz = part.centerPoint
-        rx, ry, rz = part.rotation
+        cx, cy, cz = part.cx, part.cy, part.cz
+        rx, ry, rz = part.rx, part.ry, part.rz
         partMatrix = numpy.identity(4)
         if ry:
             partMatrix = npRotate("y", ry) * partMatrix
@@ -133,7 +145,10 @@ addModel(ModelZombie())
 addModel(ModelSkeleton())
 addModel(ModelPigZombie())
 addModel(ModelSpider())
+addModel(ModelPig())
+addModel(ModelCow())
+addModel(ModelSheep())
 
 if __name__ == '__main__':
     from pprint import pprint
-    pprint(cookedModels["Spider"])
+    pprint(cookedModels["Sheep"])

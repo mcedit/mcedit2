@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 class ModelBox(collections.namedtuple(
     'ModelBox',
-    'x y z w h l expandOffset mirror',
+    'u v x y z w h l expandOffset mirror',
 )):
 
     @property
@@ -45,16 +45,19 @@ class ModelRenderer(object):
         self.u = u
         self.v = v
         self.mirror = False
-        self.centerPoint = 0, 0, 0
-        self.rotation = 0, 0, 0
+        self.cx, self.cy, self.cz = 0, 0, 0
+        self.rx, self.ry, self.rz = 0, 0, 0
 
     def addBox(self, x, y, z, w, h, l, expandOffset=0.0, mirror=None):
         if mirror is None:
             mirror = self.mirror
-        self.boxes.append(ModelBox(x, y, z, w, h, l, expandOffset, mirror))
+        self.boxes.append(ModelBox(self.u, self.v, x, y, z, w, h, l, expandOffset, mirror))
 
     def setCenterPoint(self, x, y, z):
-        self.centerPoint = x, y, z
+        self.cx, self.cy, self.cz = x, y, z
 
     def setRotation(self, rx, ry, rz):
-        self.rotation = rx, ry, rz
+        self.rx, self.ry, self.rz = rx, ry, rz
+
+    def setTextureOffset(self, u, v):
+        self.u, self.v = u, v
