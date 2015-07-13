@@ -87,6 +87,7 @@ class ModelCow(ModelQuadruped):
 
 
 class ModelSheepWool(ModelQuadruped):
+    id = "MCEDIT_SheepWool"  # eww
     modelTexture = "assets/minecraft/textures/entity/sheep/sheep_fur.png"
     
     def __init__(self):

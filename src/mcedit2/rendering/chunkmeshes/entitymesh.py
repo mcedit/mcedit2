@@ -135,6 +135,29 @@ class ItemFrameMesh(EntityMeshBase):
     }
 
 
+def entityModelNode(ref, model, modelTex, chunk):
+    modelVerts = numpy.array(model.vertices)
+    modelVerts.shape = modelVerts.shape[0]/4, 4, modelVerts.shape[1]
+    # scale down
+    modelVerts[..., :3] *= 1/16.
+    modelVerts[..., 1] = -modelVerts[..., 1] + 1.5 + 1/64.
+    modelVerts[..., 0] = -modelVerts[..., 0]
+
+    vertexBuffer = QuadVertexArrayBuffer(len(modelVerts), lights=False, textures=True)
+    vertexBuffer.vertex[:] = modelVerts[..., :3]
+    vertexBuffer.texcoord[:] = modelVerts[..., 3:5]
+
+    node = VertexNode(vertexBuffer)
+    rotateNode = RotateNode(ref.Rotation[0], (0., 1., 0.))
+    rotateNode.addChild(node)
+    translateNode = TranslateNode((ref.Position - (chunk.cx << 4, 0, chunk.cz << 4)))
+    translateNode.addChild(rotateNode)
+
+    textureNode = BindTextureNode(modelTex, (1./model.texWidth, 1./model.texHeight, 1))
+    textureNode.addChild(translateNode)
+    return textureNode
+
+
 class MonsterModelRenderer(ChunkMeshBase):
     def makeChunkVertices(self, chunk, limitBox):
         sceneNode = scenenode.Node()
@@ -145,29 +168,17 @@ class MonsterModelRenderer(ChunkMeshBase):
                 ID = "Creeper"
 
             model = models.cookedModels[ID]
-
-            modelVerts = numpy.array(model.vertices)
-            modelVerts.shape = modelVerts.shape[0]/4, 4, modelVerts.shape[1]
-            # scale down
-            modelVerts[..., :3] *= 1/16.
-            modelVerts[..., 1] = -modelVerts[..., 1] + 1.5 + 1/64.
-            modelVerts[..., 0] = -modelVerts[..., 0]
-
-            vertexBuffer = QuadVertexArrayBuffer(len(modelVerts), lights=False, textures=True)
-            vertexBuffer.vertex[:] = modelVerts[..., :3]
-            vertexBuffer.texcoord[:] = modelVerts[..., 3:5]
-
-            node = VertexNode(vertexBuffer)
-            rotateNode = RotateNode(ref.Rotation[0], (0., 1., 0.))
-            rotateNode.addChild(node)
-            translateNode = TranslateNode((ref.Position - (chunk.cx << 4, 0, chunk.cz << 4)))
-            translateNode.addChild(rotateNode)
-
             modelTex = self.chunkUpdate.updateTask.getModelTexture(models.textures[ID])
 
-            textureNode = BindTextureNode(modelTex, (1./model.texWidth, 1./model.texHeight, 1))
-            textureNode.addChild(translateNode)
-            sceneNode.addChild(textureNode)
+            node = entityModelNode(ref, model, modelTex, chunk)
+            sceneNode.addChild(node)
+            if ID == "Sheep":
+                woolID = "MCEDIT_SheepWool"
+                model = models.cookedModels[woolID]
+                modelTex = self.chunkUpdate.updateTask.getModelTexture(models.textures[woolID])
+
+                node = entityModelNode(ref, model, modelTex, chunk)
+                sceneNode.addChild(node)
 
             yield
 

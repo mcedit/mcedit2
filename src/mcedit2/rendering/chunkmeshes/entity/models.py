@@ -9,7 +9,8 @@ import numpy
 from mcedit2.rendering.chunkmeshes.entity.biped import ModelZombie, ModelSkeleton, \
     ModelPigZombie
 from mcedit2.rendering.chunkmeshes.entity.creeper import ModelCreeper
-from mcedit2.rendering.chunkmeshes.entity.quadruped import ModelPig, ModelCow, ModelSheep
+from mcedit2.rendering.chunkmeshes.entity.quadruped import ModelPig, ModelCow, ModelSheep, \
+    ModelSheepWool
 from mcedit2.rendering.chunkmeshes.entity.spider import ModelSpider
 
 log = logging.getLogger(__name__)
@@ -150,6 +151,7 @@ addModel(ModelSpider())
 addModel(ModelPig())
 addModel(ModelCow())
 addModel(ModelSheep())
+addModel(ModelSheepWool())
 
 if __name__ == '__main__':
     from pprint import pprint
