@@ -146,7 +146,7 @@ class MonsterModelRenderer(ChunkMeshBase):
 
             model = models.cookedModels[ID]
 
-            modelVerts = numpy.array(model)
+            modelVerts = numpy.array(model.vertices)
             modelVerts.shape = modelVerts.shape[0]/4, 4, modelVerts.shape[1]
             # scale down
             modelVerts[..., :3] *= 1/16.
@@ -165,7 +165,7 @@ class MonsterModelRenderer(ChunkMeshBase):
 
             modelTex = self.chunkUpdate.updateTask.getModelTexture(models.textures[ID])
 
-            textureNode = BindTextureNode(modelTex, (1./modelTex.w, 1./modelTex.h, 1))
+            textureNode = BindTextureNode(modelTex, (1./model.texWidth, 1./model.texHeight, 1))
             textureNode.addChild(translateNode)
             sceneNode.addChild(textureNode)
 

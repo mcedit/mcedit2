@@ -2,6 +2,7 @@
     models
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
+import collections
 import logging
 import math
 import numpy
@@ -107,6 +108,8 @@ def npRotate(axis, angle, rescale=False):
     # xxx rescale
     return rotate
 
+CookedModel = collections.namedtuple('CookedModel', 'vertices texWidth texHeight')
+
 def cookEntityModel(model):
     allVerts = []
     for part in model.parts:
@@ -130,11 +133,10 @@ def cookEntityModel(model):
 
             allVerts.append((x+cx, y+cy, z+cz, u, v))
 
-    return allVerts
+    return CookedModel(allVerts, model.textureWidth, model.textureHeight)
 
 cookedModels = {}
 textures = {}
-
 
 def addModel(model):
     cookedModels[model.id] = cookEntityModel(model)

@@ -9,6 +9,9 @@ log = logging.getLogger(__name__)
 
 
 class ModelCreeper(object):
+    textureWidth = 64
+    textureHeight = 32
+
     modelTexture = "assets/minecraft/textures/entity/creeper/creeper.png"
     id = "Creeper"
 

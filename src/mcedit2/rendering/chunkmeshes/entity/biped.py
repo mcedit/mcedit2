@@ -8,6 +8,9 @@ from mcedit2.rendering.chunkmeshes.entity.modelrenderer import ModelRenderer
 log = logging.getLogger(__name__)
 
 class ModelBiped(object):
+    textureWidth = 64
+    textureHeight = 32
+
     def __init__(self, expandOffset=0.0, headOffset=0.0):
         self.bipedHead = ModelRenderer(self, 0, 0)
         self.bipedHead.addBox(-4.0, -8.0, -4.0, 8, 8, 8, expandOffset)
@@ -48,11 +51,17 @@ class ModelBiped(object):
 
 
 class ModelZombie(ModelBiped):
+    textureWidth = 64
+    textureHeight = 64
+
     modelTexture = "assets/minecraft/textures/entity/zombie/zombie.png"
     id = "Zombie"
 
 
 class ModelPigZombie(ModelBiped):
+    textureWidth = 64
+    textureHeight = 64
+
     modelTexture = "assets/minecraft/textures/entity/zombie_pigman.png"
     id = "PigZombie"
 

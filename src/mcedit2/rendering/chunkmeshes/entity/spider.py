@@ -9,6 +9,9 @@ from mcedit2.rendering.chunkmeshes.entity.modelrenderer import ModelRenderer
 log = logging.getLogger(__name__)
 
 class ModelSpider(object):
+    textureWidth = 64
+    textureHeight = 32
+
     id = "Spider"
     modelTexture = "assets/minecraft/textures/entity/spider/spider.png"
 

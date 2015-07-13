@@ -195,8 +195,6 @@ class SceneUpdateTask(object):
                 GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, w, h, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, rgba[::-1])
 
             modelTex = Texture(_load)
-            modelTex.w = w  # ewwwww
-            modelTex.h = h
             self.modelTextures[texturePath] = modelTex
             return modelTex
 

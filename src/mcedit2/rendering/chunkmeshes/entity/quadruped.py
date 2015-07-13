@@ -9,6 +9,9 @@ from mcedit2.rendering.chunkmeshes.entity.modelrenderer import ModelRenderer
 log = logging.getLogger(__name__)
 
 class ModelQuadruped(object):
+    textureWidth = 64
+    textureHeight = 32
+
     def __init__(self, height, expandOffset=0.0):
         self.head = ModelRenderer(self, 0, 0)
         
