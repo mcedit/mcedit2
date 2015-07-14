@@ -252,15 +252,24 @@ class PCPaintingEntityRefBase(PCEntityRefBase):
     def facingForMCEditFace(self, face):
         return self._mceditFacings.get(face, None)
 
+
 class PCPaintingEntityRef(PCPaintingEntityRefBase):
     Motive = nbtattr.NBTAttr("Motive", nbt.TAG_String)
+
 
 class PCItemFrameEntityRef(PCPaintingEntityRefBase):
     Item = nbtattr.NBTCompoundAttr("Item", ItemRef)
 
+
+class PCVillagerEntityRef(PCEntityRefBase):
+    Profession = nbtattr.NBTAttr("Profession", nbt.TAG_Int, 0)
+
+
 _entityClasses = {
-    "ItemFrame": PCItemFrameEntityRef
+    "ItemFrame": PCItemFrameEntityRef,
+    "Villager": PCVillagerEntityRef,
 }
+
 
 def PCTileEntityRef(rootTag, chunk=None):
     id = rootTag["id"].value

@@ -147,7 +147,7 @@ def entityModelNode(ref, model, modelTex, chunk):
     vertexBuffer.vertex[:] = modelVerts[..., :3]
     vertexBuffer.texcoord[:] = modelVerts[..., 3:5]
 
-    node = VertexNode(vertexBuffer)
+    node = VertexNode([vertexBuffer])
     rotateNode = RotateNode(ref.Rotation[0], (0., 1., 0.))
     rotateNode.addChild(node)
     translateNode = TranslateNode((ref.Position - (chunk.cx << 4, 0, chunk.cz << 4)))
@@ -168,14 +168,19 @@ class MonsterModelRenderer(ChunkMeshBase):
                 ID = "Creeper"
 
             model = models.cookedModels[ID]
-            modelTex = self.chunkUpdate.updateTask.getModelTexture(models.textures[ID])
+            texturePath = models.getModelTexture(ref)
+            if texturePath is None:
+                modelTex = None
+            else:
+                modelTex = self.chunkUpdate.updateTask.getModelTexture(texturePath)
 
             node = entityModelNode(ref, model, modelTex, chunk)
             sceneNode.addChild(node)
             if ID == "Sheep":
                 woolID = "MCEDIT_SheepWool"
                 model = models.cookedModels[woolID]
-                modelTex = self.chunkUpdate.updateTask.getModelTexture(models.textures[woolID])
+                texturePath = models.getTexture(woolID)
+                modelTex = self.chunkUpdate.updateTask.getModelTexture(texturePath)
 
                 node = entityModelNode(ref, model, modelTex, chunk)
                 sceneNode.addChild(node)

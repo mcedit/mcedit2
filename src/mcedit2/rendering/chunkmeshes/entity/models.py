@@ -12,6 +12,7 @@ from mcedit2.rendering.chunkmeshes.entity.creeper import ModelCreeper
 from mcedit2.rendering.chunkmeshes.entity.quadruped import ModelPig, ModelCow, ModelSheep, \
     ModelSheepWool
 from mcedit2.rendering.chunkmeshes.entity.spider import ModelSpider
+from mcedit2.rendering.chunkmeshes.entity.villager import ModelVillager
 
 log = logging.getLogger(__name__)
 
@@ -137,11 +138,23 @@ def cookEntityModel(model):
     return CookedModel(allVerts, model.textureWidth, model.textureHeight)
 
 cookedModels = {}
-textures = {}
+models = {}
 
 def addModel(model):
     cookedModels[model.id] = cookEntityModel(model)
-    textures[model.id] = model.modelTexture
+    models[model.id] = model
+
+def getModelTexture(entityRef):
+    model = models.get(entityRef.id)
+    if model is None:
+        return None
+    if hasattr(model, b"textureForEntity"):
+        return model.textureForEntity(entityRef)
+    return model.modelTexture
+
+def getTexture(entityID):
+    model = models.get(entityID)
+    return model.modelTexture
 
 addModel(ModelCreeper())
 addModel(ModelZombie())
@@ -152,6 +165,7 @@ addModel(ModelPig())
 addModel(ModelCow())
 addModel(ModelSheep())
 addModel(ModelSheepWool())
+addModel(ModelVillager())
 
 if __name__ == '__main__':
     from pprint import pprint

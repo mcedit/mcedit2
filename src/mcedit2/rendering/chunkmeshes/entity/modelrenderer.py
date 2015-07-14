@@ -39,7 +39,7 @@ class ModelBox(collections.namedtuple(
 
 
 class ModelRenderer(object):
-    def __init__(self, parent, u, v):
+    def __init__(self, parent, u=0, v=0):
         self.parent = parent
         self.boxes = []
         self.u = u
