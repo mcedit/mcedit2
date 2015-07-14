@@ -23,7 +23,8 @@ class BindTextureRenderNode(RenderstateRenderNode):
             GL.glScale(*scale)
         glutils.glActiveTexture(GL.GL_TEXTURE0)
         GL.glEnable(GL.GL_TEXTURE_2D)
-        self.sceneNode.texture.bind()
+        if self.sceneNode.texture is not None:
+            self.sceneNode.texture.bind()
 
     def exit(self):
         GL.glMatrixMode(GL.GL_TEXTURE)
