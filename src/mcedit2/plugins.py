@@ -320,17 +320,17 @@ def registerGeneratePlugin(cls):
     _registerClass(cls)
     return generate.registerGeneratePlugin(cls)
 
-def registerBlockInspectorWidget(ID, cls):
+def registerBlockInspectorWidget(cls):
     """
-    Register a widget with the Block Inspector to use when inspecting TileEntities
-    that have the given ID.
+    Register a widget with the Block Inspector for editing a TileEntity
 
-    xxx make ID an attribute of cls?
+    The class must have a `tileEntityID` attribute.
 
     >>> from PySide import QtGui
     >>> class MyBarrelInspector(QtGui.QWidget):
-    >>>     pass
-    >>> registerBlockInspectorWidget("MyBarrel", MyBarrelInspector)
+    >>>     tileEntityID = "MyBarrel"
+    >>>
+    >>> registerBlockInspectorWidget(MyBarrelInspector)
 
     :param cls:
     :type cls:
@@ -338,7 +338,7 @@ def registerBlockInspectorWidget(ID, cls):
     :rtype:
     """
     _registerClass(cls)
-    return inspector.registerBlockInspectorWidget(ID, cls)
+    return inspector.registerBlockInspectorWidget(cls)
 
 def registerTileEntityRefClass(ID, cls):
     """

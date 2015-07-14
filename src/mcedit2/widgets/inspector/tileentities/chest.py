@@ -11,9 +11,9 @@ from mcedit2.widgets.layout import Column
 log = logging.getLogger(__name__)
 
 class GenericContainerEditorWidget(QtGui.QWidget):
-    def __init__(self, requiredTileEntityID, slotLayout, editorSession, tileEntityRef):
+    def __init__(self, slotLayout, editorSession, tileEntityRef):
         super(GenericContainerEditorWidget, self).__init__()
-        assert tileEntityRef.id == requiredTileEntityID
+        assert tileEntityRef.id == self.tileEntityID
 
         self.inventoryEditor = InventoryEditor(slotLayout)
         self.inventoryEditor.editorSession = editorSession
@@ -30,22 +30,25 @@ class GenericContainerEditorWidget(QtGui.QWidget):
 CHEST_SLOT_LAYOUT = [(s % 9, s // 9, s) for s in range(27)]
 
 class ChestEditorWidget(GenericContainerEditorWidget):
+    tileEntityID = "Chest"
     def __init__(self, editorSession, tileEntityRef):
-        super(ChestEditorWidget, self).__init__("Chest", CHEST_SLOT_LAYOUT, editorSession, tileEntityRef)
+        super(ChestEditorWidget, self).__init__(CHEST_SLOT_LAYOUT, editorSession, tileEntityRef)
         self.displayName = self.tr("Chest")
 
 
 DISPENSER_SLOT_LAYOUT = [(s % 3, s // 3, s) for s in range(9)]
 
 class DispenserEditorWidget(GenericContainerEditorWidget):
+    tileEntityID = "Trap"
     def __init__(self, editorSession, tileEntityRef):
-        super(DispenserEditorWidget, self).__init__("Trap", DISPENSER_SLOT_LAYOUT, editorSession, tileEntityRef)
+        super(DispenserEditorWidget, self).__init__(DISPENSER_SLOT_LAYOUT, editorSession, tileEntityRef)
         self.displayName = self.tr("Dispenser")
 
 
 HOPPER_SLOT_LAYOUT = [(s, 0, s) for s in range(5)]
 
 class HopperEditorWidget(GenericContainerEditorWidget):
+    tileEntityID = "Hopper"
     def __init__(self, editorSession, tileEntityRef):
-        super(HopperEditorWidget, self).__init__("Hopper", HOPPER_SLOT_LAYOUT, editorSession, tileEntityRef)
+        super(HopperEditorWidget, self).__init__(HOPPER_SLOT_LAYOUT, editorSession, tileEntityRef)
         self.displayName = self.tr("Hopper")

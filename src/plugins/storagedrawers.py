@@ -119,6 +119,8 @@ DRAWERS2_SLOT_LAYOUT = [(s, 0, s) for s in range(2)]
 DRAWERS1_SLOT_LAYOUT = [(1, 0, 0)]
 
 class StorageDrawers4EditorWidget(GenericContainerEditorWidget):
+    tileEntityID = "StorageDrawers:halfDrawers4"
+
     def __init__(self, editorSession, tileEntityRef):
         super(StorageDrawers4EditorWidget, self).__init__("StorageDrawers:halfDrawers4", DRAWERS4_SLOT_LAYOUT, editorSession, tileEntityRef)
 
@@ -126,4 +128,4 @@ class StorageDrawers4EditorWidget(GenericContainerEditorWidget):
         return self.tileEntityRef.Slots
 
 registerTileEntityRefClass("StorageDrawers:halfDrawers4", StorageDrawerRef)
-registerBlockInspectorWidget("StorageDrawers:halfDrawers4", StorageDrawers4EditorWidget)
+registerBlockInspectorWidget(StorageDrawers4EditorWidget)

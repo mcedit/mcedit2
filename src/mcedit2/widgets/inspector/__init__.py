@@ -9,22 +9,25 @@ from PySide import QtGui
 
 from mcedit2.widgets.inspector.tileentities.chest import ChestEditorWidget, DispenserEditorWidget, HopperEditorWidget
 from mcedit2.util.load_ui import load_ui
+from mcedit2.widgets.inspector.tileentities.command import CommandBlockEditorWidget
 
 log = logging.getLogger(__name__)
 
 tileEntityEditorClasses = {
-    "Chest": ChestEditorWidget,
-    "Trap": DispenserEditorWidget,
-    "Hopper": HopperEditorWidget,
 }
 
-def registerBlockInspectorWidget(ID, widgetClass):
+def registerBlockInspectorWidget(widgetClass):
+    ID = widgetClass.tileEntityID
     tileEntityEditorClasses[ID] = widgetClass
 
 def unregisterBlockInspectorWidget(widgetClass):
     dead = [k for k, v in tileEntityEditorClasses.iteritems() if v == widgetClass]
     for k in dead:
         tileEntityEditorClasses.pop(k, None)
+
+registerBlockInspectorWidget(ChestEditorWidget)
+registerBlockInspectorWidget(DispenserEditorWidget)
+registerBlockInspectorWidget(HopperEditorWidget)
 
 class InspectorWidget(QtGui.QWidget):
     def __init__(self, editorSession):
