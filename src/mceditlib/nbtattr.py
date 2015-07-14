@@ -67,6 +67,8 @@ class NBTAttr(object):
     def __get__(self, instance, owner):
         tag = instance.rootTag
         if self.name not in tag:
+            if self.default is None:
+                raise ValueError("No default value set for tag %r.", self.name)
             tag[self.name] = self.tagType(value=self.default)
         return tag[self.name].value
 
