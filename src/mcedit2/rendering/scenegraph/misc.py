@@ -28,6 +28,22 @@ class PolygonModeNode(Node):
         self.mode = mode
 
 
+class LineWidthRenderNode(RenderstateRenderNode):
+    def enter(self):
+        GL.glPushAttrib(GL.GL_LINE_BIT)
+        GL.glLineWidth(self.sceneNode.lineWidth)
+
+    def exit(self):
+        GL.glPopAttrib()
+
+
+class LineWidthNode(Node):
+    RenderNodeClass = LineWidthRenderNode
+
+    def __init__(self, lineWidth):
+        super(LineWidthNode, self).__init__()
+        self.lineWidth = lineWidth
+
 class ClearRenderNode(RenderNode):
     def drawSelf(self):
         color = self.sceneNode.clearColor
