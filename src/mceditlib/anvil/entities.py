@@ -235,7 +235,7 @@ class PCPaintingEntityRefBase(PCEntityRefBase):
     # XXXXXXXXXXX
     # in 1.7 and before, this tag is called "Direction"
     # in some version before that, it is called "Dir" and its enums are different!
-    Facing = nbtattr.NBTAttr('Facing', nbt.TAG_Byte)
+    Facing = nbtattr.NBTAttr('Facing', nbt.TAG_Byte, 0)
 
     SouthFacing = 0
     WestFacing = 1
