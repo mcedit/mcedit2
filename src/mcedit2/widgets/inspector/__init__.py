@@ -4,8 +4,10 @@
 from __future__ import absolute_import, division, print_function
 import logging
 import traceback
+
 from PySide import QtGui
-from mcedit2.tileentities.chest import ChestEditorWidget, DispenserEditorWidget, HopperEditorWidget
+
+from mcedit2.widgets.inspector.tileentities.chest import ChestEditorWidget, DispenserEditorWidget, HopperEditorWidget
 from mcedit2.util.load_ui import load_ui
 
 log = logging.getLogger(__name__)

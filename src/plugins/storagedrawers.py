@@ -3,7 +3,8 @@
 """
 from __future__ import absolute_import, division, print_function
 import logging
-from mcedit2.tileentities.chest import GenericContainerEditorWidget
+
+from mcedit2.widgets.inspector.tileentities.chest import GenericContainerEditorWidget
 from mcedit2.plugins import registerBlockInspectorWidget
 from mceditlib import nbtattr, nbt
 from mceditlib.anvil.entities import PCTileEntityRefBase, registerTileEntityRefClass
