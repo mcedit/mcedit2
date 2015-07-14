@@ -9,11 +9,18 @@ class Layer:
     Blocks = "Blocks"
     Entities = "Entities"
     Monsters = "Monsters"
+    MonsterLocations = "MonsterLocations"
     Items = "Items"
     TileEntities = "TileEntities"
+    TileEntityLocations = "TileEntityLocations"
+    CommandBlockColors = "CommandBlockColors"
+    CommandBlockLocations = "CommandBlockLocations"
     ItemFrames = "ItemFrames"
     TileTicks = "TileTicks"
     TerrainPopulated = "TerrainPopulated"
     ChunkSections = "ChunkSections"
-    AllLayers = (Blocks, Entities, Items, TileEntities, ItemFrames, TileTicks, ChunkSections)
-    DefaultVisibleLayers = (Blocks, Entities, Items, TileEntities, ItemFrames)
+    AllLayers = (Blocks, Entities, Monsters, MonsterLocations, Items,
+                 TileEntities, TileEntityLocations,
+                 CommandBlockColors, CommandBlockLocations,
+                 ItemFrames, TileTicks, ChunkSections)
+    DefaultVisibleLayers = (Blocks, Entities, Items, TileEntities, CommandBlockColors, ItemFrames)

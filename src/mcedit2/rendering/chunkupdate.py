@@ -9,8 +9,8 @@ from mcedit2.rendering.modelmesh import BlockModelMesh
 
 from mcedit2.rendering import layers
 from mcedit2.rendering.chunkmeshes.chunksections import ChunkSectionsRenderer
-from mcedit2.rendering.chunkmeshes.entitymesh import TileEntityMesh, MonsterRenderer, ItemRenderer, \
-    ItemFrameMesh, MonsterModelRenderer
+from mcedit2.rendering.chunkmeshes.entitymesh import TileEntityLocationMesh, MonsterLocationRenderer, ItemRenderer, \
+    ItemFrameMesh, MonsterModelRenderer, CommandBlockColorsMesh, CommandBlockLocationMesh
 from mcedit2.rendering.chunkmeshes.lowdetail import LowDetailBlockMesh, OverheadBlockMesh
 from mcedit2.rendering.chunkmeshes.terrainpop import TerrainPopulatedRenderer
 from mcedit2.rendering.chunkmeshes.tileticks import TileTicksRenderer
@@ -122,9 +122,11 @@ class ChunkUpdate(object):
         return self.chunkInfo.worldScene.roughGraphics
 
     wholeChunkMeshClasses = [
-        TileEntityMesh,
+        CommandBlockLocationMesh,
+        CommandBlockColorsMesh,
+        TileEntityLocationMesh,
         ItemFrameMesh,
-        MonsterRenderer,
+        MonsterLocationRenderer,
         MonsterModelRenderer,
         ItemRenderer,
         TileTicksRenderer,

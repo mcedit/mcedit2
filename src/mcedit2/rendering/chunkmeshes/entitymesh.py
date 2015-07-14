@@ -15,8 +15,9 @@ from mcedit2.rendering.chunkmeshes.entity import models
 from mcedit2.rendering.layers import Layer
 from mcedit2.rendering.scenegraph.bind_texture import BindTextureNode
 from mcedit2.rendering.scenegraph.matrix import TranslateNode, RotateNode
-from mcedit2.rendering.scenegraph.misc import PolygonModeNode
+from mcedit2.rendering.scenegraph.misc import PolygonModeNode, LineWidthNode
 from mcedit2.rendering.scenegraph.depth_test import DepthFuncNode
+from mcedit2.rendering.scenegraph.scenenode import Node
 from mcedit2.rendering.scenegraph.vertex_array import VertexNode
 from mcedit2.rendering.slices import _XYZ
 from mcedit2.rendering.vertexarraybuffer import QuadVertexArrayBuffer
@@ -25,11 +26,20 @@ from mceditlib.anvil.entities import PCPaintingEntityRefBase
 log = logging.getLogger(__name__)
 
 
+# TODO: allow these damned things to return multiple scenenodes on different layers,
+# TODO: so we don't have to iterate TileEntities over and over
+
 class EntityMeshBase(ChunkMeshBase):
     renderstate = renderstates.RenderstateEntityNode
     detailLevels = (0, 1, 2)
 
     def _computeVertices(self, positions, colors, offset=False, chunkPosition=(0, 0)):
+        colors = numpy.asarray(colors, dtype=numpy.uint8)
+        if len(colors.shape) > 1:
+            colors = colors[:, None, None, :]
+        else:
+            colors = colors[None, None, None, :]
+
         cx, cz = chunkPosition
         x = cx << 4
         z = cz << 4
@@ -54,23 +64,258 @@ class EntityMeshBase(ChunkMeshBase):
         return vertexBuffer
 
 
-class TileEntityMesh(EntityMeshBase):
-    layer = Layer.TileEntities
+def colorHash(text):
+    """
+    Stolen from https://github.com/zenozeng/color-hash
+    """
+    SaturationArray = [0.66, 0.83, .95]
+    LightnessArray = [0.5, 0.66, 0.75]
+
+    h = hash(text)
+    Hue = h % 359  # (Note that 359 is a prime)
+    Saturation = SaturationArray[h // 360 % len(SaturationArray)]
+    Lightness = LightnessArray[h // 360 // len(SaturationArray) % len(LightnessArray)]
+    return Hue, Saturation, Lightness
+
+allCommands = [
+    "achievement",
+    "blockdata",
+    "clear",
+    "clone",
+    "defaultgamemod",
+    "difficulty",
+    "effect",
+    "enchant",
+    "entitydata",
+    "execute",
+    "fill",
+    "gamemode",
+    "gamerule",
+    "give",
+    "help",
+    "kill",
+    "list",
+    "me",
+    "particle",
+    "playsound",
+    "replaceitem",
+    "say",
+    "scoreboard",
+    "seed",
+    "setblock",
+    "setworldspawn",
+    "spawnpoint",
+    "spreadplayers",
+    "stats",
+    "summon",
+    "tell",
+    "tellraw",
+    "testfor",
+    "testforblock",
+    "testforblocks",
+    "time",
+    "title",
+    "toggledownfall",
+    "tp",
+    "trigger",
+    "weather",
+    "worldborder",
+    "xp",
+]
+
+def HSL2RGB(H, S, L):
+    H /= 360
+
+    q = L * (1 + S) if L < 0.5 else L + S - L * S
+    p = 2 * L - q
+
+    def something(color):
+        if color < 0:
+            color += 1
+        
+        if color > 1:
+            color -= 1
+        
+        if color < 1/6:
+            color = p + (q - p) * 6 * color
+        elif color < 0.5:
+            color = q
+        elif color < 2/3:
+            color = p + (q - p) * 6 * (2/3 - color)
+        else:
+            color = p
+        
+        return int(color * 255)
+
+    return [something(a) for a in (H + 1/3, H, H - 1/3)]
+
+
+def computeCommandColor(cmdName):
+    return tuple(HSL2RGB(*colorHash(cmdName)))
+
+if __name__ == '__main__':
+    colors = {c:computeCommandColor(c) for c in allCommands}
+    from pprint import pprint
+    pprint(colors)
+
+_commandColors = {
+    'achievement': (38, 248, 6),
+    'blockdata': (6, 18, 248),
+    'clear': (240, 96, 197),
+    'clone': (138, 244, 203),
+    'defaultgamemod': (6, 248, 30),
+    'difficulty': (219, 233, 21),
+    'effect': (115, 248, 6),
+    'enchant': (95, 21, 233),
+    'entitydata': (250, 85, 96),
+    'execute': (225, 111, 189),
+    'fill': (233, 191, 149),
+    'gamemode': (130, 148, 251),
+    'gamerule': (244, 189, 138),
+    'give': (244, 138, 180),
+    'help': (250, 168, 85),
+    'kill': (111, 225, 185),
+    'list': (6, 248, 127),
+    'me': (176, 233, 21),
+    'particle': (43, 211, 60),
+    'playsound': (251, 156, 130),
+    'replaceitem': (21, 233, 134),
+    'say': (240, 96, 223),
+    'scoreboard': (240, 96, 96),
+    'seed': (43, 211, 127),
+    'setblock': (233, 116, 21),
+    'setworldspawn': (85, 160, 250),
+    'spawnpoint': (149, 233, 206),
+    'spreadplayers': (138, 141, 244),
+    'stats': (233, 64, 21),
+    'summon': (233, 222, 149),
+    'tell': (224, 248, 6),
+    'tellraw': (149, 233, 201),
+    'testfor': (211, 43, 65),
+    'testforblock': (206, 233, 149),
+    'testforblocks': (96, 240, 199),
+    'time': (247, 130, 251),
+    'title': (91, 248, 6),
+    'toggledownfall': (250, 85, 245),
+    'tp': (251, 201, 130),
+    'trigger': (143, 85, 250),
+    'weather': (21, 233, 81),
+    'worldborder': (21, 233, 102),
+    'xp': (98, 96, 240)
+}
+
+def commandColor(cmd):
+    cmd = cmd.lower()
+    color = _commandColors.get(cmd)
+    if color is None:
+        color = computeCommandColor(cmd)
+    return color
+
+class TileEntityLocationMesh(EntityMeshBase):
+    layer = Layer.TileEntityLocations
 
     def makeChunkVertices(self, chunk, limitBox):
         tilePositions = []
+        defaultColor = (0xff, 0xff, 0x33, 0x44)
         for i, ref in enumerate(chunk.TileEntities):
             if i % 10 == 0:
                 yield
 
             if limitBox and ref.Position not in limitBox:
                 continue
+            if ref.id == "Control":
+                continue
             tilePositions.append(ref.Position)
 
-        tiles = self._computeVertices(tilePositions, (0xff, 0xff, 0x33, 0x44), chunkPosition=chunk.chunkPosition)
-        yield
-        self.sceneNode = VertexNode(tiles)
+        tiles = self._computeVertices(tilePositions, defaultColor, chunkPosition=chunk.chunkPosition)
 
+        vertexNode = VertexNode([tiles])
+        polyNode = PolygonModeNode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
+        polyNode.addChild(vertexNode)
+        lineNode = LineWidthNode(2.0)
+        lineNode.addChild(polyNode)
+        depthNode = DepthFuncNode(GL.GL_ALWAYS)
+        depthNode.addChild(lineNode)
+
+        self.sceneNode = Node()
+        self.sceneNode.addChild(depthNode)
+
+        vertexNode = VertexNode([tiles])
+        self.sceneNode.addChild(vertexNode)
+
+
+class CommandBlockLocationMesh(EntityMeshBase):
+    layer = Layer.CommandBlockLocations
+
+    def makeChunkVertices(self, chunk, limitBox):
+        tilePositions = []
+        tileColors = []
+        defaultColor = (0xff, 0x33, 0x33, 0x44)
+        for i, ref in enumerate(chunk.TileEntities):
+            if i % 10 == 0:
+                yield
+
+            if limitBox and ref.Position not in limitBox:
+                continue
+            if ref.id == "Control":
+                tilePositions.append(ref.Position)
+                cmdText = ref.Command
+                if len(cmdText):
+                    if cmdText[0] == "/":
+                        cmdText = cmdText[1:]
+                    command, _ = cmdText.split(None, 1)
+                    color = commandColor(command)
+                    tileColors.append(color + (0x44,))
+                else:
+                    tileColors.append(defaultColor)
+            else:
+                continue
+
+        tiles = self._computeVertices(tilePositions, tileColors, chunkPosition=chunk.chunkPosition)
+
+        vertexNode = VertexNode([tiles])
+        polyNode = PolygonModeNode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
+        polyNode.addChild(vertexNode)
+        lineNode = LineWidthNode(2.0)
+        lineNode.addChild(polyNode)
+        depthNode = DepthFuncNode(GL.GL_ALWAYS)
+        depthNode.addChild(lineNode)
+
+        self.sceneNode = Node()
+        self.sceneNode.addChild(depthNode)
+
+
+class CommandBlockColorsMesh(EntityMeshBase):
+    layer = Layer.CommandBlockColors
+
+    def makeChunkVertices(self, chunk, limitBox):
+        tilePositions = []
+        tileColors = []
+        defaultColor = (0xff, 0xff, 0x33, 0x44)
+        for i, ref in enumerate(chunk.TileEntities):
+            if i % 10 == 0:
+                yield
+
+            if limitBox and ref.Position not in limitBox:
+                continue
+            if ref.id == "Control":
+                cmdText = ref.Command
+                if len(cmdText):
+                    if cmdText[0] == "/":
+                        cmdText = cmdText[1:]
+                    command, _ = cmdText.split(None, 1)
+                    color = commandColor(command)
+                    tileColors.append(color + (0x44,))
+                else:
+                    tileColors.append(defaultColor)
+            else:
+                continue
+            tilePositions.append(ref.Position)
+
+        tiles = self._computeVertices(tilePositions, tileColors, chunkPosition=chunk.chunkPosition)
+
+        vertexNode = VertexNode([tiles])
+        self.sceneNode = vertexNode
 
 
 class ItemFrameMesh(EntityMeshBase):
@@ -190,8 +435,8 @@ class MonsterModelRenderer(ChunkMeshBase):
         self.sceneNode = sceneNode
 
 
-class MonsterRenderer(EntityMeshBase):
-    layer = Layer.Entities  # xxx Monsters
+class MonsterLocationRenderer(EntityMeshBase):
+    layer = Layer.MonsterLocations
     notMonsters = {"Item", "XPOrb", "Painting", "ItemFrame"}
 
     def makeChunkVertices(self, chunk, limitBox):
@@ -217,10 +462,16 @@ class MonsterRenderer(EntityMeshBase):
         vertexNode = VertexNode(monsters)
         polyNode = PolygonModeNode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
         polyNode.addChild(vertexNode)
+        lineNode = LineWidthNode(2.0)
+        lineNode.addChild(polyNode)
         depthNode = DepthFuncNode(GL.GL_ALWAYS)
-        depthNode.addChild(polyNode)
+        depthNode.addChild(lineNode)
 
-        self.sceneNode = depthNode
+        self.sceneNode = Node()
+        self.sceneNode.addChild(depthNode)
+
+        vertexNode = VertexNode(monsters)
+        self.sceneNode.addChild(vertexNode)
 
 
 
@@ -249,8 +500,8 @@ class ItemRenderer(EntityMeshBase):
             entityColors.append(color)
 
         items = self._computeVertices(entityPositions,
-                                         numpy.array(entityColors, dtype='uint8')[:, numpy.newaxis, numpy.newaxis],
-                                         offset=True, chunkPosition=chunk.chunkPosition)
+                                      entityColors,
+                                      offset=True, chunkPosition=chunk.chunkPosition)
         yield
         self.sceneNode = VertexNode(items)
 
