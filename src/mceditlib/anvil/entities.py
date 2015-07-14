@@ -313,6 +313,15 @@ class PCTileEntityRefBase(object):
         return self.chunk.blocktypes
 
 
+class PCTileEntityControlRef(PCTileEntityRefBase):
+    tileEntityID = "Control"
+
+    Command = nbtattr.NBTAttr("Command", nbt.TAG_String, "")
+    CustomName = nbtattr.NBTAttr("CustomName", nbt.TAG_String, "")
+    SuccessCount = nbtattr.NBTAttr("SuccessCount", nbt.TAG_Int, 0)
+    TrackOutput = nbtattr.NBTAttr("TrackOutput", nbt.TAG_Byte, 1)
+
+
 def convertStackTo17(stack, blocktypes):
     if stack["id"].tagID == nbt.ID_STRING:
         stack["id"] = nbt.TAG_Short(blocktypes.itemTypes.internalNamesByID[stack["id"].value])
@@ -359,6 +368,8 @@ _tileEntityClasses = {
     "Chest": PCTileEntityChestRef,
     "Trap": PCTileEntityChestRef,
     "Hopper": PCTileEntityChestRef,
+    "Control": PCTileEntityControlRef,
+
 }
 
 def validate(ref):
