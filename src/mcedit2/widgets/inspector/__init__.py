@@ -28,6 +28,7 @@ def unregisterBlockInspectorWidget(widgetClass):
 registerBlockInspectorWidget(ChestEditorWidget)
 registerBlockInspectorWidget(DispenserEditorWidget)
 registerBlockInspectorWidget(HopperEditorWidget)
+registerBlockInspectorWidget(CommandBlockEditorWidget)
 
 class InspectorWidget(QtGui.QWidget):
     def __init__(self, editorSession):
