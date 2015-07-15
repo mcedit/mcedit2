@@ -385,49 +385,72 @@ class SectionUpdate(object):
 
         chunkWidth, chunkLength, chunkHeight = self.Blocks.shape
 
-        areaLights = numpy.empty((chunkWidth + 2, chunkLength + 2, chunkHeight + 2), numpy.uint8)
+        areaLights = numpy.empty((chunkWidth + 4, chunkLength + 4, chunkHeight + 4), numpy.uint8)
         if lightName == "SkyLight":
             default = 15
         else:
             default = 0
 
-        areaLights[(0, -1), :, :] = default
-        areaLights[:, (0, -1), :] = default
-        areaLights[:, :, (0, -1)] = default
+        areaLights[(0, 1, -2, -1), :, :] = default
+        areaLights[:, (0, 1, -2, -1), :] = default
+        areaLights[:, :, (0, 1, -2, -1)] = default
 
-        areaLights[1:-1, 1:-1, 1:-1] = Light(chunkSection)
+        areaLights[2:-2, 2:-2, 2:-2] = Light(chunkSection)
 
         y = chunkSection.Y
 
         if faces.FaceXDecreasing in neighboringChunks:
             ncs = neighboringChunks[faces.FaceXDecreasing].getSection(y)
             if ncs:
-                areaLights[1:-1, 1:-1, :1] = Light(ncs)[:, :, -1:]
+                areaLights[2:-2, 2:-2, :2] = Light(ncs)[:, :, -2:]
 
         if faces.FaceXIncreasing in neighboringChunks:
             ncs = neighboringChunks[faces.FaceXIncreasing].getSection(y)
             if ncs:
-                areaLights[1:-1, 1:-1, -1:] = Light(ncs)[:, :, :1]
+                areaLights[2:-2, 2:-2, -2:] = Light(ncs)[:, :, :2]
 
         if faces.FaceZDecreasing in neighboringChunks:
             ncs = neighboringChunks[faces.FaceZDecreasing].getSection(y)
             if ncs:
-                areaLights[1:-1, :1, 1:-1] = Light(ncs)[:, -1:, :]
+                areaLights[2:-2, :2, 2:-2] = Light(ncs)[:, -2:, :]
 
         if faces.FaceZIncreasing in neighboringChunks:
             ncs = neighboringChunks[faces.FaceZIncreasing].getSection(y)
             if ncs:
-                areaLights[1:-1, -1:, 1:-1] = Light(ncs)[:, :1, :]
+                areaLights[2:-2, -2:, 2:-2] = Light(ncs)[:, :2, :]
 
-        above = self.chunkUpdate.chunk.getSection(y + 1)
+        above = self.chunkUpdate.chunk.getSection(y + 2)
         if above:
-            areaLights[-1:, 1:-1, 1:-1] = Light(above)[:1, :, :]
+            areaLights[-2:, 2:-2, 2:-2] = Light(above)[:2, :, :]
 
-        below = self.chunkUpdate.chunk.getSection(y + 1)
+        below = self.chunkUpdate.chunk.getSection(y + 2)
         if below:
-            areaLights[:1, 1:-1, 1:-1, ] = Light(below)[-1:, :, :]
+            areaLights[:2, 2:-2, 2:-2, ] = Light(below)[-2:, :, :]
 
-        return areaLights
+        nx, ny, nz = self.blocktypes.useNeighborBrightness[self.areaBlocks].nonzero()
+        nxd = nx
+        nx = nx + 1
+        nxi = nx + 1
+        nyd = ny
+        ny = ny + 1
+        nyi = ny + 1
+        nzd = nz
+        nz = nz + 1
+        nzi = nz + 1
+        
+        neighborBrightness = [
+            areaLights[nxi, ny, nz],
+            areaLights[nxd, ny, nz],
+            areaLights[nx, nyi, nz],
+            areaLights[nx, nyd, nz],
+            areaLights[nx, ny, nzi],
+            areaLights[nx, ny, nzd],
+        ]
+        neighborBrightness = numpy.amax(neighborBrightness, 0)
+
+        areaLights[nx, ny, nz] = neighborBrightness
+
+        return areaLights[1:-1, 1:-1, 1:-1]
 
     @lazyprop
     def areaBlockLights(self):

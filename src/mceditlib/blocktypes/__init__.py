@@ -92,9 +92,14 @@ class BlockTypeSet(object):
             'unknown': False,  # False for blocks loaded from builtin .json, True for FML IDs, False for blocks configured in editor
             'color': 0xffffff,
             'biomeTintType': None,  # "grass", "leaves", or None
+            'useNeighborBrightness': False,
         }
 
         self.aka = defaultdict(lambda: "")
+
+
+        self.useNeighborBrightness = numpy.zeros(id_limit, dtype='uint8')
+        self.useNeighborBrightness[:] = self.defaults['useNeighborBrightness']
 
         self.brightness = numpy.zeros(id_limit, dtype='uint8')
         self.brightness[:] = self.defaults['brightness']
@@ -300,11 +305,11 @@ class BlockTypeSet(object):
         if blockJson.get("defaultState"):
             self.defaultBlockstates[internalName] = blockState
 
-
         for key in [
             'opaqueCube',
             'brightness',
             'opacity',
+            'useNeighborBrightness',
         ]:  # does not have data axis
             if key in blockJson:
                 array = getattr(self, key)
