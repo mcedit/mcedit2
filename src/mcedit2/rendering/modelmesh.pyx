@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 import logging
 
 cimport numpy
+import numpy as np
 
 from mcedit2.rendering import renderstates
 from mcedit2.rendering.scenegraph.vertex_array import VertexNode
@@ -63,10 +64,9 @@ class BlockModelMesh(object):
         areaData = self.sectionUpdate.areaData
         areaBiomes = self.sectionUpdate.areaBiomes
         renderType = self.sectionUpdate.renderType
-        opaqueCube = blocktypes.opaqueCube
+        opaqueCube = np.array(blocktypes.opaqueCube)
         biomeTemp = self.sectionUpdate.biomeTemp
         biomeRain = self.sectionUpdate.biomeRain
-
 
 
         #faceQuadVerts = []
@@ -78,6 +78,43 @@ class BlockModelMesh(object):
         # glass, stained glass are special cased to return False for `shouldSideBeRendered`
         cdef unsigned short glassID = blocktypes["minecraft:glass"].ID
         cdef unsigned short stainedGlassID = blocktypes.get("minecraft:stained_glass", blocktypes["minecraft:glass"]).ID
+
+        # more special cases...
+        def getID(internalName):
+            bt = blocktypes.get(internalName, None)
+            if bt is None:
+                return 0
+            return bt.ID
+
+        cdef unsigned short anvilID = getID("minecraft:anvil")
+        cdef unsigned short carpetID = getID("minecraft:carpet")
+        cdef unsigned short dragonEggID = getID("minecraft:dragon_egg")
+        cdef unsigned short endPortalID = getID("minecraft:end_portal")
+        cdef unsigned short fenceID = getID("minecraft:fence")
+        cdef unsigned short fenceGateID = getID("minecraft:fence_gate")
+        cdef unsigned short hopperID = getID("minecraft:hopper")
+        cdef unsigned short leavesID = getID("minecraft:leaves")
+        cdef unsigned short leaves2ID = getID("minecraft:leaves2")
+        cdef unsigned short paneID = getID("minecraft:glass_pane")
+        cdef unsigned short barsID = getID("minecraft:iron_bars")
+        cdef unsigned short pistonHeadID = getID("minecraft:piston_head")
+        cdef unsigned short netherPortalID = getID("minecraft:portal")
+        cdef unsigned short pComparatorID = getID("minecraft:powered_comparator")
+        cdef unsigned short upComparatorID = getID("minecraft:unpowered_comparator")
+        cdef unsigned short pRepeaterID = getID("minecraft:powered_repeater")
+        cdef unsigned short upRepeaterID = getID("minecraft:unpowered_repeater")
+        cdef unsigned short stoneSlabID = getID("minecraft:stone_slab")
+        cdef unsigned short stoneSlab2ID = getID("minecraft:stone_slab2")
+        cdef unsigned short woodenSlabID = getID("minecraft:wooden_slab")
+
+
+        #cdef char fancyGraphics = self.sectionUpdate.fancyGraphics
+        cdef char fancyGraphics = True
+
+        if fancyGraphics:
+            opaqueCube[leavesID] = False
+            opaqueCube[leaves2ID] = False
+
 
         waterTexTuple = self.sectionUpdate.chunkUpdate.textureAtlas.texCoordsByName["assets/minecraft/textures/blocks/water_still.png"]
         cdef float[4] waterTex
@@ -119,6 +156,8 @@ class BlockModelMesh(object):
         cdef size_t vertex, channel
         cdef const unsigned char * tintColor
 
+        cdef char doCull = 0
+
         if vertexBuffer == NULL:
             return
         for y in range(1, 17):
@@ -133,6 +172,7 @@ class BlockModelMesh(object):
                     meta = areaData[y, z, x]
 
                     if renderType[ID] == 3:  # model blocks
+                        # xxx cookedModelsByBlockState
                         quads = blockModels.cookedModelsByID[ID][meta]
                         if quads.count == 0:
                             continue
@@ -140,16 +180,51 @@ class BlockModelMesh(object):
                         biomeID = areaBiomes[z, x]
 
                         for i in range(quads.count):
+                            doCull = 0
                             quad = quads.quads[i]
                             if quad.cullface[0]:
                                 nx = x + quad.cullface[1]
                                 ny = y + quad.cullface[2]
                                 nz = z + quad.cullface[3]
                                 nID = areaBlocks[ny, nz, nx]
-                                if opaqueCube[nID]:
-                                    # xxx inspect neighbor model!!
-                                    continue
-                                elif (ID == glassID or ID == stainedGlassID) and (nID == glassID or nID == stainedGlassID):
+                                if (ID == endPortalID
+                                    and quad.cullface[2] == -1):
+                                    doCull = 0
+                                elif (ID == anvilID
+                                      or ID == dragonEggID
+                                      or ID == fenceID
+                                      or ID == fenceGateID
+                                      or ID == hopperID
+                                      or ID == pistonHeadID
+                                      ):
+                                    doCull = 0
+                                elif ID == carpetID and quad.cullface[2] == 1:
+                                    doCull = 0
+                                elif ((ID == glassID or ID == stainedGlassID)
+                                      and ((glassID and nID == glassID)
+                                           or (stainedGlassID and nID == stainedGlassID))
+                                      ):
+                                    doCull = 1
+                                elif ((ID == paneID
+                                       or ID == barsID)
+                                      and (ID == nID and meta == areaData[ny, nz, nx])):
+                                    doCull = 1
+                                elif (ID == netherPortalID and False):  # hairy, do later
+                                    doCull = 1
+                                elif (ID == stoneSlabID
+                                      or ID == stoneSlab2ID
+                                      or ID == woodenSlabID):
+                                    if ((stoneSlabID and nID == stoneSlabID)
+                                        or (stoneSlab2ID and nID == stoneSlab2ID)
+                                        or (woodenSlabID and nID == woodenSlabID)):
+                                        if (meta & 0x8) == (areaData[ny, nz, nx] & 0x8):
+                                            doCull = 1
+                                    else:
+                                        doCull = opaqueCube[nID]
+                                else:
+                                    doCull = opaqueCube[nID]
+
+                                if doCull:
                                     continue
 
                             nx = x + quad.quadface[1]
