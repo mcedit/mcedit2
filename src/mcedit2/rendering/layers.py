@@ -19,8 +19,8 @@ class Layer:
     TileTicks = "TileTicks"
     TerrainPopulated = "TerrainPopulated"
     ChunkSections = "ChunkSections"
-    AllLayers = (Blocks, Entities, Monsters, MonsterLocations, Items,
+    AllLayers = (Blocks, MonsterLocations, Items,
                  TileEntities, TileEntityLocations,
                  CommandBlockColors, CommandBlockLocations,
                  ItemFrames, TileTicks, ChunkSections)
-    DefaultVisibleLayers = (Blocks, Entities, Items, TileEntities, CommandBlockColors, ItemFrames)
+    DefaultVisibleLayers = (Blocks, Items, TileEntities, CommandBlockColors, ItemFrames)
