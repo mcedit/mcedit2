@@ -77,6 +77,38 @@ def colorHash(text):
     Lightness = LightnessArray[h // 360 // len(SaturationArray) % len(LightnessArray)]
     return Hue, Saturation, Lightness
 
+
+def HSL2RGB(H, S, L):
+    H /= 360
+
+    q = L * (1 + S) if L < 0.5 else L + S - L * S
+    p = 2 * L - q
+
+    def something(color):
+        if color < 0:
+            color += 1
+        
+        if color > 1:
+            color -= 1
+        
+        if color < 1/6:
+            color = p + (q - p) * 6 * color
+        elif color < 0.5:
+            color = q
+        elif color < 2/3:
+            color = p + (q - p) * 6 * (2/3 - color)
+        else:
+            color = p
+        
+        return int(color * 255)
+
+    return [something(a) for a in (H + 1/3, H, H - 1/3)]
+
+
+def computeCommandColor(cmdName):
+    return tuple(HSL2RGB(*colorHash(cmdName)))
+
+
 allCommands = [
     "achievement",
     "blockdata",
@@ -123,41 +155,13 @@ allCommands = [
     "xp",
 ]
 
-def HSL2RGB(H, S, L):
-    H /= 360
-
-    q = L * (1 + S) if L < 0.5 else L + S - L * S
-    p = 2 * L - q
-
-    def something(color):
-        if color < 0:
-            color += 1
-        
-        if color > 1:
-            color -= 1
-        
-        if color < 1/6:
-            color = p + (q - p) * 6 * color
-        elif color < 0.5:
-            color = q
-        elif color < 2/3:
-            color = p + (q - p) * 6 * (2/3 - color)
-        else:
-            color = p
-        
-        return int(color * 255)
-
-    return [something(a) for a in (H + 1/3, H, H - 1/3)]
-
-
-def computeCommandColor(cmdName):
-    return tuple(HSL2RGB(*colorHash(cmdName)))
-
 if __name__ == '__main__':
-    colors = {c:computeCommandColor(c) for c in allCommands}
+    colors = {c: computeCommandColor(c) for c in allCommands}
     from pprint import pprint
     pprint(colors)
 
+# Guard against randomized hash functions
+# Ensure the same colors are used across platforms and executions
 _commandColors = {
     'achievement': (38, 248, 6),
     'blockdata': (6, 18, 248),
@@ -204,12 +208,14 @@ _commandColors = {
     'xp': (98, 96, 240)
 }
 
+
 def commandColor(cmd):
     cmd = cmd.lower()
     color = _commandColors.get(cmd)
     if color is None:
         color = computeCommandColor(cmd)
     return color
+
 
 class TileEntityLocationMesh(EntityMeshBase):
     layer = Layer.TileEntityLocations
