@@ -32,4 +32,8 @@ def getUserFilesDirectory():
 
     folder = os.path.dirname(os.path.dirname(os.path.dirname(script)))  # main script is src/mcedit/main.py, so, ../../
     dataDir = os.path.join(folder, "MCEdit User Data")
+
+    if not os.path.exists(dataDir):
+        os.makedirs(dataDir)
+
     return dataDir
