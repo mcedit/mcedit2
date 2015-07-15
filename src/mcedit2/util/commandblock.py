@@ -32,16 +32,16 @@ log = logging.getLogger(__name__)
 /say	            Displays a message to multiple players.	Op	—	—	—	—	—
 /scoreboard	        Manages objectives, players, and teams.	Op	—	—	Entities	Players	—
 /seed	            Displays the world seed.	Op	—	—	—	—	World
-/setblock	        Changes a block to another block.	Op	—	Blocks	—	—	—
+        /setblock	        Changes a block to another block.	Op	—	Blocks	—	—	—
 /setworldspawn	    Sets the world spawn.	Op	—	—	—	—	World
 /spawnpoint	        Sets the spawn point for a player.	Op	—	—	—	Players	—
 /spreadplayers	    Teleports entities to random locations.	Op	—	—	Entities	Players	—
 /stats	            Update objectives from command results.	Op	—	Blocks	Entities	Players	—
-/summon	            Summons an entity.	Op	—	—	Entities	—	—
+        /summon	            Summons an entity.	Op	—	—	Entities	—	—
 /tell	            Displays a private message to other players.	—	—	—	—	Players	—
 /tellraw	        Displays a JSON message to players.	Op	—	—	—	Players	—
 /testfor	        Counts entities matching specified conditions.	Op	—	—	Entities	Players	—
-/testforblock	    Tests whether a block is in a location.	Op	—	Blocks	—	—	—
+        /testforblock	    Tests whether a block is in a location.	Op	—	Blocks	—	—	—
 /testforblocks	    Tests whether the blocks in two regions match.	Op	—	Blocks	—	—	—
 /time	            Changes or queries the world's game time.	Op	—	—	—	—	World
 /title	            Manages screen titles.	Op	—	—	—	Players	—
@@ -61,6 +61,7 @@ The following commands use the command block's name (defaults to @) in their
 output: /me, /say, and /tell.
 """
 
+
 def ParseCommand(commandText):
     if commandText[0] == "/":
         commandText = commandText[1:]
@@ -74,39 +75,164 @@ def ParseCommand(commandText):
         return cmdClass(args)
 
 
+def parseCoord(text):
+    rel = False
+    if text[0] == '~':
+        rel = True
+        text = text[1:]
+    if len(text):
+        try:
+            c = int(text)
+        except ValueError:
+            c = float(text)
+    else:
+        c = 0
+    return c, rel
+
+
+def formatCoords(cmd):
+    text = ""
+    if cmd.x is not None:
+        if cmd.relX:
+            text += "~"
+        text += str(cmd.x) + " "
+    if cmd.y is not None:
+        if cmd.relY:
+            text += "~"
+        text += str(cmd.y) + " "
+    if cmd.z is not None:
+        if cmd.relZ:
+            text += "~"
+        text += str(cmd.z)
+    return text
+
+
+def formatRepr(cmd, attrs):
+    args = ", ".join("%s=%s" % (a, getattr(cmd, a)) for a in attrs)
+    return "%s(%s)" % (cmd.__class__.__name__, args)
+
+
 class UnknownCommand(object):
     def __init__(self, name, args):
         self.name = name
         self.args = args
 
+    def __str__(self):
+        return "/%s %s" % (self.name, self.args)
+
+
+def argsplit(args, numargs):
+    """
+    Like str.split(), but always returns a list of length `numargs`
+    """
+
+    args = args.split(None, numargs-1)
+    if len(args) < numargs:
+        args = args + [""] * (numargs - len(args))
+    return args
+
+
+class SetBlockCommand(object):
+    name = "setblock"
+    relX = relY = relZ = False
+    x = y = z = 0
+    dataValue = -1
+    tileName = None
+    oldBlockHandling = "replace"
+
+    def __str__(self):
+        args = formatCoords(self)
+        args += " " + self.tileName
+        if self.dataValue != -1:
+            args += " " + str(self.dataValue)
+        if self.oldBlockHandling != "replace":
+            args += " " + str(self.dataValue)
+        if self.dataTag:
+            args += " " + self.dataTag
+
+        return "/%s %s" % (self.name, args)
+
+    def __init__(self, args):
+        x, y, z, tileName, rest = argsplit(args, 5)
+
+        self.x, self.relX = parseCoord(x)
+        self.y, self.relY = parseCoord(y)
+        self.z, self.relZ = parseCoord(z)
+        self.tileName = tileName
+
+        dataValue, rest = argsplit(rest, 2)
+        try:
+            dataValue = int(dataValue)
+        except ValueError:
+            oldBlockHandling = dataValue
+            dataValue = -1
+        else:
+            oldBlockHandling, rest = argsplit(rest, 2)
+
+        if oldBlockHandling not in ("destroy", "keep", "replace"):
+            dataTag = oldBlockHandling + rest
+            oldBlockHandling = "replace"
+        else:
+            dataTag = rest
+
+
+        self.dataValue = dataValue
+        self.oldBlockHandling = oldBlockHandling
+        self.dataTag = dataTag
+
+
+class TestForBlockCommand(object):
+    name = "testforblock"
+    relX = relY = relZ = False
+    x = y = z = 0
+    dataTag = ""
+
+    def __repr__(self):
+        attrs = "x y z relX relY relZ tileName dataValue dataTag".split()
+        return formatRepr(self, attrs)
+
+    def __str__(self):
+        args = formatCoords(self)
+        args += " " + self.tileName
+        if self.dataValue != -1:
+            args += " " + str(self.dataValue)
+        if self.dataTag:
+            args += " " + self.dataTag
+
+        return "/%s %s" % (self.name, args)
+
+
+    def __init__(self, args):
+        x, y, z, tileName, rest = args.split(None, 4)
+        self.x, self.relX = parseCoord(x)
+        self.y, self.relY = parseCoord(y)
+        self.z, self.relZ = parseCoord(z)
+        self.tileName = tileName
+
+        dataValue, dataTag = rest.split(None, 1)
+        try:
+            dataValue = int(dataValue)
+        except ValueError:
+            dataTag = dataValue
+            dataValue = -1
+
+        self.dataValue = dataValue
+        self.dataTag = dataTag
+
 
 class SummonCommand(object):
     name = "summon"
     entityName = NotImplemented
-    relX = relY = relZ = False
-    x = y = z = 0
 
     def __repr__(self):
-        attrs = "entityName x y z dataTagText".split()
-        args = ", ".join("%s=%s" % (a, getattr(self, a)) for a in attrs)
-        return "SummonCommand(%s)" % args
-    
+        attrs = "entityName x y z relX relY relZ dataTagText".split()
+        return formatRepr(self, attrs)
+
     def __str__(self):
         args = self.entityName + " "
-        if self.x is not None:
-            if self.relX:
-                args += "~"
-            args += str(self.x) + " "
-        if self.y is not None:
-            if self.relY:
-                args += "~"
-            args += str(self.y) + " "
-        if self.z is not None:
-            if self.relZ:
-                args += "~"
-            args += str(self.z) + " "
+        args += formatCoords(self)
 
-        args += self.dataTagText
+        args += " " + self.dataTagText
         return "/%s %s" % (self.name, args)
 
     def __init__(self, args):
@@ -121,33 +247,15 @@ class SummonCommand(object):
 
         x, y, z = pos.split(None, 2)
         if len(x):
-            if x[0] == '~':
-                self.relX = True
-                x = x[1:]
-            try:
-                x = int(x)
-            except ValueError:
-                x = float(x)
+            x, self.relX = parseCoord(x)
         else:
             x = None
         if len(y):
-            if y[0] == '~':
-                self.relY = True
-                y = y[1:]
-            try:
-                y = int(y)
-            except ValueError:
-                y = float(y)
+            y, self.relY = parseCoord(y)
         else:
             y = None
         if len(z):
-            if z[0] == '~':
-                self.relZ = True
-                z = z[1:]
-            try:
-                z = int(z)
-            except ValueError:
-                z = float(z)
+            z, self.relZ = parseCoord(z)
         else:
             z = None
 
@@ -162,33 +270,45 @@ _commandClasses = {}
 def addCommandClass(cls):
     _commandClasses[cls.name] = cls
 
-_cc = [SummonCommand]
+_cc = [SummonCommand, TestForBlockCommand, SetBlockCommand]
 
 for cc in _cc:
     addCommandClass(cc)
 
 del _cc
 
-if __name__ == '__main__':
-    cmdText = r'/summon Zombie 2.5 63 -626.5 {Health:18,HealF:18,IsVillager:0,Attributes:[{Name:"generic.followRange",Base:6},{Name:"generic.movementSpeed",Base:0.2},{Name:"generic.knockbackResistance",Base:1.0}],Equipment:[{id:283},{},{},{},{id:332, Age:5980}],PersistenceRequired:1}'
-    print("Command: ")
-    print(cmdText)
+
+def main():
+    testCommands = [
+        r'/summon Zombie 2.5 63 -626.5 {Health:18,HealF:18,IsVillager:0,Attributes:[{Name:"generic.followRange",Base:6},{Name:"generic.movementSpeed",Base:0.2},{Name:"generic.knockbackResistance",Base:1.0}],Equipment:[{id:283},{},{},{},{id:332, Age:5980}],PersistenceRequired:1}',
+        r'/setblock ~ ~3 ~ air',
+    ]
+    for cmdText in testCommands:
+        testReencode(cmdText)
+        testReencodeWithDataTag(cmdText)
+
+def testReencode(cmdText):
     cmd = ParseCommand(cmdText)
-    print("Parsed: ", repr(cmd))
+    assert not isinstance(cmd, UnknownCommand)
+    newCmdText = str(cmd)
+    newNewCmdText = str(ParseCommand(newCmdText))
+    assert newNewCmdText == newCmdText, "Expected: \n%s\nFound: \n%s" % (newCmdText, newNewCmdText)
+
+def testReencodeWithDataTag(cmdText):
+    cmd = ParseCommand(cmdText)
+    assert not isinstance(cmd, UnknownCommand)
+    if not hasattr(cmd, 'dataTagText'):
+        return
+
     from mceditlib.util import demjson
     dataTag = demjson.decode(cmd.dataTagText, sort_keys='preserve')
-    from pprint import pprint
-    print("DataTag: ")
-    pprint(dataTag)
-    print("Encoded: ")
     encoded = demjson.encode(dataTag, encode_quoted_property_names=False, sort_keys='preserve')
-    print(encoded)
-    print("Command: ")
     cmd.dataTagText = encoded
     newCmdText = str(cmd)
-    print(newCmdText)
     assert str(ParseCommand(newCmdText)) == str(cmd)
 
+if __name__ == '__main__':
+    main()
 """
 /summon Zombie ~3 ~ ~3 {"Attributes":[{"Base":6,"Name":"generic.followRange"},{"Base":0.2,"Name":"generic.movementSpeed"},{"Base":1.0,"Name":"generic.knockbackResistance"}],"Equipment":[{"id":283},{},{},{},{"Age":5980,"id":332}],"HealF":18,"Health":18,"IsVillager":0,"PersistenceRequired":1}
 """
