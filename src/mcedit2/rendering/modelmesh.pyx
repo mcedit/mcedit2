@@ -185,15 +185,14 @@ class BlockModelMesh(object):
                         # to get its actual state, we need to get its current state from
                         # its id and meta, parse the state into properties,
                         # change some property values into others according to
-                        # actualState logic, cram them back into a blockState string,
-                        # then use the new state to look up the model
+                        # actualState logic, then use the new state to look up the model
                         # ... ... ...
                         # all without doing a dict lookup for every block...
                         #
                         if grassID and (ID == grassID):
                             if (areaBlocks[y+1, z, x] == snowID
                                 or areaBlocks[y+1, z, x] == snowLayerID):
-                                actualState = "minecraft:grass[snowy=true]"
+                                actualState = "minecraft:grass", ("snowy=true",)
                                 quadListObj = blockModels.cookedModelsByBlockState[actualState]
                                 quads = quadListObj.quadList
                                 foundActualState = 1

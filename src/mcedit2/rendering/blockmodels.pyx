@@ -220,9 +220,8 @@ cdef class BlockModels(object):
                     variantZrot = block.forcedModelRotation[2]
 
             elif resourcePath is not None:
-                nameAndState = internalName + blockState
                 resourceVariant = block.resourceVariant
-                self.blockStatesByResourcePathVariant[resourcePath, resourceVariant].append(nameAndState)
+                self.blockStatesByResourcePathVariant[resourcePath, resourceVariant].append((internalName, blockState))
                 result = self.loadResourceVariant(resourcePath, resourceVariant)
                 if result is None:
                     continue
@@ -256,6 +255,8 @@ cdef class BlockModels(object):
             if block is None:
                 log.debug("No block found for block %s", internalName)
                 continue
+
+            self.blockStatesByResourcePathVariant[resourcePath, resourceVariant].append((internalName, blockState))
 
             result = self.loadResourceVariant(resourcePath, resourceVariant)
             if result is None:
@@ -616,15 +617,19 @@ cdef class BlockModels(object):
                 modelQuads.quads[i].quadface[2] = vec[1]
                 modelQuads.quads[i].quadface[3] = vec[2]
 
-            for nameAndState in self.blockStatesByResourcePathVariant[path, variant]:
-                if nameAndState != UNKNOWN_BLOCK:
+            for internalName, blockState in self.blockStatesByResourcePathVariant[path, variant]:
+                if internalName != UNKNOWN_BLOCK:
+                    modelQuadsObj = ModelQuadListObj()
+                    modelQuadsObj.quadList = modelQuads
+
+                    stateProps = sorted(blockState[1:-1].split(","))
+                    self.cookedModelsByBlockState[internalName, tuple(stateProps)] = modelQuadsObj
+
                     try:
-                        ID, meta = self.blocktypes.IDsByState[nameAndState]
+                        ID, meta = self.blocktypes.IDsByState[internalName + blockState]
                     except KeyError:
-                        modelQuadsObj = ModelQuadListObj()
-                        modelQuadsObj.quadList = modelQuads
-                        self.cookedModelsByBlockState[nameAndState] = modelQuadsObj
                         continue  # xxx put models for hidden states where??
+
 
                 # cookedModels[nameAndState] = cookedQuads
                 if path == UNKNOWN_BLOCK:
@@ -640,7 +645,7 @@ cdef class BlockModels(object):
         self.cookedModels = cookedModels
         self.cooked = True
 
-        # import pprint; pprint.pprint(dict(self.blockStatesByResourcePathVariant)); raise SystemExit
+        # import pprint; pprint.pprint((self.cookedModelsByBlockState)); raise SystemExit
         self.cookFluidQuads()
 
     def cookFluidQuads(self):
