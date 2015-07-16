@@ -53,14 +53,14 @@ cdef class FaceInfo(object):
         float ox, oy, oz
         cnp.ndarray elementMatrix, variantMatrix
         int textureRotation
-        int variantXrot, variantYrot, variantZrot
+        int variantXrot, variantYrot
         object tintcolor
         char biomeTintType
 
     def __init__(self, x1, y1, z1, x2, y2, z2, face,
                  texture, u1, v1, u2, v2, cullface,
                  shade, ox, oy, oz, elementMatrix, textureRotation,
-                 variantXrot, variantYrot, variantZrot, variantMatrix, tintcolor, biomeTintType):
+                 variantXrot, variantYrot, variantMatrix, tintcolor, biomeTintType):
         self.x1, self.y1, self.z1 = x1, y1, z1
         self.x2, self.y2, self.z2 = x2, y2, z2
         self.face = face
@@ -75,7 +75,6 @@ cdef class FaceInfo(object):
         self.textureRotation = textureRotation
         self.variantXrot = variantXrot
         self.variantYrot = variantYrot
-        self.variantZrot = variantZrot
         self.variantMatrix = variantMatrix
         self.tintcolor = tintcolor
         self.biomeTintType = biomeTintType
@@ -193,7 +192,7 @@ cdef class BlockModels(object):
         cdef dict modelDict, textures, textureVars
         cdef list elements
         cdef int i
-        cdef short variantXrot, variantYrot, variantZrot
+        cdef short variantXrot, variantYrot
         cdef char biomeTintType
 
         for i, block in enumerate(list(blocktypes) + [missingnoProxy]):
@@ -217,7 +216,6 @@ cdef class BlockModels(object):
                 if block.forcedModelRotation:
                     variantXrot = block.forcedModelRotation[0]
                     variantYrot = block.forcedModelRotation[1]
-                    variantZrot = block.forcedModelRotation[2]
 
             elif resourcePath is not None:
                 resourceVariant = block.resourceVariant
@@ -225,13 +223,13 @@ cdef class BlockModels(object):
                 result = self.loadResourceVariant(resourcePath, resourceVariant)
                 if result is None:
                     continue
-                modelDict, variantXrot, variantYrot, variantZrot = result
+                modelDict, variantXrot, variantYrot = result
 
             if modelDict is None:
                 log.debug("No model found for %s", internalName)
                 continue
 
-            self.loadModel(block, resourcePath, resourceVariant, modelDict, variantXrot, variantYrot, variantZrot)
+            self.loadModel(block, resourcePath, resourceVariant, modelDict, variantXrot, variantYrot)
 
         hiddenModels = json.load(file(resources.resourcePath("mcedit2/rendering/minecraft_hiddenstates_raw.json"), "rb"))
         log.info("Loading %s hidden blockState models...", len(hiddenModels))
@@ -262,18 +260,18 @@ cdef class BlockModels(object):
             if result is None:
                 log.debug("No blockstates file found for %s#%s", resourcePath, resourceVariant)
                 continue
-            modelDict, variantXrot, variantYrot, variantZrot = result
+            modelDict, variantXrot, variantYrot = result
 
             if modelDict is None:
                 log.debug("No model found for hidden state of %s: %s#%s ", nameAndState, resourcePath, resourceVariant)
                 continue
 
-            self.loadModel(block, resourcePath, resourceVariant, modelDict, variantXrot, variantYrot, variantZrot)
+            self.loadModel(block, resourcePath, resourceVariant, modelDict, variantXrot, variantYrot)
             hiddensLoaded += 1
 
         log.info("Found %s additional models for hidden states", hiddensLoaded)
 
-    def loadModel(self, block, resourcePath, resourceVariant, modelDict, variantXrot, variantYrot, variantZrot):
+    def loadModel(self, block, resourcePath, resourceVariant, modelDict, variantXrot, variantYrot):
 
         # model will either have an 'elements' key or a 'parent' key (maybe both).
         # 'parent' will be the name of a model
@@ -349,10 +347,10 @@ cdef class BlockModels(object):
                 b = blockColor & 0xff
                 blockColor = r, g, b
 
-            variantMatrix = variantRotation(variantXrot, variantYrot, variantZrot)
+            variantMatrix = variantRotation(variantXrot, variantYrot)
             for element in allElements:
                 quads = self.buildBoxQuads(element, block.nameAndState, textureVars,
-                                           variantXrot, variantYrot, variantZrot,
+                                           variantXrot, variantYrot,
                                            variantMatrix, blockColor, biomeTintType)
                 allQuads.extend(quads)
 
@@ -416,12 +414,11 @@ cdef class BlockModels(object):
             return None
         variantXrot = variantDict.get("x", 0)
         variantYrot = variantDict.get("y", 0)
-        variantZrot = variantDict.get("z", 0)
-        return modelDict, variantXrot, variantYrot, variantZrot
+        return modelDict, variantXrot, variantYrot
 
 
     def buildBoxQuads(self, dict element, unicode nameAndState, dict textureVars,
-                       short variantXrot, short variantYrot, short variantZrot,
+                       short variantXrot, short variantYrot,
                        cnp.ndarray variantMatrix, tuple blockColor, char biomeTintType):
         quads = []
         shade = element.get("shade", True)
@@ -485,7 +482,7 @@ cdef class BlockModels(object):
             quads.append(FaceInfo(x1, y1, z1, x2, y2, z2, face,
                     texture, u1, v1, u2, v2, cullface,
                     shade, ox, oy, oz, elementMatrix, info.get("rotation", 0),
-                    variantXrot, variantYrot, variantZrot, variantMatrix, tintcolor, biomeTintType))
+                    variantXrot, variantYrot, variantMatrix, tintcolor, biomeTintType))
 
         return quads
 
@@ -553,15 +550,11 @@ cdef class BlockModels(object):
 
                 if faceInfo.variantYrot:
                     quadface = rotateFace(quadface, 1, faceInfo.variantYrot)
-                if faceInfo.variantZrot:
-                    quadface = rotateFace(quadface, 2, faceInfo.variantZrot)
                 if faceInfo.variantXrot:
                     quadface = rotateFace(quadface, 0, faceInfo.variantXrot)
                 if cullface != -1:
                     if faceInfo.variantYrot:
                         cullface = rotateFace(cullface, 1, faceInfo.variantYrot)
-                    if faceInfo.variantZrot:
-                        cullface = rotateFace(cullface, 2, faceInfo.variantZrot)
                     if faceInfo.variantXrot:
                         cullface = rotateFace(cullface, 0, faceInfo.variantXrot)
 
@@ -816,15 +809,13 @@ cdef elementRotation(dict rotation):
     ox, oy, oz = origin
     return ox / 16., oy / 16., oz / 16., matrix[:3, :3]
 
-cdef variantRotation(variantXrot, variantYrot, variantZrot):
-    if variantXrot or variantYrot or variantZrot:
+cdef variantRotation(variantXrot, variantYrot):
+    if variantXrot or variantYrot:
         matrix = np.matrix(np.identity(4))
         if variantYrot:
             matrix *= npRotate("y", variantYrot)
         if variantXrot:
             matrix *= npRotate("x", variantXrot)
-        if variantZrot:
-            matrix *= npRotate("z", variantZrot)
         return matrix[:3, :3]
 
 @lru_cache()

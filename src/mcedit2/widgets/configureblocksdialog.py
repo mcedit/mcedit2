@@ -27,7 +27,7 @@ class BlockDefinition(object):
         self.unlocalizedName = defJson.get('unlocalizedName', internalName)
         self.englishName = defJson.get('englishName', internalName)
         self.modelPath = defJson.get('modelPath', None)
-        self.modelRotations = defJson.get('modelRotations', [0, 0, 0])
+        self.modelRotations = defJson.get('modelRotations', [0, 0])
         self.modelTextures = defJson.get('modelTextures', {})
 
     def exportAsJson(self):

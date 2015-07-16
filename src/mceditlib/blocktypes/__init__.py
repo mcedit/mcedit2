@@ -86,7 +86,7 @@ class BlockTypeSet(object):
             'resourceVariant': None,  # Name of variant from above file to use for this block type
             'forcedModel': None,  # Name of model file in assets/minecraft/models/block, forced by user configured blocks
             'forcedModelTextures': None,  # Mapping of texture variables to full texture paths, forced by user configured blocks
-            'forcedModelRotation': None,  # Mapping of 'x', 'y', 'z' to 0, 90, 180 etc to rotate model. for non-forced blocks this is specified in the states file.
+            'forcedModelRotation': None,  # Mapping of 'x', 'y', to 0, 90, 180 etc to rotate model. for non-forced blocks this is specified in the states file.
             'forcedRotationFlags': None,  # One or more of 'north', 'south' etc to use when rotating this block
             'renderType': 3,  # Model block - defaults to question mark box
             'unknown': False,  # False for blocks loaded from builtin .json, True for FML IDs, False for blocks configured in editor
