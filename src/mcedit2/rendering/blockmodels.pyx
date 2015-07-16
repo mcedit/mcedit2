@@ -12,6 +12,7 @@ from PySide import QtGui
 
 import numpy as np
 cimport numpy as cnp
+from mcedit2.util import resources
 
 cnp.import_array()
 
@@ -175,8 +176,9 @@ cdef class BlockModels(object):
         self.cooked = False
 
         missingnoProxy = BlockType(-1, -1, blocktypes)
-        missingnoProxy.internalName = u"MCEDIT_UNKNOWN"
+        missingnoProxy.internalName = missingnoProxy.nameAndState = u"MCEDIT_UNKNOWN"
         missingnoProxy.blockState = ""
+
         missingnoProxy.renderType = 3
         missingnoProxy.resourcePath = u"MCEDIT_UNKNOWN"
         missingnoProxy.resourceVariant = u"MCEDIT_UNKNOWN"
@@ -201,157 +203,215 @@ cdef class BlockModels(object):
             resourcePath = block.resourcePath
             modelDict = None
 
+
             if block.forcedModel is not None:  # user-configured block
                 modelDict = self._getBlockModelByPath(block.forcedModel)
+                # jam the custom models into quadsByResourcePathVariant and blockStatesByResourcePathVariant
+                resourcePath = "MCEDIT_CUSTOM_" + internalName
+                resourceVariant = "MCEDIT_CUSTOM_" + blockState
+                if block.forcedModelRotation:
+                    variantXrot = block.forcedModelRotation[0]
+                    variantYrot = block.forcedModelRotation[1]
+                    variantZrot = block.forcedModelRotation[2]
 
             elif resourcePath is not None:
                 nameAndState = internalName + blockState
-                try:
-                    statesJson = self._getBlockState(resourcePath)
-                except ResourceNotFound as e:
-                    if block.internalName.startswith("minecraft:"):
-                        log.warn("Could not get blockstates resource for %s, skipping... (%r)", block, e)
-                    continue
-                variants = statesJson['variants']
-                # variants is a dict with each key a resourceVariant value (from the block's ModelResourceLocation)
-                # the value for this key is either a dict describing which model to use
-                # ... or a list of such models to be selected from randomly
-                #
-                # each model dict must have a 'model' key whose value is the name of a file under assets/minecraft/models
-                # model dict may also have optional keys 'x', 'y', 'z' with a value in degrees, to rotate the model
-                # around that axis
-                # another optional key is 'uvlock', which needs investigating
-                # variant dict for 'rail':
-
-                # "variants": {
-                #     "shape=north_south": { "model": "normal_rail_flat" },
-                #     "shape=east_west": { "model": "normal_rail_flat", "y": 90 },
-                #     "shape=ascending_east": { "model": "normal_rail_raised_ne", "y": 90 },
-                #     "shape=ascending_west": { "model": "normal_rail_raised_sw", "y": 90 },
-                #     "shape=ascending_north": { "model": "normal_rail_raised_ne" },
-                #     "shape=ascending_south": { "model": "normal_rail_raised_sw" },
-                #     "shape=south_east": { "model": "normal_rail_curved" },
-                #     "shape=south_west": { "model": "normal_rail_curved", "y": 90 },
-                #     "shape=north_west": { "model": "normal_rail_curved", "y": 180 },
-                #     "shape=north_east": { "model": "normal_rail_curved", "y": 270 }
-                # }
-
                 resourceVariant = block.resourceVariant
                 self.blockStatesByResourcePathVariant[resourcePath, resourceVariant].append(nameAndState)
-                if (resourcePath, resourceVariant) in self.quadsByResourcePathVariant:
-                    log.debug("Model %s#%s already loaded for %s", resourcePath, resourceVariant, block)
+                result = self.loadResourceVariant(resourcePath, resourceVariant)
+                if result is None:
                     continue
-
-                log.debug("Loading %s#%s for %s", resourcePath, resourceVariant, block)
-                variantDict = variants[resourceVariant]
-                if isinstance(variantDict, list):
-                    variantDict = variantDict[0]  # do the random pick thing later, if at all
-                modelName = variantDict['model']
-                try:
-                    modelDict = self._getBlockModel("block/" + modelName)
-                except ResourceNotFound as e:
-                    log.exception("Could not get model resource %s for block %s, skipping... (%r)", modelName, block, e)
-                    continue
-                except ValueError as e:
-                    log.exception("Error parsing json for block/%s: %s", modelName, e)
-                    continue
-                variantXrot = variantDict.get("x", 0)
-                variantYrot = variantDict.get("y", 0)
-                variantZrot = variantDict.get("z", 0)
+                modelDict, variantXrot, variantYrot, variantZrot = result
 
             if modelDict is None:
                 log.debug("No model found for %s", internalName)
                 continue
 
-            # model will either have an 'elements' key or a 'parent' key (maybe both).
-            # 'parent' will be the name of a model
-            # following 'parent' keys will eventually lead to a model with 'elements'
-            #
-            # 'elements' is a list of dicts each describing a box that makes up the model.
-            # each box dict has 'from' and 'to' keys, which are lists of 3 float coordinates.
-            #
-            # the 'crossed squares' model demonstrates most of the keys found in a box element
-            #
-            # {   "from": [ 0.8, 0, 8 ],
-            #     "to": [ 15.2, 16, 8 ],
-            #     "rotation": { "origin": [ 8, 8, 8 ], "axis": "y", "angle": 45, "rescale": true },
-            #     "shade": false,
-            #     "faces": {
-            #         "north": { "uv": [ 0, 0, 16, 16 ], "texture": "#cross" },
-            #         "south": { "uv": [ 0, 0, 16, 16 ], "texture": "#cross" }
-            #     }
-            # }
-            #
-            # model may also have a 'textures' dict which assigns a texture file to a texture variable,
-            # or a texture variable to another texture variable.
-            #
-            # the result of loading a model should be a list of quads, each with four vertexes, four pairs of
-            # texture coordinates, four RGBA values for shading, plus a Face telling which adjacent block when
-            # present causes that quad to be culled.
+            self.loadModel(block, resourcePath, resourceVariant, modelDict, variantXrot, variantYrot, variantZrot)
 
-            textureVars = {}
-            allElements = []
+        hiddenModels = json.load(file(resources.resourcePath("mcedit2/rendering/minecraft_hiddenstates_raw.json"), "rb"))
+        log.info("Loading %s hidden blockState models...", len(hiddenModels))
+        hiddensLoaded = 0
+        for i, hidden in enumerate(hiddenModels):
+            if i % 500 == 0:
+                log.debug("Loading hidden blockState models %s/%s", i, len(hiddenModels))
 
-            # grab textures and elements from this model, then get parent and merge its textures and elements
-            # continue until no parent is found
-            for i in range(30):
-                textures = modelDict.get("textures")
-                if textures is not None:
-                    textureVars.update(textures)
-                elements = modelDict.get("elements")
-                if elements is not None:
-                    allElements.extend(elements)
-                parentName = modelDict.get("parent")
-                if parentName is None:
-                    break
-                try:
-                    modelDict = self._getBlockModel(parentName)
-                except ValueError as e:
-                    log.exception("Error parsing json for block/%s: %s", parentName, e)
-                    raise
-            else:
-                raise ValueError("Parent loop detected in block model %s" % modelName)
+            nameAndState = hidden['blockState']
+            resourcePath = hidden['resourcePath']
+            resourceVariant = hidden['resourceVariant']
+            if nameAndState in self.blockStatesByResourcePathVariant[resourcePath, resourceVariant]:
+                log.debug("Model for state %s previously loaded", nameAndState)
+                continue
+            if (resourcePath, resourceVariant) in self.quadsByResourcePathVariant:
+                log.debug("Model for variant %s#%s previously loaded", resourcePath, resourceVariant)
+                continue
 
-            if block.forcedModelTextures:  # user-configured model textures
-                for var, tex in block.forcedModelTextures.iteritems():
-                    textureVars[var[1:]] = tex
-            if block.forcedModelRotation:
-                variantXrot = block.forcedModelRotation[0]
-                variantYrot = block.forcedModelRotation[1]
-                variantZrot = block.forcedModelRotation[2]
+            internalName, blockState = (nameAndState.split("[") + [""])[:2]  # _splitInternalName
+            block = blocktypes.get(internalName, None)
+            if block is None:
+                log.debug("No block found for block %s", internalName)
+                continue
 
-            if block.biomeTintType == "grass":
-                biomeTintType = BIOME_GRASS
-            elif block.biomeTintType == "foliage":
-                biomeTintType = BIOME_FOLIAGE
-            else:
-                biomeTintType = BIOME_NONE
+            result = self.loadResourceVariant(resourcePath, resourceVariant)
+            if result is None:
+                log.debug("No blockstates file found for %s#%s", resourcePath, resourceVariant)
+                continue
+            modelDict, variantXrot, variantYrot, variantZrot = result
 
+            if modelDict is None:
+                log.debug("No model found for hidden state of %s: %s#%s ", nameAndState, resourcePath, resourceVariant)
+                continue
+
+            self.loadModel(block, resourcePath, resourceVariant, modelDict, variantXrot, variantYrot, variantZrot)
+            hiddensLoaded += 1
+
+        log.info("Found %s additional models for hidden states", hiddensLoaded)
+
+    def loadModel(self, block, resourcePath, resourceVariant, modelDict, variantXrot, variantYrot, variantZrot):
+
+        # model will either have an 'elements' key or a 'parent' key (maybe both).
+        # 'parent' will be the name of a model
+        # following 'parent' keys will eventually lead to a model with 'elements'
+        #
+        # 'elements' is a list of dicts each describing a box that makes up the model.
+        # each box dict has 'from' and 'to' keys, which are lists of 3 float coordinates.
+        #
+        # the 'crossed squares' model demonstrates most of the keys found in a box element
+        #
+        # {   "from": [ 0.8, 0, 8 ],
+        #     "to": [ 15.2, 16, 8 ],
+        #     "rotation": { "origin": [ 8, 8, 8 ], "axis": "y", "angle": 45, "rescale": true },
+        #     "shade": false,
+        #     "faces": {
+        #         "north": { "uv": [ 0, 0, 16, 16 ], "texture": "#cross" },
+        #         "south": { "uv": [ 0, 0, 16, 16 ], "texture": "#cross" }
+        #     }
+        # }
+        #
+        # model may also have a 'textures' dict which assigns a texture file to a texture variable,
+        # or a texture variable to another texture variable.
+        #
+        # the result of loading a model should be a list of quads, each with four vertexes, four pairs of
+        # texture coordinates, four RGBA values for shading, plus a Face telling which adjacent block when
+        # present causes that quad to be culled.
+
+        # grab textures and elements from this model, then get parent and merge its textures and elements
+        # continue until no parent is found
+        textureVars = {}
+        allElements = []
+
+        for i in range(30):
+            textures = modelDict.get("textures")
+            if textures is not None:
+                textureVars.update(textures)
+            elements = modelDict.get("elements")
+            if elements is not None:
+                allElements.extend(elements)
+            parentName = modelDict.get("parent")
+            if parentName is None:
+                break
             try:
-                # each element describes a box with up to six faces, each with a texture. convert the box into
-                # quads.
-                allQuads = []
-
-                if internalName == "minecraft:redstone_wire":
-                    blockColor = (0xff, 0x33, 0x00)
-                else:
-                    blockColor = block.color
-                    r = (blockColor >> 16) & 0xff
-                    g = (blockColor >> 8) & 0xff
-                    b = blockColor & 0xff
-                    blockColor = r, g, b
-
-                variantMatrix = variantRotation(variantXrot, variantYrot, variantZrot)
-                for element in allElements:
-                    quads = self.buildBoxQuads(element, nameAndState, textureVars, variantXrot, variantYrot, variantZrot, variantMatrix, blockColor, biomeTintType)
-                    allQuads.extend(quads)
-
-                self.quadsByResourcePathVariant[resourcePath, resourceVariant] = allQuads
-
-            except Exception as e:
-                log.error("Failed to parse variant of block %s\nelements:\n%s\ntextures:\n%s", nameAndState,
-                          allElements, textureVars)
+                modelDict = self._getBlockModel(parentName)
+            except ValueError as e:
+                log.exception("Error parsing json for block/%s: %s", parentName, e)
                 raise
+        else:
+            raise ValueError("Parent loop detected in block model for %s" % block.nameAndState)
+
+        if block.forcedModelTextures:  # user-configured model textures
+            for var, tex in block.forcedModelTextures.iteritems():
+                textureVars[var[1:]] = tex
+
+        if block.biomeTintType == "grass":
+            biomeTintType = BIOME_GRASS
+        elif block.biomeTintType == "foliage":
+            biomeTintType = BIOME_FOLIAGE
+        else:
+            biomeTintType = BIOME_NONE
+
+        try:
+            # each element describes a box with up to six faces, each with a texture. convert the box into
+            # quads.
+            allQuads = []
+
+            if block.internalName == "minecraft:redstone_wire":
+                blockColor = (0xff, 0x33, 0x00)
+            else:
+                blockColor = block.color
+                r = (blockColor >> 16) & 0xff
+                g = (blockColor >> 8) & 0xff
+                b = blockColor & 0xff
+                blockColor = r, g, b
+
+            variantMatrix = variantRotation(variantXrot, variantYrot, variantZrot)
+            for element in allElements:
+                quads = self.buildBoxQuads(element, block.nameAndState, textureVars,
+                                           variantXrot, variantYrot, variantZrot,
+                                           variantMatrix, blockColor, biomeTintType)
+                allQuads.extend(quads)
+
+            self.quadsByResourcePathVariant[resourcePath, resourceVariant] = allQuads
+
+        except Exception as e:
+            log.error("Failed to parse variant of block %s\nelements:\n%s\ntextures:\n%s",
+                      block.nameAndState, allElements, textureVars)
+            raise
+
+
+
+    def loadResourceVariant(self, resourcePath, resourceVariant):
+        # variants is a dict with each key a resourceVariant value (from the block's ModelResourceLocation)
+        # the value for this key is either a dict describing which model to use
+        # ... or a list of such models to be selected from randomly
+        #
+        # each model dict must have a 'model' key whose value is the name of a file under assets/minecraft/models
+        # model dict may also have optional keys 'x', 'y', 'z' with a value in degrees, to rotate the model
+        # around that axis
+        # another optional key is 'uvlock', which needs investigating
+        # variant dict for 'rail':
+
+        # "variants": {
+        #     "shape=north_south": { "model": "normal_rail_flat" },
+        #     "shape=east_west": { "model": "normal_rail_flat", "y": 90 },
+        #     "shape=ascending_east": { "model": "normal_rail_raised_ne", "y": 90 },
+        #     "shape=ascending_west": { "model": "normal_rail_raised_sw", "y": 90 },
+        #     "shape=ascending_north": { "model": "normal_rail_raised_ne" },
+        #     "shape=ascending_south": { "model": "normal_rail_raised_sw" },
+        #     "shape=south_east": { "model": "normal_rail_curved" },
+        #     "shape=south_west": { "model": "normal_rail_curved", "y": 90 },
+        #     "shape=north_west": { "model": "normal_rail_curved", "y": 180 },
+        #     "shape=north_east": { "model": "normal_rail_curved", "y": 270 }
+        # }
+        if (resourcePath, resourceVariant) in self.quadsByResourcePathVariant:
+            log.info("Model %s#%s already loaded", resourcePath, resourceVariant)
+            return None
+
+        log.debug("Loading %s#%s", resourcePath, resourceVariant)
+        try:
+            statesJson = self._getBlockState(resourcePath)
+        except ResourceNotFound as e:
+            # if block.internalName.startswith("minecraft:"):
+            #     log.warn("Could not get blockstates resource for %s, skipping... (%r)", block, e)
+            log.info("Could not get blockstates resource for %s#%s, skipping... (%r)", resourcePath, resourceVariant, e)
+            return None
+
+        variants = statesJson['variants']
+        variantDict = variants[resourceVariant]
+        if isinstance(variantDict, list):
+            variantDict = variantDict[0]  # do the random pick thing later, if at all
+        modelName = variantDict['model']
+        try:
+            modelDict = self._getBlockModel("block/" + modelName)
+        except ResourceNotFound as e:
+            log.exception("Could not get model resource %s, skipping... (%r)", modelName, e)
+            return None
+        except ValueError as e:
+            log.exception("Error parsing json for block/%s: %s", modelName, e)
+            return None
+        variantXrot = variantDict.get("x", 0)
+        variantYrot = variantDict.get("y", 0)
+        variantZrot = variantDict.get("z", 0)
+        return modelDict, variantXrot, variantYrot, variantZrot
 
 
     def buildBoxQuads(self, dict element, unicode nameAndState, dict textureVars,
@@ -555,7 +615,7 @@ cdef class BlockModels(object):
                     try:
                         ID, meta = self.blocktypes.IDsByState[nameAndState]
                     except KeyError:
-                        continue  # xxx stash unused models somewhere for user-configuration?
+                        continue  # xxx put models for hidden states where??
 
                 # cookedModels[nameAndState] = cookedQuads
                 if path == UNKNOWN_BLOCK:

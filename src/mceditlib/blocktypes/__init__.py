@@ -134,6 +134,8 @@ class BlockTypeSet(object):
         if nameAndState is None:
             return self.defaults[attr]
 
+        if attr == "nameAndState":
+            return nameAndState
         if attr == "internalName":
             return self._splitInternalName(nameAndState)[0]
 
@@ -204,7 +206,10 @@ class BlockTypeSet(object):
             if isinstance(internalName, basestring):
                 if ":" not in internalName:
                     internalName = self.namePrefix + internalName
-                ID, meta = self.IDsByState[internalName + blockState]
+                try:
+                    ID, meta = self.IDsByState[internalName + blockState]
+                except KeyError:
+                    raise KeyError("No block found for name and state: %s%s" % (internalName, blockState))
             else:  # (ID, meta)
                 ID, meta = nameAndState
 
@@ -214,7 +219,10 @@ class BlockTypeSet(object):
             if nameAndState not in self.IDsByState:
                 if nameAndState in self.defaultBlockstates:
                     nameAndState += self.defaultBlockstates[nameAndState]
-            ID, meta = self.IDsByState[nameAndState]
+            try:
+                ID, meta = self.IDsByState[nameAndState]
+            except KeyError:
+                raise KeyError("No block found for name and state: %s" % (nameAndState,))
         else:  # block ID
             ID = nameAndState
             meta = 0
