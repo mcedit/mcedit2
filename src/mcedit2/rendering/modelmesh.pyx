@@ -110,6 +110,8 @@ class BlockModelMesh(object):
         cdef unsigned short grassID = getID("minecraft:grass")
         cdef unsigned short snowID = getID("minecraft:snow")
         cdef unsigned short snowLayerID = getID("minecraft:snow_layer")
+        cdef unsigned short netherFenceID = getID("minecraft:nether_brick_fence")
+        cdef unsigned short stainedGlassPaneID = getID("minecraft:stained_glass_pane")
 
         #cdef char fancyGraphics = self.sectionUpdate.fancyGraphics
         cdef char fancyGraphics = True
@@ -196,6 +198,51 @@ class BlockModelMesh(object):
                                 quadListObj = blockModels.cookedModelsByBlockState[actualState]
                                 quads = quadListObj.quadList
                                 foundActualState = 1
+
+                        if (fenceID and (ID == fenceID)
+                            or netherFenceID and (ID == netherFenceID)):
+                            props = []
+                            for direction, dx, dz in [
+                                ("north", 0, -1),
+                                ("south", 0, 1),
+                                ("west", -1, 0),
+                                ("east", 1, 0),
+                            ]:
+                                nID = areaBlocks[y, z+dz, x+dx]
+                                props.append(direction + "=" + ("true"
+                                             if opaqueCube[nID]
+                                                or fenceID and nID == fenceID
+                                                or fenceGateID and nID == fenceGateID
+                                                or netherFenceID and nID == netherFenceID
+                                             else "false"))
+                            actualState = blocktypes.namesByID[ID], tuple(sorted(props))
+                            quadListObj = blockModels.cookedModelsByBlockState[actualState]
+                            quads = quadListObj.quadList
+                            foundActualState = 1
+
+                        if (paneID and (ID == paneID)
+                            or stainedGlassPaneID and (ID == stainedGlassPaneID)
+                            or barsID and (ID == barsID)):
+                            props = []
+                            for direction, dx, dz in [
+                                ("north", 0, -1),
+                                ("south", 0, 1),
+                                ("west", -1, 0),
+                                ("east", 1, 0),
+                            ]:
+                                nID = areaBlocks[y, z+dz, x+dx]
+                                props.append(direction + "=" + ("true"
+                                             if opaqueCube[nID]
+                                                or paneID and nID == paneID
+                                                or barsID and nID == barsID
+                                                or stainedGlassPaneID and nID == stainedGlassPaneID
+                                                or glassID and nID == glassID
+                                                or stainedGlassID and nID == stainedGlassID
+                                             else "false"))
+                            actualState = blocktypes.namesByID[ID], tuple(sorted(props))
+                            quadListObj = blockModels.cookedModelsByBlockState[actualState]
+                            quads = quadListObj.quadList
+                            foundActualState = 1
 
                         if foundActualState == 0:
                             quads = blockModels.cookedModelsByID[ID][meta]
