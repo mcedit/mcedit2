@@ -14,6 +14,9 @@ cdef struct ModelQuadList:
     int count
     ModelQuad *quads
 
+cdef class ModelQuadListObj(object):
+    cdef ModelQuadList quadList
+
 cdef class BlockModels:
     cdef object resourceLoader
     cdef object blocktypes
@@ -25,6 +28,7 @@ cdef class BlockModels:
     cdef public object firstTextures
     cdef object cookedModels
     cdef ModelQuadList cookedModelsByID[4096][16]
+    cdef dict cookedModelsByBlockState
     cdef object cooked
 
     cdef object grassImage

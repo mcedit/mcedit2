@@ -39,6 +39,10 @@ cdef struct ModelQuadList:
     int count
     ModelQuad *quads
 
+cdef class ModelQuadListObj(object):
+    pass  # defined in blockmodels.pxd
+
+
 cdef class FaceInfo(object):
     cdef:
         float x1, y1, z1, x2, y2, z2
@@ -167,6 +171,7 @@ cdef class BlockModels(object):
         self.modelStateJsons = {}
         self.quadsByResourcePathVariant = {}
         self.blockStatesByResourcePathVariant = defaultdict(list)
+        self.cookedModelsByBlockState = {}
 
         self._texturePaths = set()
         self.firstTextures = {}  # first texture found for each block - used for icons (xxx)
@@ -246,6 +251,7 @@ cdef class BlockModels(object):
                 log.debug("Model for variant %s#%s previously loaded", resourcePath, resourceVariant)
                 continue
 
+            self.blockStatesByResourcePathVariant[resourcePath, resourceVariant].append(nameAndState)
             internalName, blockState = (nameAndState.split("[") + [""])[:2]  # _splitInternalName
             block = blocktypes.get(internalName, None)
             if block is None:
@@ -502,6 +508,7 @@ cdef class BlockModels(object):
         cdef unsigned char shade
         cdef ModelQuadList modelQuads
         cdef ModelQuadList unknownBlockModel
+        cdef ModelQuadListObj modelQuadsObj = None
         cdef list allQuads
         UNKNOWN_BLOCK = u'MCEDIT_UNKNOWN'
 
@@ -615,6 +622,9 @@ cdef class BlockModels(object):
                     try:
                         ID, meta = self.blocktypes.IDsByState[nameAndState]
                     except KeyError:
+                        modelQuadsObj = ModelQuadListObj()
+                        modelQuadsObj.quadList = modelQuads
+                        self.cookedModelsByBlockState[nameAndState] = modelQuadsObj
                         continue  # xxx put models for hidden states where??
 
                 # cookedModels[nameAndState] = cookedQuads
@@ -631,6 +641,7 @@ cdef class BlockModels(object):
         self.cookedModels = cookedModels
         self.cooked = True
 
+        # import pprint; pprint.pprint(dict(self.blockStatesByResourcePathVariant)); raise SystemExit
         self.cookFluidQuads()
 
     def cookFluidQuads(self):

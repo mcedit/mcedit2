@@ -107,6 +107,9 @@ class BlockModelMesh(object):
         cdef unsigned short stoneSlab2ID = getID("minecraft:stone_slab2")
         cdef unsigned short woodenSlabID = getID("minecraft:wooden_slab")
 
+        cdef unsigned short grassID = getID("minecraft:grass")
+        cdef unsigned short snowID = getID("minecraft:snow")
+        cdef unsigned short snowLayerID = getID("minecraft:snow_layer")
 
         #cdef char fancyGraphics = self.sectionUpdate.fancyGraphics
         cdef char fancyGraphics = True
@@ -157,6 +160,8 @@ class BlockModelMesh(object):
         cdef const unsigned char * tintColor
 
         cdef char doCull = 0
+        cdef char foundActualState
+        cdef blockmodels.ModelQuadListObj quadListObj
 
         if vertexBuffer == NULL:
             return
@@ -170,10 +175,31 @@ class BlockModelMesh(object):
                     if ID == 0:
                         continue
                     meta = areaData[y, z, x]
+                    foundActualState = 0
 
                     if renderType[ID] == 3:  # model blocks
-                        # xxx cookedModelsByBlockState
-                        quads = blockModels.cookedModelsByID[ID][meta]
+                        # if this block has actualStates, get its actualState
+                        # using its neighbors and look up that state's models
+                        # in blockModels.... ... ...
+
+                        # to get its actual state, we need to get its current state from
+                        # its id and meta, parse the state into properties,
+                        # change some property values into others according to
+                        # actualState logic, cram them back into a blockState string,
+                        # then use the new state to look up the model
+                        # ... ... ...
+                        # all without doing a dict lookup for every block...
+                        #
+                        if grassID and (ID == grassID):
+                            if (areaBlocks[y+1, z, x] == snowID
+                                or areaBlocks[y+1, z, x] == snowLayerID):
+                                actualState = "minecraft:grass[snowy=true]"
+                                quadListObj = blockModels.cookedModelsByBlockState[actualState]
+                                quads = quadListObj.quadList
+                                foundActualState = 1
+
+                        if foundActualState == 0:
+                            quads = blockModels.cookedModelsByID[ID][meta]
                         if quads.count == 0:
                             continue
 
