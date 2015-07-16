@@ -548,15 +548,13 @@ cdef class BlockModels(object):
                                      faceInfo.x2, faceInfo.y2, faceInfo.z2,
                                      quadface, u1, v1, u2, v2, faceInfo.textureRotation)
 
-                if faceInfo.variantYrot:
-                    quadface = rotateFace(quadface, 1, faceInfo.variantYrot)
-                if faceInfo.variantXrot:
-                    quadface = rotateFace(quadface, 0, faceInfo.variantXrot)
+                quadface = rotateFaceByVariant(quadface,
+                                               faceInfo.variantXrot,
+                                               faceInfo.variantYrot)
                 if cullface != -1:
-                    if faceInfo.variantYrot:
-                        cullface = rotateFace(cullface, 1, faceInfo.variantYrot)
-                    if faceInfo.variantXrot:
-                        cullface = rotateFace(cullface, 0, faceInfo.variantXrot)
+                    cullface = rotateFaceByVariant(cullface,
+                                                   faceInfo.variantXrot,
+                                                   faceInfo.variantYrot)
 
                 applyRotations(faceInfo.ox, faceInfo.oy, faceInfo.oz,
                                faceInfo.elementMatrix, faceInfo.variantMatrix,
@@ -712,23 +710,23 @@ cdef short * _faceVector(char face):
 
 faceRotations = (
     (
-        FaceYIncreasing,
-        FaceZIncreasing,
-        FaceYDecreasing,
-        FaceZDecreasing,
+        FaceNorth,
+        FaceDown,
+        FaceSouth,
+        FaceUp,
     ),
     (
-        FaceXIncreasing,
-        FaceZIncreasing,
-        FaceXDecreasing,
-        FaceZDecreasing,
+        FaceNorth,
+        FaceEast,
+        FaceSouth,
+        FaceWest,
     ),
-    (
-        FaceXIncreasing,
-        FaceYIncreasing,
-        FaceXDecreasing,
-        FaceYDecreasing,
-    ),
+    # (
+    #     FaceXIncreasing,
+    #     FaceYIncreasing,
+    #     FaceXDecreasing,
+    #     FaceYDecreasing,
+    # ),
 
 )
 
@@ -751,6 +749,12 @@ faceShades[:] = [
     0x99,
 ]
 
+cdef short rotateFaceByVariant(short face, short variantXrot, short variantYrot):
+    if variantXrot:
+        face = rotateFace(face, 0, variantXrot)
+    if variantYrot:
+        face = rotateFace(face, 1, variantYrot)
+    return face
 
 
 cdef short rotateFace(short face, short axis, int degrees):
@@ -812,10 +816,10 @@ cdef elementRotation(dict rotation):
 cdef variantRotation(variantXrot, variantYrot):
     if variantXrot or variantYrot:
         matrix = np.matrix(np.identity(4))
-        if variantYrot:
-            matrix *= npRotate("y", variantYrot)
         if variantXrot:
             matrix *= npRotate("x", variantXrot)
+        if variantYrot:
+            matrix *= npRotate("y", variantYrot)
         return matrix[:3, :3]
 
 @lru_cache()
