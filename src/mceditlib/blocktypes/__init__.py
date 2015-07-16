@@ -79,7 +79,7 @@ class BlockTypeSet(object):
             'opacity': 15,
             'brightness': 0,
             'internalName': 'UNKNOWN_NAME',
-            'blockState': '[UNKNOWN_STATE]',
+            'blockState': '',
             'unlocalizedName': 'name.unknown',
             'opaqueCube': True,
             'resourcePath': None,  # Name of states file in assets/minecraft/blockstates/
