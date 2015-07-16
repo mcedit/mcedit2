@@ -251,8 +251,7 @@ cdef class BlockModels(object):
                 log.debug("Model for variant %s#%s previously loaded", resourcePath, resourceVariant)
                 continue
 
-            self.blockStatesByResourcePathVariant[resourcePath, resourceVariant].append(nameAndState)
-            internalName, blockState = (nameAndState.split("[") + [""])[:2]  # _splitInternalName
+            internalName, blockState = blocktypes._splitInternalName(nameAndState)
             block = blocktypes.get(internalName, None)
             if block is None:
                 log.debug("No block found for block %s", internalName)
