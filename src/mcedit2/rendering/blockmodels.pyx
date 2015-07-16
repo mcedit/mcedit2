@@ -3,6 +3,7 @@
     blockmodels
 """
 from __future__ import absolute_import, print_function
+from collections import defaultdict
 import json
 import logging
 import math
@@ -80,7 +81,28 @@ UNKNOWN_MODEL = {
         u"all": u"MCEDIT_UNKNOWN"
     }
 }
+"""
+Some blocks have blockStates not represented in the world file.
+These will have additional blockStates with corresponding resourceVariants that do not
+have a unique ID/meta combination.
 
+To make these additional block states renderable, we will need to have a function
+`getActualBlockState` to get the state, and another function to get the resourceVariant
+for that state. We will also need to load the model specified by the resourceVariant
+into BlockModels.
+
+Since BlockModels only stores models in an ID/meta lookup table, these "extra" models
+will need to be stored differently. Storing all of the models in a dict keyed to the
+blockstate would be expensive, as we'd need up to 4k dict lookups per section.
+
+One possible solution is to assign an internal numeric ID to each
+internalName+blockState combination, and use a table to map ID/meta to our own internal
+ID, and use a dict to map the internalName+blockState to our internal ID. This skips
+the dict lookup for states that actually are represented as ID/meta, so only states
+that are returned by `getActualBlockState` will be looked up textually.
+
+
+"""
 cdef class BlockModels(object):
     def _getBlockModel(self, modelName):
         if modelName == u"block/MCEDIT_UNKNOWN":
@@ -142,7 +164,9 @@ cdef class BlockModels(object):
 
         self.modelBlockJsons = {}
         self.modelStateJsons = {}
-        self.modelQuads = {}
+        self.quadsByResourcePathVariant = {}
+        self.blockStatesByResourcePathVariant = defaultdict(list)
+
         self._texturePaths = set()
         self.firstTextures = {}  # first texture found for each block - used for icons (xxx)
         self.cookedModels = {}  # nameAndState -> list[(xyzuvstc, cullface)]
@@ -213,6 +237,11 @@ cdef class BlockModels(object):
                 # }
 
                 resourceVariant = block.resourceVariant
+                self.blockStatesByResourcePathVariant[resourcePath, resourceVariant].append(nameAndState)
+                if (resourcePath, resourceVariant) in self.quadsByResourcePathVariant:
+                    log.debug("Model %s#%s already loaded for %s", resourcePath, resourceVariant, block)
+                    continue
+
                 log.debug("Loading %s#%s for %s", resourcePath, resourceVariant, block)
                 variantDict = variants[resourceVariant]
                 if isinstance(variantDict, list):
@@ -317,7 +346,7 @@ cdef class BlockModels(object):
                     quads = self.buildBoxQuads(element, nameAndState, textureVars, variantXrot, variantYrot, variantZrot, variantMatrix, blockColor, biomeTintType)
                     allQuads.extend(quads)
 
-                self.modelQuads[internalName + blockState] = allQuads
+                self.quadsByResourcePathVariant[resourcePath, resourceVariant] = allQuads
 
             except Exception as e:
                 log.error("Failed to parse variant of block %s\nelements:\n%s\ntextures:\n%s", nameAndState,
@@ -403,7 +432,7 @@ cdef class BlockModels(object):
         if self.cooked:
             return
 
-        log.info("Cooking quads for %d models...", len(self.modelQuads))
+        log.info("Cooking quads for %d models...", len(self.quadsByResourcePathVariant))
         cookedModels = {}
         cdef short ID, meta
         cdef int l, t, w, h
@@ -423,12 +452,7 @@ cdef class BlockModels(object):
         cdef short * vec
         cdef unsigned char * rgba
 
-        for nameAndState, allQuads in self.modelQuads.iteritems():
-            if nameAndState != UNKNOWN_BLOCK:
-                try:
-                    ID, meta = self.blocktypes.IDsByState[nameAndState]
-                except KeyError:
-                    continue  # xxx stash models somewhere for user-configuration
+        for (path, variant), allQuads in self.quadsByResourcePathVariant.iteritems():
 
             modelQuads.count = len(allQuads)
             modelQuads.quads = <ModelQuad *>malloc(modelQuads.count * sizeof(ModelQuad))
@@ -526,11 +550,18 @@ cdef class BlockModels(object):
                 modelQuads.quads[i].quadface[2] = vec[1]
                 modelQuads.quads[i].quadface[3] = vec[2]
 
-            # cookedModels[nameAndState] = cookedQuads
-            if nameAndState == UNKNOWN_BLOCK:
-                unknownBlockModel = modelQuads
-            else:
-                self.cookedModelsByID[ID][meta] = modelQuads
+            for nameAndState in self.blockStatesByResourcePathVariant[path, variant]:
+                if nameAndState != UNKNOWN_BLOCK:
+                    try:
+                        ID, meta = self.blocktypes.IDsByState[nameAndState]
+                    except KeyError:
+                        continue  # xxx stash unused models somewhere for user-configuration?
+
+                # cookedModels[nameAndState] = cookedQuads
+                if path == UNKNOWN_BLOCK:
+                    unknownBlockModel = modelQuads
+                else:
+                    self.cookedModelsByID[ID][meta] = modelQuads
 
         for ID in range(4096):
             for meta in range(16):

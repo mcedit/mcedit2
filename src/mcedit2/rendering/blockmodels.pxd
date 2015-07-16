@@ -19,7 +19,8 @@ cdef class BlockModels:
     cdef object blocktypes
     cdef object modelBlockJsons
     cdef object modelStateJsons
-    cdef object modelQuads
+    cdef object quadsByResourcePathVariant
+    cdef object blockStatesByResourcePathVariant
     cdef object _texturePaths
     cdef public object firstTextures
     cdef object cookedModels
