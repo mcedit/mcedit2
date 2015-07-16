@@ -285,8 +285,7 @@ def setBlocks(dimension, x, y, z,
         _Data = []
         if isinstance(Blocks, int):
             Blocks = [Blocks]
-        if isinstance(Data, int):
-            Data = [Data]
+
 
         for block in Blocks:
             if isinstance(block, basestring):
@@ -298,16 +297,18 @@ def setBlocks(dimension, x, y, z,
                 _Blocks.append(block)
         if len(_Blocks):
             Blocks = _Blocks
+        if len(_Data):
             Data = _Data
 
     if Blocks is None and Data is None:
         updateLights = False
 
-    Blocks = numpy.atleast_3d(Blocks) if Blocks is not None else None
-    Data = numpy.atleast_3d(Data) if Data is not None else None
-    BlockLight = numpy.atleast_3d(BlockLight) if BlockLight is not None else None
-    SkyLight = numpy.atleast_3d(SkyLight) if SkyLight is not None else None
-    Biomes = numpy.atleast_3d(Biomes) if Biomes is not None else None
+
+    Blocks = atleast_3d(Blocks) if Blocks is not None else None
+    Data = atleast_3d(Data) if Data is not None else None
+    BlockLight = atleast_3d(BlockLight) if BlockLight is not None else None
+    SkyLight = atleast_3d(SkyLight) if SkyLight is not None else None
+    Biomes = atleast_3d(Biomes) if Biomes is not None else None
 
     arrays_to_broadcast = [x, y, z]
 
@@ -330,6 +331,7 @@ def setBlocks(dimension, x, y, z,
     x, y, z = broadcasted_arrays[:3]
     broadcasted_arrays = broadcasted_arrays[3:]
 
+
     if Blocks is not None:
         Blocks, broadcasted_arrays = broadcasted_arrays[0], broadcasted_arrays[1:]
     if Data is not None:
@@ -340,7 +342,6 @@ def setBlocks(dimension, x, y, z,
         SkyLight, broadcasted_arrays = broadcasted_arrays[0], broadcasted_arrays[1:]
     if Biomes is not None:
         Biomes, broadcasted_arrays = broadcasted_arrays[0], broadcasted_arrays[1:]
-
 
 
     for cx, cz, sx, sy, sz, mask in coords_by_chunk(x, y, z):
