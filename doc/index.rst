@@ -6,13 +6,13 @@
 Welcome to mceditlib's documentation!
 =====================================
 
-Contents:
+API Documentation:
 
 .. toctree::
     :maxdepth: 2
 
-    mceditlib
-    mcedit2
+    apidoc/mceditlib
+    apidoc/mcedit2
 
 Indices and tables
 ==================
