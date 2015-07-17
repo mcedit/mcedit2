@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.abspath('extensions'))  # extensions
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinx_nounderscore']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -92,12 +92,26 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
-
+import alabaster  # If you get an ImportError here, run `pip install alabaster`
+html_theme_path = [alabaster.get_path()]
+extensions.insert(0, 'alabaster')
+html_theme = 'alabaster'
+html_sidebars = {
+    '**': [
+        'about.html',
+        'navigation.html',
+        'relations.html',
+        'searchbox.html',
+        'donate.html',
+    ]
+}
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {}
+html_theme_options = {
+    'github_user': 'mcedit',
+    'github_repo': 'mcedit2',
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
@@ -130,9 +144,6 @@ html_static_path = ['_static']
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
 #html_use_smartypants = True
-
-# Custom sidebar templates, maps document names to template names.
-#html_sidebars = {}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -247,3 +258,14 @@ texinfo_documents = [
 # (value 'alphabetical'), by member type (value 'groupwise') or by source order
 # (value 'bysource'). The default is alphabetical.
 autodoc_member_order = 'bysource'
+
+
+# -- Sphinx event handlers
+
+# exclude Qt staticMetaObjects from autodoc
+def skip_member(app, what, name, obj, skip, options):
+    return name.endswith('staticMetaObject') or skip
+
+
+def setup(app):
+    app.connect('autodoc-skip-member', skip_member)
