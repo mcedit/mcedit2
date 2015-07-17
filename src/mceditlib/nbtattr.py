@@ -1,5 +1,5 @@
 """
-    ${NAME}
+    nbtattr
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import collections
@@ -27,7 +27,7 @@ class NBTAttr(object):
     The function SetNBTDefaults can be used to initialize all subtags of an instance's rootTag to their defaults,
     creating them if needed.
 
-    Compare:
+    Without NBTAttr::
 
         # getting
         if "Dimension" not in rootTag:
@@ -39,7 +39,7 @@ class NBTAttr(object):
             rootTag["Dimension"] = nbt.TAG_Int()
         rootTag["Dimension"].value = 1
 
-    With NBTAttrs:
+    With NBTAttr::
 
         class PlayerRef(object):
             Dimension = NBTAttr("Dimension", nbt.TAG_Int, 0)
@@ -59,12 +59,15 @@ class NBTAttr(object):
     def __repr__(self):
         return "NBTAttr('%s', %s, %r)" % (self.name, self.tagType, self.default)
 
-    def __init__(self, name, tagType, default=None):
+    def __init__(self, name, tagType, default=None, doc=""):
         self.name = name
         self.tagType = tagType
         self.default = default
+        self.__doc__ = doc
 
     def __get__(self, instance, owner):
+        if instance is None:
+            return self  # attribute access on class returns the NBTAttr, like property()
         tag = instance.rootTag
         if self.name not in tag:
             if self.default is None:
@@ -82,10 +85,16 @@ class NBTAttr(object):
 
 
 class NBTUUIDAttr(object):
+    """
+    This attribute gets the entity's UUID from its `UUIDLeast` and `UUIDMost` tags and
+    returns it as a `uuid.UUID`
+    """
     def __repr__(self):
         return "NBTUUIDAttr()"
 
     def __get__(self, instance, owner):
+        if instance is None:
+            return self
         tag = instance.rootTag
         if 'UUIDLeast' not in tag or 'UUIDMost' not in tag:
             return None
@@ -200,15 +209,18 @@ class NBTCompoundListAttr(object):
     to the constructor.
     """
 
-    def __init__(self, name, compoundRefClass):
+    def __init__(self, name, compoundRefClass, doc=""):
         self.name = name
         self.compoundRefClass = compoundRefClass
         self.listProxyClass = NBTListProxy
+        self.__doc__ = doc
 
     def __repr__(self):
         return "NBTListAttr(%s, %s)" % (self.name, self.compoundRefClass)
 
     def __get__(self, instance, owner):
+        if instance is None:
+            return self
         tag = instance.rootTag
         if self.name not in tag:
             tag[self.name] = nbt.TAG_List()
@@ -220,12 +232,15 @@ class NBTListAttr(object):
     def __repr__(self):
         return "NBTListAttr(%s, %s, %s)" % (self.name, self.listType, self.default)
 
-    def __init__(self, name, listType, default=()):
+    def __init__(self, name, listType, default=(), doc=""):
         self.name = name
         self.listType = listType
         self.default = default
+        self.__doc__ = doc
 
     def __get__(self, instance, owner):
+        if instance is None:
+            return self
         tag = instance.rootTag
         if self.name not in tag:
             tag[self.name] = nbt.TAG_List()
@@ -249,11 +264,13 @@ class NBTCompoundAttr(NBTAttr):
     def __repr__(self):
         return "NBTCompoundAttr(%s, %s)" % (self.name, self.compoundRefClass)
 
-    def __init__(self, name, compoundRefClass):
-        super(NBTCompoundAttr, self).__init__(name, nbt.TAG_Compound)
+    def __init__(self, name, compoundRefClass, doc=""):
+        super(NBTCompoundAttr, self).__init__(name, nbt.TAG_Compound, doc=doc)
         self.compoundRefClass = compoundRefClass
 
     def __get__(self, instance, owner):
+        if instance is None:
+            return self
         tag = instance.rootTag
         if self.name not in tag:
             tag[self.name] = self.tagType(value=self.default)
@@ -273,6 +290,9 @@ class NBTCompoundAttr(NBTAttr):
 
 class NBTVectorAttr(NBTListAttr):
     def __get__(self, instance, owner):
+        if instance is None:
+            return self
+
         val = super(NBTVectorAttr, self).__get__(instance, owner)
         return Vector(*val)
 
@@ -283,12 +303,15 @@ class KeyedVectorAttr(object):
     instead of as a list of tags. For example, the world spawn position (SpawnX, SpawnY,
     SpawnZ) and a TileEntity's position (x, y, z).
     """
-    def __init__(self, xKey, yKey, zKey, tagType, default=None):
+    def __init__(self, xKey, yKey, zKey, tagType, default=None, doc=""):
         self.tagType = tagType
         self.default = default
         self.keys = xKey, yKey, zKey
+        self.__doc__ = doc
 
     def __get__(self, instance, owner):
+        if instance is None:
+            return self
         tag = instance.rootTag
         for key in self.keys:
             if key not in tag:
