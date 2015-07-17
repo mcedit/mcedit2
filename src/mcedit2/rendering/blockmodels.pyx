@@ -244,9 +244,6 @@ cdef class BlockModels(object):
             if nameAndState in self.blockStatesByResourcePathVariant[resourcePath, resourceVariant]:
                 log.debug("Model for state %s previously loaded", nameAndState)
                 continue
-            if (resourcePath, resourceVariant) in self.quadsByResourcePathVariant:
-                log.debug("Model for variant %s#%s previously loaded", resourcePath, resourceVariant)
-                continue
 
             internalName, blockState = blocktypes._splitInternalName(nameAndState)
             block = blocktypes.get(internalName, None)
@@ -255,6 +252,10 @@ cdef class BlockModels(object):
                 continue
 
             self.blockStatesByResourcePathVariant[resourcePath, resourceVariant].append((internalName, blockState))
+
+            if (resourcePath, resourceVariant) in self.quadsByResourcePathVariant:
+                log.debug("Model for variant %s#%s previously loaded", resourcePath, resourceVariant)
+                continue
 
             result = self.loadResourceVariant(resourcePath, resourceVariant)
             if result is None:
