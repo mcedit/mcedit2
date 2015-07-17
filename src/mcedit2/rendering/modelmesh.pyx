@@ -224,6 +224,17 @@ class BlockModelMesh(object):
                             or stainedGlassPaneID and (ID == stainedGlassPaneID)
                             or barsID and (ID == barsID)):
                             props = []
+                            if ID == stainedGlassPaneID:
+                                # absolutely disgusting
+                                state = blocktypes.statesByID[ID, meta].split('[')[1]
+                                props = state[:-1].split(",")
+                                for p in props:
+                                    if p.startswith("color"):
+                                        props = [p]
+                                        break
+                                else:
+                                    props = []
+
                             for direction, dx, dz in [
                                 ("north", 0, -1),
                                 ("south", 0, 1),
