@@ -20,6 +20,19 @@ from libc.string cimport memcpy
 log = logging.getLogger(__name__)
 
 
+lPowerLevels = [p/15. * 0.6 + 0.4 for p in range(16)]
+
+lRedstonePowerColors = [
+    (p if p > 0.4 else 0.3, max(0.0, p * p * 0.7 - 0.5), max(0.0, p * p * 0.6 - 0.7))
+    for p in lPowerLevels
+]
+cdef unsigned char redstonePowerColors[16 * 4]
+for i, (r, g, b) in enumerate(lRedstonePowerColors):
+    redstonePowerColors[i*4] = b * 255
+    redstonePowerColors[i*4+1] = g * 255
+    redstonePowerColors[i*4+2] = r * 255
+    redstonePowerColors[i*4+3] = 255
+
 class BlockModelMesh(object):
     renderstate = renderstates.RenderstateAlphaTestNode
     def __init__(self, sectionUpdate):
@@ -113,6 +126,36 @@ class BlockModelMesh(object):
         cdef unsigned short netherFenceID = getID("minecraft:nether_brick_fence")
         cdef unsigned short stainedGlassPaneID = getID("minecraft:stained_glass_pane")
 
+        cdef unsigned short woodenDoorID = getID("minecraft:wooden_door")
+        cdef unsigned short ironDoorID = getID("minecraft:iron_door")
+        cdef unsigned short birchDoorID = getID("minecraft:birch_door")
+        cdef unsigned short spruceDoorID = getID("minecraft:spruce_door")
+        cdef unsigned short jungleDoorID = getID("minecraft:jungle_door")
+        cdef unsigned short acaciaDoorID = getID("minecraft:acacia_door")
+        cdef unsigned short darkOakDoorID = getID("minecraft:dark_oak_door")
+
+        cdef unsigned short redstoneWireID = getID("minecraft:redstone_wire")
+        cdef list powerSources
+
+        powerSources = [
+            getID("minecraft:stone_pressure_plate"),
+            getID("minecraft:wooden_pressure_plate"),
+            getID("minecraft:light_weighted_pressure_plate"),
+            getID("minecraft:heavy_weighted_pressure_plate"),
+            getID("minecraft:stone_button"),
+            getID("minecraft:wooden_button"),
+            getID("minecraft:trapped_chest"),
+            getID("minecraft:redstone_block"),
+            getID("minecraft:daylight_detector"),
+            getID("minecraft:daylight_detector_inverted"),
+            getID("minecraft:lever"),
+            getID("minecraft:detector_rail"),
+            getID("minecraft:tripwire_hook"),
+            getID("minecraft:redstone_torch"),
+            getID("minecraft:unlit_redstone_torch"),
+        ]
+        powerSources = [p for p in powerSources if p != 0]
+
         #cdef char fancyGraphics = self.sectionUpdate.fancyGraphics
         cdef char fancyGraphics = True
 
@@ -159,10 +202,14 @@ class BlockModelMesh(object):
         cdef unsigned char * vertexColor
         cdef unsigned short color
         cdef size_t vertex, channel
-        cdef const unsigned char * tintColor
+        cdef unsigned char * tintColor
 
         cdef char doCull = 0
         cdef char foundActualState
+        cdef char redstonePower
+
+
+
         cdef blockmodels.ModelQuadListObj quadListObj
 
         if vertexBuffer == NULL:
@@ -177,7 +224,8 @@ class BlockModelMesh(object):
                     if ID == 0:
                         continue
                     meta = areaData[y, z, x]
-                    foundActualState = 0
+                    actualState = None
+                    redstonePower = 0
 
                     if renderType[ID] == 3:  # model blocks
                         # if this block has actualStates, get its actualState
@@ -191,13 +239,26 @@ class BlockModelMesh(object):
                         # ... ... ...
                         # all without doing a dict lookup for every block...
                         #
+                        # absolutely disgusting
+
+                        def parseProps(ID, meta):
+                            state = blocktypes.statesByID.get((ID, meta))
+                            if state is None:
+                                state = blocktypes.defaultBlockstates.get(ID)
+                            if state is None or '[' not in state:
+                                return {}
+                            state = state.split('[')[1]
+                            props = state[:-1].split(",")
+                            props = [p.split("=") for p in props]
+                            return {k:v for k,v in props}
+                        def combineProps(props):
+                            props = [k + "=" + v for k, v in props.iteritems()]
+                            return tuple(sorted(props))
+
                         if grassID and (ID == grassID):
                             if (areaBlocks[y+1, z, x] == snowID
                                 or areaBlocks[y+1, z, x] == snowLayerID):
                                 actualState = "minecraft:grass", ("snowy=true",)
-                                quadListObj = blockModels.cookedModelsByBlockState[actualState]
-                                quads = quadListObj.quadList
-                                foundActualState = 1
 
                         if (fenceID and (ID == fenceID)
                             or netherFenceID and (ID == netherFenceID)):
@@ -216,24 +277,13 @@ class BlockModelMesh(object):
                                                 or netherFenceID and nID == netherFenceID
                                              else "false"))
                             actualState = blocktypes.namesByID[ID], tuple(sorted(props))
-                            quadListObj = blockModels.cookedModelsByBlockState[actualState]
-                            quads = quadListObj.quadList
-                            foundActualState = 1
 
                         if (paneID and (ID == paneID)
                             or stainedGlassPaneID and (ID == stainedGlassPaneID)
                             or barsID and (ID == barsID)):
-                            props = []
+                            props = {}
                             if ID == stainedGlassPaneID:
-                                # absolutely disgusting
-                                state = blocktypes.statesByID[ID, meta].split('[')[1]
-                                props = state[:-1].split(",")
-                                for p in props:
-                                    if p.startswith("color"):
-                                        props = [p]
-                                        break
-                                else:
-                                    props = []
+                                props = parseProps(ID, meta)
 
                             for direction, dx, dz in [
                                 ("north", 0, -1),
@@ -242,21 +292,83 @@ class BlockModelMesh(object):
                                 ("east", 1, 0),
                             ]:
                                 nID = areaBlocks[y, z+dz, x+dx]
-                                props.append(direction + "=" + ("true"
+                                props[direction] = ("true"
                                              if opaqueCube[nID]
                                                 or paneID and nID == paneID
                                                 or barsID and nID == barsID
                                                 or stainedGlassPaneID and nID == stainedGlassPaneID
                                                 or glassID and nID == glassID
                                                 or stainedGlassID and nID == stainedGlassID
-                                             else "false"))
-                            actualState = blocktypes.namesByID[ID], tuple(sorted(props))
+                                             else "false")
+                            actualState = blocktypes.namesByID[ID], combineProps(props)
+
+                        if ((woodenDoorID and ID == woodenDoorID)
+                            or (ironDoorID and ID == ironDoorID)
+                            or (birchDoorID and ID == birchDoorID)
+                            or (spruceDoorID and ID == spruceDoorID)
+                            or (jungleDoorID and ID == jungleDoorID)
+                            or (acaciaDoorID and ID == acaciaDoorID)
+                            or (darkOakDoorID and ID == darkOakDoorID)
+                            ):
+                            props = parseProps(ID, meta)
+                            if len(props):
+                                if props['half'] == 'upper':
+                                    nID = areaBlocks[y-1, z, x]
+                                    if nID == ID:
+                                        lowerProps = parseProps(areaBlocks[y-1, z, x], areaData[y-1, z, x])
+                                        for p in ['facing', 'hinge', 'open']:
+                                            props[p] = lowerProps[p]
+                                        actualState = blocktypes.namesByID[ID], combineProps(props)
+
+                        if (redstoneWireID and ID == redstoneWireID):
+                            props = parseProps(ID, meta)
+                            def isConnectible(nID, nMeta, dx, dz):
+                                if (nID == redstoneWireID
+                                    or (upComparatorID and nID == upComparatorID)
+                                    or (pComparatorID and nID == pComparatorID)
+                                    or (nID in powerSources)
+                                    ):
+                                    return True
+                                elif ((pRepeaterID and nID == pRepeaterID)
+                                      or (upRepeaterID and nID == upRepeaterID)):
+                                    nProps = parseProps(nID, nMeta)
+                                    if (dz != 0 and nProps['facing'] in ('north', 'south')
+                                        or dx != 0 and nProps['facing'] in ('east', 'west')):
+                                        return True
+
+                            if len(props):
+                                for direction, dx, dz in [
+                                    ("north", 0, -1),
+                                    ("south", 0, 1),
+                                    ("west", -1, 0),
+                                    ("east", 1, 0),
+                                ]:
+                                    nID = areaBlocks[y, z+dz, x+dx]
+                                    nMeta = areaData[y, z+dz, x+dx]
+                                    if isConnectible(nID, nMeta, dx, dz):
+                                        props[direction] = "side"
+
+                                    elif opaqueCube[nID] > 0:  # xxx isFullOpaqueCube
+                                        nID = areaBlocks[y+1, z+dz, x+dx]
+                                        nMeta = areaData[y+1, z+dz, x+dx]
+                                        if isConnectible(nID, nMeta, dx, dz):
+                                            props[direction] = "up"
+                                    else:
+                                        nID = areaBlocks[y-1, z+dz, x+dx]
+                                        nMeta = areaData[y-1, z+dz, x+dx]
+                                        if isConnectible(nID, nMeta, dx, dz):
+                                            props[direction] = "side"
+
+                                redstonePower = int(props['power'])
+
+                            actualState = "minecraft:redstone_wire", combineProps(props)
+
+                        if actualState is None:
+                            quads = blockModels.cookedModelsByID[ID][meta]
+                        else:
                             quadListObj = blockModels.cookedModelsByBlockState[actualState]
                             quads = quadListObj.quadList
-                            foundActualState = 1
 
-                        if foundActualState == 0:
-                            quads = blockModels.cookedModelsByID[ID][meta]
                         if quads.count == 0:
                             continue
 
@@ -337,12 +449,15 @@ class BlockModelMesh(object):
                                     imageY = <unsigned int>((1.0 - rainfall) * (blockModels.foliageImageY - 1))
                                     imageOffset = imageX + blockModels.foliageImageX * imageY
                                     tintColor = &blockModels.foliageImageBits[imageOffset * 4]
+                                if quad.biomeTintType == blockmodels.BIOME_REDSTONE:
+                                    tintColor = &redstonePowerColors[redstonePower * 4]
+                                    # print("REDSTONE TINT", redstonePower, tintColor[0], tintColor[1], tintColor[2])
 
                                 vertexColor = <unsigned char *>xyzuvstc
                                 for vertex in range(4):
                                     for channel in range(3):
                                         color = vertexColor[vertexBytes * vertex + vertexBytes - 4 + channel]
-                                        # format is ARGB8, but this is with respect to 4-byte words
+                                        # image format is ARGB8, but this is with respect to 4-byte words
                                         # when the words are little endian, the byte ordering becomes BGRA
                                         # what i REALLY SHOULD do is get the pixel as an int and bit shift the bytes out.
                                         color *= tintColor[2-channel]

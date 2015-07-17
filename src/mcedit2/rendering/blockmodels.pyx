@@ -340,7 +340,8 @@ cdef class BlockModels(object):
             allQuads = []
 
             if block.internalName == "minecraft:redstone_wire":
-                blockColor = (0xff, 0x33, 0x00)
+                blockColor = (0xff, 0xff, 0xff)
+                biomeTintType = BIOME_REDSTONE
             else:
                 blockColor = block.color
                 r = (blockColor >> 16) & 0xff

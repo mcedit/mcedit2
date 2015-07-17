@@ -3,6 +3,7 @@ cdef enum:
     BIOME_NONE = 0
     BIOME_GRASS = 1
     BIOME_FOLIAGE = 2
+    BIOME_REDSTONE = 3
 
 cdef struct ModelQuad:
     float[32] xyzuvstc
