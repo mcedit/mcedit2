@@ -6,6 +6,7 @@ import collections
 import logging
 import math
 import numpy
+from mcedit2.rendering.chunkmeshes.entity.armorstand import ModelArmorStand
 from mcedit2.rendering.chunkmeshes.entity.biped import ModelZombie, ModelSkeleton, \
     ModelPigZombie
 from mcedit2.rendering.chunkmeshes.entity.creeper import ModelCreeper
@@ -166,6 +167,7 @@ addModel(ModelCow())
 addModel(ModelSheep())
 addModel(ModelSheepWool())
 addModel(ModelVillager())
+addModel(ModelArmorStand())
 
 if __name__ == '__main__':
     from pprint import pprint
