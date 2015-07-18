@@ -213,6 +213,7 @@ cdef class BlockModels(object):
                 # jam the custom models into quadsByResourcePathVariant and blockStatesByResourcePathVariant
                 resourcePath = "MCEDIT_CUSTOM_" + internalName
                 resourceVariant = "MCEDIT_CUSTOM_" + blockState
+                self.blockStatesByResourcePathVariant[resourcePath, resourceVariant].append((internalName, blockState))
                 if block.forcedModelRotation:
                     variantXrot = block.forcedModelRotation[0]
                     variantYrot = block.forcedModelRotation[1]
@@ -389,7 +390,7 @@ cdef class BlockModels(object):
         #     "shape=north_east": { "model": "normal_rail_curved", "y": 270 }
         # }
         if (resourcePath, resourceVariant) in self.quadsByResourcePathVariant:
-            log.info("Model %s#%s already loaded", resourcePath, resourceVariant)
+            log.debug("Model %s#%s already loaded", resourcePath, resourceVariant)
             return None
 
         log.debug("Loading %s#%s", resourcePath, resourceVariant)
