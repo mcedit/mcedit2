@@ -78,6 +78,35 @@ class TranslateNode(Node):
         self.dirty = True
 
 
+class ScaleRenderNode(RenderstateRenderNode):
+    def __init__(self, sceneNode):
+        """
+
+        :type sceneNode: TranslateNode
+        """
+        super(ScaleRenderNode, self).__init__(sceneNode)
+
+    def __repr__(self):
+        return "RotateRenderNode(%s, %s)" % (self.sceneNode.degrees, self.sceneNode.axis)
+
+    def enter(self):
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glPushMatrix()
+        GL.glScale(*self.sceneNode.scale)
+
+    def exit(self):
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glPopMatrix()
+
+
+class ScaleNode(Node):
+    RenderNodeClass = ScaleRenderNode
+
+    def __init__(self, scale):
+        super(ScaleNode, self).__init__()
+        self.scale = scale
+
+
 class MatrixRenderNode(RenderstateRenderNode):
     def enter(self):
         projection = self.sceneNode.projection
