@@ -152,8 +152,34 @@ class BoxFaceRenderNode(RenderNode):
         GL.glDisable(GL.GL_BLEND)
 """
 
+def createRenderNode(sceneNode):
+    """
+    Create and return a renderNode that renders the given sceneNode and all of its
+    children.
+
+    Calls updateRenderNode to recursively create child renderNodes for each descendent of
+    sceneNode.
+
+    :type sceneNode: Node
+    :rtype: mcedit2.rendering.rendernode.RenderNode
+    """
+    renderNode = sceneNode.RenderNodeClass(sceneNode)
+    updateRenderNode(renderNode)
+    return renderNode
+
+
 def updateRenderNode(renderNode):
     """
+    Synchronize the state of a renderNode and its childre with its scene node.
+
+    If the sceneNode that owns this renderNode is dirty, invalidates the renderNode.
+    Then, updateChildren is called to add or remove renderNodes if the sceneNode had
+    children added or removed.
+
+    As an optimization, each sceneNode keeps track of whether one of its descendents
+    was dirtied or had children added or removed. This allows us to skip the recursive
+    updateRenderNode call if it is not needed.
+
 
     :type renderNode: mcedit2.rendering.rendernode.RenderNode
     """
@@ -162,47 +188,45 @@ def updateRenderNode(renderNode):
     if sceneNode.dirty:
         renderNode.invalidate()
         sceneNode.dirty = False
-    if sceneNode.descendentChildrenChanged or sceneNode.childrenChanged:
+
+    if sceneNode.childrenChanged:
         updateChildren(renderNode)
-        sceneNode.descendentChildrenChanged = False
         sceneNode.childrenChanged = False
 
-
-def createRenderNode(sceneNode):
-    """
-
-    :type sceneNode: Node
-    :rtype: mcedit2.rendering.rendernode.RenderNode
-    """
-    renderNode = sceneNode.RenderNodeClass(sceneNode)
-    updateChildren(renderNode)
-    return renderNode
-
+    if sceneNode.descendentNeedsUpdate:
+        for renderChild in renderNode.children:
+            updateRenderNode(renderChild)
+        sceneNode.descendentNeedsUpdate = False
 
 def updateChildren(renderNode):
     """
+    Compare the children of this renderNode to the children of its sceneNode. Create
+    renderNodes for any new sceneNodes, and remove any renderNodes whose
+    sceneNode is no longer a child of this node's sceneNode.
 
     :type renderNode: mcedit2.rendering.rendernode.RenderNode
     :return:
     :rtype:
     """
     sceneNode = renderNode.sceneNode
-    deadChildren = []
+    orphans = []
+
+    # Find renderNode children whose sceneNode no longer has a parent
     for renderChild in renderNode.children:
         if renderChild.sceneNode.parent is None:
-            deadChildren.append(renderChild)
+            orphans.append(renderChild)
 
-    for dc in deadChildren:
-        renderNode.removeChild(dc)
-        dc.destroy()
+    for node in orphans:
+        renderNode.removeChild(node)
+        node.destroy()
 
+    # Find sceneNode children who do not have a renderNode as a child of this renderNode
     for index, sceneChild in enumerate(sceneNode.children):
         renderChild = renderNode.childrenBySceneNode.get(sceneChild)
         if renderChild is None:
             renderNode.insertNode(index, createRenderNode(sceneChild))
             sceneChild.dirty = False
-        else:
-            updateRenderNode(renderChild)
+
 
 
 def renderScene(renderNode):

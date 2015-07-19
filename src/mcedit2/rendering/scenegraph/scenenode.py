@@ -18,7 +18,7 @@ class Node(object):
         self._children = []
         self._dirty = True
         self.childrenChanged = False
-        self.descendentChildrenChanged = False
+        self.descendentNeedsUpdate = False
 
     def __repr__(self):
         return "%s(visible=%s, children=%d)" % (self.__class__.__name__, self.visible, len(self._children))
@@ -36,32 +36,32 @@ class Node(object):
         else:
             self._parent = None
 
-    def touchChildren(self):
+    def childrenDidChange(self):
         node = self
         node.childrenChanged = True
         while node.parent:
             node = node.parent
-            node.descendentChildrenChanged = True
+            node.descendentNeedsUpdate = True
 
     def addChild(self, node):
         self._children.append(node)
         node.parent = self
-        self.touchChildren()
+        self.childrenDidChange()
 
     def insertChild(self, index, node):
         self._children.insert(index, node)
         node.parent = self
-        self.touchChildren()
+        self.childrenDidChange()
 
     def removeChild(self, node):
         self._children.remove(node)
         node.parent = None
-        self.touchChildren()
+        self.childrenDidChange()
 
     def clear(self):
         for c in self._children:
             c.parent = None
-        self.touchChildren()
+        self.childrenDidChange()
         self._children[:] = []
 
     def childCount(self):
@@ -82,7 +82,7 @@ class Node(object):
             node = self
             while node.parent:
                 node = node.parent
-                node.descendentChildrenChanged = True
+                node.descendentNeedsUpdate = True
 
     _visible = True
     @property
@@ -111,7 +111,7 @@ class NamedChildrenNode(Node):
             oldNode.parent = None
         self._children[name] = node
         node.parent = self
-        self.touchChildren()
+        self.childrenDidChange()
 
     insertChild = NotImplemented
 
@@ -119,7 +119,7 @@ class NamedChildrenNode(Node):
         node = self._children.pop(name, None)
         if node:
             node.parent = None
-            self.touchChildren()
+            self.childrenDidChange()
 
     def getChild(self, name):
         return self._children.get(name)
@@ -128,7 +128,7 @@ class NamedChildrenNode(Node):
         for node in self.children:
             node.parent = None
         self._children.clear()
-        self.touchChildren()
+        self.childrenDidChange()
 
     @property
     def children(self):
