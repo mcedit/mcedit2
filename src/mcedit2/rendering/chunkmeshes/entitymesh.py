@@ -419,8 +419,7 @@ class MonsterModelRenderer(ChunkMeshBase):
         for i, ref in enumerate(chunk.Entities):
             ID = ref.id
             if ID not in models.cookedModels:
-                assert ID != "Zombie"
-                ID = "Creeper"
+                continue
 
             model = models.cookedModels[ID]
             texturePath = models.getModelTexture(ref)
