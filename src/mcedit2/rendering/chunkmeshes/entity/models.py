@@ -9,6 +9,7 @@ import numpy
 from mcedit2.rendering.chunkmeshes.entity.armorstand import ModelArmorStand
 from mcedit2.rendering.chunkmeshes.entity.biped import ModelZombie, ModelSkeleton, \
     ModelPigZombie
+from mcedit2.rendering.chunkmeshes.entity.chest import ModelChest, ModelLargeChest
 from mcedit2.rendering.chunkmeshes.entity.creeper import ModelCreeper
 from mcedit2.rendering.chunkmeshes.entity.quadruped import ModelPig, ModelCow, ModelSheep, \
     ModelSheepWool
@@ -111,7 +112,7 @@ def npRotate(axis, angle, rescale=False):
     # xxx rescale
     return rotate
 
-CookedModel = collections.namedtuple('CookedModel', 'vertices texWidth texHeight')
+CookedModel = collections.namedtuple('CookedModel', 'vertices texWidth texHeight modelTexture')
 
 def cookEntityModel(model):
     allVerts = []
@@ -136,14 +137,23 @@ def cookEntityModel(model):
 
             allVerts.append((x+cx, y+cy, z+cz, u, v))
 
-    return CookedModel(allVerts, model.textureWidth, model.textureHeight)
+    return CookedModel(allVerts, model.textureWidth, model.textureHeight, model.modelTexture)
 
 cookedModels = {}
 models = {}
 
+cookedTileEntityModels = {}
+tileEntityModels = {}
+
+
 def addModel(model):
-    cookedModels[model.id] = cookEntityModel(model)
-    models[model.id] = model
+    if hasattr(model, 'id'):
+        cookedModels[model.id] = cookEntityModel(model)
+        models[model.id] = model
+    else:
+        cookedTileEntityModels[model.tileEntityID] = cookEntityModel(model)
+        tileEntityModels[model.tileEntityID] = model
+
 
 def getModelTexture(entityRef):
     model = models.get(entityRef.id)
@@ -168,6 +178,8 @@ addModel(ModelSheep())
 addModel(ModelSheepWool())
 addModel(ModelVillager())
 addModel(ModelArmorStand())
+addModel(ModelChest())
+addModel(ModelLargeChest())
 
 if __name__ == '__main__':
     from pprint import pprint

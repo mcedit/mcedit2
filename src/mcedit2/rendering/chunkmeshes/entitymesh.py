@@ -14,7 +14,7 @@ from mcedit2.rendering.blockmeshes import ChunkMeshBase
 from mcedit2.rendering.chunkmeshes.entity import models
 from mcedit2.rendering.layers import Layer
 from mcedit2.rendering.scenegraph.bind_texture import BindTextureNode
-from mcedit2.rendering.scenegraph.matrix import TranslateNode, RotateNode
+from mcedit2.rendering.scenegraph.matrix import TranslateNode, RotateNode, ScaleNode
 from mcedit2.rendering.scenegraph.misc import PolygonModeNode, LineWidthNode
 from mcedit2.rendering.scenegraph.depth_test import DepthFuncNode
 from mcedit2.rendering.scenegraph.scenenode import Node
@@ -437,6 +437,95 @@ class MonsterModelRenderer(ChunkMeshBase):
                 sceneNode.addChild(node)
 
             yield
+
+        self.sceneNode = sceneNode
+
+
+def chestEntityModelNode(ref, model, modelTex, chunk, facing, largeX, largeZ):
+    modelVerts = numpy.array(model.vertices)
+    modelVerts.shape = modelVerts.shape[0]/4, 4, modelVerts.shape[1]
+    # scale down
+    modelVerts[..., :3] *= 1/16.
+    # modelVerts[..., 1] = -modelVerts[..., 1]
+    # modelVerts[..., 0] = -modelVerts[..., 0]
+
+    vertexBuffer = QuadVertexArrayBuffer(len(modelVerts), lights=False, textures=True)
+    vertexBuffer.vertex[:] = modelVerts[..., :3]
+    vertexBuffer.texcoord[:] = modelVerts[..., 3:5]
+
+    node = VertexNode([vertexBuffer])
+    rotations = {
+        "north": 180,
+        "east": 270,
+        "south": 0,
+        "west": 90
+    }
+    decenterTranslateNode = TranslateNode((-0.5, -0.5, -0.5))
+    decenterTranslateNode.addChild(node)
+
+    rotateNode = RotateNode(rotations[facing], (0., 1., 0.))
+    # rotateNode = RotateNode(0, (0., 1., 0.))
+    rotateNode.addChild(decenterTranslateNode)
+    dx = dz = 0
+    if largeX and facing == "north":
+        dx = 1.
+    if largeZ and facing == "east":
+        dz = -1.
+    recenterTranslateNode = TranslateNode((0.5+dx, 0.5, 0.5+dz))
+    recenterTranslateNode.addChild(rotateNode)
+    x, y, z = (ref.Position - (chunk.cx << 4, 0, chunk.cz << 4))
+    scaleNode = ScaleNode((1., -1., -1.))
+    scaleNode.addChild(recenterTranslateNode)
+    posTranslateNode = TranslateNode((x, y+1., z+1.))
+    posTranslateNode.addChild(scaleNode)
+
+    textureNode = BindTextureNode(modelTex, (1./model.texWidth, 1./model.texHeight, 1))
+    textureNode.addChild(posTranslateNode)
+    return textureNode
+
+class TileEntityModelRenderer(ChunkMeshBase):
+    layer = Layer.TileEntities
+
+    def makeChunkVertices(self, chunk, limitBox):
+        sceneNode = scenenode.Node()
+        chests = {}
+        for i, ref in enumerate(chunk.TileEntities):
+            ID = ref.id
+            if ID not in models.cookedTileEntityModels:
+                continue
+            if ID == "Chest":
+                chests[ref.Position] = ref, {}
+                continue
+
+        for (x, y, z), (ref, adj) in chests.iteritems():
+            for dx, dz in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+                if (x+dx, y, z+dz) in chests:
+                    adj[dx, dz] = ref
+
+        for ref, adj in chests.itervalues():
+            if (-1, 0) not in adj and (0, -1) not in adj:
+                if (1, 0) not in adj and (0, 1) not in adj:
+                    model = models.cookedTileEntityModels[ref.id]
+                else:
+                    model = models.cookedTileEntityModels["MCEDIT_LargeChest"]
+
+                texturePath = model.modelTexture
+                if texturePath is None:
+                    modelTex = None
+                else:
+                    modelTex = self.chunkUpdate.updateTask.getModelTexture(texturePath)
+
+                block = chunk.dimension.getBlock(*ref.Position)
+                if block.internalName != "minecraft:chest":
+                    continue
+                blockState = block.blockState[1:-1]
+                facing = blockState.split("=")[1]
+
+                node = chestEntityModelNode(ref, model, modelTex, chunk, facing,
+                                            (1, 0) in adj, (0, 1) in adj)
+                sceneNode.addChild(node)
+
+                yield
 
         self.sceneNode = sceneNode
 
