@@ -339,8 +339,12 @@ class ItemFrameMesh(EntityMeshBase):
             if limitBox and ref.Position not in limitBox:
                 continue
 
-            item = ref.Item
-            if item.itemType.internalName != "minecraft:filled_map":
+            try:
+                item = ref.Item
+                if item.itemType.internalName != "minecraft:filled_map":
+                    continue
+            except KeyError:
+                log.exception("Error while getting ItemFrame item ID in frame at %s", ref.TilePos)
                 continue
 
             mapID = item.Damage
