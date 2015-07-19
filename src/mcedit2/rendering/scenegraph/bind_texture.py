@@ -15,20 +15,22 @@ log = logging.getLogger(__name__)
 class BindTextureRenderNode(RenderstateRenderNode):
     def enter(self):
         GL.glPushAttrib(GL.GL_ENABLE_BIT | GL.GL_TEXTURE_BIT)
-        GL.glMatrixMode(GL.GL_TEXTURE)
-        GL.glPushMatrix()
-        GL.glLoadIdentity()
         scale = self.sceneNode.scale
         if scale is not None:
+            GL.glMatrixMode(GL.GL_TEXTURE)
+            GL.glPushMatrix()
+            GL.glLoadIdentity()
             GL.glScale(*scale)
-        glutils.glActiveTexture(GL.GL_TEXTURE0)
+        glutils.glActiveTexture(GL.GL_TEXTURE0)  # disable texture1?
         GL.glEnable(GL.GL_TEXTURE_2D)
         if self.sceneNode.texture is not None:
             self.sceneNode.texture.bind()
 
     def exit(self):
-        GL.glMatrixMode(GL.GL_TEXTURE)
-        GL.glPopMatrix()
+        if self.sceneNode.scale is not None:
+            # Please do not change BindTextureNode.scale during RenderNode calls, thx
+            GL.glMatrixMode(GL.GL_TEXTURE)
+            GL.glPopMatrix()
         GL.glPopAttrib()
 
 
