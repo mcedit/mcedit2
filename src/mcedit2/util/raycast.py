@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function
 import logging
 import math
+import numpy
 from mcedit2.util import profiler
 from mceditlib.geometry import Vector, Ray
 from mceditlib.selection import SectionBox, rayIntersectsBox
@@ -97,6 +98,76 @@ def intbound(o, v, step):
             return 0.0
     return (step - (o % step)) / v
 
+def _cast_np(origin, vector, maxDistance, stepSize):
+    # maxDistance is just a recommendation. More points will usually be returned.
+
+    originPos = list(int(o - o % stepSize) for o in origin)
+    # Integer single steps along each vector axis
+    step = numpy.array([stepSize if v > 0 else -stepSize if v < 0 else 0 for v in vector])
+    faceDirs = numpy.array([1 if v > 0 else -1 if v < 0 else 0 for v in vector])
+    faceDirs = -faceDirs
+
+    # t factor along each axis
+    t = numpy.array([intbound(o, v, stepSize) if v else 2000000000 for o, v in zip(origin, vector)])
+    # distance to increment t along each axis after finding a block edge
+    d = numpy.array([s/v if v != 0 else 0 for s, v in zip(step, vector)])
+
+    maxT = maxDistance / vector.length()
+    stepCount = max(int(1 + (maxT - t[i]) / d[i]) for i in range(3))
+    # stepCount = int(1 + (maxT) / min(d))
+    print("stepCount", stepCount)
+    # compute all t values for `stepCount` steps
+    tarr = numpy.arange(stepCount)[None, :] * d[:, None]
+    tarr += t[:, None]
+    tlimits = [(tarr[i] > maxT).nonzero() for i in range(3)]
+    #print("tlimit", len(tlimits), tlimits[0][0].shape)
+    limits = [(i, tlimits[i][0][0]) for i in range(3) if len(tlimits[i][0])]
+    print("limit", limits)
+    print("stepCount?", )
+
+    # get flattened indexes of sorted form of tarr
+    targs = numpy.argsort(tarr, None)  # xxx arrays are pre-sorted, find O(n) sort method
+
+    # the flattened indexes have a unique property: the index divided by stepCount
+    # gives the axis for that t value. so now we have the axis of the smallest t value
+    # at each step along the ray.
+
+    taxis = targs // stepCount
+
+    # make a coordinate triple for each axis that only steps along that axis
+
+    steps = numpy.diag(step)
+
+    # similarly, make a coordinate triple for each axis that gives the face direction
+    # (the "normal") of the cube face that was hit.
+
+    faceDirs = numpy.diag(faceDirs)
+
+    # use taxis to pull the single-axis steps out into an array of stepCount*3 steps
+
+    allSteps = steps[taxis]
+
+    # similarly, use taxis to get the faces hit at each step
+
+    allFaces = faceDirs[taxis]
+
+    # the cumulative sum of the steps along axis 0 gives the offset at each step
+
+    allOffsets = numpy.cumsum(allSteps, 0)
+
+    allPositions = allOffsets + originPos
+
+    # massage output array into a list of pairs of coordinate triples
+
+    ret = numpy.hstack([allPositions[:, None, :], allFaces[:, None, :]])
+    # print('ret', ret.shape)
+
+    # j-j-jam the first point/face in the front
+
+    ret = numpy.vstack([[[originPos, [0, 1, 0]]], ret[:-1]])
+    return ret
+
+
 def _cast(origin, vector, maxDistance, stepSize):
     originPos = list(int(o - o % stepSize) for o in origin)
     # Integer single steps along each vector axis
@@ -113,7 +184,7 @@ def _cast(origin, vector, maxDistance, stepSize):
     face = [0, 1, 0]
     while True:
         # find axis of nearest block edge
-        yield originPos, face
+        yield tuple(originPos), face
         smallAxis = t.index(min(t))
         t[smallAxis] += d[smallAxis]
         if t[smallAxis] > maxDistance:
@@ -156,3 +227,33 @@ def advanceToChunk(ray, dimension, maxDistance):
                     return hitPoint
 
     raise RayBoundsError("Ray exited dimension bounds.")
+
+def main():
+    vector = Vector(.333, .555, .2831).normalize()
+    origin = Vector(138.2, 22.459, 12)
+    maxDistance = 1000
+
+    def cast_py():
+        return numpy.array(list(_cast(origin, vector, maxDistance, 1)))
+    def cast_np():
+        return _cast_np(origin, vector, maxDistance, 1)
+
+    res_py = cast_py()
+    res_np = cast_np()
+
+    print("res_py", res_py.shape)
+    print("res_np", res_np.shape)
+    s = min(len(res_py), len(res_np))
+    passed = (res_py[:s] == res_np[:s]).all()
+    print("Passed" if passed else "Failed")
+
+    from timeit import timeit
+
+    t_py = timeit(cast_py, number=1)
+    t_np = timeit(cast_np, number=1)
+
+    print("Time cast_py", t_py)
+    print("Time cast_np", t_np)
+
+if __name__ == '__main__':
+    main()
