@@ -6,7 +6,7 @@
 
 This issue tracker is for **MCEdit 2.0 only**. Issues with MCEdit 1.x need to be reported here: https://github.com/Khroki/MCEdit-Unified/issues
 
-**Before** submitting an issue, read [Reporting Issues](https://github.com/mcedit/mcedit/wiki/Reporting-Issues) and be sure to include all of the required info in your description:
+**Before** submitting an issue, read [Reporting Issues](https://github.com/mcedit/mcedit2/wiki/Reporting-Issues) and be sure to include all of the required info in your description:
 
 * **Error log** - If MCEdit tells you it had an error, there will be vital information inside the console window and/or error log file. On Windows, this is the file `mcedit.log` inside the `MCEdit User Data` folder. Use [pastebin](http://pastebin.com/) or [gist](https://gist.github.com/) for logs longer than a dozen lines. On Mac OS X, the error log is inside `~/Library/Logs`. On Linux, the error log will be inside `MCEdit User Data` and will also be shown on the terminal you started MCEdit from.
 
