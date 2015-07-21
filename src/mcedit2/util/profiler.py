@@ -18,6 +18,7 @@ ENABLE_PROFILER = True
 
 class Profiler(object):
     sampleLimit = 100000
+    sampleTimeLimit = 10.000
     def __init__(self):
         self.nameStack = deque(["root"])
 
@@ -99,6 +100,9 @@ class Profiler(object):
 
     def recordSample(self, entry=False):
         self.samples.append(('/'.join(self.nameStack), time.time(), entry))
+        if self.sampleTimeLimit is not None:
+            while len(self.samples) and self.samples[-1][1] - self.samples[0][1] > self.sampleTimeLimit:
+                self.samples.popleft()
 
     def analyze(self):
         times = defaultdict(float)
