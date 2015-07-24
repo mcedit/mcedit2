@@ -63,8 +63,8 @@ def validateQGLContext(context):
     detailedText += "\n"
     detailedText += "Driver info:\n"
     detailedText += "GL_VERSION: %s (%s, %s)\n" % (version, major, minor)
-    detailedText += "GL_VENDOR: %s\n" % GL.glGetString(GL.GL_VENDOR)
-    detailedText += "GL_RENDERER: %s\n" % GL.glGetString(GL.GL_RENDERER)
+    detailedText += "GL_VENDOR: %r\n" % GL.glGetString(GL.GL_VENDOR)
+    detailedText += "GL_RENDERER: %r\n" % GL.glGetString(GL.GL_RENDERER)
 
     log.info("%s", detailedText)
     global _lastAcquiredContextInfo
