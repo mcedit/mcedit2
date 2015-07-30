@@ -938,6 +938,10 @@ class EditorSession(QtCore.QObject):
         self.inspectorDockWidget.show()
         self.inspectorWidget.inspectEntity(entity)
 
+    def inspectChunk(self, cx, cz):
+        self.inspectorDockWidget.show()
+        self.inspectorWidget.inspectChunk(cx, cz)
+
     # --- Zooming ---
 
     def zoomAndInspectBlock(self, pos):
