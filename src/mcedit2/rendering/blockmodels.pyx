@@ -499,29 +499,29 @@ cdef class BlockModels(object):
                                 'assets/minecraft/textures/blocks/lava_still.png'])
 
     def cookQuads(self, textureAtlas):
-        if self.cooked:
-            return
-
-        log.info("Cooking quads for %d models...", len(self.quadsByResourcePathVariant))
-        cookedModels = {}
         cdef short ID, meta
         cdef int l, t, w, h
         cdef short u1, u2, v1, v2, tr, tg, tb
         cdef int uw, vh
-        cdef short quadface, cullface,
+        cdef short quadface, cullface
         cdef unsigned char shade
         cdef ModelQuadList modelQuads
         cdef ModelQuadList unknownBlockModel
         cdef ModelQuadListObj modelQuadsObj = None
         cdef list allQuads
-        UNKNOWN_BLOCK = u'MCEDIT_UNKNOWN'
-
-        cdef size_t i, j;
+        cdef size_t i, j
 
         cdef dict texCoordsByName = textureAtlas.texCoordsByName
         cdef FaceInfo faceInfo
         cdef short * vec
         cdef unsigned char * rgba
+
+        if self.cooked:
+            return
+
+        log.info("Cooking quads for %d models...", len(self.quadsByResourcePathVariant))
+        cookedModels = {}
+        UNKNOWN_BLOCK = u'MCEDIT_UNKNOWN'
 
         for (path, variant), allQuads in self.quadsByResourcePathVariant.iteritems():
 

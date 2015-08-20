@@ -163,12 +163,12 @@ def updateLightsByCoord(dim, x, y, z):
     cdef cnp.ndarray[ndim=1, dtype=int] ax = x
     cdef cnp.ndarray[ndim=1, dtype=int] ay = y
     cdef cnp.ndarray[ndim=1, dtype=int] az = z
+    cdef size_t i
 
     if not (x.shape == y.shape == z.shape):
         raise ValueError("All coord arrays must be the same size. (No broadcasting.)")
 
     ctx = RelightCtx(dim)
-    cdef size_t i;
 
     for i in range(<size_t>len(ax)):
         updateLights(ctx, ax[i], ay[i], az[i])
