@@ -13,6 +13,7 @@ from mcedit2.rendering.chunkmeshes.entity.chest import ModelChest, ModelLargeChe
 from mcedit2.rendering.chunkmeshes.entity.creeper import ModelCreeper
 from mcedit2.rendering.chunkmeshes.entity.quadruped import ModelPig, ModelCow, ModelSheep, \
     ModelSheepWool
+from mcedit2.rendering.chunkmeshes.entity.shulker import ModelShulker
 from mcedit2.rendering.chunkmeshes.entity.spider import ModelSpider
 from mcedit2.rendering.chunkmeshes.entity.villager import ModelVillager
 
@@ -180,6 +181,7 @@ addModel(ModelVillager())
 addModel(ModelArmorStand())
 addModel(ModelChest())
 addModel(ModelLargeChest())
+addModel(ModelShulker())
 
 if __name__ == '__main__':
     from pprint import pprint
