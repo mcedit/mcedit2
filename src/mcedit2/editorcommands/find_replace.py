@@ -413,7 +413,11 @@ class FindReplaceNBT(QtCore.QObject):
         row = modelIndex.row()
         result = self.resultsModel.results[row]
         if result.resultType == result.EntityResult:
-            self.editorSession.zoomAndInspectEntity(result.getEntity(self.editorSession.currentDimension))  # xxxxxxx!!!
+            entity = result.getEntity(self.editorSession.currentDimension)
+            if entity is not None:
+                self.editorSession.zoomAndInspectEntity(entity)  # xxxxxxx!!!
+            else:
+                log.error("Entity not found for result %s", str(result))
         if result.resultType == result.TileEntityResult:
             self.editorSession.zoomAndInspectBlock(result.position)
 
