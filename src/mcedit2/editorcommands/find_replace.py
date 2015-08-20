@@ -44,7 +44,7 @@ class NBTResultsEntry(object):
 
     def getEntity(self, dim):
         assert self.resultType == self.EntityResult
-        box = BoundingBox(self.position, (1, 1, 1)).chunkBox(dim)
+        box = BoundingBox(self.position.intfloor(), (1, 1, 1)).chunkBox(dim)
         entities = dim.getEntities(box, UUID=self.uuid)
         for entity in entities:
             return entity
