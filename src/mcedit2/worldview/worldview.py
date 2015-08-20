@@ -28,7 +28,7 @@ from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
 from mcedit2.rendering.scenegraph import scenenode, rendernode
 from mcedit2.util import profiler, raycast
 from mcedit2.util.mimeformats import MimeFormats
-from mcedit2.util.qglcontext import validateQGLContext
+from mcedit2.util.qglcontext import validateWidgetQGLContext
 from mcedit2.util.settings import Settings
 from mcedit2.widgets.infopanel import InfoPanel
 from mceditlib import faces
@@ -98,7 +98,7 @@ class WorldView(QGLWidget):
         :rtype:
         """
         QGLWidget.__init__(self, shareWidget=sharedGLWidget)
-        validateQGLContext(self.context())
+        validateWidgetQGLContext(self)
 
         self.setAcceptDrops(True)
         self.setSizePolicy(QtGui.QSizePolicy.Policy.Expanding, QtGui.QSizePolicy.Policy.Expanding)

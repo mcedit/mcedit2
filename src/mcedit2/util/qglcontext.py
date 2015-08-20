@@ -20,7 +20,12 @@ def setDefaultFormat():
     oglFormat.setDirectRendering(True)
     QtOpenGL.QGLFormat.setDefaultFormat(oglFormat)
 
-def validateQGLContext(context):
+def validateWidgetQGLContext(widget):
+    context = widget.context()
+    # Keep a reference to context since PySide's mechanism for allowing Python
+    # classes to override C++ superclass methods doesn't unregister its wrapper
+    # when it is freed.
+    widget._pyside_bug_context = context
     context.makeCurrent()
 
     versionFlags = QtOpenGL.QGLFormat.openGLVersionFlags()
