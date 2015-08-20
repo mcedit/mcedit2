@@ -6,6 +6,8 @@ import fnmatch
 import os
 import itertools
 
+from PyInstaller.utils.hooks.hookutils import collect_data_files
+
 # Grab every .py file under src/mcedit2 and src/mceditlib because some modules are made
 # available for plugins and not directly used by MCEdit.
 everything = []
@@ -44,6 +46,26 @@ for d in a.datas:
     if 'pyconfig' in d[0]:
         a.datas.remove(d)
         break
+
+def ext_filter(source):
+    base = os.path.basename(source)
+    if base == '.coverage':
+        return False
+    name, ext = os.path.splitext(base)
+    return ext not in ('.c', '.html')
+
+mceditlib_datas = collect_data_files('mceditlib')
+mceditlib_datas = [(os.path.join(dest, os.path.basename(source)), source, 'DATA')
+                   for source, dest in mceditlib_datas
+                   if ext_filter(source)]
+
+mcedit2_datas = collect_data_files('mcedit2')
+mcedit2_datas = [(os.path.join(dest, os.path.basename(source)), source, 'DATA')
+                 for source, dest in mcedit2_datas
+                 if ext_filter(source)]
+
+a.datas.extend(mcedit2_datas)
+a.datas.extend(mceditlib_datas)
 
 a.binaries = a.binaries - TOC([
     ('sqlite3.dll', '', ''),
