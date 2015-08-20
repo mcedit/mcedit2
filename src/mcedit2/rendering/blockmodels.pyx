@@ -402,6 +402,10 @@ cdef class BlockModels(object):
             log.info("Could not get blockstates resource for %s#%s, skipping... (%r)", resourcePath, resourceVariant, e)
             return None
 
+        if 'variants' not in statesJson:
+            log.warn("'variants' key not found in states file %s, skipping...", resourcePath)
+            return None
+
         variants = statesJson['variants']
         variantDict = variants[resourceVariant]
         if isinstance(variantDict, list):
