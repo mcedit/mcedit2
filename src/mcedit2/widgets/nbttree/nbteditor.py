@@ -3,6 +3,8 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+from mceditlib import nbt
+import re
 
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
@@ -16,6 +18,46 @@ from mcedit2.widgets.layout import Column
 
 log = logging.getLogger(__name__)
 
+longlongPattern = re.compile("^-?\d+$")  # only digits with optional leading minus sign
+
+class LongLongValidator(QtGui.QValidator):
+    def validate(self, input, pos):
+        matches = longlongPattern.match(input)
+        if matches is not None:
+            return QtGui.QValidator.Acceptable
+        return QtGui.QValidator.Invalid
+
+class LongLongLineEdit(QtGui.QLineEdit):
+    def __init__(self, *a, **kw):
+        super(LongLongLineEdit, self).__init__(*a, **kw)
+        self.setValidator(LongLongValidator())
+
+    def getValue(self):
+        return long(self.text())
+
+    def setValue(self, val):
+        self.setText(str(val))
+
+    value = QtCore.Property(long, getValue, setValue, user=True)
+
+class NBTEditorItemDelegate(QtGui.QStyledItemDelegate):
+    def createEditor(self, parent, option, index):
+        if index.data(NBTTreeModel.NBTTagTypeRole) == nbt.ID_LONG:
+            return LongLongLineEdit(parent)
+
+        return super(NBTEditorItemDelegate, self).createEditor(parent, option, index)
+
+    def setEditorData(self, editor, index):
+        if index.data(NBTTreeModel.NBTTagTypeRole) == nbt.ID_LONG:
+            editor.setValue(index.data(QtCore.Qt.EditRole))
+        else:
+            super(NBTEditorItemDelegate, self).setEditorData(editor, index)
+
+    def setModelData(self, editor, model, index):
+        if index.data(NBTTreeModel.NBTTagTypeRole) == nbt.ID_LONG:
+            model.setData(index, editor.getValue(), QtCore.Qt.EditRole)
+        else:
+            super(NBTEditorItemDelegate, self).setModelData(editor, model, index)
 
 class NBTDataChangeCommand(SimpleRevisionCommand):
     pass
@@ -52,6 +94,7 @@ class NBTEditorWidget(QtGui.QWidget):
         self.nbtTypesMenu.addAction(NBTIcon(11), self.tr("Int Array"), self.addIntArray)
         # self.nbtTypesMenu.addAction(NBTIcon(12), self.tr("Short Array"), self.addShortArray)
 
+        self.treeView.setItemDelegate(NBTEditorItemDelegate())
 
     def setRootTagRef(self, rootTagRef, keepExpanded=False):
         if rootTagRef is self.rootTagRef:

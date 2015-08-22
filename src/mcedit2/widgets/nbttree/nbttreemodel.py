@@ -276,6 +276,7 @@ class NBTTreeItem(object):
 class NBTTreeModel(QtCore.QAbstractItemModel):
 
     NBTPathRole = QtCore.Qt.UserRole + 1
+    NBTTagTypeRole = NBTPathRole + 1
 
     def __init__(self, rootTag, parent=None):
         super(NBTTreeModel, self).__init__(parent)
@@ -326,6 +327,8 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
 
         if role == self.NBTPathRole:
             return item.nbtPath()
+        if role == self.NBTTagTypeRole:
+            return item.tag.tagID
 
     # --- Structure ---
 
