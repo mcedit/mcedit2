@@ -136,6 +136,9 @@ class MCInstallGroup(object):
     def getInstall(self, index):
         return self._installations[index]
 
+    def getCurrentInstall(self):
+        return self.getInstall(self.selectedInstallIndex())
+
     def addInstall(self, install):
         self._installations.append(install)
         self._saveInstalls()

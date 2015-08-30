@@ -16,6 +16,7 @@ from mcedit2.editortools.select import SelectCommand
 from mcedit2.panels.player import PlayerPanel
 from mcedit2.panels.map import MapPanel
 from mcedit2.panels.worldinfo import WorldInfoPanel
+from mcedit2.util import minecraftinstall
 from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.directories import getUserSchematicsDirectory
 from mcedit2.util.mimeformats import MimeFormats
@@ -124,6 +125,7 @@ class EditorSession(QtCore.QObject):
         self.loader = None
         self.blockModels = None
         self.textureAtlas = None
+        self.editorTab = None
 
         self.filename = filename
         self.dockWidgets = []
@@ -319,6 +321,7 @@ class EditorSession(QtCore.QObject):
         self.mapPanel = MapPanel(self)
         self.worldInfoPanel = WorldInfoPanel(self)
         self.panels = [self.playerPanel, self.worldInfoPanel, self.mapPanel]
+        self.panelActions = []
 
         # --- Tools ---
 
@@ -358,7 +361,29 @@ class EditorSession(QtCore.QObject):
             action.triggered.connect(action._changed)
 
         dimButton.setMenu(dimMenu)
-        dimButton.setPopupMode(dimButton.InstantPopup)
+        dimButton.setPopupMode(QtGui.QToolButton.InstantPopup)
+
+        self.panelActions.append(dimAction)
+
+        mcVersionButton = self.changeMCVersionButton = QtGui.QToolButton()
+        mcVersionButton.setText(self.minecraftVersionLabel())
+        mcVersionAction = self.changeMCVersionAction = QtGui.QWidgetAction(self)
+        mcVersionAction.setDefaultWidget(mcVersionButton)
+        self.mcVersionMenu = QtGui.QMenu()
+        mcVersionButton.setMenu(self.mcVersionMenu)
+        mcVersionButton.setPopupMode(QtGui.QToolButton.InstantPopup)
+        self.panelActions.append(mcVersionAction)
+
+        resourcePackButton = self.changeResourcePackButton = QtGui.QToolButton()
+        resourcePackButton.setText(self.resourcePackLabel())
+        resourcePackAction = self.changeResourcePackAction = QtGui.QWidgetAction(self)
+        resourcePackAction.setDefaultWidget(resourcePackButton)
+        self.resourcePackMenu = QtGui.QMenu()
+        resourcePackButton.setMenu(self.resourcePackMenu)
+        resourcePackButton.setPopupMode(QtGui.QToolButton.InstantPopup)
+        self.panelActions.append(resourcePackAction)
+
+        self._updateVersionsAndResourcePacks()
 
         progress("Loading overworld dimension")
         self.gotoDimension("")
@@ -390,6 +415,50 @@ class EditorSession(QtCore.QObject):
 
         if hasattr(progress, 'progressCount') and progress.progressCount != progressMax:
             log.info("Update progressMax to %d, please.", progress.progressCount)
+
+    def minecraftVersionLabel(self):
+        version = minecraftinstall.currentVersionOption.value()
+        return "Minecraft Version: %s" % version
+
+    def resourcePackLabel(self):
+        resourcePack = minecraftinstall.currentResourcePackOption.value()
+        return "Resource Pack: %s" % resourcePack
+
+
+    def _updateVersionsAndResourcePacks(self):
+        self.mcVersionMapper = QtCore.QSignalMapper()
+        self.mcVersionMapper.mapped[str].connect(self.changeMCVersion)
+        self.resourcePackMapper = QtCore.QSignalMapper()
+        self.resourcePackMapper.mapped[str].connect(self.changeResourcePack)
+
+        self.mcVersionMenu.clear()
+        self.resourcePackMenu.clear()
+        defaultAction = self.resourcePackMenu.addAction(self.tr("(No resource pack)"))
+        self.resourcePackMapper.setMapping(defaultAction, "")
+
+        install = minecraftinstall.GetInstalls().getCurrentInstall()
+
+        for version in sorted(install.versions, reverse=True):
+            versionAction = self.mcVersionMenu.addAction(version)
+            self.mcVersionMapper.setMapping(versionAction, version)
+            versionAction.triggered.connect(self.mcVersionMapper.map)
+
+        for resourcePack in sorted(install.resourcePacks):
+            resourcePackAction = self.resourcePackMenu.addAction(resourcePack)
+            self.resourcePackMapper.setMapping(resourcePackAction, resourcePack)
+            resourcePackAction.triggered.connect(self.resourcePackMapper.map)
+
+    def changeResourcePack(self, packName):
+        minecraftinstall.currentResourcePackOption.setValue(packName or "")
+        self.resourceLoader = minecraftinstall.getResourceLoaderForFilename(self.filename)
+        self.changeResourcePackButton.setText(self.resourcePackLabel())
+        self.reloadModels()
+
+    def changeMCVersion(self, version):
+        minecraftinstall.currentVersionOption.setValue(version)
+        self.resourceLoader = minecraftinstall.getResourceLoaderForFilename(self.filename)
+        self.changeMCVersionButton.setText(self.minecraftVersionLabel())
+        self.reloadModels()
 
     # Connecting these signals to the EditorTab creates a circular reference through
     # the Qt objects, preventing the EditorSession from being destroyed
@@ -467,11 +536,17 @@ class EditorSession(QtCore.QObject):
             blockJson['__configured__'] = True
 
         self.configuredBlocks = configuredBlocks
+        self.reloadModels()
+        self.configuredBlocksChanged.emit()
 
+    def reloadModels(self):
         self.blockModels = BlockModels(self.worldEditor.blocktypes, self.resourceLoader)
         self.textureAtlas = TextureAtlas(self.worldEditor, self.resourceLoader, self.blockModels)
+        # May be called before editorTab is created
+        if self.editorTab:
+            for view in self.editorTab.views:
+                view.setTextureAtlas(self.textureAtlas)
 
-        self.configuredBlocksChanged.emit()
 
     # --- Selection ---
 
@@ -1044,8 +1119,6 @@ class EditorTab(QtGui.QWidget):
             currentViewName = "Cam"
         self.viewButtons[currentViewName].click()
 
-        self.editorSession.configuredBlocksChanged.connect(self.configuredBlocksDidChange)
-
     def destroy(self):
         self.editorSession = None
         for view in self.views:
@@ -1057,10 +1130,6 @@ class EditorTab(QtGui.QWidget):
 
     urlsDropped = QtCore.Signal(QtCore.QMimeData, Vector, faces.Face)
     mapItemDropped = QtCore.Signal(QtCore.QMimeData, Vector, faces.Face)
-
-    def configuredBlocksDidChange(self):
-        for view in self.views:
-            view.setTextureAtlas(self.editorSession.textureAtlas)
 
     def dimensionDidChange(self, dim):
         for view in self.views:

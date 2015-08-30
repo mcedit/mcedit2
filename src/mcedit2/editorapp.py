@@ -509,7 +509,8 @@ class MCEditApp(QtGui.QApplication):
                 self.mainWindow.panelsToolBar.addAction(panel.toggleViewAction())
 
             self.mainWindow.panelsToolBar.addSeparator()
-            self.mainWindow.panelsToolBar.addAction(session.changeDimensionAction)
+            for action in session.panelActions:
+                self.mainWindow.panelsToolBar.addAction(action)
 
             for action in session.toolActions:
                 self.mainWindow.toolsToolBar.addAction(action)
