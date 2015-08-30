@@ -667,9 +667,8 @@ class MCEditApp(QtGui.QApplication):
             fileLoadingDialog.setLabelText(status)
 
         try:
-            resourceLoader = minecraftinstall.getResourceLoaderForFilename(filename)
             configuredBlocks = self.configureBlocksDialog.getConfiguredBlocks()
-            session = EditorSession(filename, resourceLoader, configuredBlocks, readonly=readonly, progressCallback=callback)
+            session = EditorSession(filename, configuredBlocks, readonly=readonly, progressCallback=callback)
             self.undoGroup.addStack(session.undoStack)
 
             self.tabWidget.addTab(session.editorTab, session.tabCaption())

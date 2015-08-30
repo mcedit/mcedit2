@@ -87,14 +87,12 @@ class PasteImportCommand(QtGui.QUndoCommand):
 
 
 class EditorSession(QtCore.QObject):
-    def __init__(self, filename, resourceLoader, configuredBlocks, readonly=False,
+    def __init__(self, filename, configuredBlocks, readonly=False,
                  progressCallback=None):
         """
 
         :param filename:
         :type filename: str
-        :param resourceLoader:
-        :type resourceLoader: mcedit2.resourceloader.ResourceLoader
         :param configuredBlocks:
         :type configuredBlocks: dict???
         :param readonly:
@@ -120,6 +118,8 @@ class EditorSession(QtCore.QObject):
 
         QtCore.QObject.__init__(self)
         self.undoStack = MCEUndoStack()
+
+        self.resourceLoader = minecraftinstall.getResourceLoaderForFilename(filename)
 
         self.loader = None
         self.blockModels = None
@@ -303,7 +303,6 @@ class EditorSession(QtCore.QObject):
 
         # --- Resources ---
 
-        self.resourceLoader = resourceLoader
         self.geometryCache = GeometryCache()
 
         progress("Loading textures and models...")
