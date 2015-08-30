@@ -186,6 +186,16 @@ class CutawayWorldView(WorldView):
             CutawaySliceDownAction(),
         ))
 
+    @property
+    def cameraVector(self):
+        if self.axis == 'x':
+            return Vector(-1, 0, 0)
+        if self.axis == 'y':
+            return Vector(0, -1, 0)
+        if self.axis == 'z':
+            return Vector(0, 0, -1)
+
+
     def createWorldScene(self):
         return SlicedWorldScene(self.dimension, self.textureAtlas)
 
