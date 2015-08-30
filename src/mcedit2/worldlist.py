@@ -367,7 +367,7 @@ class WorldListWidget(QtGui.QDialog):
 
         try:
             worldEditor = worldeditor.WorldEditor(filename, readonly=True)
-            resLoader = QtGui.qApp.getResourceLoaderForFilename(filename)
+            resLoader = minecraftinstall.getResourceLoaderForFilename(filename)
             blockModels = BlockModels(worldEditor.blocktypes, resLoader)
             textureAtlas = TextureAtlas(worldEditor, resLoader, blockModels)
 

@@ -647,31 +647,6 @@ class MCEditApp(QtGui.QApplication):
         tab = self.currentTab()
         return getattr(tab, 'editorSession', None)
 
-    def getResourceLoaderForFilename(self, filename):
-        # Is this world inside a MultiMC instance?
-        filename = os.path.normpath(filename)
-        installs = minecraftinstall.GetInstalls()
-        for instance in installs.instances:
-            savesFolder = os.path.normpath(instance.saveFileDir)
-            if filename.startswith(savesFolder):
-                return instance.getResourceLoader()
-
-        # Nope. Use the version and respack chosen in the world list.
-        # ... should search for installs matching this one, but vanilla installs are still multi-version...
-        return self.getSelectedResourceLoader()
-
-    def getSelectedResourceLoader(self):
-        i = minecraftinstall.currentInstallOption.value()
-        if i == -1:
-            return minecraftinstall.GetInstalls().getDefaultResourceLoader()
-
-        install = minecraftinstall.GetInstalls().getInstall(i)
-        v = minecraftinstall.currentVersionOption.value()
-        if not v:
-            v = list(install.versions)[0]
-        p = minecraftinstall.currentResourcePackOption.value() or None
-        return install.getResourceLoader(v, p)
-
     def loadFile(self, filename, readonly=False):
         self.hideWorldList()
         fileLoadingDialog = QtGui.QProgressDialog(self.tr("Loading world..."),
@@ -692,7 +667,7 @@ class MCEditApp(QtGui.QApplication):
             fileLoadingDialog.setLabelText(status)
 
         try:
-            resourceLoader = self.getResourceLoaderForFilename(filename)
+            resourceLoader = minecraftinstall.getResourceLoaderForFilename(filename)
             configuredBlocks = self.configureBlocksDialog.getConfiguredBlocks()
             session = EditorSession(filename, resourceLoader, configuredBlocks, readonly=readonly, progressCallback=callback)
             self.undoGroup.addStack(session.undoStack)

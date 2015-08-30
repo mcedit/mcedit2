@@ -27,6 +27,32 @@ currentMMCInstanceOption = settings.Settings().getOption("minecraft_installs/cur
 _installs = None
 
 
+def getResourceLoaderForFilename(filename):
+    # Is this world inside a MultiMC instance?
+    filename = os.path.normpath(filename)
+    installs = GetInstalls()
+    for instance in installs.instances:
+        savesFolder = os.path.normpath(instance.saveFileDir)
+        if filename.startswith(savesFolder):
+            return instance.getResourceLoader()
+
+    # Nope. Use the version and respack chosen in the world list.
+    # ... should search for installs matching this one, but vanilla installs are still multi-version...
+    return getSelectedResourceLoader()
+
+def getSelectedResourceLoader():
+    i = currentInstallOption.value()
+    if i == -1:
+        return GetInstalls().getDefaultResourceLoader()
+
+    install = GetInstalls().getInstall(i)
+    v = currentVersionOption.value()
+    if not v:
+        v = list(install.versions)[0]
+    p = currentResourcePackOption.value() or None
+    return install.getResourceLoader(v, p)
+
+
 def GetInstalls():
     global _installs
     if _installs is None:
