@@ -91,7 +91,6 @@ class MapPanel(QtGui.QWidget):
         self.importImageButton.clicked.connect(self.importImage)
 
         self.currentlyEditingLabel.setVisible(False)
-        centerWidgetInScreen(self)
 
         if len(self.mapListModel.mapIDs):
             index = self.mapListModel.index(0, 0)
@@ -106,6 +105,7 @@ class MapPanel(QtGui.QWidget):
 
     def toggleView(self):
         if self.isHidden():
+            centerWidgetInScreen(self, 0.8)
             self.show()
             self._toggleViewAction.setChecked(True)
         else:
