@@ -193,11 +193,13 @@ class WorldView(QGLWidget):
 
     def setTextureAtlas(self, textureAtlas):
         self.textureAtlas = textureAtlas
-        self.makeCurrent()
-        textureAtlas.load()
         if self.worldScene:
             self.worldScene.setTextureAtlas(textureAtlas)
-        self.resetLoadOrder()
+
+        if textureAtlas is not None:
+            self.makeCurrent()
+            textureAtlas.load()
+            self.resetLoadOrder()
 
     def destroy(self):
         self.makeCurrent()

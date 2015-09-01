@@ -368,8 +368,6 @@ class WorldListWidget(QtGui.QDialog):
         try:
             worldEditor = worldeditor.WorldEditor(filename, readonly=True)
             resLoader = minecraftinstall.getResourceLoaderForFilename(filename)
-            blockModels = BlockModels(worldEditor.blocktypes, resLoader)
-            textureAtlas = TextureAtlas(worldEditor, resLoader, blockModels)
 
         except (EnvironmentError, LevelFormatError, zipfile.BadZipfile) as e:
             self.errorWidget = QtGui.QWidget()
@@ -380,7 +378,7 @@ class WorldListWidget(QtGui.QDialog):
         else:
 
             dim = worldEditor.getDimension()
-            self.setWorldView(MinimapWorldView(dim, textureAtlas))
+            self.setWorldView(MinimapWorldView(dim))
             self.chunkLoader = ChunkLoader(dim)
             self.chunkLoader.addClient(self.worldView)
             self.chunkLoader.chunkCompleted.connect(self.worldView.update)

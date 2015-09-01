@@ -235,10 +235,11 @@ class WorldScene(scenenode.Node):
         self.bounds = bounds
 
     def setTextureAtlas(self, textureAtlas):
-        self.textureAtlas = textureAtlas
-        self.textureAtlasNode.textureAtlas = textureAtlas
-        self.updateTask.textureAtlas = textureAtlas
-        self.discardAllChunks()
+        if textureAtlas is not self.textureAtlas:
+            self.textureAtlas = textureAtlas
+            self.textureAtlasNode.textureAtlas = textureAtlas
+            self.updateTask.textureAtlas = textureAtlas
+            self.discardAllChunks()
 
     def chunkPositions(self):
         return self.chunkRenderInfo.iterkeys()
