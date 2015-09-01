@@ -247,6 +247,12 @@ class WorldEditor(object):
 
     def __repr__(self):
         return "WorldEditor(adapter=%r)" % self.adapter
+    # --- Summary Info ---
+
+    @classmethod
+    def getWorldInfo(cls, filename):
+        worldInfo = findAdapter(filename, readonly=True, getInfo=True)
+        return worldInfo
 
     # --- Debug ---
 

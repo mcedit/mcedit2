@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 #     return WorldEditor(filename)
 
 
-def findAdapter(filename, readonly=False, resume=None):
+def findAdapter(filename, readonly=False, resume=None, getInfo=False):
     """
     Try to identify the given file and find an adapter that will open it.
     Returns an Adapter object if a class is found, and raises ValueError if
@@ -29,6 +29,9 @@ def findAdapter(filename, readonly=False, resume=None):
 
     Knows about ZipSchematic, PocketWorldAdapter, WorldEditor, JavaLevel,
     IndevLevel, SchematicFile, and INVEditChest
+
+    If getInfo is True, returns a WorldInfo object that contains at least
+    the world's readable name and Minecraft version.
 
     :param filename: The file to open
     :type filename: string
@@ -49,7 +52,10 @@ def findAdapter(filename, readonly=False, resume=None):
         log.debug("%s: Attempting", cls.__name__)
         if isLevel(cls, filename):
             log.debug("%s: Opening", cls.__name__)
-            level = cls(filename=filename, readonly=readonly, resume=resume)
+            if getInfo:
+                level = cls.getWorldInfo(filename)
+            else:
+                level = cls(filename=filename, readonly=readonly, resume=resume)
             log.debug("%s: Opened%s", cls.__name__, " read-only" if readonly else "")
             return level
 

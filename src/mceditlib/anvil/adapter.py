@@ -26,7 +26,7 @@ from mceditlib.selection import BoundingBox
 from mceditlib import nbtattr
 from mceditlib.exceptions import PlayerNotFound, ChunkNotPresent, LevelFormatError
 from mceditlib.revisionhistory import RevisionHistory
-from mceditlib.util import exhaust
+from mceditlib.util import exhaust, displayName, WorldInfo
 
 log = logging.getLogger(__name__)
 
@@ -464,10 +464,64 @@ class AnvilWorldAdapter(object):
         else:
             self.loadMetadata()
 
-
-
     def __repr__(self):
         return "AnvilWorldAdapter(%r)" % self.filename
+
+    # --- Summary info ---
+
+    @classmethod
+    def getWorldInfo(cls, filename, displayNameLimit=40):
+        try:
+            if os.path.isdir(filename):
+                folderName = os.path.basename(filename)
+                levelDat = os.path.join(filename, "level.dat")
+            else:
+                folderName = os.path.basename(os.path.dirname(filename))
+                levelDat = filename
+
+            levelTag = nbt.load(levelDat)
+            try:
+                displayName = levelTag['Data']['LevelName'].value
+
+                if len(displayName) > displayNameLimit:
+                    displayName = displayName[:displayNameLimit] + "..."
+                if len(folderName) > displayNameLimit:
+                    folderName = folderName[:displayNameLimit] + "..."
+
+                if folderName != displayName:
+                    displayName = "%s (%s)" % (displayName, folderName)
+            except Exception as e:
+                log.warn("Failed to get display name for level.", exc_info=1)
+                displayName = folderName
+
+            try:
+                lastPlayedTime = levelTag['Data']['LastPlayed'].value
+            except Exception as e:
+                log.warn("Failed to get last-played time for level.", exc_info=1)
+                lastPlayedTime = 0
+
+            version = "Unknown Version"
+            try:
+                metadata = AnvilWorldMetadata(levelTag)
+                stackVersion = VERSION_1_8 if metadata.is1_8World() else VERSION_1_7
+
+                if stackVersion == VERSION_1_7:
+                    version = "Minecraft 1.7"
+                    if "FML" in metadata.metadataTag:
+                        version = "MinecraftForge 1.7"
+
+                if stackVersion == VERSION_1_8:
+                    version = "Minecraft 1.8"
+
+            except Exception as e:
+                log.warn("Failed to get version info for %s: %r", filename, e, exc_info=1)
+
+            return WorldInfo(displayName, lastPlayedTime, version)
+
+        except Exception as e:
+            log.error("Failed getting world info for %s: %r", filename, e)
+            return WorldInfo(str(e), 0, "")
+
 
     # --- Create, save, close ---
 

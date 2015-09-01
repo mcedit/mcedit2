@@ -27,24 +27,9 @@ from mceditlib import worldeditor
 import logging
 from mceditlib.findadapter import isLevel, findAdapter
 from mceditlib.util import displayName
+from mceditlib.worldeditor import WorldEditor
 
 log = logging.getLogger(__name__)
-
-
-def lastPlayedTime(adapter):
-    try:
-        time = adapter.metadata.LastPlayed
-        dt = arrow.Arrow.fromtimestamp(time / 1000.0)
-        return dt
-    except (AttributeError, ValueError) as e:  # no lastplayed, or time is before 1970
-        return None
-
-
-def usefulFilename(adapter):
-    if hasattr(adapter, 'worldFolder'):
-        return os.path.basename(adapter.worldFolder.filename)
-    else:
-        return os.path.basename(adapter.filename)
 
 
 class WorldListItemWidget(QtGui.QWidget):
@@ -81,49 +66,24 @@ class WorldListItemWidget(QtGui.QWidget):
 
         self.setLayout(layout)
 
-    def setWorldInfo(self, (name, lastPlayedText, versionInfo)):
+    def setWorldInfo(self, (name, lastPlayed, versionInfo)):
         self.displayNameLabel.setText(name)
-        self.lastPlayedLabel.setText(lastPlayedText)
-        self.versionInfoLabel.setText(versionInfo)
+        if lastPlayed:
+            lastPlayedText = arrow.Arrow.fromtimestamp(lastPlayed / 1000.0).humanize()
+            self.lastPlayedLabel.setText(lastPlayedText)
+        else:
+            self.lastPlayedLabel.setText("")
+
+        if versionInfo:
+            self.versionInfoLabel.setText(versionInfo)
+        else:
+            self.versionInfoLabel.setText("")
 
     def mouseDoubleClickEvent(self, event):
         self.doubleClicked.emit()
 
     def setErrorMessage(self, msg):
         self.sizeLabel.setText(msg)
-
-
-def getWorldInfo(filename):
-    worldAdapter = findAdapter(filename, readonly=True)
-    try:
-        displayNameLimit = 40
-        name = displayName(worldAdapter.filename)
-
-        if len(name) > displayNameLimit:
-            name = name[:displayNameLimit] + "..."
-        if usefulFilename(worldAdapter) != displayName(worldAdapter.filename):
-            name = "%s (%s)" % (name, usefulFilename(worldAdapter))
-
-        lastPlayed = lastPlayedTime(worldAdapter)
-        lastPlayedText = lastPlayed.humanize() if lastPlayed else "Unknown"
-
-        version = "Unknown Version"
-        try:
-            stackVersion = worldAdapter.blocktypes.itemStackVersion
-            if stackVersion == VERSION_1_7:
-                version = "Minecraft 1.7"
-                if "FML" in worldAdapter.metadata.metadataTag:
-                    version = "MinecraftForge 1.7"
-
-            if stackVersion == VERSION_1_8:
-                version = "Minecraft 1.8"
-        except Exception as e:
-            log.warn("Failed to get version info for %s: %r", filename, e)
-        return name, lastPlayedText, version
-
-    except Exception as e:
-        log.error("Failed getting world info for %s: %r", filename, e)
-        return str(e), "", ""
 
 
 class WorldListItemDelegate(QtGui.QStyledItemDelegate):
@@ -172,8 +132,9 @@ class WorldListModel(QtCore.QAbstractListModel):
         self.worlds = []
         for f in worlds:
             try:
-                info = getWorldInfo(f)
+                info = WorldEditor.getWorldInfo(f)
             except Exception as e:
+                log.warn("Error while getting world info, skipping...", exc_info=1)
                 continue
             else:
                 self.worlds.append((f, info))
@@ -301,7 +262,7 @@ class WorldListWidget(QtGui.QDialog):
                 dead.append(filename)
                 continue
             try:
-                displayName, lastPlayed, versionInfo = getWorldInfo(filename)
+                displayName, lastPlayed, versionInfo = WorldEditor.getWorldInfo(filename)
                 action = self.recentWorldsMenu.addAction(displayName)
                 action._editWorld = _triggered(filename)
                 action.triggered.connect(action._editWorld)

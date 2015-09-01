@@ -2,10 +2,13 @@
     util.py
 """
 from __future__ import absolute_import
+import collections
 from contextlib import contextmanager
 from math import floor
 import os
 import sys
+
+WorldInfo = collections.namedtuple("WorldInfo", "displayName lastPlayedTime versionInfo")
 
 @contextmanager
 def notclosing(f):
