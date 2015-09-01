@@ -23,6 +23,7 @@ currentInstallOption = settings.Settings().getOption("minecraft_installs/current
 currentVersionOption = settings.Settings().getOption("minecraft_installs/current_version", unicode, "")
 currentResourcePackOption = settings.Settings().getOption("minecraft_installs/current_resource_pack", unicode, "")
 currentMMCInstanceOption = settings.Settings().getOption("minecraft_installs/current_mmc_instance", int)
+allowSnapshotsOption = settings.Settings().getOption("minecraft_installs/allow_snapshots", int, 0)
 
 _installs = None
 
@@ -245,7 +246,7 @@ class MCInstall(object):
         versions = os.listdir(self.versionsDir)
         return [v for v in versions
                 if os.path.exists(self.getVersionJarPath(v))
-                and usableVersion(v)]
+                and usableVersion(v) or allowSnapshotsOption.value()]
 
     def getVersionJarPath(self, version):
         return os.path.join(self.versionsDir, version, "%s.jar" % version)
