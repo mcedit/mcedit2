@@ -6,7 +6,10 @@ import fnmatch
 import os
 import itertools
 
-from PyInstaller.utils.hooks.hookutils import collect_data_files
+try:
+    from PyInstaller.utils.hooks.hookutils import collect_data_files
+except ImportError:
+    from PyInstaller.hooks.hookutils import collect_data_files
 
 # Grab every .py file under src/mcedit2 and src/mceditlib because some modules are made
 # available for plugins and not directly used by MCEdit.
