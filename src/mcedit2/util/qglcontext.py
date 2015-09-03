@@ -22,29 +22,7 @@ def setDefaultFormat():
 
 def validateWidgetQGLContext(widget):
     context = widget.context()
-    # Keep a reference to context since PySide's mechanism for allowing Python
-    # classes to override C++ superclass methods doesn't unregister its wrapper
-    # when it is freed.
-    widget._pyside_bug_context = context
     context.makeCurrent()
-
-    versionFlags = QtOpenGL.QGLFormat.openGLVersionFlags()
-    log.info("OpenGL Version Info:")
-    for flag in (
-            QtOpenGL.QGLFormat.OpenGL_Version_1_1,
-            QtOpenGL.QGLFormat.OpenGL_Version_1_2,
-            QtOpenGL.QGLFormat.OpenGL_Version_1_3,
-            QtOpenGL.QGLFormat.OpenGL_Version_1_4,
-            QtOpenGL.QGLFormat.OpenGL_Version_1_5,
-            QtOpenGL.QGLFormat.OpenGL_Version_2_0,
-            QtOpenGL.QGLFormat.OpenGL_Version_3_0,
-            QtOpenGL.QGLFormat.OpenGL_Version_3_1,
-            QtOpenGL.QGLFormat.OpenGL_Version_3_2,
-            QtOpenGL.QGLFormat.OpenGL_Version_3_3,
-            QtOpenGL.QGLFormat.OpenGL_Version_4_0,
-    ):
-        if flag & versionFlags:
-            log.info(str(flag))
 
     actualFormat = context.format()
     """:type : QtOpenGL.QGLFormat"""
