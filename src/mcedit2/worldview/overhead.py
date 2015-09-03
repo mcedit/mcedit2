@@ -12,8 +12,8 @@ from mceditlib.geometry import Vector
 log = logging.getLogger(__name__)
 
 
-def OverheadWorldViewFrame(dimension, geometryCache, resourceLoader, sharedGLWidget):
-    overheadView = OverheadWorldView(dimension, geometryCache, resourceLoader, sharedGLWidget)
+def OverheadWorldViewFrame(dimension, textureAtlas, geometryCache, sharedGLWidget):
+    overheadView = OverheadWorldView(dimension, textureAtlas, geometryCache, sharedGLWidget)
     rulerSize = 22
     xruler = worldruler.WorldRuler(overheadView, 0)
     xruler.setFixedHeight(rulerSize)

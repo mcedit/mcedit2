@@ -19,8 +19,8 @@ from mceditlib.geometry import Vector, Ray
 log = logging.getLogger(__name__)
 
 
-def FourUpWorldViewFrame(dimension, geometryCache, resourceLoader, sharedGLWidget):
-    view = FourUpWorldView(dimension, geometryCache, resourceLoader, sharedGLWidget)
+def FourUpWorldViewFrame(dimension, textureAtlas, geometryCache, sharedGLWidget):
+    view = FourUpWorldView(dimension, textureAtlas, geometryCache, sharedGLWidget)
 
     widget = QtGui.QWidget()
     widget.setLayout(Column(view, margin=0))

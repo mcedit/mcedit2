@@ -31,10 +31,10 @@ ViewDistanceSetting = settings.getOption("view_distance", int, 12)
 PerspectiveSetting = settings.getOption("perspective", bool, True)
 
 class CameraWorldViewFrame(QtGui.QWidget):
-    def __init__(self, dimension, geometryCache, resourceLoader, shareGLWidget, *args, **kwargs):
+    def __init__(self, dimension, textureAtlas, geometryCache, shareGLWidget, *args, **kwargs):
         super(CameraWorldViewFrame, self).__init__(*args, **kwargs)
 
-        self.worldView = view = CameraWorldView(dimension, geometryCache, resourceLoader, shareGLWidget)
+        self.worldView = view = CameraWorldView(dimension, textureAtlas, geometryCache, shareGLWidget)
 
         self.viewControls = ViewControls(view)
 
