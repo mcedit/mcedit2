@@ -98,6 +98,11 @@ class WorldView(QGLWidget):
         :rtype:
         """
         QGLWidget.__init__(self, shareWidget=sharedGLWidget)
+        self.dimension = None
+        self.worldScene = None
+        self.loadableChunksNode = None
+        self.textureAtlas = None
+
         validateWidgetQGLContext(self)
 
         self.setAcceptDrops(True)
@@ -106,11 +111,6 @@ class WorldView(QGLWidget):
 
         self.layerToggleGroup = LayerToggleGroup()
         self.layerToggleGroup.layerToggled.connect(self.setLayerVisible)
-
-        self.dimension = None
-        self.worldScene = None
-        self.loadableChunksNode = None
-        self.textureAtlas = None
 
         self.mouseRay = Ray(Vector(0, 1, 0), Vector(0, -1, 0))
 
