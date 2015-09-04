@@ -52,7 +52,8 @@ def validateWidgetQGLContext(widget):
     log.info("%s", detailedText)
     global _lastAcquiredContextInfo
     _lastAcquiredContextInfo = detailedText
-
+    versionFlags = QtOpenGL.QGLFormat.openGLVersionFlags()
+    
     if (not context.isValid() or not actualFormat.directRendering()
         or not versionFlags & QtOpenGL.QGLFormat.OpenGL_Version_1_3
         or (major, minor) < (1, 3)):
