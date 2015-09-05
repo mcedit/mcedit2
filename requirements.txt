@@ -1,7 +1,9 @@
 pyside>=1.2.0
 pyopengl
 cython
-ipython
+# path.py 8.1 isn't compatible with IPython 3
+path.py==7.7.1
+ipython==3.2.1
 pygments
 pyzmq
 numpy>=1.9.0
