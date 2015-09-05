@@ -16,7 +16,7 @@ def generateLightBrightnessTable(minLight = 0.0):
 
 generateLightBrightnessTable()
 
-def generateLightmap(darkness, theEnd = False, gamma = 0.5):
+def generateLightmap(brightness, theEnd = False, gamma = 0.5):
 
     """
     :type gamma: Brightness setting in the Minecraft Video Options. Usual values are 0.0 to 1.0
@@ -24,50 +24,31 @@ def generateLightmap(darkness, theEnd = False, gamma = 0.5):
     lightmapColors = numpy.zeros((16, 16, 4), 'uint8')
 
     torchFlickerX = 0.0
+    log.info("Generating lightmap. brightness=%s, theEnd=%s, gamma=%s", brightness, theEnd, gamma)
 
     for x, y in numpy.ndindex(16, 16):
-        var4 = darkness * 0.95 + 0.05
-        skyLight = lightBrightnessTable[y] * var4
-        blockLight = lightBrightnessTable[x] * (torchFlickerX * 0.1 + 1.5)
+        var4 = brightness * 0.95 + 0.05
+        skyBrightness = lightBrightnessTable[y] * var4
+        blockBrightness = lightBrightnessTable[x] * (torchFlickerX * 0.1 + 1.5)
 
 #        if (var2.lightningFlash > 0)
 #            skyLight = var2.provider.lightBrightnessTable[index / 16]
 
-        skyRed = skyLight * (darkness * 0.65 + 0.35)
-        skyGreen = skyLight * (darkness * 0.65 + 0.35)
-        blockGreen = blockLight * ((blockLight * 0.6 + 0.4) * 0.6 + 0.4)
-        blockBlue = blockLight * (blockLight * blockLight * 0.6 + 0.4)
-        red = skyRed + blockLight
+        skyRed = skyBrightness * (brightness * 0.65 + 0.35)
+        skyGreen = skyBrightness * (brightness * 0.65 + 0.35)
+        blockGreen = blockBrightness * ((blockBrightness * 0.6 + 0.4) * 0.6 + 0.4)
+        blockBlue = blockBrightness * (blockBrightness * blockBrightness * 0.6 + 0.4)
+        red = skyRed + blockBrightness
         green = skyGreen + blockGreen
-        blue = skyLight + blockBlue
+        blue = skyBrightness + blockBlue
         red = red * 0.96 + 0.03
         green = green * 0.96 + 0.03
         blue = blue * 0.96 + 0.03
 
-#        if (this.field_82831_U > 0.0): #boss glow?
-#            gamma = this.field_82832_V + (this.field_82831_U - this.field_82832_V) * ticks
-#            red = red * (1.0 - gamma) + red * 0.7 * gamma
-#            green = green * (1.0 - gamma) + green * 0.6 * gamma
-#            blue = blue * (1.0 - gamma) + blue * 0.6 * gamma
-
         if theEnd:
-            red = 0.22 + blockLight * 0.75
+            red = 0.22 + blockBrightness * 0.75
             green = 0.28 + blockGreen * 0.75
             blue = 0.25 + blockBlue * 0.75
-
-#        if (this.mc.thePlayer.isPotionActive(Potion.nightVision))
-#            gamma = this.func_82830_a(this.mc.thePlayer, ticks)
-#            var17 = 1.0 / red
-#
-#            if (var17 > 1.0 / green)
-#                var17 = 1.0 / green
-#
-#            if (var17 > 1.0 / blue)
-#                var17 = 1.0 / blue
-#
-#            red = red * (1.0 - gamma) + red * var17 * gamma
-#            green = green * (1.0 - gamma) + green * var17 * gamma
-#            blue = blue * (1.0 - gamma) + blue * var17 * gamma
 
         if red > 1.0:
             red = 1.0
@@ -120,9 +101,12 @@ def generateLightmap(darkness, theEnd = False, gamma = 0.5):
 
 
 def main():
-    colors = generateLightmap(1.0)
+    colors = generateLightmap(0.2)
     numpy.set_printoptions(edgeitems=100)
-    print (colors)
+    for bl in range(16):
+        sl = colors[bl]
+        print("BlockLight %s, SkyLight 0-15" % bl)
+        print (sl)
 
 if __name__ == "__main__":
     main()
