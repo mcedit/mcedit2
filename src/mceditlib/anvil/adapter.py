@@ -153,6 +153,7 @@ class AnvilSection(object):
         self.Blocks = numpy.zeros(shape, 'uint16')
         self.Data = numpy.zeros(shape, 'uint8')
         self.SkyLight = numpy.zeros(shape, 'uint8')
+        self.SkyLight[:] = 15
         self.BlockLight = numpy.zeros(shape, 'uint8')
         self.old_section_tag = nbt.TAG_Compound()
 
