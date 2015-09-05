@@ -34,6 +34,7 @@ class FakeChunkData(object):
 
     dimName = ""
     HeightMap = None
+    Biomes = None
 
     def sectionPositions(self):
         return self.dimension.bounds.sectionPositions(self.cx, self.cz)

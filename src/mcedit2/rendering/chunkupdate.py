@@ -263,6 +263,8 @@ class SectionUpdate(object):
 
     @lazyprop
     def areaBiomes(self):
+        if self.chunkUpdate.chunk.Biomes is None:
+            return None
         chunkWidth, chunkLength, chunkHeight = self.chunkSection.Blocks.shape
         areaBiomes = numpy.zeros((chunkWidth+2, chunkLength+2), numpy.uint8)
         # need neighbors later to blend biome colors

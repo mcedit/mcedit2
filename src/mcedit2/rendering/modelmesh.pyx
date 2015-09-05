@@ -372,7 +372,10 @@ class BlockModelMesh(object):
                         if quads.count == 0:
                             continue
 
-                        biomeID = areaBiomes[z, x]
+                        if areaBiomes is not None:
+                            biomeID = areaBiomes[z, x]
+                        else:
+                            biomeID = 1
 
                         for i in range(quads.count):
                             doCull = 0
