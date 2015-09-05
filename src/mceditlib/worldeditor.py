@@ -791,12 +791,12 @@ class WorldEditorDimension(object):
 
     # --- Import/Export ---
 
-    def copyBlocksIter(self, sourceLevel, sourceSelection, destinationPoint, blocksToCopy=None, entities=True, create=False, biomes=False, updateLights=False):
+    def copyBlocksIter(self, sourceLevel, sourceSelection, destinationPoint, blocksToCopy=None, entities=True, create=False, biomes=False, updateLights="all"):
         return copyBlocksIter(self, sourceLevel, sourceSelection, destinationPoint, blocksToCopy, entities, create,
                               biomes, updateLights)
 
 
-    def copyBlocks(self, sourceLevel, sourceSelection, destinationPoint, blocksToCopy=None, entities=True, create=False, biomes=False, updateLights=False):
+    def copyBlocks(self, sourceLevel, sourceSelection, destinationPoint, blocksToCopy=None, entities=True, create=False, biomes=False, updateLights="all"):
         return exhaust(self.copyBlocksIter(sourceLevel, sourceSelection, destinationPoint, blocksToCopy,
                                            entities, create, biomes, updateLights))
 

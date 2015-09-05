@@ -30,7 +30,7 @@ def sourceMaskFunc(blocksToCopy):
     return unmaskedSourceMask
 
 
-def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocksToCopy=None, entities=True, create=False, biomes=False, updateLights=False):
+def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocksToCopy=None, entities=True, create=False, biomes=False, updateLights="all"):
     """
     Copy blocks and entities from the `sourceBox` area of `sourceDim` to `destDim` starting at `destinationPoint`.
 
