@@ -649,6 +649,9 @@ class WorldEditor(object):
         ref.parent = self  # make blockTypes available for item IDs
         return ref
 
+    @property
+    def hasLights(self):
+        return self.adapter.hasLights
 
 class WorldEditorDimension(object):
     def __init__(self, worldEditor, dimName):
@@ -658,6 +661,10 @@ class WorldEditorDimension(object):
 
     def __repr__(self):
         return "WorldEditorDimension(dimName=%r, adapter=%r)" % (self.dimName, self.adapter)
+
+    @property
+    def hasLights(self):
+        return self.adapter.hasLights
 
     # --- Bounds ---
 
@@ -981,4 +988,4 @@ class WorldEditorDimension(object):
                          BlockLight,
                          SkyLight,
                          Biomes,
-                         updateLights and self.adapter.hasLights)
+                         updateLights)

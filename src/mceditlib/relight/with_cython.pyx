@@ -355,6 +355,9 @@ cdef updateSkyLight(RelightCtx ctx,
     ctx.useBlockLight()
 
 def updateLightsByCoord(dim, x, y, z):
+    if not dim.hasLights:
+        return
+    
     x = np.asarray(x, 'i32').ravel()
     y = np.asarray(y, 'i32').ravel()
     z = np.asarray(z, 'i32').ravel()
