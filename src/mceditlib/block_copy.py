@@ -146,23 +146,24 @@ def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocks
                     # Read blocks
                     sourceBlocks = sourceSection.Blocks[sourceSlices]
                     sourceData = sourceSection.Data[sourceSlices]
-                    sourceMaskPart = sourceMask[sourceSlices]
+                    sourceMaskSliced = sourceMask[sourceSlices]
 
                     # Convert blocks
                     convertedSourceBlocks, convertedSourceData = convertBlocks(sourceBlocks, sourceData)
-                    convertedSourceBlocksMasked = convertedSourceBlocks[sourceMaskPart]
+                    convertedSourceBlocksMasked = convertedSourceBlocks[sourceMaskSliced]
+                    convertedSourceDataMasked = convertedSourceData[sourceMaskSliced]
 
                     # Find blocks that need direct lighting update - block opacity or brightness changed
 
-                    oldBrightness = destDim.blocktypes.brightness[destSection.Blocks[destSlices][sourceMaskPart]]
+                    oldBrightness = destDim.blocktypes.brightness[destSection.Blocks[destSlices][sourceMaskSliced]]
                     newBrightness = destDim.blocktypes.brightness[convertedSourceBlocksMasked]
-                    oldOpacity = destDim.blocktypes.opacity[destSection.Blocks[destSlices][sourceMaskPart]]
+                    oldOpacity = destDim.blocktypes.opacity[destSection.Blocks[destSlices][sourceMaskSliced]]
                     newOpacity = destDim.blocktypes.opacity[convertedSourceBlocksMasked]
                     changedLight = (oldBrightness != newBrightness) | (oldOpacity != newOpacity)
 
                     # Write blocks
-                    destSection.Blocks[destSlices][sourceMaskPart] = convertedSourceBlocks[sourceMaskPart]
-                    destSection.Data[destSlices][sourceMaskPart] = convertedSourceData[sourceMaskPart]
+                    destSection.Blocks[destSlices][sourceMaskSliced] = convertedSourceBlocksMasked
+                    destSection.Data[destSlices][sourceMaskSliced] = convertedSourceDataMasked
 
                     if updateLights:
                         # Find coordinates of lighting updates
