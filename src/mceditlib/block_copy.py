@@ -172,7 +172,7 @@ def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocks
                         # of sourceMaskPart.
 
                         if len(changedFlat):
-                            x, y, z = sourceMaskPart.nonzero()
+                            y, z, x = sourceMaskSliced.nonzero()
                             changedX = x[changedFlat].astype('i4')
                             changedY = y[changedFlat].astype('i4')
                             changedZ = z[changedFlat].astype('i4')
