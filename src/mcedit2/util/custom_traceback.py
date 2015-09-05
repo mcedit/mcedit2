@@ -84,11 +84,16 @@ def print_list(extracted_list, file=None):
     """
     if file is None:
         file = sys.stderr
-    for filename, lineno, name, line, selfstr in extracted_list:
-        print(file,
-               '  File "%s", line %d, in %s %s' % (filename, lineno, name, selfstr))
+    for entry in extracted_list:
+        if len(entry) > 4:
+            filename, lineno, name, line, selfstr = entry
+        else:
+            filename, lineno, name, line = entry
+            selfstr = ""
+        print('  File "%s", line %d, in %s %s' % (filename, lineno, name, selfstr),
+              file=file)
         if line:
-            print(file, '    %s' % line.strip())
+            print('    %s' % line.strip(), file=file)
 
 
 def print_tb(tb, limit=None, file=None):
