@@ -468,29 +468,29 @@ class BlockModelMesh(object):
                             xyzuvstc[0] += rx
                             xyzuvstc[1] += ry
                             xyzuvstc[2] += rz
-                            xyzuvstc[5] += bl
-                            xyzuvstc[6] += sl
+                            xyzuvstc[5] += sl
+                            xyzuvstc[6] += bl
 
 
                             xyzuvstc[8] += rx
                             xyzuvstc[9] += ry
                             xyzuvstc[10] += rz
-                            xyzuvstc[13] += bl
-                            xyzuvstc[14] += sl
+                            xyzuvstc[13] += sl
+                            xyzuvstc[14] += bl
 
 
                             xyzuvstc[16] += rx
                             xyzuvstc[17] += ry
                             xyzuvstc[18] += rz
-                            xyzuvstc[21] += bl
-                            xyzuvstc[22] += sl
+                            xyzuvstc[21] += sl
+                            xyzuvstc[22] += bl
 
 
                             xyzuvstc[24] += rx
                             xyzuvstc[25] += ry
                             xyzuvstc[26] += rz
-                            xyzuvstc[29] += bl
-                            xyzuvstc[30] += sl
+                            xyzuvstc[29] += sl
+                            xyzuvstc[30] += bl
 
                             buffer_ptr += 1
 
