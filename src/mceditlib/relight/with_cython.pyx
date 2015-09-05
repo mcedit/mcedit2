@@ -35,30 +35,56 @@ cdef struct RelightSection:
     void * chunk
     char dirty
 
-ctypedef long long section_key_t
+cdef struct RelightChunk:
+    # This guy is a big endian array, but Cython only wants to operate on little-endians.
+    # We byteswap the entire thing on read, and if we're dirty, byteswap it all out again
+    # on write.
+    unsigned int[:,:] HeightMap
+    # Ditto.
+    void * chunk
+    char dirty
+    
+
+ctypedef unsigned long long section_key_t
+ctypedef unsigned long long chunk_key_t
 
 cdef section_key_t section_key(int cx, int cy, int cz):
     # assume 0 < cy < 256
-    return (<section_key_t>cx) << 36 | cz << 8 | cy
+    return (<section_key_t>cx) << 36 | (<section_key_t>cz & 0xFFFFFFF) << 8 | (<section_key_t>cy) & 0xFF
+
+cdef chunk_key_t chunk_key(int cx, int cz):
+    return (<chunk_key_t>cx) << 32 | (<section_key_t>cz) & 0xFFFFFFFFLL
 
 DEF CACHE_LIMIT = 100
+
 
 @cython.final
 cdef class RelightCtx(object):
     cdef:
         map[section_key_t, RelightSection] section_cache
+        map[chunk_key_t, RelightChunk] chunk_cache
+        
         object dimension
         unsigned char [:] brightness
         unsigned char [:] opacity
         IF OUTPUT_STATS:
             unsigned int spreadCount, drawCount, fadeCount
 
+        int _useBlockLight
+
     def __init__(self, dim):
         self.dimension = dim
         self.brightness = self.dimension.blocktypes.brightness
         self.opacity = self.dimension.blocktypes.opacity
+        self._useBlockLight = 1
         IF OUTPUT_STATS:
             self.spreadCount = self.drawCount = self.fadeCount = 0
+
+    cdef void useBlockLight(self):
+        self._useBlockLight = 1
+
+    cdef void useSkyLight(self):
+        self._useBlockLight = 0
 
     cdef RelightSection * getSection(self, int cx, int cy, int cz):
         cdef section_key_t key = section_key(cx, cy, cz)
@@ -78,7 +104,7 @@ cdef class RelightCtx(object):
         if not self.dimension.containsChunk(cx, cz):
             return NULL
         chunk = self.dimension.getChunk(cx, cz)
-        section = chunk.getSection(cy)
+        section = chunk.getSection(cy, create=True)
         if section is None:
             return NULL
         if self.section_cache.size() > CACHE_LIMIT:
@@ -100,6 +126,45 @@ cdef class RelightCtx(object):
         ret[0] = cachedSection
         return ret
 
+    # ---
+    
+
+    cdef RelightChunk * getChunk(self, int cx, int cz):
+        cdef chunk_key_t key = chunk_key(cx, cz)
+        cdef map[chunk_key_t, RelightChunk].iterator i = self.chunk_cache.find(key)
+        cdef RelightChunk * ret
+        if i == self.chunk_cache.end():
+            ret = self.cacheChunk(cx, cz)
+        else:
+            ret = &(deref(i).second)
+        return ret
+
+    cdef RelightChunk * cacheChunk(self, int cx, int cz):
+        # Initializer is *required* - if memoryview fields are uninitialized, they cannot be assigned
+        # later as Cython attempts to decref the uninitialized memoryview and segfaults.
+        cdef RelightChunk cachedChunk = [None, NULL, 0]
+        cdef long long key = chunk_key(cx, cz)
+        if not self.dimension.containsChunk(cx, cz):
+            return NULL
+        chunk = self.dimension.getChunk(cx, cz)
+        if self.chunk_cache.size() > CACHE_LIMIT:
+            # xxx decache something!
+            pass
+
+        cachedChunk.HeightMap = np.array(chunk.HeightMap, dtype='u4')
+        cachedChunk.chunk = <void *>chunk
+        Py_INCREF(chunk)
+
+        # weird hack because in Python an assignment is a statement so we cannot write
+        # `return self.chunk_cache[key] = cachedChunk` to return a reference to the
+        # RelightChunk in the cache...
+        cdef RelightChunk * ret
+        ret = &self.chunk_cache[key]
+        ret[0] = cachedChunk
+        return ret
+    
+    # ---
+    
     def __dealloc__(self):
         cdef RelightSection cachedSection
         cdef section_key_t key
@@ -114,23 +179,63 @@ cdef class RelightCtx(object):
             Py_DECREF(<object>cachedSection.chunk)
             cachedSection.chunk = NULL
 
+        for ckeyval in self.chunk_cache:
+            key = ckeyval.first
+            cachedChunk = ckeyval.second
+            if cachedChunk.dirty:
+                assert ((<object>cachedChunk.chunk).HeightMap != cachedChunk.HeightMap).any()
+                (<object>cachedChunk.chunk).HeightMap[:] = cachedChunk.HeightMap
+                (<object>cachedChunk.chunk).dirty = True
+            cachedChunk.HeightMap = None
+            Py_DECREF(<object>cachedChunk.chunk)
+            cachedChunk.chunk = NULL
+
+    # ---
+
+    cdef int getHeightMap(self, int x, int z):
+        cdef RelightChunk * chunk = self.getChunk(x >> 4, z >> 4)
+        if chunk is NULL:
+            return 0
+        return chunk.HeightMap[<unsigned int>(z & 0xf),
+                               <unsigned int>(x & 0xf)]
+
+    cdef void setHeightMap(self, int x, int z, int value):
+        cdef RelightChunk * chunk = self.getChunk(x >> 4, z >> 4)
+        if chunk is NULL:
+            return
+        chunk.dirty = True
+        chunk.HeightMap[<unsigned int>(z & 0xf),
+                        <unsigned int>(x & 0xf)] = value
+
+    # ---
+
     cdef char getBlockLight(self, int x, int y, int z):
         cdef RelightSection * section = self.getSection(x >> 4, y >> 4, z >> 4)
         if section is NULL:
             return 0
+        if self._useBlockLight:
+            return section.BlockLight[<unsigned int>(y & 0xf),
+                                      <unsigned int>(z & 0xf),
+                                      <unsigned int>(x & 0xf)]
+        else:
+            return section.SkyLight[<unsigned int>(y & 0xf),
+                                      <unsigned int>(z & 0xf),
+                                      <unsigned int>(x & 0xf)]
 
-        return section.BlockLight[<unsigned int>(y & 0xf),
-                                  <unsigned int>(z & 0xf),
-                                  <unsigned int>(x & 0xf)]
 
     cdef void setBlockLight(self, int x, int y, int z, char value):
         cdef RelightSection * section = self.getSection(x >> 4, y >> 4, z >> 4)
         if section is NULL:
             return
         section.dirty = 1
-        section.BlockLight[<unsigned int>(y & 0xf),
-                           <unsigned int>(z & 0xf),
-                           <unsigned int>(x & 0xf)] = value
+        if self._useBlockLight:
+            section.BlockLight[<unsigned int>(y & 0xf),
+                               <unsigned int>(z & 0xf),
+                               <unsigned int>(x & 0xf)] = value
+        else:
+            section.SkyLight[<unsigned int>(y & 0xf),
+                               <unsigned int>(z & 0xf),
+                               <unsigned int>(x & 0xf)] = value
 
 
     cdef unsigned char getBlockBrightness(self, int x, int y, int z):
@@ -155,6 +260,99 @@ cdef class RelightCtx(object):
         return max(<unsigned char>1, # truncation warning
                    self.opacity[blockID])
 
+cdef updateSkyLight(RelightCtx ctx,
+                     cnp.ndarray[ndim=1, dtype=int] ax,
+                     cnp.ndarray[ndim=1, dtype=int] ay,
+                     cnp.ndarray[ndim=1, dtype=int] az):
+    
+    cdef ssize_t i, n
+    cdef chunk_key_t k
+    cdef int x, y, z, y2, h, oldH, newH, oldLight
+    cdef map[chunk_key_t, int] oldHeights
+    cdef map[chunk_key_t, int] newHeights
+    cdef coord c
+
+    cdef deque[coord] litCoords
+    cdef deque[coord] dimCoords
+
+    cdef pair[chunk_key_t, int] p
+
+    ctx.useSkyLight()
+
+    n = ax.shape[0]
+    for i in range(n):
+        x = ax[i]
+        z = az[i]
+        oldHeights[chunk_key(x, z)] = ctx.getHeightMap(x, z)
+
+    # HeightMap stores the block height above the highest opacity>0 block
+
+    for i in range(n):
+        x = ax[i]
+        y = ay[i]
+        z = az[i]
+        k = chunk_key(x, z)
+        h = oldHeights[k]
+        if y >= h:
+            # Block was set above current height - if opaque, increase height
+            if ctx.getBlockOpacity(x, y, z):
+                newHeights[k] = y + 1
+        elif y == h-1:
+            # Block was set below current height
+            # if it was height-1, and it was set to opacity==0, then drop height
+            # until we find an opacity>0 block
+            if 0 == ctx.getBlockOpacity(x, y, z):
+                for y2 in range(h, y):
+                    if ctx.getBlockOpacity(x, y2, z):
+                        newHeights[k] = y2 + 1
+                        break
+                else:
+                    newHeights[k] = y+1
+            else:
+                newHeights[k] = h
+        else:
+            newHeights[k] = h
+
+    for p in oldHeights:
+        k = p.first
+        oldH = p.second
+        x = k >> 32
+        z = k & 0xffffffffLL
+        h = newHeights[k]
+        c.x = x
+        c.z = z
+        if h > oldH:
+            # Column shifted up - blocks in changed segment reduced light level
+            for y2 in range(oldH, h):
+                c.y = y2
+                dimCoords.push_back(c)
+            # Blocks above column may be in a newly created section.
+            # This is a shitty, shitty answer. FIXME FIXME FIXME.
+            c.y += 1
+            ctx.setBlockLight(c.x, c.y, c.z, 15)
+            litCoords.push_back(c)
+        if h < oldH:
+            # Column shifted down - blocks in changed segment increased light level
+            for y2 in range(h, oldH):
+                c.y = y2
+                ctx.setBlockLight(c.x, c.y, c.z, 15)
+                litCoords.push_back(c)
+
+        if h != oldH:
+            ctx.setHeightMap(x, z, h)
+
+    print("Dimming %d, brightening %d" % (dimCoords.size(), litCoords.size()))
+    for c in dimCoords:
+        oldLight = ctx.getBlockLight(c.x, c.y, c.z)
+        ctx.setBlockLight(c.x, c.y, c.z, 0)
+        drawLight(ctx, c.x, c.y, c.z)
+        fadeLight(ctx, c.x, c.y, c.z, oldLight)
+
+    # lots of repeated work here
+    for c in litCoords:
+        spreadLight(ctx, c.x, c.y, c.z)
+
+    ctx.useBlockLight()
 
 def updateLightsByCoord(dim, x, y, z):
     x = np.asarray(x, 'i32').ravel()
@@ -165,10 +363,13 @@ def updateLightsByCoord(dim, x, y, z):
     cdef cnp.ndarray[ndim=1, dtype=int] az = z
     cdef size_t i
 
+
     if not (x.shape == y.shape == z.shape):
         raise ValueError("All coord arrays must be the same size. (No broadcasting.)")
 
     ctx = RelightCtx(dim)
+
+    updateSkyLight(ctx, ax, ay, az)
 
     for i in range(<size_t>len(ax)):
         updateLights(ctx, ax[i], ay[i], az[i])
