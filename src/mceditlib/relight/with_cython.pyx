@@ -183,7 +183,6 @@ cdef class RelightCtx(object):
             key = ckeyval.first
             cachedChunk = ckeyval.second
             if cachedChunk.dirty:
-                assert ((<object>cachedChunk.chunk).HeightMap != cachedChunk.HeightMap).any()
                 (<object>cachedChunk.chunk).HeightMap[:] = cachedChunk.HeightMap
                 (<object>cachedChunk.chunk).dirty = True
             cachedChunk.HeightMap = None
@@ -268,7 +267,6 @@ cdef updateSkyLight(RelightCtx ctx,
     cdef ssize_t i, n
     cdef chunk_key_t k
     cdef int x, y, z, y2, h, oldH, newH, oldLight
-    cdef map[chunk_key_t, int] oldHeights
     cdef map[chunk_key_t, int] newHeights
     cdef coord c
 
@@ -283,7 +281,7 @@ cdef updateSkyLight(RelightCtx ctx,
     for i in range(n):
         x = ax[i]
         z = az[i]
-        oldHeights[chunk_key(x, z)] = ctx.getHeightMap(x, z)
+        newHeights[chunk_key(x, z)] = ctx.getHeightMap(x, z)
 
     # HeightMap stores the block height above the highest opacity>0 block
 
@@ -292,7 +290,7 @@ cdef updateSkyLight(RelightCtx ctx,
         y = ay[i]
         z = az[i]
         k = chunk_key(x, z)
-        h = oldHeights[k]
+        h = newHeights[k]
         if y >= h:
             # Block was set above current height - if opaque, increase height
             if ctx.getBlockOpacity(x, y, z):
@@ -302,23 +300,17 @@ cdef updateSkyLight(RelightCtx ctx,
             # if it was height-1, and it was set to opacity==0, then drop height
             # until we find an opacity>0 block
             if 0 == ctx.getBlockOpacity(x, y, z):
-                for y2 in range(h, y):
+                for y2 in range(y, -1):
                     if ctx.getBlockOpacity(x, y2, z):
                         newHeights[k] = y2 + 1
                         break
-                else:
-                    newHeights[k] = y+1
-            else:
-                newHeights[k] = h
-        else:
-            newHeights[k] = h
-
-    for p in oldHeights:
+    
+    for p in newHeights:
         k = p.first
-        oldH = p.second
+        h = p.second
         x = k >> 32
         z = k & 0xffffffffLL
-        h = newHeights[k]
+        oldH = ctx.getHeightMap(x, z)
         c.x = x
         c.z = z
         if h > oldH:
@@ -357,7 +349,7 @@ cdef updateSkyLight(RelightCtx ctx,
 def updateLightsByCoord(dim, x, y, z):
     if not dim.hasLights:
         return
-    
+
     x = np.asarray(x, 'i32').ravel()
     y = np.asarray(y, 'i32').ravel()
     z = np.asarray(z, 'i32').ravel()
