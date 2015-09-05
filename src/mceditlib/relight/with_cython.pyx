@@ -304,7 +304,7 @@ cdef updateSkyLight(RelightCtx ctx,
                     if ctx.getBlockOpacity(x, y2, z):
                         newHeights[k] = y2 + 1
                         break
-    
+
     for p in newHeights:
         k = p.first
         h = p.second
@@ -333,7 +333,7 @@ cdef updateSkyLight(RelightCtx ctx,
         if h != oldH:
             ctx.setHeightMap(x, z, h)
 
-    print("Dimming %d, brightening %d" % (dimCoords.size(), litCoords.size()))
+    #print("Dimming %d, brightening %d" % (dimCoords.size(), litCoords.size()))
     for c in dimCoords:
         oldLight = ctx.getBlockLight(c.x, c.y, c.z)
         ctx.setBlockLight(c.x, c.y, c.z, 0)
