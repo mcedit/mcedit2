@@ -20,6 +20,7 @@ from mcedit2.util import minecraftinstall
 from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.directories import getUserSchematicsDirectory
 from mcedit2.util.mimeformats import MimeFormats
+from mcedit2.widgets.spinslider import SpinSlider
 from mceditlib.util import exhaust
 from mceditlib.util.lazyprop import weakrefprop
 from mcedit2.util.raycast import rayCastInBounds
@@ -433,7 +434,9 @@ class EditorSession(QtCore.QObject):
 
         self.mcVersionMenu.clear()
         self.resourcePackMenu.clear()
+
         defaultAction = self.resourcePackMenu.addAction(self.tr("(No resource pack)"))
+        defaultAction.triggered.connect(self.resourcePackMapper.map)
         self.resourcePackMapper.setMapping(defaultAction, "")
 
         install = minecraftinstall.GetInstalls().getCurrentInstall()
@@ -449,6 +452,7 @@ class EditorSession(QtCore.QObject):
             resourcePackAction.triggered.connect(self.resourcePackMapper.map)
 
     def changeResourcePack(self, packName):
+        log.info("Changing to resource pack %s", packName)
         minecraftinstall.currentResourcePackOption.setValue(packName or "")
         self.resourceLoader = minecraftinstall.getResourceLoaderForFilename(self.filename)
         self.changeResourcePackButton.setText(self.resourcePackLabel())
@@ -1119,12 +1123,40 @@ class EditorTab(QtGui.QWidget):
             currentViewName = "Cam"
         self.viewButtons[currentViewName].click()
 
+        self.dayTimeInput = SpinSlider(double=True,
+                                       minimum=0.0, maximum=1.0, value=1.0)
+        self.minBrightnessInput = SpinSlider(double=True,
+                                             minimum=0.0, maximum=1.0, value=0.0)
+
+        self.dayTimeInput.valueChanged.connect(self.setDayTime)
+        self.minBrightnessInput.valueChanged.connect(self.setMinBrightness)
+
+        self.viewButtonToolbar.addSeparator()
+        self.viewButtonToolbar.addWidget(QtGui.QLabel("Time of day:"))
+        self.viewButtonToolbar.addWidget(self.dayTimeInput)
+
+        self.viewButtonToolbar.addSeparator()
+        self.viewButtonToolbar.addWidget(QtGui.QLabel("Minimum brightness:"))
+        self.viewButtonToolbar.addWidget(self.minBrightnessInput)
+
+        spacer = QtGui.QWidget()
+        spacer.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+        self.viewButtonToolbar.addWidget(spacer)
+
     def destroy(self):
         self.editorSession = None
         for view in self.views:
             view.destroy()
 
         super(EditorTab, self).destroy()
+
+    def setDayTime(self, value):
+        if self.editorSession.textureAtlas:
+            self.editorSession.textureAtlas.dayTime = value
+
+    def setMinBrightness(self, value):
+        if self.editorSession.textureAtlas:
+            self.editorSession.textureAtlas.minBrightness = value
 
     editorSession = weakrefprop()
 
