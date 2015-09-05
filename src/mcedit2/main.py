@@ -45,6 +45,10 @@ if "-log" in sys.argv:
 
 if "-debug" not in sys.argv:
     OpenGL.ERROR_CHECKING = False
+else:
+    while "-debug" in sys.argv:
+        sys.argv.remove('-debug')
+    print("GL Errors enabled!")
 
 import os
 # ugly ugly hack. has_binding uses imp.find_module to find QtGui, but imp.find_module doesn't work for pyinstaller
