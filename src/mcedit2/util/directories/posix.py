@@ -30,7 +30,8 @@ def getUserFilesDirectory():
             sys.argv[0], sys.getfilesystemencoding()))
         raise
 
-    folder = os.path.dirname(os.path.dirname(os.path.dirname(script)))  # main script is src/mcedit/main.py, so, ../../
+    #folder = os.path.dirname(os.path.dirname(os.path.dirname(script))) - On Linux, this makes MCE2 try to write to /usr/
+    folder = os.path.expanduser('~') # The Cross-Platform way to find the user's $HOME directory
     dataDir = os.path.join(folder, "MCEdit User Data")
 
     if not os.path.exists(dataDir):
