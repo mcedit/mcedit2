@@ -24,7 +24,9 @@ class LongLongValidator(QtGui.QValidator):
     def validate(self, input, pos):
         matches = longlongPattern.match(input)
         if matches is not None:
-            return QtGui.QValidator.Acceptable
+            value = long(input)
+            if (-1<<63) < value < (1<<63) - 1:
+                return QtGui.QValidator.Acceptable
         return QtGui.QValidator.Invalid
 
 class LongLongLineEdit(QtGui.QLineEdit):
@@ -33,10 +35,10 @@ class LongLongLineEdit(QtGui.QLineEdit):
         self.setValidator(LongLongValidator())
 
     def getValue(self):
-        return long(self.text())
+        return self.text()
 
     def setValue(self, val):
-        self.setText(str(val))
+        self.setText(val)
 
     value = QtCore.Property(long, getValue, setValue, user=True)
 

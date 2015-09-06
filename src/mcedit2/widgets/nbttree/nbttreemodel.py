@@ -259,12 +259,17 @@ class NBTTreeItem(object):
                 if size > maxsize:
                     hexdata += "..."
                 return "(size=%d) %s" % (size, hexdata)
+            if self.tag.tagID == nbt.ID_LONG:
+                # Workaround for OverflowError on Linux
+                return str(self.tag.value)
             return self.tag.value
 
     def parent(self):
         return self.parentItem
 
     def setValue(self, value):
+        if self.tag.tagID == nbt.ID_LONG:
+            value = long(value)
         self.tag.value = value
         return True
 
