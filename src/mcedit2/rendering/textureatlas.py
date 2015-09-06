@@ -110,8 +110,6 @@ class TextureAtlas(object):
         log.info("Preloaded %d textures for world %s (%i kB)",
                  len(self._rawTextures), util.displayName(self._filename), rawSize/1024)
 
-
-
     def load(self):
         if self._terrainTexture:
             return
@@ -182,19 +180,22 @@ class TextureAtlas(object):
                     texDataView[:] = data
                 self.texCoordsByName[name] = left + b, top + b, width - 2 * b, height - 2 * b
 
-        def _load():
-            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, atlasWidth, atlasHeight, 0, GL.GL_RGBA,
-                            GL.GL_UNSIGNED_BYTE, self.textureData.ravel())
-
         if self.overrideMaxSize is None:
             if maxLOD:
                 minFilter = GL.GL_NEAREST_MIPMAP_LINEAR
             else:
                 minFilter = None
-            self._terrainTexture = glutils.Texture(_load, minFilter=minFilter, maxLOD=maxLOD)
+            self._terrainTexture = glutils.Texture(name="TextureAtlas",
+                                                   image=self.textureData.ravel(),
+                                                   width=atlasWidth, height=atlasHeight,
+                                                   minFilter=minFilter, maxLOD=maxLOD)
             self._terrainTexture.load()
         else:
             self._terrainTexture = object()
+
+        if self._lightTexture is None:
+            self._lightTexture = LightTexture(self.dayTime, self.minBrightness)
+            self._lightTexture.load()
 
         self.width = atlasWidth
         self.height = atlasHeight
@@ -226,7 +227,7 @@ class TextureAtlas(object):
     @dayTime.setter
     def dayTime(self, value):
         self._dayTime = value
-        del self._lightTexture
+        self._lightTexture.dayTime = value
 
     _minBrightness = 0.0
 
@@ -237,12 +238,9 @@ class TextureAtlas(object):
     @minBrightness.setter
     def minBrightness(self, value):
         self._minBrightness = value
-        del self._lightTexture
+        self._lightTexture.minBrightness = value
 
     def bindLight(self):
-        if self._lightTexture is None:
-            self._lightTexture = _makeLightTexture(self.dayTime, self.minBrightness)
-
         self._lightTexture.bind()
 
     def dispose(self):
@@ -251,14 +249,46 @@ class TextureAtlas(object):
         if self._lightTexture:
             self._lightTexture.dispose()
 
+    def update(self):
+        if self._terrainTexture:
+            self._terrainTexture.load()
+        if self._lightTexture:
+            self._lightTexture.load()
 
-def _makeLightTexture(dayTime=1.0, minBrightness=1.0):
-    def _loadLightTexture():
-        pixels = generateLightmap(dayTime)
-        pixels.clip(int(minBrightness * 255), 255, pixels)
-        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, 16, 16, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, pixels.ravel())
 
-    return glutils.Texture(_loadLightTexture)
+class LightTexture(glutils.Texture):
+    def __init__(self, dayTime=1.0, minBrightness=0.0):
+        self._dayTime = dayTime
+        self._minBrightness = minBrightness
+        self.image = self.generateImage()
+        super(LightTexture, self).__init__(name="Lightmap", image=self.image, width=16, height=16)
+
+    def generateImage(self):
+        pixels = generateLightmap(self.dayTime)
+        pixels.clip(int(self.minBrightness * 255), 255, pixels)
+        return pixels
+
+    @property
+    def dayTime(self):
+        return self._dayTime
+    
+    @dayTime.setter
+    def dayTime(self, value):
+        self._dayTime = value
+        self.updateLightmap()
+
+    @property
+    def minBrightness(self):
+        return self._minBrightness
+    
+    @minBrightness.setter
+    def minBrightness(self, value):
+        self._minBrightness = value
+        self.updateLightmap()
+
+    def updateLightmap(self):
+        self.image = self.generateImage()
+        
 
 _maxSize = None
 

@@ -14,7 +14,23 @@ from mcedit2.rendering.depths import DepthOffset
 
 log = logging.getLogger(__name__)
 
+log.info("Making checkerboard texture...")
+color0 = (0xff, 0xff, 0xff, 0x22)
+color1 = (0xff, 0xff, 0xff, 0x44)
+
+floorTexImage = numpy.array([color0, color1, color1, color0], dtype='uint8')
+
 class LoadableChunksRenderNode(rendernode.RenderNode):
+    floorTexture = None
+
+    def compile(self):
+        if self.floorTexture is None:
+            self.floorTexture = Texture(image=floorTexImage, width=2, height=2,
+                                        minFilter=GL.GL_NEAREST,
+                                        magFilter=GL.GL_NEAREST,
+                                        )
+            self.floorTexture.load()
+        super(LoadableChunksRenderNode, self).compile()
 
     def drawSelf(self):
         with gl.glPushAttrib(GL.GL_FOG_BIT | GL.GL_ENABLE_BIT):
@@ -37,14 +53,6 @@ class LoadableChunksRenderNode(rendernode.RenderNode):
                     # chunkPositions *= 8
                     GL.glTexCoordPointer(2, GL.GL_FLOAT, 0, (vertexArray[..., (0, 2)] / 32).ravel())
                     GL.glDrawArrays(GL.GL_QUADS, 0, len(vertexArray) * 4)
-
-    _floorTexture = None
-
-    @property
-    def floorTexture(self):
-        if self._floorTexture is None:
-            self._floorTexture = Texture(makeFloorTex)
-        return self._floorTexture
 
 
 class LoadableChunksNode(scenenode.Node):
@@ -85,19 +93,6 @@ class LoadableChunksNode(scenenode.Node):
                     yield chunkPositions
 
             return list(arrays())
-
-def makeFloorTex():
-    log.info("Making checkerboard texture...")
-    color0 = (0xff, 0xff, 0xff, 0x22)
-    color1 = (0xff, 0xff, 0xff, 0x44)
-
-    img = numpy.array([color0, color1, color1, color0], dtype='uint8')
-
-    GL.glTexParameter(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_NEAREST)
-    GL.glTexParameter(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_NEAREST)
-
-    GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, 2, 2, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, img)
-
 
 def chunkMarkers(chunkSet):
     """ Returns a mapping { size: [position, ...] } for different powers of 2

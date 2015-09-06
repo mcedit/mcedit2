@@ -530,6 +530,8 @@ class WorldView(QGLWidget):
     def paintGL(self):
         with profiler.context("paintGL: %s" % self):
             self.frameSamples.append(time.time())
+            if self.textureAtlas:
+                self.textureAtlas.update()
 
             with profiler.context("renderScene"):
                 rendernode.renderScene(self.renderGraph)

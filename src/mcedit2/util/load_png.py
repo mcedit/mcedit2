@@ -13,18 +13,12 @@ __author__ = 'Rio'
 def loadPNGTexture(filename, *a, **kw):
     try:
         w, h, ndata = loadPNGFile(filename)
-
-        tex = glutils.Texture(functools.partial(loadTextureFunc, w, h, ndata), *a, **kw)
-        tex.data = ndata
+        tex = glutils.Texture(name=os.path.basename(filename), image=ndata.ravel(),
+                              width=w, height=h, *a, **kw)
         return tex
     except Exception as e:
         print ("Exception loading ", filename, ": ", repr(e))
         return glutils.Texture()
-
-
-def loadTextureFunc(w, h, ndata):
-    GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, w, h, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, ndata)
-    return w, h
 
 
 def loadPNGImage(img):

@@ -162,12 +162,6 @@ class SceneUpdateTask(object):
             groupNode.discardChunkNode(cx, cz)
 
     def getMapTexture(self, mapID):
-        def _loadFunc(colors):
-            def _load():
-                w = colors.shape[1]
-                h = colors.shape[0]
-                GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, w, h, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, colors.ravel())
-            return _load
 
         if mapID in self.mapTextures:
             return self.mapTextures[mapID]
@@ -178,7 +172,9 @@ class SceneUpdateTask(object):
         else:
             colors = mapData.getColorsAsRGBA()
 
-            mapTex = Texture(_loadFunc(colors))
+            mapTex = Texture(image=colors.ravel(),
+                             width=colors.shape[1],
+                             height=colors.shape[0])
             self.mapTextures[mapID] = mapTex
             return mapTex
 
@@ -191,14 +187,9 @@ class SceneUpdateTask(object):
         except Exception as e:
             log.exception("Model texture %s could not be loaded", texturePath)
         else:
-            def _load():
-                GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, w, h, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, rgba[::-1])
-
-            modelTex = Texture(_load)
+            modelTex = Texture(image=rgba[::-1], width=w, height=h)
             self.modelTextures[texturePath] = modelTex
             return modelTex
-
-
 
 
 class WorldScene(scenenode.Node):

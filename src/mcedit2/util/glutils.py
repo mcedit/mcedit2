@@ -24,11 +24,14 @@ from OpenGL.extensions import alternate
 import numpy
 from contextlib import contextmanager
 
+import logging
 
 import weakref
 from OpenGL.GL import framebufferobjects as FBO
 import sys
 
+
+log = logging.getLogger(__name__)
 
 class gl(object):
     @classmethod
@@ -193,55 +196,74 @@ class Texture(object):
     allTextures = []
     defaultFilter = GL.GL_NEAREST
 
-    def __init__(self, textureFunc=None, minFilter=None, magFilter=None, maxLOD=4):
+    def __init__(self, name=None, image=None, width=None, height=None, minFilter=None, magFilter=None, maxLOD=4):
         # maxLOD setting of 4 ensures 16x16 textures reduce to 1x1 and no smaller
         self.minFilter = minFilter or self.defaultFilter
         self.magFilter = magFilter or self.defaultFilter
-        if textureFunc is None:
-            textureFunc = lambda: None
 
-        self.textureFunc = textureFunc
-        self._texID = GL.glGenTextures(1)
+        self._image = image
+        self.width = width
+        self.height = height
+        self.name = name or "Unnamed"
+
+        self.imageFormat = GL.GL_RGBA
+        self.textureFormat = GL.GL_RGBA
+        self.imageDtype = GL.GL_UNSIGNED_BYTE
+
+        self._texID = None
         self.dirty = True
         self.maxLOD = maxLOD
 
+    @property
+    def image(self):
+        return self._image
+
+    @image.setter
+    def image(self, value):
+        self._image = value
+        self.dirty = True
+
     def load(self):
-        if not self.dirty:
+        if self.image is None or not self.dirty:
             return
+        assert self.width and self.height, "Invalid texture size."
 
-        self.dirty = False
-
-        def _delete(r):
-            Texture.allTextures.remove(r)
-        self.allTextures.append(weakref.ref(self, _delete))
-        self.bind()
-
+        self.bind(load=False)
+        log.debug("BINDING: %s", GL.glGetInteger(GL.GL_TEXTURE_BINDING_2D))
         GL.glTexParameter(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, self.minFilter)
         GL.glTexParameter(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, self.magFilter)
 
-        self.textureFunc()
-
-        if self.minFilter in (GL.GL_LINEAR_MIPMAP_LINEAR,
-                              GL.GL_LINEAR_MIPMAP_NEAREST,
-                              GL.GL_NEAREST_MIPMAP_LINEAR,
-                              GL.GL_NEAREST_MIPMAP_NEAREST):
-
-            if bool(GL.glGenerateMipmap):
-                GL.glTexParameter(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAX_LOD, self.maxLOD)
-                GL.glGenerateMipmap(GL.GL_TEXTURE_2D)
+        log.debug("Update texture %s (%d)", self.name, self._texID)
+        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, self.textureFormat,
+                        self.width, self.height, 0, self.imageFormat,
+                        self.imageDtype, self._image)
+        self.dirty = False
 
     def dispose(self):
         if self._texID is not None:
             GL.glDeleteTextures(self._texID)
             self._texID = None
 
-    def bind(self):
-        self.load()
+    def gen(self):
+        if self._texID is None:
+            self._texID = GL.glGenTextures(1)
+            log.debug("Gen texture %s (%d)", self.name, self._texID)
+
+            def _delete(r):
+                Texture.allTextures.remove(r)
+            self.allTextures.append(weakref.ref(self, _delete))
+
+    def bind(self, load=True):
+        self.gen()
+        if load:
+            self.load()
         GL.glBindTexture(GL.GL_TEXTURE_2D, self._texID)
 
     def invalidate(self):
         self.dirty = True
 
+
+# --- UNUSED FOR NOW? ---
 
 class FramebufferTexture(Texture):
     def __init__(self, width, height, drawFunc):
