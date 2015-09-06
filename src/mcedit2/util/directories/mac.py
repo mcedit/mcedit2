@@ -5,12 +5,13 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import os
 import sys
+from mcedit2.util import resources
 
 log = logging.getLogger(__name__)
 
 # no build scripts for OS X yet. assuming py2app or py2installer will be used.
 #
-# store user files in source checkout folder
+# store user files in source checkout folder when checked out, otherwise in Documents folder
 
 def getUserFilesDirectory():
 
@@ -21,10 +22,11 @@ def getUserFilesDirectory():
     # OS X filenames are defined to be UTF-8 encoded.
     # We internally handle filenames as unicode.
 
-    script = sys.argv[0].decode(sys.getfilesystemencoding())
-
-    folder = os.path.dirname(os.path.dirname(os.path.dirname(script)))  # main script is src/mcedit/main.py, so, ../../
-    dataDir = os.path.join(folder, "MCEdit User Data")
+    if resources.isSrcCheckout():
+        # Source checkouts don't use the same folder as regular installs.
+        dataDir = os.path.join(os.path.dirname(resources.getSrcFolder()), "MCEdit User Data")
+    else:
+        dataDir = os.path.expanduser(u"~/Documents/MCEdit 2 Files")
 
     if not os.path.exists(dataDir):
         os.makedirs(dataDir)

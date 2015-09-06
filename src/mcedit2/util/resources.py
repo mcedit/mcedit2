@@ -8,6 +8,12 @@ import sys
 
 log = logging.getLogger(__name__)
 
+def isSrcCheckout():
+    srcFolder = getSrcFolder()
+    gitPath = os.path.join(os.path.dirname(srcFolder), '.git')
+
+    return os.path.exists(gitPath)
+
 def getSrcFolder():
     """
     Find the 'src/' folder of a source checkout.
@@ -27,8 +33,14 @@ def getSrcFolder():
     # On Linux, it is locale-encoded and filenames are defined as bytestrings, so it is possible
     # to have a filename that cannot be interpreted as unicode. If the user writes a filename
     # that is not locale-encoded, he loses.
-
-    mod = mod.decode(sys.getfilesystemencoding())
+    try:
+        # assert the source checkout is not in a non-representable path...
+        mod = mod.decode(sys.getfilesystemencoding())
+    except UnicodeDecodeError:
+        print("Script filename %r cannot be decoded with the current locale %s! "
+              "Please use sensible filenames." %
+              (mod, sys.getfilesystemencoding()))
+        raise
 
     # Assert the source checkout is not in a non-representable path...
     assert os.path.exists(mod), ("Source checkout path cannot be represented as unicode. "

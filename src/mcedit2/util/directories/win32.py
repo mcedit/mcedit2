@@ -28,6 +28,7 @@ def getUserFilesDirectory():
     if hasattr(sys, 'frozen'):
         # On Windows, filenames are UTF-16 encoded.
         # Filenames are defined as UTF-16.
+        #
         # However, sys.executable is codepage-encoded. Codepages cannot represent all possible
         # filenames, so we must get the exe filename using this wide-character API.
         # Wide-character APIs in pywin32 always return a `unicode`.
@@ -42,11 +43,11 @@ def getUserFilesDirectory():
         exe = win32api.GetModuleFileNameW(None)
         assert os.path.exists(exe), "MCEdit executable %r does not exist! Something is very wrong." % exe
         folder = os.path.dirname(exe)
+        dataDir = os.path.join(folder, "MCEdit 2 Files")
 
     else:
         folder = os.path.dirname(resources.getSrcFolder())
-
-    dataDir = os.path.join(folder, "MCEdit User Data")
+        dataDir = os.path.join(folder, "MCEdit User Data")
 
     if not os.path.exists(dataDir):
         os.makedirs(dataDir)
