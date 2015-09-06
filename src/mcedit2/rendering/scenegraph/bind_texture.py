@@ -16,10 +16,10 @@ class BindTextureRenderNode(RenderstateRenderNode):
     def enter(self):
         GL.glPushAttrib(GL.GL_ENABLE_BIT | GL.GL_TEXTURE_BIT)
         scale = self.sceneNode.scale
+        GL.glMatrixMode(GL.GL_TEXTURE)
+        GL.glPushMatrix()
+        GL.glLoadIdentity()
         if scale is not None:
-            GL.glMatrixMode(GL.GL_TEXTURE)
-            GL.glPushMatrix()
-            GL.glLoadIdentity()
             GL.glScale(*scale)
         glutils.glActiveTexture(GL.GL_TEXTURE0)  # disable texture1?
         GL.glEnable(GL.GL_TEXTURE_2D)
@@ -27,10 +27,8 @@ class BindTextureRenderNode(RenderstateRenderNode):
             self.sceneNode.texture.bind()
 
     def exit(self):
-        if self.sceneNode.scale is not None:
-            # Please do not change BindTextureNode.scale during RenderNode calls, thx
-            GL.glMatrixMode(GL.GL_TEXTURE)
-            GL.glPopMatrix()
+        GL.glMatrixMode(GL.GL_TEXTURE)
+        GL.glPopMatrix()
         GL.glPopAttrib()
 
 
