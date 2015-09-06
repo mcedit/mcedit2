@@ -85,7 +85,7 @@ class Profiler(object):
 
     def iterator(self, name):
         def _decorate(func):
-            log.info("Decorating %s with %s", func, name)
+            log.debug("Decorating %s with %s", func, name)
             @functools.wraps(func)
             def _wrapper(*a, **kw):
                 return self.iterate(func(*a, **kw), name)
