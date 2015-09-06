@@ -395,9 +395,7 @@ class SectionUpdate(object):
         else:
             default = 0
 
-        areaLights[(0, 1, -2, -1), :, :] = default
-        areaLights[:, (0, 1, -2, -1), :] = default
-        areaLights[:, :, (0, 1, -2, -1)] = default
+        areaLights[:, :, :] = default
 
         areaLights[2:-2, 2:-2, 2:-2] = Light(chunkSection)
 
@@ -423,11 +421,11 @@ class SectionUpdate(object):
             if ncs:
                 areaLights[2:-2, -2:, 2:-2] = Light(ncs)[:, :2, :]
 
-        above = self.chunkUpdate.chunk.getSection(y + 2)
+        above = self.chunkUpdate.chunk.getSection(y + 1)
         if above:
             areaLights[-2:, 2:-2, 2:-2] = Light(above)[:2, :, :]
 
-        below = self.chunkUpdate.chunk.getSection(y + 2)
+        below = self.chunkUpdate.chunk.getSection(y - 1)
         if below:
             areaLights[:2, 2:-2, 2:-2, ] = Light(below)[-2:, :, :]
 
