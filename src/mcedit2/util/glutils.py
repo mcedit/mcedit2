@@ -255,8 +255,8 @@ class Texture(object):
 
     def bind(self, load=True):
         self.gen()
-        if load:
-            self.load()
+        if load and self.dirty:
+            raise ValueError("Binding dirty/unloaded texture! Implicit loads not allowed; should not load during displaylist compilation.")
         GL.glBindTexture(GL.GL_TEXTURE_2D, self._texID)
 
     def invalidate(self):

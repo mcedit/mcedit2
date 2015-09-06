@@ -13,6 +13,11 @@ log = logging.getLogger(__name__)
 
 
 class BindTextureRenderNode(RenderstateRenderNode):
+    def compile(self):
+        if self.sceneNode.texture is not None:
+            self.sceneNode.texture.load()
+        super(BindTextureRenderNode, self).compile()
+
     def enter(self):
         GL.glPushAttrib(GL.GL_ENABLE_BIT | GL.GL_TEXTURE_BIT)
         scale = self.sceneNode.scale

@@ -27,6 +27,7 @@ class CompassRenderNode(rendernode.RenderNode):
                 filename = "compass.png"
 
             self._tex = loadPNGTexture(filename, minFilter=GL.GL_LINEAR, magFilter=GL.GL_LINEAR)
+            self._tex.load()
         super(CompassRenderNode, self).compile()
 
     def drawSelf(self):
