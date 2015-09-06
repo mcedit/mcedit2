@@ -109,7 +109,7 @@ class WorldListItemDelegate(QtGui.QStyledItemDelegate):
         option = QtGui.QStyleOptionViewItemV4(option)
         self.initStyleOption(option, index)
         style = QtGui.qApp.style()
-        worldInfo = index.data(Qt.UserRole)
+        worldInfo = index.model().data(index, Qt.UserRole)
         style.drawPrimitive(QtGui.QStyle.PE_PanelItemViewItem, option, painter, self.parent())
         self.itemWidget.setGeometry(option.rect)
         self.itemWidget.setWorldInfo(worldInfo)
