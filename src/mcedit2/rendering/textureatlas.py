@@ -120,8 +120,6 @@ class TextureAtlas(object):
             maxSize = self.overrideMaxSize
 
         maxLOD = min(4, self._maxLOD)
-        if not bool(GL.glGenerateMipmap):
-            maxLOD = 0
         if maxLOD:
             borderSize = 1 << (maxLOD - 1)
         else:
