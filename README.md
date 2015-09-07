@@ -77,7 +77,6 @@ As a bonus, you can use the `-debug` flag to enable the Debug menu and a few ext
 
 ## Linux/OS X (not tested fully)
 
-
     cd (Your mcedit2 location)
     virtualenv ENV
     . ENV/bin/activate
@@ -87,9 +86,13 @@ As a bonus, you can use the `-debug` flag to enable the Debug menu and a few ext
 
 If you get a `Library not loaded: libpyside-python2.7.1.2.dylib` error, try running `pyside_postinstall.py -install` to fix this. 
 
-If after that, you get a `Library not loaded: /usr/local/lib/QtGui.framework/Versions/4/QtGui` error after that, try installing `qt` using a package manager like Homebrew or apt-get. 
+If after that, you get a `Library not loaded: /usr/local/lib/QtGui.framework/Versions/4/QtGui` error after that, try installing `qt` using a package manager like Homebrew or apt-get or similar equivalent on your distribution.   You may also need `libxslt-dev` and `python-dev` packages installed before the commands above will work.
 
-Example: `brew install qt`
+Example: `brew install qt` etc. or:
+
+    sudo apt-get install qt-sdk
+    sudo apt-get install libxslt-dev
+    sudo apt-get install python-dev
 
 _Note: This information is not fully tested and might not work for you_
 
