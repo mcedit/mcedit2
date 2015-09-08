@@ -42,15 +42,18 @@ class LoaderTimer(QtCore.QTimer):
 
 
 class WorldLoader(object):
-    def __init__(self, scene):
+    def __init__(self, scene, chunkPositions=None):
         """
-        A timer for loading a world separately from the main ChunkLoader. Loads every chunk in the world.
+        A timer for loading a world separately from the main ChunkLoader. If
+        chunkPositions is given, loads only those chunks, otherwise loads every
+        chunk in the world.
 
         :type scene: WorldScene
         """
         self.scene = scene
         self.timer = LoaderTimer(timeout=self.loadChunk)
         self.timer.setInterval(0)
+        self.chunkPositions = chunkPositions
         self.chunkIter = self.work()
 
     def loadChunk(self):
@@ -62,6 +65,10 @@ class WorldLoader(object):
     @profiler.iterator
     def work(self):
         yield
-        for cPos in self.scene.dimension.chunkPositions():
+        if self.chunkPositions is not None:
+            chunkPositions = self.chunkPositions
+        else:
+            chunkPositions = self.scene.dimension.chunkPositions()
+        for cPos in chunkPositions:
             for _ in self.scene.workOnChunk(self.scene.dimension.getChunk(*cPos)):
                 yield _
