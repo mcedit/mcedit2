@@ -52,7 +52,7 @@ class SceneUpdateTask(object):
     spaceHeight = 64
     targetFPS = 30
 
-    def __init__(self, worldScene, textureAtlas, bounds=None):
+    def __init__(self, worldScene, textureAtlas):
         """
 
         :type worldScene: WorldScene
@@ -67,6 +67,7 @@ class SceneUpdateTask(object):
         self.alpha = 255
 
         self.textureAtlas = textureAtlas
+
         self.mapTextures = {}
         self.modelTextures = {}
 
@@ -90,11 +91,15 @@ class SceneUpdateTask(object):
     workFactor = 2
 
     def wantsChunk(self, cPos):
+        if self.worldScene.bounds is not None:
+            if not self.worldScene.bounds.containsChunk(*cPos):
+                return False
+
         chunkInfo = self.worldScene.chunkRenderInfo.get(cPos)
         if chunkInfo is None:
             return True
 
-        return chunkInfo.layersToRender
+        return bool(chunkInfo.layersToRender)
 
     def workOnChunk(self, chunk, visibleSections=None):
         work = 0
@@ -214,7 +219,7 @@ class WorldScene(scenenode.Node):
         self.chunkRenderInfo = {}
         self.visibleLayers = set(Layer.DefaultVisibleLayers)
 
-        self.updateTask = SceneUpdateTask(self, textureAtlas, bounds)
+        self.updateTask = SceneUpdateTask(self, textureAtlas)
 
         if geometryCache is None:
             geometryCache = GeometryCache()
