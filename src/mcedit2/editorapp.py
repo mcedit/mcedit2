@@ -510,10 +510,16 @@ class MCEditApp(QtGui.QApplication):
 
             self.mainWindow.panelsToolBar.addSeparator()
             for action in session.panelActions:
-                self.mainWindow.panelsToolBar.addAction(action)
+                if action is None:
+                    self.mainWindow.panelsToolBar.addSeparator()
+                else:
+                    self.mainWindow.panelsToolBar.addAction(action)
 
             for action in session.toolActions:
-                self.mainWindow.toolsToolBar.addAction(action)
+                if action is None:
+                    self.mainWindow.toolsToolBar.addSeparator()
+                else:
+                    self.mainWindow.toolsToolBar.addAction(action)
 
 
             self.loaderInfo.object = session.loader

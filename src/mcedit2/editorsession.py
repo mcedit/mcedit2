@@ -368,24 +368,28 @@ class EditorSession(QtCore.QObject):
         dimButton.setPopupMode(QtGui.QToolButton.InstantPopup)
 
         self.panelActions.append(dimAction)
+        self.panelActions.append(None)
+        # --- Versions/Resource Packs ---
+        versionRPAction = self.versionRPAction = QtGui.QWidgetAction(self)
 
-        mcVersionButton = self.changeMCVersionButton = QtGui.QToolButton()
+        mcVersionButton = self.changeMCVersionButton = QtGui.QToolButton(autoRaise=True)
         mcVersionButton.setText(self.minecraftVersionLabel())
-        mcVersionAction = self.changeMCVersionAction = QtGui.QWidgetAction(self)
-        mcVersionAction.setDefaultWidget(mcVersionButton)
         self.mcVersionMenu = QtGui.QMenu()
         mcVersionButton.setMenu(self.mcVersionMenu)
         mcVersionButton.setPopupMode(QtGui.QToolButton.InstantPopup)
-        self.panelActions.append(mcVersionAction)
 
-        resourcePackButton = self.changeResourcePackButton = QtGui.QToolButton()
+        resourcePackButton = self.changeResourcePackButton = QtGui.QToolButton(autoRaise=True)
         resourcePackButton.setText(self.resourcePackLabel())
-        resourcePackAction = self.changeResourcePackAction = QtGui.QWidgetAction(self)
-        resourcePackAction.setDefaultWidget(resourcePackButton)
         self.resourcePackMenu = QtGui.QMenu()
         resourcePackButton.setMenu(self.resourcePackMenu)
         resourcePackButton.setPopupMode(QtGui.QToolButton.InstantPopup)
-        self.panelActions.append(resourcePackAction)
+
+        versionRPColumn = Column(mcVersionButton, resourcePackButton)
+        versionRPWidget = QtGui.QWidget()
+        versionRPWidget.setLayout(versionRPColumn)
+        versionRPAction.setDefaultWidget(versionRPWidget)
+
+        self.panelActions.append(versionRPAction)
 
         self._updateVersionsAndResourcePacks()
 
@@ -421,12 +425,12 @@ class EditorSession(QtCore.QObject):
             log.info("Update progressMax to %d, please.", progress.progressCount)
 
     def minecraftVersionLabel(self):
-        version = minecraftinstall.currentVersionOption.value()
-        return "Minecraft Version: %s" % version
+        version = minecraftinstall.currentVersionOption.value() or self.tr("(Not set)")
+        return self.tr("Minecraft Version: %s") % version
 
     def resourcePackLabel(self):
-        resourcePack = minecraftinstall.currentResourcePackOption.value()
-        return "Resource Pack: %s" % resourcePack
+        resourcePack = minecraftinstall.currentResourcePackOption.value() or self.tr("(Default)")
+        return self.tr("Resource Pack: %s") % resourcePack
 
 
     def _updateVersionsAndResourcePacks(self):
@@ -438,7 +442,7 @@ class EditorSession(QtCore.QObject):
         self.mcVersionMenu.clear()
         self.resourcePackMenu.clear()
 
-        defaultAction = self.resourcePackMenu.addAction(self.tr("(No resource pack)"))
+        defaultAction = self.resourcePackMenu.addAction(self.tr("(Default)"))
         defaultAction.triggered.connect(self.resourcePackMapper.map)
         self.resourcePackMapper.setMapping(defaultAction, "")
 
