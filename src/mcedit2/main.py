@@ -72,6 +72,35 @@ def setup_logging():
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
     log_debug("Logging level set")
+    class MCELogRecord(logging.LogRecord):
+        """
+        Override of LogRecord with 100% unicode-safe message formatting
+        """
+        def getMessage(self):
+            """
+            Return the message for this LogRecord.
+
+            Return the message for this LogRecord after merging any user-supplied
+            arguments with the message.
+            """
+            msg = self.msg
+            if not isinstance(msg, basestring):
+                try:
+                    msg = str(self.msg)
+                except UnicodeError:
+                    msg = self.msg      #Defer encoding till later
+            if self.args:
+                try:
+                    msg = msg % self.args
+                except UnicodeDecodeError:
+                    # 'msg' is unicode, but 'args' contains a str with non-ascii chars
+                    # round-trip to str and decode with escapes to avoid encode errors
+                    msg = msg.encode(b'ascii', b'backslashreplace')
+                    msg = msg % self.args
+                    msg = msg.decode(b'ascii', b'replace')
+            return msg
+
+    logging.LogRecord = MCELogRecord
 
     from mcedit2.util.directories import getUserFilesDirectory
     mceditUserData = getUserFilesDirectory()
