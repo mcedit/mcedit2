@@ -60,11 +60,12 @@ currentViewSetting = sessionSettings.getOption("currentview", unicode, "cam")
 # chunks into its viewports.
 
 class PendingImport(object):
-    def __init__(self, sourceDim, pos, selection, text):
+    def __init__(self, sourceDim, pos, selection, text, isMove=False):
         self.selection = selection
         self.text = text
         self.pos = pos
         self.sourceDim = sourceDim
+        self.isMove = isMove
 
     def __repr__(self):
         return "%s(%r, %r, %r)" % (self.__class__.__name__, self.sourceDim, self.selection, self.pos)

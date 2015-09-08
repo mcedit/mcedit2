@@ -341,7 +341,8 @@ class MoveTool(EditorTool):
             # blocks will be moved.
             pos = self.editorSession.currentSelection.origin
             pendingImport = PendingImport(self.editorSession.currentDimension, pos,
-                                          self.editorSession.currentSelection, self.tr("<Moved Object>"))
+                                          self.editorSession.currentSelection, self.tr("<Moved Object>"),
+                                          isMove=True)
             moveCommand = MoveSelectionCommand(self, pendingImport)
 
             self.editorSession.pushCommand(moveCommand)
@@ -360,13 +361,18 @@ class MoveTool(EditorTool):
 
         with command.begin():
             # TODO don't use intermediate schematic...
-            export = self.currentImport.sourceDim.exportSchematicIter(self.currentImport.selection)
-            schematic = showProgress("Copying...", export)
+            if self.currentImport.isMove:
+                export = self.currentImport.sourceDim.exportSchematicIter(self.currentImport.selection)
+                schematic = showProgress("Copying...", export)
+                dim = schematic.getDimension()
+                fill = self.editorSession.currentDimension.fillBlocksIter(self.currentImport.selection, "air")
+                showProgress("Clearing...", fill)
+            else:
+                dim = self.currentImport.sourceDim
 
-            fill = self.editorSession.currentDimension.fillBlocksIter(self.editorSession.currentSelection, "air")
-            showProgress("Clearing...", fill)
-
-            task = self.editorSession.currentDimension.importSchematicIter(schematic, self.currentImport.pos)
+            task = self.editorSession.currentDimension.copyBlocksIter(dim, dim.bounds,
+                                                                      self.currentImport.pos,
+                                                                      biomes=True, create=True)
             showProgress(self.tr("Pasting..."), task)
 
         self.editorSession.pushCommand(command)
