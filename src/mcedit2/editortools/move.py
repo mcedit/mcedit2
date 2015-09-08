@@ -126,22 +126,28 @@ class PendingImportNode(TranslateNode):
         self.pendingImport = pendingImport
         self.pos = pendingImport.pos
 
-        dim = pendingImport.schematic.getDimension()
+        dim = pendingImport.sourceDim
 
-        self.worldScene = WorldScene(dim, textureAtlas)
+        self.worldSceneTranslateNode = TranslateNode()
+        self.worldScene = WorldScene(dim, textureAtlas, bounds=pendingImport.selection)
         self.worldScene.depthOffsetNode.depthOffset = DepthOffset.PreviewRenderer
-        self.addChild(self.worldScene)
 
+        self.worldSceneTranslateNode.translateOffset = -self.pendingImport.selection.origin
+        self.worldSceneTranslateNode.addChild(self.worldScene)
+        self.addChild(self.worldSceneTranslateNode)
+
+        box = BoundingBox((0, 0, 0), pendingImport.bounds.size)
         self.outlineNode = SelectionBoxNode()
         self.outlineNode.filled = False
-        self.outlineNode.selectionBox = dim.bounds
+        self.outlineNode.selectionBox = box
         self.addChild(self.outlineNode)
 
         self.faceHoverNode = SelectionFaceNode()
-        self.faceHoverNode.selectionBox = dim.bounds
+        self.faceHoverNode.selectionBox = box
         self.addChild(self.faceHoverNode)
 
-        self.loader = WorldLoader(self.worldScene)
+        self.loader = WorldLoader(self.worldScene,
+                                  list(pendingImport.selection.chunkPositions()))
         self.loader.timer.start()
 
     @property
@@ -216,6 +222,7 @@ class MoveTool(EditorTool):
     # --- Pending imports ---
 
     def addPendingImport(self, pendingImport):
+        log.info("Added import: %s", pendingImport)
         self.pendingImports.append(pendingImport)
         item = QtGui.QStandardItem()
         item.setEditable(False)
@@ -270,7 +277,7 @@ class MoveTool(EditorTool):
 
     @property
     def schematicBox(self):
-        box = self.currentImport.schematic.getDimension().bounds
+        box = self.currentImport.selection
         return BoundingBox(self.movePosition, box.size)
 
     # --- Mouse events ---
@@ -310,13 +317,6 @@ class MoveTool(EditorTool):
         self.movePosition = self.dragStartMovePosition + map(int, delta)
 
     def mousePress(self, event):
-        # Record which face/axis was clicked for mouseDrag. Store current revision # in MoveCommand, begin undo
-        # revision, cut selection from world, end undo revision, create overlay node for pasted selection
-        # Inform EditorSession that a multi-step undo is being recorded and give it a callback to use when something
-        # else tries to call beginUndo before we're done - call it an "undo block"
-
-
-        # begin drag
         if self.currentImport is not None:
             point, face = boxFaceUnderCursor(self.schematicBox, event.ray)
             self.dragStartFace = face
@@ -333,19 +333,16 @@ class MoveTool(EditorTool):
     def toolActive(self):
         self.editorSession.selectionTool.hideSelectionWalls = True
         if self.currentImport is None:
-            # Need to cut out selection
-            # xxxx for huge selections, don't cut, just do everything at the end?
             if self.editorSession.currentSelection is None:
                 return
-            export = self.editorSession.currentDimension.exportSchematicIter(self.editorSession.currentSelection)
-            schematic = showProgress("Copying...", export)
-            pos = self.editorSession.currentSelection.origin
-            pendingImport = PendingImport(schematic, pos, self.tr("<Moved Object>"))
-            moveCommand = MoveSelectionCommand(self, pendingImport)
 
-            with moveCommand.begin():
-                fill = self.editorSession.currentDimension.fillBlocksIter(self.editorSession.currentSelection, "air")
-                showProgress("Clearing...", fill)
+            # This makes a reference to the latest revision in the editor.
+            # If the moved area is changed between "Move" and "Confirm", the changed
+            # blocks will be moved.
+            pos = self.editorSession.currentSelection.origin
+            pendingImport = PendingImport(self.editorSession.currentDimension, pos,
+                                          self.editorSession.currentSelection, self.tr("<Moved Object>"))
+            moveCommand = MoveSelectionCommand(self, pendingImport)
 
             self.editorSession.pushCommand(moveCommand)
 
@@ -362,7 +359,14 @@ class MoveTool(EditorTool):
         command = MoveFinishCommand(self, self.currentImport)
 
         with command.begin():
-            task = self.editorSession.currentDimension.importSchematicIter(self.currentImport.schematic, self.currentImport.pos)
+            # TODO don't use intermediate schematic...
+            export = self.currentImport.sourceDim.exportSchematicIter(self.currentImport.selection)
+            schematic = showProgress("Copying...", export)
+
+            fill = self.editorSession.currentDimension.fillBlocksIter(self.editorSession.currentSelection, "air")
+            showProgress("Clearing...", fill)
+
+            task = self.editorSession.currentDimension.importSchematicIter(schematic, self.currentImport.pos)
             showProgress(self.tr("Pasting..."), task)
 
         self.editorSession.pushCommand(command)

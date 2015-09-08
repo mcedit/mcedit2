@@ -60,17 +60,19 @@ currentViewSetting = sessionSettings.getOption("currentview", unicode, "cam")
 # chunks into its viewports.
 
 class PendingImport(object):
-    def __init__(self, schematic, pos, text):
+    def __init__(self, sourceDim, pos, selection, text):
+        self.selection = selection
         self.text = text
         self.pos = pos
-        self.schematic = schematic
+        self.sourceDim = sourceDim
 
     def __repr__(self):
-        return "%s(%r, %r)" % (self.__class__.__name__, self.schematic, self.pos)
+        return "%s(%r, %r, %r)" % (self.__class__.__name__, self.sourceDim, self.selection, self.pos)
 
     @property
     def bounds(self):
-        return BoundingBox(self.pos, self.schematic.getDimension().bounds.size)
+        return BoundingBox(self.pos, self.selection.size)
+        #return BoundingBox(self.pos, self.sourceDim.bounds.size)
 
 
 class PasteImportCommand(QtGui.QUndoCommand):
@@ -615,7 +617,8 @@ class EditorSession(QtCore.QObject):
         if self.copiedSchematic is None:
             return
         view = self.editorTab.currentView()
-        imp = PendingImport(self.copiedSchematic, view.mouseBlockPos, self.tr("<Pasted Object>"))
+        dim = self.copiedSchematic.getDimension()
+        imp = PendingImport(dim, view.mouseBlockPos, dim.bounds, self.tr("<Pasted Object>"))
         command = PasteImportCommand(self, imp, "Paste")
         self.undoStack.push(command)
 
@@ -808,7 +811,8 @@ class EditorSession(QtCore.QObject):
             pos = ray.point
 
         name = os.path.basename(filename)
-        imp = PendingImport(schematic, pos, name)
+        dim = schematic.getDimension()
+        imp = PendingImport(schematic.getDimension(), pos, dim.bounds, name)
         command = PasteImportCommand(self, imp, "Import %s" % name)
         self.undoStack.push(command)
 
