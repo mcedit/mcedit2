@@ -132,7 +132,7 @@ class MCESettings(QtCore.QSettings):
             option.valueChanged.emit(val)
 
     def setValue(self, key, val):
-        old = self.value(key, val)
+        old = self.value(key)
         super(MCESettings, self).setValue(key, val)
         if old != val:
             self.emitSignal(key, val)
