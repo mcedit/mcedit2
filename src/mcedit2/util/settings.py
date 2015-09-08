@@ -133,8 +133,9 @@ class MCESettings(QtCore.QSettings):
 
     def setValue(self, key, val):
         old = self.value(key)
-        super(MCESettings, self).setValue(key, val)
         if old != val:
+            log.info("Setting %r changed to (%.40r)(...) (was (%.40r)(...))", key, val, old)
+            super(MCESettings, self).setValue(key, val)
             self.emitSignal(key, val)
 
     def jsonValue(self, key, default=None):
