@@ -18,9 +18,10 @@ class Layer:
     ItemFrames = "ItemFrames"
     TileTicks = "TileTicks"
     TerrainPopulated = "TerrainPopulated"
+    HeightMap = "HeightMap"
     ChunkSections = "ChunkSections"
     AllLayers = (Blocks, MonsterLocations, Items,
                  TileEntities, TileEntityLocations,
                  CommandBlockColors, CommandBlockLocations,
-                 ItemFrames, TileTicks, ChunkSections)
+                 ItemFrames, TileTicks, ChunkSections, HeightMap)
     DefaultVisibleLayers = (Blocks, Items, TileEntities, CommandBlockColors, ItemFrames)

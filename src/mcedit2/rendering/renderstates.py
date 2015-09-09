@@ -38,6 +38,18 @@ class RenderstateLowDetailNode(rendernode.RenderstateRenderNode):
     def exit(self):
         GL.glPopAttrib()
 
+class RenderstateHeightLevelNode(rendernode.RenderstateRenderNode):
+    def enter(self):
+        GL.glPushAttrib(GL.GL_ENABLE_BIT | GL.GL_POLYGON_BIT)
+        GL.glDisable(GL.GL_CULL_FACE)
+        GL.glDisable(GL.GL_TEXTURE_2D)
+        GL.glEnable(GL.GL_BLEND)
+        GL.glPolygonOffset(-1, -1)
+        GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
+
+    def exit(self):
+        GL.glPopAttrib()
+
 class RenderstateAlphaTestNode(rendernode.RenderstateRenderNode):
     def enter(self):
         GL.glPushAttrib(GL.GL_ENABLE_BIT)
@@ -81,4 +93,5 @@ allRenderstates = (
     RenderstateWaterNode,
     RenderstateIceNode,
     RenderstateEntityNode,
+    RenderstateHeightLevelNode,
 )
