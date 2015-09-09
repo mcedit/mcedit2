@@ -816,7 +816,7 @@ class LayerToggleGroup(QtCore.QObject):
         self.actionGroup.setExclusive(False)
         self.options = {}
         for layer in Layer.AllLayers:
-            option = LayerToggleOptions.getOption("%s_visible" % layer, bool, True)
+            option = LayerToggleOptions.getOption("%s_visible" % layer, bool, layer in Layer.DefaultVisibleLayers)
             self.options[layer] = option
 
             action = QtGui.QAction(layer, self)
