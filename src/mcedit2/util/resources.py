@@ -56,6 +56,9 @@ def resourcePath(filename):
     'src' folder. I'd imagine that when installed as a .whl (on linux) we need to use
     pkg_resources to get filenames.
 
+    If the file does not exist, this is fatal error that usually indicates a packaging
+    problem or an incorrect filename.
+
     :param filename:
     :return:
     """
