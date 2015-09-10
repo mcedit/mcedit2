@@ -134,7 +134,6 @@ class MoveTool(EditorTool):
         super(MoveTool, self).__init__(editorSession, *args, **kwargs)
         self.overlayNode = scenenode.Node()
 
-        self.loader = None
         self.dragStartFace = None
         self.dragStartPoint = None
 
@@ -300,7 +299,8 @@ class MoveTool(EditorTool):
             # blocks will be moved.
             pos = self.editorSession.currentSelection.origin
             pendingImport = PendingImport(self.editorSession.currentDimension, pos,
-                                          self.editorSession.currentSelection, self.tr("<Moved Object>"),
+                                          self.editorSession.currentSelection,
+                                          self.tr("<Moved Object>"),
                                           isMove=True)
             moveCommand = MoveSelectionCommand(self, pendingImport)
 
