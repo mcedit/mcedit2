@@ -69,7 +69,7 @@ class CloneFinishCommand(SimpleRevisionCommand):
         self.cloneTool.currentClone = None
         
 class CloneTool(EditorTool):
-    #iconName = "clone"
+    iconName = "clone"
     name = "Clone"
 
     def __init__(self, editorSession, *args, **kwargs):
