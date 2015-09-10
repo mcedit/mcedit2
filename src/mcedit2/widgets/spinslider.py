@@ -27,6 +27,7 @@ class SpinSlider(QtGui.QWidget):
 
         if isDouble:
             self.spinBox = QtGui.QDoubleSpinBox()
+            self.spinBox.setSingleStep(0.1)
             self.sliderFactor = 100.0
         else:
             self.spinBox = QtGui.QSpinBox()
