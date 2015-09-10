@@ -256,8 +256,11 @@ cdef class RelightCtx(object):
         cdef unsigned short blockID = section.Blocks[<unsigned int>(y & 0xf),
                                                      <unsigned int>(z & 0xf),
                                                      <unsigned int>(x & 0xf)]
+        return self.opacity[blockID]
+
+    cdef unsigned char getBlockEffectiveOpacity(self, int x, int y, int z):
         return max(<unsigned char>1, # truncation warning
-                   self.opacity[blockID])
+                   self.getBlockOpacity(x, y, z))
 
 cdef updateSkyLight(RelightCtx ctx,
                      cnp.ndarray[ndim=1, dtype=int] ax,
@@ -300,7 +303,7 @@ cdef updateSkyLight(RelightCtx ctx,
             # if it was height-1, and it was set to opacity==0, then drop height
             # until we find an opacity>0 block
             if 0 == ctx.getBlockOpacity(x, y, z):
-                for y2 in range(y, -1):
+                for y2 in range(y, -1, -1):
                     if ctx.getBlockOpacity(x, y2, z):
                         newHeights[k] = y2 + 1
                         break
@@ -391,7 +394,7 @@ cdef void updateLights(RelightCtx ctx, int x, int y, int z):
         fadeLight(ctx, x, y, z, previousLight)
 
 cdef void drawLight(RelightCtx ctx, int x, int y, int z):
-    cdef short opacity = ctx.getBlockOpacity(x, y, z)
+    cdef short opacity = ctx.getBlockEffectiveOpacity(x, y, z)
     cdef short adjacentLight
     cdef int nx, ny, nz
     IF OUTPUT_STATS:
@@ -453,7 +456,7 @@ cdef void spreadLight(RelightCtx ctx, int x, int y, int z):
             nz = z
 
         adjacentLight = ctx.getBlockLight(nx, ny, nz)
-        adjacentOpacity = ctx.getBlockOpacity(nx, ny, nz)
+        adjacentOpacity = ctx.getBlockEffectiveOpacity(nx, ny, nz)
         newLight = light - adjacentOpacity
         # If the adjacent cell already has the "correct" light value, stop.
         if newLight > adjacentLight:
@@ -549,7 +552,7 @@ cdef set[coord] findFadedCells(RelightCtx ctx, int x, int y, int z, char previou
                 n_coord.z = z                
 
             adjacentLight = ctx.getBlockLight(n_coord.x, n_coord.y, n_coord.z)
-            adjacentOpacity = ctx.getBlockOpacity(n_coord.x, n_coord.y, n_coord.z)
+            adjacentOpacity = ctx.getBlockEffectiveOpacity(n_coord.x, n_coord.y, n_coord.z)
 
             if previousLight - adjacentOpacity <= 0:
                 continue
