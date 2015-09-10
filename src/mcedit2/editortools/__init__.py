@@ -36,9 +36,10 @@ def ToolClasses():
     from . import select
     from . import flood_fill
     from . import select_block
-
+    from . import clone
     return (select.SelectionTool,
             move.MoveTool,
+            clone.CloneTool,
             brush.BrushTool,
             flood_fill.FloodFillTool,
             generate.GenerateTool,
