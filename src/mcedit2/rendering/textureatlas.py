@@ -238,6 +238,17 @@ class TextureAtlas(object):
         self._minBrightness = value
         self._lightTexture.minBrightness = value
 
+    _gamma = 0.0
+
+    @property
+    def gamma(self):
+        return self._gamma
+
+    @gamma.setter
+    def gamma(self, value):
+        self._gamma = value
+        self._lightTexture.gamma = value
+
     def bindLight(self):
         self._lightTexture.bind()
 
@@ -255,15 +266,15 @@ class TextureAtlas(object):
 
 
 class LightTexture(glutils.Texture):
-    def __init__(self, dayTime=1.0, minBrightness=0.0):
+    def __init__(self, dayTime=1.0, minBrightness=0.0, gamma=1.0):
         self._dayTime = dayTime
         self._minBrightness = minBrightness
+        self._gamma = gamma
         self.image = self.generateImage()
         super(LightTexture, self).__init__(name="Lightmap", image=self.image, width=16, height=16)
 
     def generateImage(self):
-        pixels = generateLightmap(self.dayTime)
-        pixels.clip(int(self.minBrightness * 255), 255, pixels)
+        pixels = generateLightmap(self.dayTime, minLight=self.minBrightness, gamma=self.gamma)
         return pixels
 
     @property
@@ -282,6 +293,15 @@ class LightTexture(glutils.Texture):
     @minBrightness.setter
     def minBrightness(self, value):
         self._minBrightness = value
+        self.updateLightmap()
+
+    @property
+    def gamma(self):
+        return self._gamma
+
+    @gamma.setter
+    def gamma(self, value):
+        self._gamma = value
         self.updateLightmap()
 
     def updateLightmap(self):

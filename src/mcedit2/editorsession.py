@@ -1134,19 +1134,20 @@ class EditorTab(QtGui.QWidget):
 
         self.dayTimeInput = SpinSlider(double=True,
                                        minimum=0.0, maximum=1.0, value=1.0)
-        self.minBrightnessInput = SpinSlider(double=True,
-                                             minimum=0.0, maximum=1.0, value=0.0)
+
+        self.gammaInput = SpinSlider(double=True,
+                                     minimum=0.0, maximum=3.0, value=1.0)
 
         self.dayTimeInput.valueChanged.connect(self.setDayTime)
-        self.minBrightnessInput.valueChanged.connect(self.setMinBrightness)
+        self.gammaInput.valueChanged.connect(self.setGamma)
 
         self.viewButtonToolbar.addSeparator()
         self.viewButtonToolbar.addWidget(QtGui.QLabel("Time of day:"))
         self.viewButtonToolbar.addWidget(self.dayTimeInput)
 
         self.viewButtonToolbar.addSeparator()
-        self.viewButtonToolbar.addWidget(QtGui.QLabel("Minimum brightness:"))
-        self.viewButtonToolbar.addWidget(self.minBrightnessInput)
+        self.viewButtonToolbar.addWidget(QtGui.QLabel("Brightness:"))
+        self.viewButtonToolbar.addWidget(self.gammaInput)
 
         spacer = QtGui.QWidget()
         spacer.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
@@ -1162,10 +1163,12 @@ class EditorTab(QtGui.QWidget):
     def setDayTime(self, value):
         if self.editorSession.textureAtlas:
             self.editorSession.textureAtlas.dayTime = value
+            self.currentView().update()
 
-    def setMinBrightness(self, value):
+    def setGamma(self, value):
         if self.editorSession.textureAtlas:
-            self.editorSession.textureAtlas.minBrightness = value
+            self.editorSession.textureAtlas.gamma = value
+            self.currentView().update()
 
     editorSession = weakrefprop()
 

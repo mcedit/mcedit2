@@ -7,24 +7,22 @@ import numpy
 
 log = logging.getLogger(__name__)
 
-lightBrightnessTable = range(16)
-
-def generateLightBrightnessTable(minLight = 0.0):
-    for index in range(16):
-        darkness = 1.0 - index / 15.0
-        lightBrightnessTable[index] = (1.0 - darkness) / (darkness * 3.0 + 1.0) * (1.0 - minLight) + minLight
-
-generateLightBrightnessTable()
-
-def generateLightmap(brightness, theEnd = False, gamma = 0.5):
+def generateLightmap(brightness, theEnd = False, minLight=0.0, gamma=0.5):
 
     """
     :type gamma: Brightness setting in the Minecraft Video Options. Usual values are 0.0 to 1.0
     """
+
+    lightBrightnessTable = range(16)
+    for index in range(16):
+        darkness = 1.0 - index / 15.0
+        lightBrightnessTable[index] = (1.0 - darkness) / (darkness * 3.0 + 1.0) * (1.0 - minLight) + minLight
+
     lightmapColors = numpy.zeros((16, 16, 4), 'uint8')
 
     torchFlickerX = 0.0
-    log.info("Generating lightmap. brightness=%s, theEnd=%s, gamma=%s", brightness, theEnd, gamma)
+    log.info("Generating lightmap. brightness=%s, minLight=%s, theEnd=%s, gamma=%s",
+              brightness, minLight, theEnd, gamma)
 
     for x, y in numpy.ndindex(16, 16):
         var4 = brightness * 0.95 + 0.05
