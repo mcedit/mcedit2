@@ -17,50 +17,61 @@ class Node(object):
         super(Node, self).__init__()
         self._children = []
         self._dirty = True
+        self._parents = []
         self.childrenChanged = False
         self.descendentNeedsUpdate = False
 
     def __repr__(self):
         return "%s(visible=%s, children=%d)" % (self.__class__.__name__, self.visible, len(self._children))
 
-    _parent = None
-    @property
-    def parent(self):
-        if self._parent is not None:
-            return self._parent()
+    def addParent(self, obj):
+        for parent in self._parents:
+            if parent() is obj:
+                return
 
-    @parent.setter
-    def parent(self, value):
-        if value is not None:
-            self._parent = weakref.ref(value)
-        else:
-            self._parent = None
+        self._parents.append(weakref.ref(obj))
+
+    def removeParent(self, obj):
+        self._parents[:] = [p for p in self._parents
+                            if p() is not obj or p() is not None]
+
+    def hasParent(self, obj):
+        for p in self._parents:
+            if p() is obj:
+                return True
+
+        return False
 
     def childrenDidChange(self):
         node = self
         node.childrenChanged = True
-        while node.parent:
-            node = node.parent
-            node.descendentNeedsUpdate = True
+        self.notifyParents()
+
+    def notifyParents(self):
+        for p in self._parents:
+            parent = p()
+            if parent:
+                parent.descendentNeedsUpdate = True
+                parent.notifyParents()
 
     def addChild(self, node):
         self._children.append(node)
-        node.parent = self
+        node.addParent(self)
         self.childrenDidChange()
 
     def insertChild(self, index, node):
         self._children.insert(index, node)
-        node.parent = self
+        node.addParent(self)
         self.childrenDidChange()
 
     def removeChild(self, node):
         self._children.remove(node)
-        node.parent = None
+        node.removeParent(self)
         self.childrenDidChange()
 
     def clear(self):
         for c in self._children:
-            c.parent = None
+            c.removeParent(self)
         self.childrenDidChange()
         self._children[:] = []
 
@@ -79,10 +90,7 @@ class Node(object):
     def dirty(self, value):
         self._dirty = value
         if value:
-            node = self
-            while node.parent:
-                node = node.parent
-                node.descendentNeedsUpdate = True
+            self.notifyParents()
 
     _visible = True
     @property
@@ -95,8 +103,10 @@ class Node(object):
             return
 
         self._visible = value
-        if self.parent:
-            self.parent.dirty = True
+        for p in self._parents:
+            parent = p()
+            if parent:
+                parent.dirty = True
 
 class NamedChildrenNode(Node):
     RenderNodeClass = rendernode.RenderNode
@@ -108,9 +118,9 @@ class NamedChildrenNode(Node):
     def addChild(self, name, node):
         oldNode = self._children.get(name)
         if oldNode:
-            oldNode.parent = None
+            oldNode.removeParent(self)
         self._children[name] = node
-        node.parent = self
+        node.addParent(self)
         self.childrenDidChange()
 
     insertChild = NotImplemented
@@ -118,7 +128,7 @@ class NamedChildrenNode(Node):
     def removeChild(self, name):
         node = self._children.pop(name, None)
         if node:
-            node.parent = None
+            node.removeParent(self)
             self.childrenDidChange()
 
     def getChild(self, name):
@@ -126,7 +136,7 @@ class NamedChildrenNode(Node):
 
     def clear(self):
         for node in self.children:
-            node.parent = None
+            node.removeParent(self)
         self._children.clear()
         self.childrenDidChange()
 

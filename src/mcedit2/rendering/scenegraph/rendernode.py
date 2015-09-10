@@ -20,6 +20,7 @@ class RenderNode(object):
 
     def __init__(self, sceneNode):
         super(RenderNode, self).__init__()
+        self._parents = []
         self.children = []
         self.childrenBySceneNode = {}
         self.sceneNode = sceneNode
@@ -30,18 +31,16 @@ class RenderNode(object):
     def __repr__(self):
         return "%s(%s)" % (self.__class__.__name__, self.sceneNode)
 
-    _parent = None
-    @property
-    def parent(self):
-        if self._parent:
-            return self._parent()
+    def addParent(self, obj):
+        for parent in self._parents:
+            if parent() is obj:
+                return
 
-    @parent.setter
-    def parent(self, value):
-        if value is not None:
-            self._parent = weakref.ref(value)
-        else:
-            self._parent = None
+        self._parents.append(weakref.ref(obj))
+
+    def removeParent(self, obj):
+        self._parents[:] = [p for p in self._parents
+                            if p() is not obj or p() is not None]
 
     def addChild(self, node):
         self.children.append(node)
@@ -49,11 +48,10 @@ class RenderNode(object):
 
     def _addChild(self, node):
         self.childrenBySceneNode[node.sceneNode] = node
-        node.parent = self
+        node.addParent(self)
         self.displayList.invalidate()
         self.childNeedsRecompile = True
-        if self.parent:
-            self.parent.touch()
+        self.notifyParents()
 
     def insertNode(self, index, node):
         self.children.insert(index, node)
@@ -63,20 +61,20 @@ class RenderNode(object):
         self.childrenBySceneNode.pop(node.sceneNode, None)
         self.children.remove(node)
         self.displayList.invalidate()
-        node.parent = None
+        node.removeParent(self)
         self.childNeedsRecompile = True
-        if self.parent:
-            self.parent.touch()
+        self.notifyParents()
 
     def invalidate(self):
         self.displayList.invalidate()
-        self.touch()
+        self.notifyParents()
 
-    def touch(self):
-        node = self
-        while node:
-            node.childNeedsRecompile = True
-            node = node.parent
+    def notifyParents(self):
+        for p in self._parents:
+            parent = p()
+            if parent:
+                parent.childNeedsRecompile = True
+                parent.notifyParents()
 
     def getList(self):
         return self.displayList.getList()
@@ -213,7 +211,7 @@ def updateChildren(renderNode):
 
     # Find renderNode children whose sceneNode no longer has a parent
     for renderChild in renderNode.children:
-        if renderChild.sceneNode.parent is None:
+        if not renderChild.sceneNode.hasParent(renderNode.sceneNode):
             orphans.append(renderChild)
 
     for node in orphans:
