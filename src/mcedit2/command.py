@@ -55,8 +55,10 @@ class SimpleRevisionCommand(QtGui.QUndoCommand):
     def begin(self):
         self.previousRevision = self.editorSession.currentRevision
         self.editorSession.beginUndo()
-        yield
-        task = self.editorSession.commitUndoIter()
-        showProgress(QtGui.qApp.tr("Writing undo history"), task)
+        try:
+            yield
+        finally:
+            task = self.editorSession.commitUndoIter()
+            showProgress(QtGui.qApp.tr("Writing undo history"), task)
 
-        self.currentRevision = self.editorSession.currentRevision
+            self.currentRevision = self.editorSession.currentRevision
