@@ -478,7 +478,8 @@ class EditorSession(QtCore.QObject):
         self.editorTab.currentView().setFocus()
 
     def updateView(self):
-        self.editorTab.currentView().update()
+        if self.editorTab:
+            self.editorTab.currentView().update()
 
     def toolDidChange(self, tool):
         self.editorTab.toolDidChange(tool)
@@ -826,7 +827,7 @@ class EditorSession(QtCore.QObject):
     revisionChanged = QtCore.Signal(RevisionChanges)
 
     def undoIndexChanged(self, index):
-        self.editorTab.currentView().update()
+        self.updateView()
 
     def pushCommand(self, command):
         log.info("Pushing command %s" % command.text())
@@ -962,25 +963,25 @@ class EditorSession(QtCore.QObject):
         self.updateStatusFromEvent(event)
         if hasattr(self.currentTool, 'mousePress') and event.blockPosition is not None:
             self.currentTool.mousePress(event)
-        self.editorTab.currentView().update()
+        self.updateView()
 
     def viewMouseMove(self, event):
         self.updateStatusFromEvent(event)
         if hasattr(self.currentTool, 'mouseMove'):
             self.currentTool.mouseMove(event)
-        self.editorTab.currentView().update()
+        self.updateView()
 
     def viewMouseDrag(self, event):
         self.updateStatusFromEvent(event)
         if hasattr(self.currentTool, 'mouseDrag'):
             self.currentTool.mouseDrag(event)
-        self.editorTab.currentView().update()
+        self.updateView()
 
     def viewMouseRelease(self, event):
         self.updateStatusFromEvent(event)
         if hasattr(self.currentTool, 'mouseRelease'):
             self.currentTool.mouseRelease(event)
-        self.editorTab.currentView().update()
+        self.updateView()
 
     # --- EditorTab handling ---
 
