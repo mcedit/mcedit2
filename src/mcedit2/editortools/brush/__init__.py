@@ -9,7 +9,7 @@ from PySide import QtGui
 from mcedit2.editortools import EditorTool
 from mcedit2.command import SimplePerformCommand
 from mcedit2.editortools.brush.masklevel import FakeBrushSection
-from mcedit2.editortools.brush.modes import BrushModes
+from mcedit2.editortools.brush.modes import BrushModeClasses
 from mcedit2.rendering import worldscene
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.scenegraph.matrix import TranslateNode
@@ -101,6 +101,10 @@ class BrushTool(EditorTool):
         self.brushMode = None
         self.brushLoader = None
 
+        self.brushModesByName = {cls.name:cls() for cls in BrushModeClasses}
+        modes = self.brushModesByName.values()
+        modes.sort(key=lambda m: m.name)
+        self.toolWidget.brushModeInput.setModes(modes)
         BrushModeSetting.connectAndCall(self.modeSettingChanged)
 
         self.cursorWorldScene = None
@@ -184,7 +188,7 @@ class BrushTool(EditorTool):
         return options
 
     def modeSettingChanged(self, value):
-        self.brushMode = BrushModes.modesByName[value]
+        self.brushMode = self.brushModesByName[value]
         stack = self.toolWidget.modeOptionsStack
         while stack.count():
             stack.removeWidget(stack.widget(0))
@@ -224,8 +228,10 @@ class BrushTool(EditorTool):
 class BrushModeWidget(QtGui.QComboBox):
     def __init__(self, *args, **kwargs):
         super(BrushModeWidget, self).__init__(*args, **kwargs)
+        self.currentIndexChanged.connect(self.indexDidChange)
 
-        for mode in BrushModes.allModes:
+    def setModes(self, modes):
+        for mode in modes:
             self.addItem(mode.displayName, mode.name)
 
         currentID = BrushModeSetting.value()
@@ -233,7 +239,6 @@ class BrushModeWidget(QtGui.QComboBox):
         if currentIndex == -1:
             currentIndex = 0
         self.setCurrentIndex(currentIndex)
-        self.currentIndexChanged.connect(self.indexDidChange)
 
     def indexDidChange(self):
         BrushModeSetting.setValue(self.itemData(self.currentIndex()))

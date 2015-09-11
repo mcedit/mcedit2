@@ -168,9 +168,4 @@ class Biome(BrushMode):
         return cursorLevel
 
 
-class BrushModes(object):
-    # load from plugins here
-    fill = Fill()
-    biome = Biome()
-    allModes = [fill, biome]
-    modesByName = {mode.name: mode for mode in allModes}
+BrushModeClasses = [Fill, Biome]
