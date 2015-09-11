@@ -321,9 +321,15 @@ cdef updateSkyLight(RelightCtx ctx,
             for y2 in range(oldH, h):
                 c.y = y2
                 dimCoords.push_back(c)
+            # Translucent blocks below changed segment also reduced light level
+            for y2 in range(oldH, -1, -1):
+                c.y = y2
+                dimCoords.push_back(c)
+                if ctx.getBlockLight(c.x, c.y, c.z) == 0:
+                    break
             # Blocks above column may be in a newly created section.
             # This is a shitty, shitty answer. FIXME FIXME FIXME.
-            c.y += 1
+            c.y = h
             ctx.setBlockLight(c.x, c.y, c.z, 15)
             litCoords.push_back(c)
         if h < oldH:
