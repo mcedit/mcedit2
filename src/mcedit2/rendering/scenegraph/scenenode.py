@@ -33,7 +33,7 @@ class Node(object):
 
     def removeParent(self, obj):
         self._parents[:] = [p for p in self._parents
-                            if p() is not obj or p() is not None]
+                            if p() is not obj and p() is not None]
 
     def hasParent(self, obj):
         for p in self._parents:

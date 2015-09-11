@@ -40,7 +40,7 @@ class RenderNode(object):
 
     def removeParent(self, obj):
         self._parents[:] = [p for p in self._parents
-                            if p() is not obj or p() is not None]
+                            if p() is not obj and p() is not None]
 
     def addChild(self, node):
         self.children.append(node)
@@ -209,9 +209,9 @@ def updateChildren(renderNode):
     sceneNode = renderNode.sceneNode
     orphans = []
 
-    # Find renderNode children whose sceneNode no longer has a parent
+    # Find renderNode children whose sceneNode is no longer this node's sceneNode
     for renderChild in renderNode.children:
-        if not renderChild.sceneNode.hasParent(renderNode.sceneNode):
+        if not renderChild.sceneNode.hasParent(sceneNode):
             orphans.append(renderChild)
 
     for node in orphans:
