@@ -24,6 +24,7 @@ from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
 
+
 class MoveSelectionCommand(SimpleRevisionCommand):
     def __init__(self, moveTool, pendingImport, text=None, *args, **kwargs):
         if text is None:

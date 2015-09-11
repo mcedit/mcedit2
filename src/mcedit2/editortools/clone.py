@@ -13,9 +13,9 @@ from mcedit2.rendering.selection import boxFaceUnderCursor
 from mcedit2.util.showprogress import showProgress
 from mcedit2.widgets.coord_widget import CoordinateWidget
 from mcedit2.widgets.layout import Column, Row
-from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
+
 
 class CloneSelectionCommand(SimpleRevisionCommand):
     def __init__(self, cloneTool, pendingImport, text=None, *args, **kwargs):
@@ -35,8 +35,8 @@ class CloneSelectionCommand(SimpleRevisionCommand):
         self.cloneTool.editorSession.chooseTool("Clone")
         super(CloneSelectionCommand, self).redo()
 
-class CloneOffsetCommand(QtGui.QUndoCommand):
 
+class CloneOffsetCommand(QtGui.QUndoCommand):
     def __init__(self, cloneTool, oldPoint, newPoint):
         super(CloneOffsetCommand, self).__init__()
         self.setText(cloneTool.tr("Move Cloned Object"))
@@ -49,6 +49,7 @@ class CloneOffsetCommand(QtGui.QUndoCommand):
 
     def redo(self):
         self.cloneTool.clonePosition = self.newPoint
+
 
 class CloneFinishCommand(SimpleRevisionCommand):
     def __init__(self, cloneTool, pendingImport, *args, **kwargs):
@@ -67,7 +68,8 @@ class CloneFinishCommand(SimpleRevisionCommand):
         self.previousSelection = self.editorSession.currentSelection
         self.editorSession.currentSelection = self.pendingImport.bounds
         self.cloneTool.pendingClone = None
-        
+
+
 class CloneTool(EditorTool):
     iconName = "clone"
     name = "Clone"
@@ -182,7 +184,6 @@ class CloneTool(EditorTool):
         self._pendingClone = pendingImport
         self.pointInput.setEnabled(pendingImport is not None)
         self.updateTiling()
-
 
     def toolActive(self):
         self.editorSession.selectionTool.hideSelectionWalls = True
