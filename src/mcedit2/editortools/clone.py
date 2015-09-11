@@ -12,7 +12,7 @@ from PySide import QtGui
 from mcedit2.rendering.selection import boxFaceUnderCursor
 from mcedit2.util.showprogress import showProgress
 from mcedit2.widgets.coord_widget import CoordinateWidget
-from mcedit2.widgets.layout import Column
+from mcedit2.widgets.layout import Column, Row
 from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
@@ -27,11 +27,11 @@ class CloneSelectionCommand(SimpleRevisionCommand):
 
     def undo(self):
         super(CloneSelectionCommand, self).undo()
-        self.cloneTool.currentClone = None
+        self.cloneTool.pendingClone = None
         self.cloneTool.editorSession.chooseTool("Select")
 
     def redo(self):
-        self.cloneTool.currentClone = self.pendingImport
+        self.cloneTool.pendingClone = self.pendingImport
         self.cloneTool.editorSession.chooseTool("Clone")
         super(CloneSelectionCommand, self).redo()
 
@@ -58,7 +58,7 @@ class CloneFinishCommand(SimpleRevisionCommand):
 
     def undo(self):
         super(CloneFinishCommand, self).undo()
-        self.cloneTool.currentClone = self.pendingImport
+        self.cloneTool.pendingClone = self.pendingImport
         self.editorSession.currentSelection = self.previousSelection
         self.editorSession.chooseTool("Clone")
 
@@ -66,7 +66,7 @@ class CloneFinishCommand(SimpleRevisionCommand):
         super(CloneFinishCommand, self).redo()
         self.previousSelection = self.editorSession.currentSelection
         self.editorSession.currentSelection = self.pendingImport.bounds
-        self.cloneTool.currentClone = None
+        self.cloneTool.pendingClone = None
         
 class CloneTool(EditorTool):
     iconName = "clone"
@@ -79,90 +79,164 @@ class CloneTool(EditorTool):
         self.dragStartPoint = None
         self.dragStartClonePosition = None
 
-        self.pendingCloneNode = None
+        self.originPoint = None
+        self.offsetPoint = None
+
+        self.pendingCloneNodes = []
+        self.mainCloneNode = None
         self.overlayNode = scenenode.Node()
         self.overlayNode.name = "Clone Overlay"
 
         self.toolWidget = QtGui.QWidget()
         self.pointInput = CoordinateWidget()
         self.pointInput.pointChanged.connect(self.pointInputChanged)
-        confirmButton = QtGui.QPushButton("Confirm")  # xxxx should be in worldview
+        confirmButton = QtGui.QPushButton(self.tr("Confirm"))  # xxxx should be in worldview
         confirmButton.clicked.connect(self.confirmClone)
+
+        self.repeatCount = 1
+        self.repeatCountInput = QtGui.QSpinBox(minimum=1, maximum=100, value=1)
+        self.repeatCountInput.valueChanged.connect(self.setRepeatCount)
+
+        self.tileX = self.tileY = self.tileZ = False
+
+        self.tileXCheckbox = QtGui.QCheckBox(self.tr("Tile X"))
+        self.tileXCheckbox.toggled.connect(self.setTileX)
+
+        self.tileYCheckbox = QtGui.QCheckBox(self.tr("Tile Y"))
+        self.tileYCheckbox.toggled.connect(self.setTileY)
+
+        self.tileZCheckbox = QtGui.QCheckBox(self.tr("Tile Z"))
+        self.tileZCheckbox.toggled.connect(self.setTileZ)
+
         self.toolWidget.setLayout(Column(self.pointInput,
+                                         Row(QtGui.QLabel(self.tr("Repeat count: ")), self.repeatCountInput),
+                                         Row(self.tileXCheckbox,
+                                             self.tileYCheckbox,
+                                             self.tileZCheckbox),
                                          confirmButton,
                                          None))
 
-        self.currentClone = None  # Do this after creating pointInput to disable inputs
+        self.pendingClone = None  # Do this after creating pointInput to disable inputs
 
     def pointInputChanged(self, value):
-        if value is not None:
-            self.currentClone.pos = value
-            self.pendingCloneNode.pos = value
+        self.offsetPoint = value
+        self.pendingClone.pos = value
+        self.updateTiling()
+
+    def setTileX(self, value):
+        self.tileX = value
+        self.updateTiling()
+
+    def setTileY(self, value):
+        self.tileY = value
+        self.updateTiling()
+
+    def setTileZ(self, value):
+        self.tileZ = value
+        self.updateTiling()
+
+    def setRepeatCount(self, value):
+        self.repeatCount = value
+        self.updateTiling()
+
+    def updateTiling(self):
+        if self.pendingClone is None:
+            repeatCount = 0
+        else:
+            repeatCount = self.repeatCount
+
+        while len(self.pendingCloneNodes) > repeatCount:
+            node = self.pendingCloneNodes.pop()
+            self.overlayNode.removeChild(node)
+        while len(self.pendingCloneNodes) < repeatCount:
+            node = PendingImportNode(self.pendingClone, self.editorSession.textureAtlas)
+            self.pendingCloneNodes.append(node)
+            self.overlayNode.addChild(node)
+
+        if len(self.pendingCloneNodes):
+            self.mainCloneNode = self.pendingCloneNodes[0]
+        else:
+            self.mainCloneNode = None
+
+        if None not in (self.offsetPoint, self.originPoint):
+            for node, pos in zip(self.pendingCloneNodes, self.getTilingPositions()):
+                node.pos = pos
+
+        self.editorSession.updateView()
+
+    def getTilingPositions(self):
+        if None not in (self.offsetPoint, self.originPoint):
+            pos = self.originPoint
+            offset = self.offsetPoint - self.originPoint
+            for i in range(self.repeatCount):
+                pos = pos + offset
+                yield pos
 
     @property
-    def currentClone(self):
-        return self._currentClone
+    def pendingClone(self):
+        return self._pendingClone
 
-    @currentClone.setter
-    def currentClone(self, pendingImport):
+    @pendingClone.setter
+    def pendingClone(self, pendingImport):
         log.info("Begin clone: %s", pendingImport)
-        self._currentClone = pendingImport
+        self._pendingClone = pendingImport
         self.pointInput.setEnabled(pendingImport is not None)
-        if pendingImport is not None:
-            node = self.pendingCloneNode = PendingImportNode(pendingImport, self.editorSession.textureAtlas)
-            self.overlayNode.addChild(node)
-        else:
-            if self.pendingCloneNode:
-                self.overlayNode.removeChild(self.pendingCloneNode)
-                self.pendingCloneNode = None
+        self.updateTiling()
+
 
     def toolActive(self):
         self.editorSession.selectionTool.hideSelectionWalls = True
-        if self.currentClone is None:
-            if self.editorSession.currentSelection is None:
-                return
+        if self.pendingClone is not None:
+            self.pendingClone = None
 
-            # This makes a reference to the latest revision in the editor.
-            # If the cloned area is changed between "Clone" and "Confirm", the changed
-            # blocks will be moved.
-            pos = self.editorSession.currentSelection.origin
-            pendingImport = PendingImport(self.editorSession.currentDimension, pos,
-                                          self.editorSession.currentSelection, 
-                                          self.tr("<Cloned Object>"))
-            moveCommand = CloneSelectionCommand(self, pendingImport)
+        if self.editorSession.currentSelection is None:
+            return
 
-            self.editorSession.pushCommand(moveCommand)
+        # This makes a reference to the latest revision in the editor.
+        # If the cloned area is changed between "Clone" and "Confirm", the changed
+        # blocks will be moved.
+        pos = self.editorSession.currentSelection.origin
+        self.originPoint = pos
+        pendingImport = PendingImport(self.editorSession.currentDimension, pos,
+                                      self.editorSession.currentSelection,
+                                      self.tr("<Cloned Object>"))
+        moveCommand = CloneSelectionCommand(self, pendingImport)
+
+        self.editorSession.pushCommand(moveCommand)
 
     def toolInactive(self):
         self.editorSession.selectionTool.hideSelectionWalls = False
+        if self.mainCloneNode:
+            self.mainCloneNode.hoverFace(None)
 
-        self.pendingCloneNode.hoverFace(None)
-            
         self.confirmClone()
         
     def confirmClone(self):
-        if self.currentClone is None:
+        if self.pendingClone is None:
             return
 
-        command = CloneFinishCommand(self, self.currentClone)
+        command = CloneFinishCommand(self, self.pendingClone)
 
         with command.begin():
             # TODO don't use intermediate schematic...
-            export = self.currentClone.sourceDim.exportSchematicIter(self.currentClone.selection)
+            export = self.pendingClone.sourceDim.exportSchematicIter(self.pendingClone.selection)
             schematic = showProgress("Copying...", export)
             dim = schematic.getDimension()
 
-            task = self.editorSession.currentDimension.copyBlocksIter(dim, dim.bounds,
-                                                                      self.currentClone.pos,
-                                                                      biomes=True, create=True)
-            showProgress(self.tr("Pasting..."), task)
+            tasks = []
+            for pos in self.getTilingPositions():
+                task = self.editorSession.currentDimension.copyBlocksIter(dim, dim.bounds, pos,
+                                                                          biomes=True, create=True)
+                tasks.append(task)
+
+            showProgress(self.tr("Pasting..."), *tasks)
 
         self.editorSession.pushCommand(command)
-        
+        self.originPoint = None
 
     @property
     def clonePosition(self):
-        return None if self.currentClone is None else self.currentClone.pos
+        return None if self.pendingClone is None else self.pendingClone.pos
 
     @clonePosition.setter
     def clonePosition(self, value):
@@ -186,38 +260,20 @@ class CloneTool(EditorTool):
         dim = self.dragStartFace.dimension
         return ray.intersectPlane(dim, self.dragStartPoint[dim])
 
-    @property
-    def schematicBox(self):
-        box = self.currentClone.selection
-        return BoundingBox(self.clonePosition, box.size)
-
-    def dragMovePoint(self, ray):
-        """
-        Return a point representing the intersection between the mouse ray
-         and an imaginary plane coplanar to the dragged face
-
-        :type ray: Ray
-        :rtype: Vector
-        """
-        dim = self.dragStartFace.dimension
-        return ray.intersectPlane(dim, self.dragStartPoint[dim])
-
     def mouseMove(self, event):
         # Hilite face cursor is over
-        if self.currentClone is None:
+        if self.pendingClone is None:
             return
 
-        node = self.pendingCloneNode
-        if node:
-            point, face = boxFaceUnderCursor(self.schematicBox, event.ray)
-            node.hoverFace(face)
+        point, face = boxFaceUnderCursor(self.pendingClone.bounds, event.ray)
+        self.mainCloneNode.hoverFace(face)
 
         # Highlight face of box to move along, or else axis pointers to grab and drag?
         pass
 
     def mouseDrag(self, event):
         # Clone box using face or axis pointers
-        if self.currentClone is None:
+        if self.pendingClone is None:
             return
         if self.dragStartFace is None:
             return
@@ -226,17 +282,18 @@ class CloneTool(EditorTool):
         self.clonePosition = self.dragStartClonePosition + map(int, delta)
 
     def mousePress(self, event):
-        if self.currentClone is not None:
-            point, face = boxFaceUnderCursor(self.schematicBox, event.ray)
+        if self.pendingClone is not None:
+            point, face = boxFaceUnderCursor(self.pendingClone.bounds, event.ray)
             self.dragStartFace = face
             self.dragStartPoint = point
             self.dragStartClonePosition = self.clonePosition
 
     def mouseRelease(self, event):
-        if self.currentClone is not None:
+        if self.pendingClone is not None:
             self.doCloneOffsetCommand(self.dragStartClonePosition, self.clonePosition)
 
     def doCloneOffsetCommand(self, oldPoint, newPoint):
+        log.info("clone offset command: %s %s", oldPoint, newPoint)
         if newPoint != oldPoint:
             command = CloneOffsetCommand(self, oldPoint, newPoint)
             self.editorSession.pushCommand(command)
