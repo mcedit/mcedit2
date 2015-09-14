@@ -392,7 +392,7 @@ class ItemFrameMesh(EntityMeshBase):
 
 def entityModelNode(ref, model, modelTex, chunk):
     modelVerts = numpy.array(model.vertices)
-    modelVerts.shape = modelVerts.shape[0]/4, 4, modelVerts.shape[1]
+    modelVerts.shape = modelVerts.shape[0]//4, 4, modelVerts.shape[1]
     # scale down
     modelVerts[..., :3] *= 1/16.
     modelVerts[..., 1] = -modelVerts[..., 1] + 1.5 + 1/64.
@@ -446,7 +446,7 @@ class MonsterModelRenderer(ChunkMeshBase):
 
 def chestEntityModelNode(ref, model, modelTex, chunk, facing, largeX, largeZ):
     modelVerts = numpy.array(model.vertices)
-    modelVerts.shape = modelVerts.shape[0]/4, 4, modelVerts.shape[1]
+    modelVerts.shape = modelVerts.shape[0]//4, 4, modelVerts.shape[1]
     # scale down
     modelVerts[..., :3] *= 1/16.
     # modelVerts[..., 1] = -modelVerts[..., 1]
