@@ -105,7 +105,7 @@ def drawBox(box, cubeType=GL.GL_QUADS, texture=None, textureVertices=None, selec
 
             GL.glDrawArrays(cubeType, 0, 24)
         if texture is not None:
-            GL.glEnableClientState(GL.GL_TEXTURE_COORD_ARRAY)
+            GL.glDisableClientState(GL.GL_TEXTURE_COORD_ARRAY)
 
 
 
