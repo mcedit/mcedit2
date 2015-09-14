@@ -34,25 +34,25 @@ class LoadableChunksRenderNode(rendernode.RenderNode):
 
     def drawSelf(self):
         with gl.glPushAttrib(GL.GL_FOG_BIT | GL.GL_ENABLE_BIT):
-            with gl.glPushClientAttrib(GL.GL_CLIENT_VERTEX_ARRAY_BIT):
-                GL.glDisable(GL.GL_FOG)
+            GL.glDisable(GL.GL_FOG)
 
-                GL.glEnable(GL.GL_BLEND)
-                GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
-                GL.glPolygonOffset(DepthOffset.ChunkMarkers, DepthOffset.ChunkMarkers)
-                GL.glEnable(GL.GL_DEPTH_TEST)
+            GL.glEnable(GL.GL_BLEND)
+            GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
+            GL.glPolygonOffset(DepthOffset.ChunkMarkers, DepthOffset.ChunkMarkers)
+            GL.glEnable(GL.GL_DEPTH_TEST)
 
-                GL.glEnableClientState(GL.GL_TEXTURE_COORD_ARRAY)
-                GL.glEnable(GL.GL_TEXTURE_2D)
-                GL.glColor(1.0, 1.0, 1.0, 1.0)
+            GL.glEnableClientState(GL.GL_TEXTURE_COORD_ARRAY)
+            GL.glEnable(GL.GL_TEXTURE_2D)
+            GL.glColor(1.0, 1.0, 1.0, 1.0)
 
-                self.floorTexture.bind()
+            self.floorTexture.bind()
 
-                for vertexArray in self.sceneNode.createVertexArrays():
-                    GL.glVertexPointer(3, GL.GL_FLOAT, 0, vertexArray.ravel())
-                    # chunkPositions *= 8
-                    GL.glTexCoordPointer(2, GL.GL_FLOAT, 0, (vertexArray[..., (0, 2)] / 32).ravel())
-                    GL.glDrawArrays(GL.GL_QUADS, 0, len(vertexArray) * 4)
+            for vertexArray in self.sceneNode.createVertexArrays():
+                GL.glVertexPointer(3, GL.GL_FLOAT, 0, vertexArray.ravel())
+                # chunkPositions *= 8
+                GL.glTexCoordPointer(2, GL.GL_FLOAT, 0, (vertexArray[..., (0, 2)] / 32).ravel())
+                GL.glDrawArrays(GL.GL_QUADS, 0, len(vertexArray) * 4)
+            GL.glDisableClientState(GL.GL_TEXTURE_COORD_ARRAY)
 
 
 class LoadableChunksNode(scenenode.Node):

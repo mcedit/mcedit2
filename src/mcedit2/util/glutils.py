@@ -61,16 +61,6 @@ class gl(object):
 
     @classmethod
     @contextmanager
-    def glPushClientAttrib(cls, *attribs):
-        allAttribs = reduce(lambda a, b: a | b, attribs)
-        try:
-            GL.glPushClientAttrib(allAttribs)
-            yield
-        finally:
-            GL.glPopClientAttrib()
-
-    @classmethod
-    @contextmanager
     def glBegin(cls, type):
         try:
             GL.glBegin(type)

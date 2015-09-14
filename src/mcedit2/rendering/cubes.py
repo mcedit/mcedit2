@@ -90,21 +90,22 @@ def drawBox(box, cubeType=GL.GL_QUADS, texture=None, textureVertices=None, selec
             textureVertices[4:6] += (16 * (z & 15), 16 * (y2 & 15))
             textureVertices[:] += 0.5
 
-    with gl.glPushClientAttrib(GL.GL_CLIENT_VERTEX_ARRAY_BIT):
-        with gl.glPushAttrib(GL.GL_TEXTURE_BIT):
-            GL.glVertexPointer(3, GL.GL_FLOAT, 0, cubeVertices)
-            if texture is not None:
-                GL.glEnable(GL.GL_TEXTURE_2D)
-                GL.glEnableClientState(GL.GL_TEXTURE_COORD_ARRAY)
+    with gl.glPushAttrib(GL.GL_TEXTURE_BIT):
+        GL.glVertexPointer(3, GL.GL_FLOAT, 0, cubeVertices)
+        if texture is not None:
+            GL.glEnable(GL.GL_TEXTURE_2D)
+            GL.glEnableClientState(GL.GL_TEXTURE_COORD_ARRAY)
 
-                texture.bind()
-                GL.glTexCoordPointer(2, GL.GL_FLOAT, 0, textureVertices),
+            texture.bind()
+            GL.glTexCoordPointer(2, GL.GL_FLOAT, 0, textureVertices),
 
-            with gl.glPushAttrib(GL.GL_POLYGON_BIT):
-                GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
-                GL.glEnable(GL.GL_POLYGON_OFFSET_LINE)
+        with gl.glPushAttrib(GL.GL_POLYGON_BIT):
+            GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
+            GL.glEnable(GL.GL_POLYGON_OFFSET_LINE)
 
-                GL.glDrawArrays(cubeType, 0, 24)
+            GL.glDrawArrays(cubeType, 0, 24)
+        if texture is not None:
+            GL.glEnableClientState(GL.GL_TEXTURE_COORD_ARRAY)
 
 
 
