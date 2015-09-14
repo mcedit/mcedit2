@@ -124,8 +124,8 @@ class LowDetailBlockMesh(ChunkMeshBase):
         va1.vertex[:, 0, 1] = depths  # stretch to floor
         va1.vertex[:, (2, 3), 1] -= 0.5  # drop down to prevent intersection pixels
 
-
-        flatcolors *= 0.8
+        numpy.multiply(flatcolors, 0.8, out=flatcolors, casting='unsafe')
+        #flatcolors *= 0.8
 
         va1.rgb[:] = flatcolors
         grassmask = topBlocks == 2
