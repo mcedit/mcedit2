@@ -101,7 +101,7 @@ def setup_logging():
             return msg
 
     logging.LogRecord = MCELogRecord
-
+    logging.captureWarnings(True)
     from mcedit2.util.directories import getUserFilesDirectory
     mceditUserData = getUserFilesDirectory()
     logfilename = os.path.join(mceditUserData, 'mcedit.log')
