@@ -163,13 +163,6 @@ class MCEditApp(QtGui.QApplication):
         mainWindow.panelsToolBar.addAction(undoToggleAction)
         self.undoDockWidget.close()
 
-        self.logViewWidget = LogViewFrame(mainWindow)
-        self.logViewDockWidget = MCEDockWidget("Error Log", mainWindow, objectName="ErrorsWidget")
-        self.logViewDockWidget.setWidget(self.logViewWidget)
-        mainWindow.addDockWidget(Qt.BottomDockWidgetArea, self.logViewDockWidget)
-        mainWindow.panelsToolBar.addAction(self.logViewDockWidget.toggleViewAction())
-        self.logViewDockWidget.close()
-
         self.libraryWidget = LibraryWidget()
         self.libraryDockWidget = MCEDockWidget("Library", mainWindow, objectName="LibraryWidget")
         self.libraryDockWidget.setWidget(self.libraryWidget)
@@ -180,7 +173,7 @@ class MCEditApp(QtGui.QApplication):
 
         self.libraryWidget.doubleClicked.connect(self.libraryItemDoubleClicked)
 
-        self.globalPanels = [self.undoDockWidget, self.logViewDockWidget, self.libraryDockWidget]
+        self.globalPanels = [self.undoDockWidget, self.libraryDockWidget]
 
         log.info("Loaded panels.")
 
@@ -193,6 +186,13 @@ class MCEditApp(QtGui.QApplication):
         self.inspectorDockWidget.setWidget(self.debugObjectInspector)
         self.debugMenu.addAction(self.inspectorDockWidget.toggleViewAction())
         self.inspectorDockWidget.close()
+
+        self.logViewWidget = LogViewFrame(mainWindow)
+        self.logViewDockWidget = MCEDockWidget("Error Log", mainWindow, objectName="ErrorsWidget")
+        self.logViewDockWidget.setWidget(self.logViewWidget)
+        mainWindow.addDockWidget(Qt.BottomDockWidgetArea, self.logViewDockWidget)
+        self.debugMenu.addAction(self.logViewDockWidget.toggleViewAction())
+        self.logViewDockWidget.close()
 
         self.profileView = ProfilerWidget()
         self.profileDockWidget = MCEDockWidget("Profiler", mainWindow, objectName="ProfilerWidget")
@@ -930,10 +930,8 @@ class MCEditApp(QtGui.QApplication):
             self.mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.profileDockWidget)
             self.mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.textureAtlasDockWidget)
             self.mainWindow.addDockWidget(Qt.BottomDockWidgetArea, self.infoDockWidget)
+            self.mainWindow.addDockWidget(Qt.BottomDockWidgetArea, self.logViewDockWidget)
             self.mainWindow.tabifyDockWidget(self.infoDockWidget, self.logViewDockWidget)
-            self.mainWindow.panelsToolBar.addAction(self.infoDockWidget.toggleViewAction())
-
-            self.globalPanels.append(self.infoDockWidget)
 
         else:
             self.mainWindow.menuBar().removeAction(self.debugMenu.menuAction())
@@ -941,7 +939,7 @@ class MCEditApp(QtGui.QApplication):
             self.mainWindow.removeDockWidget(self.profileDockWidget)
             self.mainWindow.removeDockWidget(self.textureAtlasDockWidget)
             self.mainWindow.removeDockWidget(self.infoDockWidget)
-            self.mainWindow.panelsToolBar.removeAction(self.infoDockWidget.toggleViewAction())
+            self.mainWindow.removeDockWidget(self.logViewDockWidget)
 
     # --- App foreground ---
 
