@@ -135,6 +135,7 @@ class WorldView(QGLWidget):
         self.geometryCache = geometryCache
 
         self.matrixNode = None
+        self.skyNode = None
         self.overlayNode = scenenode.Node()
 
         self.sceneGraph = None
@@ -225,7 +226,7 @@ class WorldView(QGLWidget):
         self.worldScene.setVisibleLayers(self.layerToggleGroup.getVisibleLayers())
 
         clearNode = ClearNode()
-        skyNode = sky.SkyNode()
+        self.skyNode = sky.SkyNode()
         self.loadableChunksNode = loadablechunks.LoadableChunksNode(self.dimension)
 
         self.matrixNode = MatrixNode()
@@ -236,7 +237,7 @@ class WorldView(QGLWidget):
         self.matrixNode.addChild(self.overlayNode)
 
         sceneGraph.addChild(clearNode)
-        sceneGraph.addChild(skyNode)
+        sceneGraph.addChild(self.skyNode)
         sceneGraph.addChild(self.matrixNode)
         sceneGraph.addChild(self.compassOrthoNode)
         if self.cursorNode:
@@ -660,6 +661,10 @@ class WorldView(QGLWidget):
     def setLayerVisible(self, layerName, visible):
         self.worldScene.setLayerVisible(layerName, visible)
         self.resetLoadOrder()
+
+    def setDayTime(self, value):
+        if self.skyNode:
+            self.skyNode.setDayTime(value)
 
 def iterateChunks(x, z, radius):
     """

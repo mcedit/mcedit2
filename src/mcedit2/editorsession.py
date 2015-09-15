@@ -1187,6 +1187,8 @@ class EditorTab(QtGui.QWidget):
     def setDayTime(self, value):
         if self.editorSession.textureAtlas:
             self.editorSession.textureAtlas.dayTime = value
+            for view in self.views:
+                view.setDayTime(value)
             self.currentView().update()
 
     def setGamma(self, value):
