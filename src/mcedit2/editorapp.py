@@ -119,6 +119,21 @@ class MCEditApp(QtGui.QApplication):
 
         log.info("Loaded main window.")
 
+        def toggleToolbarText(enable):
+            if enable:
+                style = Qt.ToolButtonTextUnderIcon
+            else:
+                style = Qt.ToolButtonIconOnly
+            self.mainWindow.toolsToolBar.setToolButtonStyle(style)
+            self.mainWindow.panelsToolBar.setToolButtonStyle(style)
+
+        self.toggleToolbarTextAction = QtGui.QAction("Toolbar Text", self)
+        self.toggleToolbarTextAction.setCheckable(True)
+        self.toggleToolbarTextAction.setChecked(True)
+
+        self.toggleToolbarTextAction.toggled.connect(toggleToolbarText)
+        self.toggleToolbarTextAction.__toggled = toggleToolbarText
+
         # --- OpenGL ---
 
         setDefaultFormat()
@@ -488,6 +503,8 @@ class MCEditApp(QtGui.QApplication):
         :type session: EditorSession
         """
         self.mainWindow.panelsToolBar.clear()
+        self.mainWindow.panelsToolBar.addAction(self.toggleToolbarTextAction)
+
         self.mainWindow.toolsToolBar.clear()
         self.removeSessionDockWidgets()
 
