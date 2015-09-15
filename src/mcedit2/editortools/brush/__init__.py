@@ -229,16 +229,24 @@ class BrushModeWidget(QtGui.QComboBox):
     def __init__(self, *args, **kwargs):
         super(BrushModeWidget, self).__init__(*args, **kwargs)
         self.currentIndexChanged.connect(self.indexDidChange)
-
+        self.adding = False
     def setModes(self, modes):
-        for mode in modes:
-            self.addItem(mode.displayName, mode.name)
+        self.adding = True
+        try:
+            for mode in modes:
+                self.addItem(mode.displayName, mode.name)
 
-        currentID = BrushModeSetting.value()
-        currentIndex = self.findData(currentID)
-        if currentIndex == -1:
-            currentIndex = 0
-        self.setCurrentIndex(currentIndex)
-
+            currentID = BrushModeSetting.value()
+            currentIndex = self.findData(currentID)
+            if currentIndex == -1:
+                log.info("Search failed!")
+                currentIndex = 0
+            log.info("Loading BrushModeWidget setting: found %s at %s", currentID, currentIndex)
+            self.setCurrentIndex(currentIndex)
+        finally:
+            self.adding = False
+            
     def indexDidChange(self):
+        if self.adding:
+            return
         BrushModeSetting.setValue(self.itemData(self.currentIndex()))
