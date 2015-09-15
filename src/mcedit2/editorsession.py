@@ -347,23 +347,20 @@ class EditorSession(QtCore.QObject):
 
         # --- Dimensions ---
 
-        def _dimChanged(f):
-            def _changed():
-                self.gotoDimension(f)
-
-            return _changed
-
         dimButton = self.changeDimensionButton = QtGui.QToolButton()
         dimButton.setText(self.dimensionMenuLabel(""))
         dimAction = self.changeDimensionAction = QtGui.QWidgetAction(self)
         dimAction.setDefaultWidget(dimButton)
         dimMenu = self.dimensionsMenu = QtGui.QMenu()
 
+        self.dimMapper = QtCore.QSignalMapper()
+        self.dimMapper.mapped[str].connect(self.gotoDimension)
+
         for dimName in self.worldEditor.listDimensions():
             displayName = self.dimensionDisplayName(dimName)
             action = dimMenu.addAction(displayName)
-            action._changed = _dimChanged(dimName)
-            action.triggered.connect(action._changed)
+            self.dimMapper.setMapping(action, dimName)
+            action.triggered.connect(self.dimMapper.map)
 
         dimButton.setMenu(dimMenu)
         dimButton.setPopupMode(QtGui.QToolButton.InstantPopup)
