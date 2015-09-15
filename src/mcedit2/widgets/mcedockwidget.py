@@ -17,7 +17,6 @@ class MCEDockWidget(QtGui.QDockWidget):
         self._unfocusedOpacity = value
 
     def animate(self, value):
-        log.info("ANIMATION")
         self.setWindowOpacity(value)
 
     def enterEvent(self, event):
