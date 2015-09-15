@@ -270,8 +270,12 @@ class NBTTreeItem(object):
     def setValue(self, value):
         if self.tag.tagID == nbt.ID_LONG:
             value = long(value)
-        self.tag.value = value
-        return True
+        if value != self.tag.value:
+            log.info("Changing NBT tag %s because old %s != new %s", self.nbtPath, self.tag.value, value)
+            self.tag.value = value
+            return True
+        else:
+            return False
 
     def nbtPath(self):
         if self.parentItem is None:
@@ -415,7 +419,7 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
         item = self.getItem(index)
         column = index.column()
         if column == 0:
-            if item.parentItem.tag.tagID == nbt.ID_COMPOUND:
+            if item.parentItem.tag.tagID == nbt.ID_COMPOUND and item.tag.name != value:
                 item.parentItem.tag[value] = item.tag
                 item.tag.name = value
                 result = True
