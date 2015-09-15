@@ -120,14 +120,6 @@ class MCEditApp(QtGui.QApplication):
 
         log.info("Loaded main window.")
 
-        def toggleToolbarText(enable):
-            if enable:
-                style = Qt.ToolButtonTextUnderIcon
-            else:
-                style = Qt.ToolButtonIconOnly
-            self.mainWindow.toolsToolBar.setToolButtonStyle(style)
-            self.mainWindow.panelsToolBar.setToolButtonStyle(style)
-
         tttIcon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/toolbar_text.png"))
 
         self.toggleToolbarTextAction = QtGui.QAction(tttIcon, "Toolbar Text", self)
@@ -135,8 +127,7 @@ class MCEditApp(QtGui.QApplication):
         self.toggleToolbarTextAction.setCheckable(True)
         self.toggleToolbarTextAction.setChecked(True)
 
-        self.toggleToolbarTextAction.toggled.connect(toggleToolbarText)
-        self.toggleToolbarTextAction.__toggled = toggleToolbarText
+        self.toggleToolbarTextAction.toggled.connect(self.toggleToolbarText)
 
         # --- OpenGL ---
 
@@ -726,6 +717,19 @@ class MCEditApp(QtGui.QApplication):
         fileLoadingDialog.reset()
         # XXX trigger viewportMoved to update minimap after GL initialization
         # session.editorTab.currentView().viewportMoved.emit(session.editorTab.currentView())
+
+    # --- Toolbar ---
+
+    toolbarTextToggled = QtCore.Signal(bool)
+
+    def toggleToolbarText(self, enable):
+        if enable:
+            style = Qt.ToolButtonTextUnderIcon
+        else:
+            style = Qt.ToolButtonIconOnly
+        self.mainWindow.toolsToolBar.setToolButtonStyle(style)
+        self.mainWindow.panelsToolBar.setToolButtonStyle(style)
+        self.toolbarTextToggled.emit(enable)
 
     # --- Library ---
 

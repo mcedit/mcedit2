@@ -370,27 +370,30 @@ class EditorSession(QtCore.QObject):
 
         self.panelActions.append(dimAction)
         self.panelActions.append(None)
+
         # --- Versions/Resource Packs ---
+
         versionRPAction = self.versionRPAction = QtGui.QWidgetAction(self)
 
-        mcVersionButton = self.changeMCVersionButton = QtGui.QToolButton(autoRaise=True)
+        self.mcVersionButton = mcVersionButton = self.changeMCVersionButton = QtGui.QToolButton(autoRaise=True)
         mcVersionButton.setText(self.minecraftVersionLabel())
         self.mcVersionMenu = QtGui.QMenu()
         mcVersionButton.setMenu(self.mcVersionMenu)
         mcVersionButton.setPopupMode(QtGui.QToolButton.InstantPopup)
 
-        resourcePackButton = self.changeResourcePackButton = QtGui.QToolButton(autoRaise=True)
+        self.resourcePackButton = resourcePackButton = self.changeResourcePackButton = QtGui.QToolButton(autoRaise=True)
         resourcePackButton.setText(self.resourcePackLabel())
         self.resourcePackMenu = QtGui.QMenu()
         resourcePackButton.setMenu(self.resourcePackMenu)
         resourcePackButton.setPopupMode(QtGui.QToolButton.InstantPopup)
 
-        versionRPColumn = Column(mcVersionButton, resourcePackButton)
-        versionRPWidget = QtGui.QWidget()
-        versionRPWidget.setLayout(versionRPColumn)
-        versionRPAction.setDefaultWidget(versionRPWidget)
-
+        self.versionRPWidget = QtGui.QStackedWidget()
+        self.versionRPWidget.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
+        self.versionRPAction.setDefaultWidget(self.versionRPWidget)
         self.panelActions.append(versionRPAction)
+
+        QtGui.qApp.toolbarTextToggled.connect(self.toolbarTextChanged)
+        self.toolbarTextChanged(True)  # xxx
 
         self._updateVersionsAndResourcePacks()
 
@@ -425,14 +428,6 @@ class EditorSession(QtCore.QObject):
         if hasattr(progress, 'progressCount') and progress.progressCount != progressMax:
             log.info("Update progressMax to %d, please.", progress.progressCount)
 
-    def minecraftVersionLabel(self):
-        version = minecraftinstall.currentVersionOption.value() or self.tr("(Not set)")
-        return self.tr("Minecraft Version: %s") % version
-
-    def resourcePackLabel(self):
-        resourcePack = minecraftinstall.currentResourcePackOption.value() or self.tr("(Default)")
-        return self.tr("Resource Pack: %s") % resourcePack
-
 
     def _updateVersionsAndResourcePacks(self):
         self.mcVersionMapper = QtCore.QSignalMapper()
@@ -458,6 +453,31 @@ class EditorSession(QtCore.QObject):
             resourcePackAction = self.resourcePackMenu.addAction(resourcePack)
             self.resourcePackMapper.setMapping(resourcePackAction, resourcePack)
             resourcePackAction.triggered.connect(self.resourcePackMapper.map)
+
+    def toolbarTextChanged(self, enable):
+        if enable:
+            Box = Column
+        else:
+            Box = Row
+
+        widget = self.versionRPAction.defaultWidget()
+        if widget:
+            layout = widget.layout()
+            while layout.count():
+                layout.takeAt(0)
+
+        self.mcVersionButton.setParent(None)
+        self.resourcePackButton.setParent(None)
+        versionRPColumn = Box(self.mcVersionButton, self.resourcePackButton, margin=0)
+        versionRPColumn.addStretch()
+        widget = QtGui.QWidget()
+        widget.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
+        widget.setLayout(versionRPColumn)
+
+        while self.versionRPWidget.count():
+            self.versionRPWidget.takeAt(0)
+
+        self.versionRPWidget.addWidget(widget)
 
     def changeResourcePack(self, packName):
         packDisplayName = packName or "(default)"
@@ -494,6 +514,14 @@ class EditorSession(QtCore.QObject):
         self.changeMCVersionButton.setText(self.minecraftVersionLabel())
         self.reloadModels()
         dialog.hide()
+
+    def minecraftVersionLabel(self):
+        version = minecraftinstall.currentVersionOption.value() or self.tr("(Not set)")
+        return self.tr("Minecraft Version: %s") % version
+
+    def resourcePackLabel(self):
+        resourcePack = minecraftinstall.currentResourcePackOption.value() or self.tr("(Default)")
+        return self.tr("Resource Pack: %s") % resourcePack
 
     # Connecting these signals to the EditorTab creates a circular reference through
     # the Qt objects, preventing the EditorSession from being destroyed
@@ -1124,6 +1152,8 @@ class EditorTab(QtGui.QWidget):
 
         self.toolOptionsDockWidget = MCEDockWidget("Tool Options", objectName="ToolOptionsWidget", floating=True)
         self.toolOptionsDockWidget.setWidget(self.toolOptionsArea)
+        self.toolOptionsDockWidget.setUnfocusedOpacity(0.8)
+
         editorSession.dockWidgets.append((Qt.LeftDockWidgetArea, self.miniMapDockWidget))
         editorSession.dockWidgets.append((Qt.LeftDockWidgetArea, self.toolOptionsDockWidget))
 
