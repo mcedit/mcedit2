@@ -127,7 +127,10 @@ class MCEditApp(QtGui.QApplication):
             self.mainWindow.toolsToolBar.setToolButtonStyle(style)
             self.mainWindow.panelsToolBar.setToolButtonStyle(style)
 
-        self.toggleToolbarTextAction = QtGui.QAction("Toolbar Text", self)
+        tttIcon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/toolbar_text.png"))
+
+        self.toggleToolbarTextAction = QtGui.QAction(tttIcon, "Toolbar Text", self)
+
         self.toggleToolbarTextAction.setCheckable(True)
         self.toggleToolbarTextAction.setChecked(True)
 
@@ -146,12 +149,17 @@ class MCEditApp(QtGui.QApplication):
         self.sessionChanged.connect(self.sessionDidChange)
 
         # --- Panel Widgets ---
+        historyIcon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/history.png"))
 
         self.undoView = QtGui.QUndoView(self.undoGroup)
         self.undoDockWidget = QtGui.QDockWidget("History", mainWindow, objectName="HistoryWidget")
         self.undoDockWidget.setWidget(self.undoView)
+        self.undoDockWidget.setWindowIcon(historyIcon)
+
         mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.undoDockWidget)
-        mainWindow.panelsToolBar.addAction(self.undoDockWidget.toggleViewAction())
+        undoToggleAction = self.undoDockWidget.toggleViewAction()
+        undoToggleAction.setIcon(historyIcon)
+        mainWindow.panelsToolBar.addAction(undoToggleAction)
         self.undoDockWidget.close()
 
         self.logViewWidget = LogViewFrame(mainWindow)
