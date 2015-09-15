@@ -415,6 +415,8 @@ class EditorSession(QtCore.QObject):
         self.inspectorWidget = InspectorWidget(self)
         self.inspectorDockWidget = MCEDockWidget(self.tr("Inspector"), objectName="inspector")
         self.inspectorDockWidget.setWidget(self.inspectorWidget)
+        self.inspectorDockWidget.setUnfocusedOpacity(0.8)
+
         self.inspectorDockWidget.hide()
         self.dockWidgets.append((Qt.RightDockWidgetArea, self.inspectorDockWidget))
 
@@ -1141,6 +1143,7 @@ class EditorTab(QtGui.QWidget):
         self.miniMapDockWidget = MCEDockWidget("Minimap", objectName="MinimapWidget", floating=True)
         self.miniMapDockWidget.setWidget(self.miniMap)
         self.miniMapDockWidget.setFixedSize(256, 256)
+        self.miniMapDockWidget.setUnfocusedOpacity(0.9)
 
         self.views.append(self.miniMap)
 

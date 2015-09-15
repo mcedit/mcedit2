@@ -147,6 +147,7 @@ class MCEditApp(QtGui.QApplication):
         self.undoDockWidget = MCEDockWidget("History", mainWindow, objectName="HistoryWidget")
         self.undoDockWidget.setWidget(self.undoView)
         self.undoDockWidget.setWindowIcon(historyIcon)
+        self.undoDockWidget.setUnfocusedOpacity(0.8)
 
         mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.undoDockWidget)
         undoToggleAction = self.undoDockWidget.toggleViewAction()
@@ -159,6 +160,7 @@ class MCEditApp(QtGui.QApplication):
         self.libraryDockWidget = MCEDockWidget("Library", mainWindow, objectName="LibraryWidget")
         self.libraryDockWidget.setWidget(self.libraryWidget)
         self.libraryDockWidget.setWindowIcon(libraryIcon)
+        self.libraryDockWidget.setUnfocusedOpacity(0.8)
 
         mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.libraryDockWidget)
 
