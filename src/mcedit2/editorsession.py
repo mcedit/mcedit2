@@ -1060,11 +1060,17 @@ class EditorSession(QtCore.QObject):
 
         for panel in self.panels:
             panel.close()
+            panel.setParent(None)
+
+        self.panels = None
 
         self.editorTab.saveState()
         self.worldEditor.close()
         self.worldEditor = None
-
+        # Break all reference cycles just to be absolutely sure.
+        d = {'menus': self.menus, 'undoStack': self.undoStack}
+        self.__dict__.clear()
+        self.__dict__.update(d)
         return True
 
     # --- Inspector ---

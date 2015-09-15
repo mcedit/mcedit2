@@ -583,6 +583,7 @@ class MCEditApp(QtGui.QApplication):
     def removeSessionDockWidgets(self):
         for dw in self.sessionDockWidgets:
             self.mainWindow.removeDockWidget(dw)
+            dw.setParent(None)
 
         self.sessionDockWidgets[:] = ()
 
