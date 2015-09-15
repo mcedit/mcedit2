@@ -68,7 +68,7 @@ def unpackNibbleArray(dataArray):
 
 
 def packNibbleArray(unpackedData):
-    packedData = numpy.array(unpackedData.reshape(16, 16, unpackedData.shape[2] / 2, 2))
+    packedData = numpy.array(unpackedData.reshape(16, 16, unpackedData.shape[2] // 2, 2))
     packedData[..., 1] <<= 4
     packedData[..., 1] |= packedData[..., 0]
     return numpy.array(packedData[:, :, :, 1])
