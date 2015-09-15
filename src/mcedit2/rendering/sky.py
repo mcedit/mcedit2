@@ -26,6 +26,7 @@ class SkyRenderNode(rendernode.RenderNode):
                                       0x8a, 0xaf, 0xff, 0xff,
                                       0x8a, 0xaf, 0xff, 0xff,
                                       0x48, 0x49, 0xBA, 0xff, ], dtype='uint8')
+                numpy.multiply(colors, self.sceneNode.dayTime, out=colors, casting='unsafe')
 
                 with gl.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT):
                     GL.glDepthMask(False)
@@ -37,3 +38,9 @@ class SkyRenderNode(rendernode.RenderNode):
 
 class SkyNode(scenenode.Node):
     RenderNodeClass = SkyRenderNode
+
+    dayTime = 1.0
+
+    def setDayTime(self, value):
+        self.dayTime = value
+        self.dirty = True
