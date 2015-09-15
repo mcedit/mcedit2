@@ -32,6 +32,7 @@ from mcedit2.widgets.log_view import LogViewFrame
 from mcedit2.rendering.chunkloader import ChunkLoaderInfo
 from mcedit2.util import profiler
 from mcedit2.util.ipython_widget import terminal_widget
+from mcedit2.widgets.mcedockwidget import MCEDockWidget
 from mcedit2.widgets.objectinspector import ObjectInspector
 from mcedit2.util.profilerui import ProfilerWidget
 from mcedit2.util.settings import Settings
@@ -152,7 +153,7 @@ class MCEditApp(QtGui.QApplication):
         historyIcon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/history.png"))
 
         self.undoView = QtGui.QUndoView(self.undoGroup)
-        self.undoDockWidget = QtGui.QDockWidget("History", mainWindow, objectName="HistoryWidget")
+        self.undoDockWidget = MCEDockWidget("History", mainWindow, objectName="HistoryWidget")
         self.undoDockWidget.setWidget(self.undoView)
         self.undoDockWidget.setWindowIcon(historyIcon)
 
@@ -163,14 +164,14 @@ class MCEditApp(QtGui.QApplication):
         self.undoDockWidget.close()
 
         self.logViewWidget = LogViewFrame(mainWindow)
-        self.logViewDockWidget = QtGui.QDockWidget("Error Log", mainWindow, objectName="ErrorsWidget")
+        self.logViewDockWidget = MCEDockWidget("Error Log", mainWindow, objectName="ErrorsWidget")
         self.logViewDockWidget.setWidget(self.logViewWidget)
         mainWindow.addDockWidget(Qt.BottomDockWidgetArea, self.logViewDockWidget)
         mainWindow.panelsToolBar.addAction(self.logViewDockWidget.toggleViewAction())
         self.logViewDockWidget.close()
 
         self.libraryWidget = LibraryWidget()
-        self.libraryDockWidget = QtGui.QDockWidget("Library", mainWindow, objectName="LibraryWidget")
+        self.libraryDockWidget = MCEDockWidget("Library", mainWindow, objectName="LibraryWidget")
         self.libraryDockWidget.setWidget(self.libraryWidget)
         mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.libraryDockWidget)
         mainWindow.panelsToolBar.addAction(self.libraryDockWidget.toggleViewAction())
@@ -188,20 +189,20 @@ class MCEditApp(QtGui.QApplication):
         self.debugMenu = self.createDebugMenu()
 
         self.debugObjectInspector = ObjectInspector(mainWindow)
-        self.inspectorDockWidget = QtGui.QDockWidget("Inspector", mainWindow, objectName="InspectorWidget")
+        self.inspectorDockWidget = MCEDockWidget("Object Inspector", mainWindow, objectName="InspectorWidget")
         self.inspectorDockWidget.setWidget(self.debugObjectInspector)
         self.debugMenu.addAction(self.inspectorDockWidget.toggleViewAction())
         self.inspectorDockWidget.close()
 
         self.profileView = ProfilerWidget()
-        self.profileDockWidget = QtGui.QDockWidget("Profiler", mainWindow, objectName="ProfilerWidget")
+        self.profileDockWidget = MCEDockWidget("Profiler", mainWindow, objectName="ProfilerWidget")
         self.profileDockWidget.setWidget(self.profileView)
         self.debugMenu.addAction(self.profileDockWidget.toggleViewAction())
         self.profileDockWidget.close()
 
         self.textureAtlasView = QtGui.QLabel()
         self.textureAtlasView.setScaledContents(True)
-        self.textureAtlasDockWidget = QtGui.QDockWidget("Texture Atlas", mainWindow, objectName="TextureAtlasWidget")
+        self.textureAtlasDockWidget = MCEDockWidget("Texture Atlas", mainWindow, objectName="TextureAtlasWidget")
 
         self.textureAtlasArea = QtGui.QScrollArea()
         self.textureAtlasArea.setWidget(self.textureAtlasView)
@@ -220,7 +221,7 @@ class MCEditApp(QtGui.QApplication):
         self.loaderInfo = ChunkLoaderInfo()
         infoTabs.addTab(self.loaderInfo, "Loader")
 
-        self.infoDockWidget = QtGui.QDockWidget("Debug Info", mainWindow, objectName="DebugInfo")
+        self.infoDockWidget = MCEDockWidget("Debug Info", mainWindow, objectName="DebugInfo")
         self.infoDockWidget.setWidget(infoTabs)
         self.infoDockWidget.close()
 

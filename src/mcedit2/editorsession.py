@@ -20,6 +20,7 @@ from mcedit2.util import minecraftinstall
 from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.directories import getUserSchematicsDirectory
 from mcedit2.util.mimeformats import MimeFormats
+from mcedit2.widgets.mcedockwidget import MCEDockWidget
 from mcedit2.widgets.spinslider import SpinSlider
 from mceditlib.util import exhaust
 from mceditlib.util.lazyprop import weakrefprop
@@ -412,7 +413,7 @@ class EditorSession(QtCore.QObject):
             self.dockWidgets.append((Qt.BottomDockWidgetArea, resultsWidget))
 
         self.inspectorWidget = InspectorWidget(self)
-        self.inspectorDockWidget = QtGui.QDockWidget(self.tr("Inspector"), objectName="inspector")
+        self.inspectorDockWidget = MCEDockWidget(self.tr("Inspector"), objectName="inspector")
         self.inspectorDockWidget.setWidget(self.inspectorWidget)
         self.inspectorDockWidget.hide()
         self.dockWidgets.append((Qt.RightDockWidgetArea, self.inspectorDockWidget))
@@ -1112,7 +1113,7 @@ class EditorTab(QtGui.QWidget):
         self.viewStack = QtGui.QStackedWidget()
 
         self.miniMap = MinimapWorldView(editorSession.currentDimension, editorSession.textureAtlas, editorSession.geometryCache)
-        self.miniMapDockWidget = QtGui.QDockWidget("Minimap", objectName="MinimapWidget", floating=True)
+        self.miniMapDockWidget = MCEDockWidget("Minimap", objectName="MinimapWidget", floating=True)
         self.miniMapDockWidget.setWidget(self.miniMap)
         self.miniMapDockWidget.setFixedSize(256, 256)
 
@@ -1121,7 +1122,7 @@ class EditorTab(QtGui.QWidget):
         self.toolOptionsArea = QtGui.QScrollArea()
         self.toolOptionsArea.setWidgetResizable(True)
 
-        self.toolOptionsDockWidget = QtGui.QDockWidget("Tool Options", objectName="ToolOptionsWidget", floating=True)
+        self.toolOptionsDockWidget = MCEDockWidget("Tool Options", objectName="ToolOptionsWidget", floating=True)
         self.toolOptionsDockWidget.setWidget(self.toolOptionsArea)
         editorSession.dockWidgets.append((Qt.LeftDockWidgetArea, self.miniMapDockWidget))
         editorSession.dockWidgets.append((Qt.LeftDockWidgetArea, self.toolOptionsDockWidget))

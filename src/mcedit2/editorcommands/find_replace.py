@@ -3,6 +3,7 @@
 """
 from __future__ import absolute_import, division, print_function
 from collections import namedtuple
+from mcedit2.widgets.mcedockwidget import MCEDockWidget
 from mceditlib import nbt
 from PySide import QtGui, QtCore
 import logging
@@ -294,7 +295,7 @@ class FindReplaceNBT(QtCore.QObject):
         self.dialog = dialog
 
         self.resultsWidget = load_ui("find_replace_nbt_results.ui")
-        self.resultsDockWidget = QtGui.QDockWidget("NBT Search", objectName="nbtSearch")
+        self.resultsDockWidget = MCEDockWidget("NBT Search", objectName="nbtSearch")
         self.resultsDockWidget.setWidget(self.resultsWidget)
         self.resultsDockWidget.hide()
 
