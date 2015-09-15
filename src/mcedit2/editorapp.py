@@ -163,11 +163,17 @@ class MCEditApp(QtGui.QApplication):
         mainWindow.panelsToolBar.addAction(undoToggleAction)
         self.undoDockWidget.close()
 
+        libraryIcon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/library.png"))
         self.libraryWidget = LibraryWidget()
         self.libraryDockWidget = MCEDockWidget("Library", mainWindow, objectName="LibraryWidget")
         self.libraryDockWidget.setWidget(self.libraryWidget)
+        self.libraryDockWidget.setWindowIcon(libraryIcon)
+
         mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.libraryDockWidget)
-        mainWindow.panelsToolBar.addAction(self.libraryDockWidget.toggleViewAction())
+
+        libraryToggleAction = self.libraryDockWidget.toggleViewAction()
+        libraryToggleAction.setIcon(libraryIcon)
+        mainWindow.panelsToolBar.addAction(libraryToggleAction)
         self.libraryDockWidget.close()
         self.sessionChanged.connect(self.libraryWidget.sessionDidChange)
 

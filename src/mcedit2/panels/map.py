@@ -8,6 +8,7 @@ from PySide.QtCore import Qt
 import numpy
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.util.load_ui import load_ui
+from mcedit2.util.resources import resourcePath
 from mcedit2.util.screen import centerWidgetInScreen
 from mceditlib.anvil.adapter import AnvilMapData
 from mceditlib.exceptions import LevelFormatError
@@ -74,8 +75,8 @@ class MapPanel(QtGui.QWidget):
 
         load_ui("panels/map.ui", baseinstance=self)
 
-        #icon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/edit_maps.png"))
-        action = QtGui.QAction("Edit Maps", self)
+        icon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/edit_map.png"))
+        action = QtGui.QAction(icon, "Edit Maps", self)
         action.setCheckable(True)
         action.triggered.connect(self.toggleView)
         self._toggleViewAction = action
