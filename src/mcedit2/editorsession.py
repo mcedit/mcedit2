@@ -459,17 +459,40 @@ class EditorSession(QtCore.QObject):
             resourcePackAction.triggered.connect(self.resourcePackMapper.map)
 
     def changeResourcePack(self, packName):
+        packDisplayName = packName or "(default)"
         log.info("Changing to resource pack %s", packName)
+        dialog = QtGui.QProgressDialog(QtGui.qApp.mainWindow)
+        dialog.setRange(0, 0)
+        dialog.setValue(0)
+        dialog.setWindowTitle(self.tr("Changing resource pack..."))
+        dialog.setLabelText(self.tr("Changing to resource pack %s") % packDisplayName)
+        dialog.setMinimumDuration(0)
+        dialog.setWindowModality(Qt.WindowModal)
+        dialog.show()
+        QtGui.qApp.processEvents()
         minecraftinstall.currentResourcePackOption.setValue(packName or "")
         self.resourceLoader = minecraftinstall.getResourceLoaderForFilename(self.filename)
         self.changeResourcePackButton.setText(self.resourcePackLabel())
         self.reloadModels()
+        dialog.hide()
 
     def changeMCVersion(self, version):
+        versionDisplayName = version or "(current)"
+        dialog = QtGui.QProgressDialog(QtGui.qApp.mainWindow)
+        dialog.setRange(0, 0)
+        dialog.setValue(0)
+        dialog.setWindowTitle(self.tr("Changing Minecraft version..."))
+        dialog.setLabelText(self.tr("Changing to Minecraft version %s") % versionDisplayName)
+        dialog.setMinimumDuration(0)
+        dialog.setWindowModality(Qt.WindowModal)
+        dialog.show()
+        QtGui.qApp.processEvents()
+
         minecraftinstall.currentVersionOption.setValue(version)
         self.resourceLoader = minecraftinstall.getResourceLoaderForFilename(self.filename)
         self.changeMCVersionButton.setText(self.minecraftVersionLabel())
         self.reloadModels()
+        dialog.hide()
 
     # Connecting these signals to the EditorTab creates a circular reference through
     # the Qt objects, preventing the EditorSession from being destroyed
