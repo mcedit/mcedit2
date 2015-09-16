@@ -14,7 +14,8 @@ log = logging.getLogger(__name__)
 
 class ISelection(object):
     """
-    Interface for block selections that can have any shape. Used by block_copy and block_fill.
+    Interface for block selections that can have any shape. Used by copy and fill
+    operations, among others.
 
     BoundingBox is the only provider for now.
 

@@ -6,6 +6,9 @@ import logging
 
 log = logging.getLogger(__name__)
 
+updateLightsByCoord = updateLightsInSelection = NotImplemented
+
+
 def setMethod(name):
     if name == "pure":
         from mceditlib.relight import pure_python
@@ -19,6 +22,7 @@ def setMethod(name):
     if name == "sections":
         from mceditlib.relight import with_sections
         setModule(with_sections)
+
 
 def setModule(mod):
     global updateLightsByCoord, updateLightsInSelection

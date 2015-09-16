@@ -245,7 +245,7 @@ class BrushModeWidget(QtGui.QComboBox):
             self.setCurrentIndex(currentIndex)
         finally:
             self.adding = False
-            
+
     def indexDidChange(self):
         if self.adding:
             return
