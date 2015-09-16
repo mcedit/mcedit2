@@ -730,7 +730,7 @@ class WorldEditorDimension(object):
         """
         return self.worldEditor.getChunk(cx, cz, self.dimName, create)
 
-    def getChunks(self, chunkPositions=None):
+    def getChunks(self, chunkPositions=None, create=False):
         """
         :type chunkPositions(): iterator
         :rtype: iterator
@@ -738,8 +738,8 @@ class WorldEditorDimension(object):
         if chunkPositions is None:
             chunkPositions = self.chunkPositions()
         for cx, cz in chunkPositions:
-            if self.containsChunk(cx, cz):
-                yield self.getChunk(cx, cz)
+            if self.containsChunk(cx, cz) or create:
+                yield self.getChunk(cx, cz, create)
 
     def createChunk(self, cx, cz):
         return self.worldEditor.createChunk(cx, cz, self.dimName)
