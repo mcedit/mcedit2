@@ -16,7 +16,7 @@
    version="1.1"
    inkscape:version="0.48.4 r9939"
    sodipodi:docname="icons.svg"
-   inkscape:export-filename="..\assets\mcedit2\toolicons\edit_entity.png"
+   inkscape:export-filename="..\assets\mcedit2\icons\history.png"
    inkscape:export-xdpi="45"
    inkscape:export-ydpi="45">
   <defs
@@ -420,10 +420,10 @@
        inkscape:collect="always"
        xlink:href="#linearGradient5448"
        id="radialGradient5454"
-       cx="71.078102"
-       cy="76.600845"
-       fx="71.078102"
-       fy="76.600845"
+       cx="99.423782"
+       cy="68.752922"
+       fx="99.423782"
+       fy="68.752922"
        r="54.75"
        gradientUnits="userSpaceOnUse"
        gradientTransform="matrix(0.77919716,1.2102211,-1.1660966,0.75078779,77.12861,-94.112573)" />
@@ -832,15 +832,15 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4142136"
-     inkscape:cx="95.780837"
-     inkscape:cy="44.118576"
+     inkscape:zoom="0.5"
+     inkscape:cx="113.7729"
+     inkscape:cy="21.900249"
      inkscape:document-units="px"
-     inkscape:current-layer="layer7"
+     inkscape:current-layer="layer17"
      showgrid="false"
-     inkscape:window-width="1658"
+     inkscape:window-width="1640"
      inkscape:window-height="1058"
-     inkscape:window-x="254"
+     inkscape:window-x="272"
      inkscape:window-y="-8"
      inkscape:window-maximized="1"
      inkscape:snap-global="false"
@@ -1205,7 +1205,7 @@
        inkscape:groupmode="layer"
        id="layer7"
        inkscape:label="edit player"
-       style="display:inline">
+       style="display:none">
       <image
          style="display:inline"
          y="956.36218"
@@ -1563,11 +1563,10 @@
        inkscape:groupmode="layer"
        id="layer17"
        inkscape:label="history"
-       sodipodi:insensitive="true"
-       style="display:none">
+       style="display:inline">
       <path
          sodipodi:type="arc"
-         style="color:#000000;fill:url(#radialGradient5454);fill-opacity:1;fill-rule:nonzero;stroke:#4f4f4f;stroke-width:5.65178537;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+         style="color:#000000;fill:url(#radialGradient5454);fill-opacity:1;fill-rule:nonzero;stroke:#4f4f4f;stroke-width:5.65178536999999980;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
          id="path5438"
          sodipodi:cx="64.25"
          sodipodi:cy="64.25"
@@ -1696,6 +1695,12 @@
          id="path5462"
          style="color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:4;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
          sodipodi:type="arc" />
+      <path
+         style="opacity:0.49557519;color:#000000;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:4;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+         d="M 19.79899,65.067497 C 21.213203,32.540585 56.568543,13.448701 79.19596,25.469517 59.546025,29.816538 32.806334,48.545291 19.79899,65.067497 z"
+         id="path6117"
+         inkscape:connector-curvature="0"
+         sodipodi:nodetypes="ccc" />
     </g>
     <g
        inkscape:groupmode="layer"
