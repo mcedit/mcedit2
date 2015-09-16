@@ -30,7 +30,9 @@ def sourceMaskFunc(blocksToCopy):
     return unmaskedSourceMask
 
 
-def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocksToCopy=None, entities=True, create=False, biomes=False, updateLights="all"):
+def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint,
+                   blocksToCopy=None, entities=True, create=False, biomes=False,
+                   updateLights="all", replaceUnknownWith=None):
     """
     Copy blocks and entities from the `sourceBox` area of `sourceDim` to `destDim` starting at `destinationPoint`.
 
@@ -74,7 +76,9 @@ def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint, blocks
     #          Use slices and mask to copy Blocks and Data
     #   Copy entities and tile entities from this chunk.
     sourceBiomeMask = None
-    convertBlocks = blocktypes.blocktypeConverter(destDim.blocktypes, sourceDim.blocktypes)
+    convertBlocks = blocktypes.blocktypeConverter(destDim.blocktypes,
+                                                  sourceDim.blocktypes,
+                                                  replaceUnknownWith)
 
     for sourceCpos in sourceSelection.chunkPositions():
         # Visit each chunk

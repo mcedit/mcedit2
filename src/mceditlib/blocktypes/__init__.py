@@ -353,7 +353,7 @@ VERSION_1_7 = 17
 VERSION_1_8 = 18
 
 
-def blocktypeConverter(destTypes, sourceTypes):
+def blocktypeConverter(destTypes, sourceTypes, replaceUnknownWith=None):
     """
 
     :param destTypes:
@@ -371,6 +371,8 @@ def blocktypeConverter(destTypes, sourceTypes):
             except IndexError:
                 log.error("Can't insert %s->%s into %s (%s???) ??", ID, destTypes.IDsByName[name], idTable.shape, type(ID))
                 raise
+        elif replaceUnknownWith is not None:
+            idTable[ID] = replaceUnknownWith
 
     def _convert(ID, meta):
         return idTable[ID], meta
