@@ -3,24 +3,24 @@
 """
 from __future__ import absolute_import, division, print_function
 import contextlib
+import json
 import logging
 from mcedit2.command import SimpleRevisionCommand
-from mceditlib import nbt
+from mcedit2.util.mimeformats import MimeFormats
 
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
-import itertools
 
 from mcedit2.widgets.itemtype_list import ItemTypeListModel, ItemTypeIcon, ICON_SIZE
 from mcedit2.widgets.layout import Row, Column
 from mcedit2.widgets.nbttree.nbteditor import NBTEditorWidget
-from mceditlib.blocktypes import VERSION_1_7, VERSION_1_8
+from mceditlib.blocktypes import VERSION_1_7
 
 
 log = logging.getLogger(__name__)
 
 
-class InventoryItemModel(QtCore.QAbstractItemModel):
+class InventoryItemModel(QtCore.QAbstractListModel):
     ItemIDRole = Qt.UserRole
     ItemRawIDRole = ItemIDRole + 1
     ItemIconRole = ItemRawIDRole + 1
@@ -79,14 +79,20 @@ class InventoryItemModel(QtCore.QAbstractItemModel):
 
         return None
 
+    def createSlot(self, slot):
+        if self.itemListRef.getItemInSlot(slot):
+            return
+        return self.itemListRef.createItemInSlot(slot)
+
     def setData(self, index, value, role):
         if not index.isValid():
             return 0
 
         slot = index.row()
+        log.info("Setting ItemStack %d role %s value %s", slot, role, value)
         itemStack = self.itemListRef.getItemInSlot(slot)
         if itemStack is None:
-            return
+            itemStack = self.createSlot(slot)
 
         if role == self.ItemIDRole:
             itemStack.id = value
@@ -122,6 +128,7 @@ class InventoryItemWidget(QtGui.QPushButton):
         self.setIcon(InventoryItemWidget.BLANK)
 
         self.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+        self.setAcceptDrops(True)
 
     def setCount(self, val):
         if val == 1:
@@ -157,6 +164,26 @@ class InventoryItemWidget(QtGui.QPushButton):
         # outlinePen = QtGui.QPen(color=Qt.black, width=4.0)
         # painter.strokePath(path, outlinePen)
         #painter.fillPath(path, fillBrush)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasFormat(MimeFormats.ItemType):
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        if event.mimeData().hasFormat(MimeFormats.ItemType):
+            itemTypesData = str(event.mimeData().data(MimeFormats.ItemType))
+            itemTypes = json.loads(itemTypesData)
+            if len(itemTypes):
+                ID, damage = itemTypes[0]
+                log.info("Dropped item: (%s, %s)", ID, damage)
+                model = self.inventoryView.model
+                if model is not None:
+                    index = model.index(self.slotNumber)
+                    model.setData(index, ID, InventoryItemModel.ItemIDRole)
+                    if damage is not None:
+                        model.setData(index, damage, InventoryItemModel.ItemDamageRole)
+                else:
+                    log.info("No model")
 
 
 class InventoryView(QtGui.QWidget):
@@ -266,6 +293,9 @@ class InventoryEditor(QtGui.QWidget):
         self.itemList = QtGui.QListView()
         self.itemList.setMinimumWidth(200)
         self.itemList.clicked.connect(self.itemTypeChanged)
+
+        self.itemList.setDragEnabled(True)
+        self.itemList.setDragDropMode(QtGui.QAbstractItemView.DragOnly)
         self.itemListModel = None
 
         self.itemListSearchBox = QtGui.QComboBox()
@@ -499,7 +529,7 @@ class InventoryEditor(QtGui.QWidget):
 
     def dataWasChanged(self, topLeft, bottomRight):
         slot = topLeft.row()
-        if slot == self.currentIndex.row():
+        if self.currentIndex and slot == self.currentIndex.row():
             self.updateFields()
 
 class InventoryEditCommand(SimpleRevisionCommand):

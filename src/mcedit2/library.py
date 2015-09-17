@@ -36,7 +36,7 @@ class LibrarySchematicsTreeModel(QtGui.QFileSystemModel):
         mimeData.setUrls([QtCore.QUrl.fromLocalFile(self.filePath(index)) for index in indices])
         return mimeData
 
-    def mimeTypes(self, indices):
+    def mimeTypes(self):
         return ["text/uri-list"]
 
 class LibraryWidget(QtGui.QWidget):

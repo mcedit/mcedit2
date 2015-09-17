@@ -2,9 +2,11 @@
     itemtype_list
 """
 from __future__ import absolute_import, division, print_function
+import json
 from PySide import QtCore, QtGui
 import logging
 from PySide.QtCore import Qt
+from mcedit2.util.mimeformats import MimeFormats
 from mcedit2.widgets.blocktype_list import BlockTypePixmap
 
 log = logging.getLogger(__name__)
@@ -43,6 +45,23 @@ class ItemTypeListModel(QtCore.QAbstractListModel):
         if role == self.DamageRole:
             return itemType.meta
 
+    def flags(self, index):
+        if not index.isValid():
+            return Qt.NoItemFlags
+        return super(ItemTypeListModel, self).flags(index) | Qt.ItemIsDragEnabled
+
+    def mimeTypes(self):
+        return [MimeFormats.ItemType]
+
+    def mimeData(self, indexes):
+        mimeData = QtCore.QMimeData()
+        itemData = [(index.data(self.InternalNameRole), index.data(self.DamageRole))
+                    for index in indexes]
+        mapItemData = json.dumps(itemData)
+        mimeData.setData(MimeFormats.ItemType,
+                         mapItemData)
+
+        return mimeData
 
 def ItemTypeIcon(itemType, editorSession, itemStack=None):
     textureName = itemType.texture
