@@ -172,7 +172,7 @@ class Diamond(BrushShape):
 
 class Cylinder(BrushShape):
     ID = "Cylinder"
-    icon = None
+    icon = "shapes/cylinder.png"
 
     def shapeFunc(self, blockPositions, selectionSize):
         # axis = y
@@ -205,7 +205,7 @@ class Cylinder(BrushShape):
 
 class ChunkShape(BrushShape):
     ID = "Chunk"
-    icon = None
+    icon = "shapes/chunk.png"
 
     def createShapedSelection(self, box, dimension):
         return box.chunkBox(dimension)
@@ -213,7 +213,7 @@ class ChunkShape(BrushShape):
 
 class ParabolicDome(BrushShape):
     ID = "ParabolicDome"
-    icon = None
+    icon = "shapes/parabolic_dome.png"
 
     def shapeFunc(self, blockPositions, selectionSize):
 
