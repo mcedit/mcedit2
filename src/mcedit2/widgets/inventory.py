@@ -211,21 +211,18 @@ class InventoryView(QtGui.QWidget):
         if columns:
             gridLayout.addWidget(QtGui.QWidget(), 0, columns-1)
 
-
-        def _makeClicked(slot):
-            def _clicked():
-                self.slotClicked.emit(slot)
-            return _clicked
-
         self.slots = []
         self.buttonGroup = QtGui.QButtonGroup()
+        self.slotMapper = QtCore.QSignalMapper()
+        self.slotMapper.mapped[int].connect(self.slotClicked)
 
         for (x, y, slotNumber) in slotLayout:
             itemWidget = InventoryItemWidget(self, slotNumber)
-            itemWidget._clicked = _makeClicked(slotNumber)
+
             self.slotWidgets[slotNumber] = itemWidget
             gridLayout.addWidget(itemWidget, y, x)
-            itemWidget.clicked.connect(itemWidget._clicked)
+            itemWidget.clicked.connect(self.slotMapper.map)
+            self.slotMapper.setMapping(itemWidget, slotNumber)
             self.slots.append(slotNumber)
             self.buttonGroup.addButton(itemWidget)
 
