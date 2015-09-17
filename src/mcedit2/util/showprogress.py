@@ -36,7 +36,7 @@ def showProgress(text, *tasks, **kwargs):
         dialog = QtGui.QProgressDialog(QtGui.qApp.mainWindow)
         dialog.setWindowTitle(text)
         dialog.setWindowModality(Qt.WindowModal)
-        dialog.show()
+        #dialog.show()
         log.info("Starting progress: %d tasks." % len(tasks))
         maximum = len(tasks) * 100
         for i, task in enumerate(tasks):
@@ -59,7 +59,7 @@ def showProgress(text, *tasks, **kwargs):
                 dialog.setValue(current)
                 dialog.setMaximum(maximum)
                 dialog.setLabelText(status)
-                QtGui.QApplication.processEvents()
+                #QtGui.QApplication.processEvents()
                 if dialog.wasCanceled():
                     return False
 
