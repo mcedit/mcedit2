@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function
 import collections
 import logging
+import warnings
 
 from mceditlib.blocktypes.json_resources import getJsonFile
 
@@ -78,9 +79,13 @@ class ItemTypeSet(object):
                 assert itemType.meta is not None, "ItemType %s: Got a list %s for attr %s but meta is None" % (
                     itemType.internalName, retval, attr
                 )
-                assert itemType.meta < len(retval), "ItemType %s: Got meta %d but no item in list %s" % (
-                    itemType.internalName, itemType.meta, retval
-                )
+                if itemType.meta >= len(retval):
+                    warnings.warn(
+                        "ItemType %s: Got meta %d but no item in list %s" % (
+                            itemType.internalName, itemType.meta, retval
+                        ))
+                    return retval[0] + ("(Unknown meta)")
+
                 return retval[itemType.meta]
 
         if retval is None:
