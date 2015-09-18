@@ -72,9 +72,16 @@
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="label_5">
+    <widget class="QLabel" name="copyToPastebinLabel">
      <property name="text">
       <string>Clicking &quot;Copy to PasteBin&quot; will copy a Pastebin URL to your clipboard.</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="pastebinURLBox">
+     <property name="readOnly">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
@@ -97,6 +104,13 @@
       <widget class="QPushButton" name="copyToPastebinButton">
        <property name="text">
         <string>Copy to PasteBin</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="restartMCEditButton">
+       <property name="text">
+        <string>Restart MCEdit</string>
        </property>
       </widget>
      </item>
