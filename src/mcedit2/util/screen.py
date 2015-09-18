@@ -17,7 +17,13 @@ def centerWidgetInScreen(widget, resize=None):
     :return:
     :rtype:
     """
-    screen = QtGui.QApplication.desktop().availableGeometry()
+    desktop = QtGui.QApplication.desktop()
+    parent = widget.parent()
+    if parent is not None:
+        screenNo = desktop.screenNumber(parent)
+    else:
+        screenNo = -1
+    screen = desktop.availableGeometry(screenNo)
     w = screen.width()
     h = screen.height()
     r = widget.geometry()
