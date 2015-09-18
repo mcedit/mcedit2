@@ -21,6 +21,8 @@ class ShapeWidget(QtGui.QWidget):
         addShapes = kwargs.pop('addShapes', None)
         super(ShapeWidget, self).__init__(*args, **kwargs)
         buttons = self.buttons = []
+        self.groupBox = QtGui.QGroupBox("Shape:")
+
         flowLayout = flowlayout.FlowLayout()
         actionGroup = QtGui.QActionGroup(self)
         actionGroup.setExclusive(True)
@@ -29,6 +31,7 @@ class ShapeWidget(QtGui.QWidget):
         shapes = list(getShapes())
         if addShapes:
             shapes.extend(addShapes)
+
         for shape in shapes:
             if shape.icon is not None:
                 filename = os.path.join(iconBase, shape.icon)
@@ -61,7 +64,8 @@ class ShapeWidget(QtGui.QWidget):
 
         self.optionsHolder = QtGui.QStackedWidget()
         layout = Column(flowLayout, (self.optionsHolder, 1))
-        self.setLayout(layout)
+        self.groupBox.setLayout(layout)
+        self.setLayout(Column(self.groupBox, margin=0))
 
         currentID = BrushShapeSetting.value(shapes[0].ID)
         shapesByID = {shape.ID: shape for shape in shapes}
@@ -77,7 +81,12 @@ class ShapeWidget(QtGui.QWidget):
     shapeChanged = QtCore.Signal(object)
     shapeOptionsChanged = QtCore.Signal()
 
+    def groupBoxTitle(self, shape):
+        return self.tr("Shape: ") + shape.displayName
+
     def shapeDidChange(self, newShape):
+        self.groupBox.setTitle(self.groupBoxTitle(newShape))
+
         while self.optionsHolder.count():
             self.optionsHolder.removeWidget(self.optionsHolder.widget(0))
 

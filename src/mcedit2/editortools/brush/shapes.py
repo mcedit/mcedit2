@@ -93,6 +93,10 @@ class Round(BrushShape):
     ID = "Round"
     icon = "shapes/round.png"
 
+    def __init__(self):
+        super(Round, self).__init__()
+        self.displayName = self.tr("Round")
+
     def shapeFunc(self, blockPositions, shape):
         # For spheres: x^2 + y^2 + z^2 <= r^2
         # For ovoids: x^2/rx^2 + y^2/ry^2 + z^2/rz^2 <= 1
@@ -125,6 +129,7 @@ class Square(BrushShape):
 
     def __init__(self):
         super(Square, self).__init__()
+        self.displayName = self.tr("Square")
 
         self.optionsWidget = QtGui.QWidget()
         self.hollowCheckbox = QtGui.QCheckBox()
@@ -147,6 +152,10 @@ class Square(BrushShape):
 class Diamond(BrushShape):
     ID = "Diamond"
     icon = "shapes/diamond.png"
+
+    def __init__(self):
+        super(Diamond, self).__init__()
+        self.displayName = self.tr("Diamond")
 
     def shapeFunc(self, blockPositions, selectionSize):
         # This is an octahedron.
@@ -173,6 +182,10 @@ class Diamond(BrushShape):
 class Cylinder(BrushShape):
     ID = "Cylinder"
     icon = "shapes/cylinder.png"
+
+    def __init__(self):
+        super(Cylinder, self).__init__()
+        self.displayName = self.tr("Cylinder")
 
     def shapeFunc(self, blockPositions, selectionSize):
         # axis = y
@@ -207,6 +220,10 @@ class ChunkShape(BrushShape):
     ID = "Chunk"
     icon = "shapes/chunk.png"
 
+    def __init__(self):
+        super(ChunkShape, self).__init__()
+        self.displayName = self.tr("Chunk")
+
     def createShapedSelection(self, box, dimension):
         return box.chunkBox(dimension)
 
@@ -214,6 +231,10 @@ class ChunkShape(BrushShape):
 class ParabolicDome(BrushShape):
     ID = "ParabolicDome"
     icon = "shapes/parabolic_dome.png"
+
+    def __init__(self):
+        super(ParabolicDome, self).__init__()
+        self.displayName = self.tr("Parabolic Dome")
 
     def shapeFunc(self, blockPositions, selectionSize):
 
@@ -261,5 +282,6 @@ class ParabolicDome(BrushShape):
 
 # xxx what is responsible for "owning" the instances of BrushShape??
 # Currently the ShapeWidget seems to own them.
+
 def getShapes():
     return Square(), Round(), Diamond(), Cylinder(), ParabolicDome()
