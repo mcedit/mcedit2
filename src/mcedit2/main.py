@@ -11,6 +11,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import sys
 
 import OpenGL
+from mcedit2.dialogs.error_dialog import ErrorDialog, showErrorDialog
 
 from mcedit2.util import custom_traceback
 
@@ -184,16 +185,18 @@ def excepthook(exc_type, exc_value, exc_tb):
     # exception, so we override it to send the error to the logging module and exit with an error,
     # since PySide foolishly tries to continue after catching the error.
     log.error("Unhandled Exception: \n\t%s", exc_value, exc_info=(exc_type, exc_value, exc_tb))
-    text = "An error has occured.\n\nUnhandled exception: %s" % exc_value
-    if getattr(sys, 'frozen', False):
-        if editorApp:
-            if editorApp.mainWindow:
-                editorApp.mainWindow.hide()
-        msg = QtGui.QMessageBox(editorApp.mainWindow or None if editorApp else None)
-        msg.setIcon(QtGui.QMessageBox.Critical)
-        msg.setText(text)
-        msg.exec_()
-    sys.exit(-1)
+    # text = "An error has occured.\n\nUnhandled exception: %s" % exc_value
+    # if getattr(sys, 'frozen', False):
+    #     if editorApp:
+    #         if editorApp.mainWindow:
+    #             editorApp.mainWindow.hide()
+    #     msg = QtGui.QMessageBox(editorApp.mainWindow or None if editorApp else None)
+    #     msg.setIcon(QtGui.QMessageBox.Critical)
+    #     msg.setText(text)
+    #     msg.exec_()
+    # sys.exit(-1)
+
+    showErrorDialog("Unhandled Exception", (exc_type, exc_value, exc_tb), fatal=True)
 
 
 def main():
