@@ -315,16 +315,17 @@ class MCEditApp(QtGui.QApplication):
 
         # --- App Dialogs ---
 
-        self.prefsDialog = prefsdialog.PrefsDialog(None)
-        self.configureBlocksDialog = configureblocksdialog.ConfigureBlocksDialog(None)
-        self.configureBlocksDialog.finished.connect(self.configureBlocksFinished)
+        # Qt weirdness - initializing QDialog with parent puts the dialog at 0,
+        # 0 instead of centering it on the parent. Have to set the parent explicitly
+        # and put the Qt.Dialog flag back on since changing the parent resets the
+        # window flags...
 
-        # Qt weirdness - initializing QDialog with parent puts the dialog at 0,0 instead of
-        # centering it on the parent. Have to set the parent explicitly and put the Qt.Dialog flag back on
-        # since changing the parent resets the window flags...
+        self.prefsDialog = prefsdialog.PrefsDialog(None)
         self.prefsDialog.setParent(mainWindow)
         self.prefsDialog.setWindowFlags(Qt.Dialog)
 
+        self.configureBlocksDialog = configureblocksdialog.ConfigureBlocksDialog(None)
+        self.configureBlocksDialog.finished.connect(self.configureBlocksFinished)
         self.configureBlocksDialog.setParent(mainWindow)
         self.configureBlocksDialog.setWindowFlags(Qt.Dialog)
 
