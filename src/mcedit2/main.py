@@ -11,7 +11,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import sys
 
 import OpenGL
-from mcedit2.dialogs.error_dialog import ErrorDialog, showErrorDialog
 
 from mcedit2.util import custom_traceback
 
@@ -196,6 +195,7 @@ def excepthook(exc_type, exc_value, exc_tb):
     #     msg.exec_()
     # sys.exit(-1)
 
+    from mcedit2.dialogs.error_dialog import showErrorDialog
     showErrorDialog("Unhandled Exception", (exc_type, exc_value, exc_tb), fatal=True)
 
 
