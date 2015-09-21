@@ -60,8 +60,11 @@ class ErrorDialog(QtGui.QDialog):
 
         self.restartMCEditLabel.setVisible(fatal)
 
-        self.restartMCEditButton.setEnabled(fatal)
+        self.restartMCEditButton.setVisible(fatal)
         self.restartMCEditButton.clicked.connect(self.restartMCEdit)
+
+        self.quitMCEditButton.setVisible(fatal)
+        self.quitMCEditButton.clicked.connect(self.quitMCEdit)
 
         try:
             import Pastebin
@@ -108,4 +111,7 @@ class ErrorDialog(QtGui.QDialog):
 
     def restartMCEdit(self):
         QtCore.QProcess.startDetached(sys.executable, sys.argv)
-        raise SystemExit  # xxxxxxxxxxx
+        raise SystemExit
+
+    def quitMCEdit(self):
+        raise SystemExit

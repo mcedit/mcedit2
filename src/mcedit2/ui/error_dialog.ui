@@ -115,6 +115,13 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="quitMCEditButton">
+       <property name="text">
+        <string>Quit</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="continueButton">
        <property name="text">
         <string>Continue</string>
