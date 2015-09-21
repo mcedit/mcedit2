@@ -59,8 +59,10 @@ class ErrorDialog(QtGui.QDialog):
         self.tracebackView.setText(tbText)
 
         self.restartMCEditLabel.setVisible(fatal)
-        self.restartMCEditButton.setVisible(False)
-        self.restartMCEditButton.setEnabled(False)  # xxxx connect me
+
+        self.restartMCEditButton.setEnabled(fatal)
+        self.restartMCEditButton.clicked.connect(self.restartMCEdit)
+
         try:
             import Pastebin
         except ImportError:
@@ -103,3 +105,7 @@ class ErrorDialog(QtGui.QDialog):
             self.pastebinURLBox.setText(url)
             QtGui.QApplication.clipboard().setText(url)
             self.copyToPastebinLabel.setText(self.tr("Pastebin URL copied to clipboard!"))
+
+    def restartMCEdit(self):
+        QtCore.QProcess.startDetached(sys.executable, sys.argv)
+        raise SystemExit  # xxxxxxxxxxx
