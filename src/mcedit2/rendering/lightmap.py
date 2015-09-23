@@ -21,7 +21,7 @@ def generateLightmap(brightness, theEnd = False, minLight=0.0, gamma=0.5):
     lightmapColors = numpy.zeros((16, 16, 4), 'uint8')
 
     torchFlickerX = 0.0
-    log.info("Generating lightmap. brightness=%s, minLight=%s, theEnd=%s, gamma=%s",
+    log.debug("Generating lightmap. brightness=%s, minLight=%s, theEnd=%s, gamma=%s",
               brightness, minLight, theEnd, gamma)
 
     for x, y in numpy.ndindex(16, 16):
