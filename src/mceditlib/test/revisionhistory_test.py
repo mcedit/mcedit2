@@ -16,7 +16,7 @@ from mceditlib import nbt
 
 @pytest.fixture
 def history():
-    filename = "test_files/AnvilWorld"
+    filename = "AnvilWorld"
     tmpname = TempFile(filename)
     return RevisionHistory(tmpname)
 

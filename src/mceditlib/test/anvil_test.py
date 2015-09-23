@@ -3,7 +3,6 @@ import os
 import shutil
 
 import numpy
-import py.test
 from mceditlib.anvil.adapter import AnvilWorldAdapter
 from mceditlib.util import exhaust
 
@@ -11,48 +10,39 @@ from mceditlib.worldeditor import WorldEditor
 from mceditlib import nbt
 from mceditlib.selection import BoundingBox
 from mceditlib.pc.regionfile import RegionFile
-from templevel import mktemp, TempLevel, TempFile
+from templevel import mktemp, TempFile
 
 
 __author__ = 'Rio'
 
 def testCreate():
     temppath = mktemp("AnvilCreate")
-    anvilLevel = WorldEditor(filename=temppath, create=True, adapterClass=AnvilWorldAdapter)
-    anvilLevel.close()
+    pc_world = WorldEditor(filename=temppath, create=True, adapterClass=AnvilWorldAdapter)
+    pc_world.close()
     shutil.rmtree(temppath)
 
-
-@py.test.fixture
-def sourceLevel():
-    return TempLevel("Station.schematic")
-
-@py.test.fixture
-def anvilLevel():
-    return TempLevel("AnvilWorld")
-
-def testCreateChunks(anvilLevel):
-    dim = anvilLevel.getDimension()
+def testCreateChunks(pc_world):
+    dim = pc_world.getDimension()
     for ch in list(dim.chunkPositions()):
         dim.deleteChunk(*ch)
     for ch in BoundingBox((0, 0, 0), (32, 0, 32)).chunkPositions():
         dim.createChunk(*ch)
 
-def testRecreateChunks(anvilLevel):
-    dim = anvilLevel.getDimension()
+def testRecreateChunks(pc_world):
+    dim = pc_world.getDimension()
     for x, z in itertools.product(xrange(-1, 3), xrange(-1, 2)):
         dim.deleteChunk(x, z)
         assert not dim.containsChunk(x, z)
         dim.createChunk(x, z)
 
-def testCopyRelight(anvilLevel, sourceLevel):
-    destDim = anvilLevel.getDimension()
-    exhaust(destDim.copyBlocksIter(sourceLevel.getDimension(), BoundingBox((0, 0, 0), (32, 64, 32,)),
+def testCopyRelight(pc_world, schematic_world):
+    destDim = pc_world.getDimension()
+    exhaust(destDim.copyBlocksIter(schematic_world.getDimension(), BoundingBox((0, 0, 0), (32, 64, 32,)),
             destDim.bounds.origin))
-    anvilLevel.saveChanges()
+    pc_world.saveChanges()
 
-def testRecompress(anvilLevel):
-    dim = anvilLevel.getDimension()
+def testRecompress(pc_world):
+    dim = pc_world.getDimension()
     keys = 'Blocks Data SkyLight BlockLight'.split()
 
     cx, cz = iter(dim.chunkPositions()).next()
@@ -70,7 +60,7 @@ def testRecompress(anvilLevel):
         d[key] = numpy.array(getattr(section, key))
 
     for i in range(5):
-        anvilLevel.saveChanges()
+        pc_world.saveChanges()
         section = dim.getChunk(cx, cz).getSection(cy)
         section.dirty = True
         assert (section.Data == 13).all()
@@ -81,7 +71,7 @@ def testBigEndianIntHeightMap():
     """ Test modifying, saving, and loading the new TAG_Int_Array heightmap
     added with the Anvil format.
     """
-    region = RegionFile(TempFile("test_files/AnvilWorld/region/r.0.0.mca"))
+    region = RegionFile(TempFile("AnvilWorld/region/r.0.0.mca"))
     chunk_data = region.readChunkBytes(0, 0)
     chunk = nbt.load(buf=chunk_data)
 

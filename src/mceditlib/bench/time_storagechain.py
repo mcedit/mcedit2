@@ -9,7 +9,7 @@ from mceditlib.test.templevel import TempFile
 
 log = logging.getLogger(__name__)
 
-chain = RevisionHistory(TempFile("test_files/AnvilWorld"))
+chain = RevisionHistory(TempFile("AnvilWorld"))
 
 chunkPositions = list(chain.getHead().chunkPositions(""))
 

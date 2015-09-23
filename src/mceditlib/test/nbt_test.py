@@ -3,7 +3,7 @@ import time
 import zipfile
 import numpy
 from mceditlib import nbt
-from templevel import TempLevel
+from templevel import TempFile
 
 __author__ = 'Rio'
 
@@ -11,7 +11,7 @@ class TestNBT():
 
     def testLoad(self):
         "Load an indev level."
-        level = nbt.load("test_files/indev.mclevel")
+        level = nbt.load(TempFile("indev.mclevel"))
 
         # The root tag must have a name, and so must any tag within a TAG_Compound
         print level.name
@@ -25,7 +25,7 @@ class TestNBT():
         return level
 
     def testLoadUncompressed(self):
-        rootTag = nbt.load("test_files/uncompressed.nbt")
+        rootTag = nbt.load(TempFile("uncompressed.nbt"))
 
     def testCreate(self):
         "Create an indev level."
@@ -162,17 +162,4 @@ class TestNBT():
             pass
         else:
             assert False
-
-    def testSpeed(self):
-        d = join("test_files", "TileTicks_chunks.zip")
-        zf = zipfile.ZipFile(d)
-
-        files = [zf.read(f) for f in zf.namelist()[:40]]
-        startTime = time.time()
-        for f in files:
-            if len(f):
-                n = nbt.load(buf=f)
-        duration = time.time() - startTime
-
-        assert duration < 1.0 # Will fail when not using _nbt.pyx
 

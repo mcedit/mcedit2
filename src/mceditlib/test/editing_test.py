@@ -1,4 +1,3 @@
-import zipfile
 import numpy
 import pytest
 import logging
@@ -6,48 +5,30 @@ from mceditlib.blocktypes import blocktypeConverter
 
 from mceditlib.export import extractSchematicFrom
 from mceditlib.selection import BoundingBox
-from mceditlib import block_copy
 from mceditlib.worldeditor import WorldEditor
-from templevel import TempLevel
 
 logging.basicConfig(level=logging.INFO)
 
 __author__ = 'Rio'
 
 
-@pytest.fixture(params=["AnvilWorld", "Floating.schematic"])
-# , "MCRWorld", "city_256_256_128.dat", "PocketWorldAdapter.zip"
-def world(request):
-    if request.param == "PocketWorldAdapter.zip":
-        def unpackPocket(tmpname):
-            zf = zipfile.ZipFile("test_files/PocketWorldAdapter.zip")
-            zf.extractall(tmpname)
-            return WorldEditor(tmpname + "/PocketWorldAdapter")
-
-        return TempLevel("XXX", createFunc=unpackPocket)
-
-    return TempLevel(request.param)
 
 
-@pytest.fixture(params=["Station.schematic"])
-def sourceLevel(request):
-    return TempLevel(request.param)
 
-
-def testGetEntities(world):
-    dim = world.getDimension()
+def testGetEntities(any_world):
+    dim = any_world.getDimension()
     print len(list(dim.getEntities(dim.bounds)))
 
 
-def testImportAndConvert(world, sourceLevel):
-    destDim = world.getDimension()
-    sourceDim = sourceLevel.getDimension()
+def testImportAndConvert(any_world, schematic_world):
+    destDim = any_world.getDimension()
+    sourceDim = schematic_world.getDimension()
     destPoint = sourceDim.bounds.origin
 
     oldEntityCount = len(list(destDim.getEntities(BoundingBox(destPoint, sourceDim.bounds.size))))
     destDim.copyBlocks(sourceDim, sourceDim.bounds, destPoint, create=True)
 
-    convertBlocks = blocktypeConverter(world, sourceLevel)
+    convertBlocks = blocktypeConverter(any_world.blocktypes, schematic_world.blocktypes)
 
     for sourceChunk in sourceDim.getChunks():
         cx = sourceChunk.cx
@@ -76,14 +57,14 @@ def testImportAndConvert(world, sourceLevel):
             == len(list(destDim.getEntities(sourceDim.bounds))))
 
 
-def testFill(world):
-    dim = world.getDimension()
+def testFill(any_world):
+    dim = any_world.getDimension()
     bounds = dim.bounds
 
     box = BoundingBox(bounds.origin + (bounds.size / 2), (64, bounds.height / 2, 64))
     x, y, z = numpy.array(list(box.positions)).transpose()
 
-    dim.fillBlocks(box, world.blocktypes["planks"])
+    dim.fillBlocks(box, any_world.blocktypes["planks"])
 
     def checkEqual(a, b):
         """
@@ -100,38 +81,38 @@ def testFill(world):
             for cy in chunk.bounds.sectionPositions(*cp):
                 assert chunk.getSection(cy) is not None, "Section %s not found" % cy
 
-    checkEqual(dim.getBlocks(x, y, z).Blocks, world.blocktypes["planks"].ID)
+    checkEqual(dim.getBlocks(x, y, z).Blocks, any_world.blocktypes["planks"].ID)
 
-    dim.fillBlocks(box, world.blocktypes["stone"], [world.blocktypes["planks"]])
-    world.saveChanges()
-    world.close()
+    dim.fillBlocks(box, any_world.blocktypes["stone"], [any_world.blocktypes["planks"]])
+    any_world.saveChanges()
+    any_world.close()
 
-    filename = world.filename
-    world = WorldEditor(filename)
-    checkEqual(world.getDimension().getBlocks(x, y, z).Blocks, world.blocktypes["stone"].ID)
-
-
-def testOldReplace(world):
-    dim = world.getDimension()
-    dim.fillBlocks(BoundingBox((-11, 0, -7), (38, dim.bounds.height, 25)), world.blocktypes["planks"],
-                   [world.blocktypes["dirt"], world.blocktypes["grass"]])
+    filename = any_world.filename
+    any_world = WorldEditor(filename)
+    checkEqual(any_world.getDimension().getBlocks(x, y, z).Blocks, any_world.blocktypes["stone"].ID)
 
 
-def testMultiReplace(world):
-    dim = world.getDimension()
+def testOldReplace(any_world):
+    dim = any_world.getDimension()
+    dim.fillBlocks(BoundingBox((-11, 0, -7), (38, dim.bounds.height, 25)), any_world.blocktypes["planks"],
+                   [any_world.blocktypes["dirt"], any_world.blocktypes["grass"]])
+
+
+def testMultiReplace(any_world):
+    dim = any_world.getDimension()
     dim.fillBlocks(BoundingBox((-11, 0, -7), (38, dim.bounds.height, 25)),
-                   [(world.blocktypes["planks"], world.blocktypes["dirt"]),
-                    (world.blocktypes["grass"], world.blocktypes["iron_ore"])])
+                   [(any_world.blocktypes["planks"], any_world.blocktypes["dirt"]),
+                    (any_world.blocktypes["grass"], any_world.blocktypes["iron_ore"])])
 
 
-def testImport(world, sourceLevel):
-    dim = world.getDimension()
-    dim.copyBlocks(sourceLevel.getDimension(), BoundingBox((0, 0, 0), (32, 64, 32,)), dim.bounds.origin)
-    world.saveChanges()
+def testImport(any_world, schematic_world):
+    dim = any_world.getDimension()
+    dim.copyBlocks(schematic_world.getDimension(), BoundingBox((0, 0, 0), (32, 64, 32,)), dim.bounds.origin)
+    any_world.saveChanges()
 
 
-def testExportImport(world):
-    dim = world.getDimension()
+def testExportImport(any_world):
+    dim = any_world.getDimension()
 
     schem = extractSchematicFrom(dim, dim.bounds)
     schemDim = schem.getDimension()

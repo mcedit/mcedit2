@@ -1,12 +1,18 @@
 import atexit
 import os
-from os.path import join
+from os.path import join, dirname
 import shutil
 import tempfile
 from mceditlib.worldeditor import WorldEditor
 
 __author__ = 'Rio'
-TEST_FILES_DIR = "test_files"
+
+_TEST_FILES_DIR = "test_files"
+
+# from $PROJECT/src/mceditlib/test/templevel.py, get to $PROJECT/test_files
+
+_PROJECT = dirname(dirname(dirname(dirname(__file__))))
+TEST_FILES_DIR = join(_PROJECT, _TEST_FILES_DIR)
 
 tempdir = os.path.join(tempfile.gettempdir(), "mceditlib_test")
 def killtemp():
@@ -23,6 +29,13 @@ def mktemp(suffix):
     return td
 
 def TempFile(filename):
+    """
+    Create a temporary copy of 'filename'.
+
+    'filename' must be a path relative to the 'test_files' folder
+    """
+    assert not os.path.isabs(filename), "TempFile filename must be a relative path."
+    filename = join(TEST_FILES_DIR, filename)
     tmpname = mktemp(os.path.basename(filename))
     if not os.path.exists(filename):
         raise IOError("File not found")
