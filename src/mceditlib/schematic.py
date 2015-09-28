@@ -99,7 +99,8 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
         if blocktypes in blocktypeClassesByName:
             self.blocktypes = blocktypeClassesByName[blocktypes]()
         else:
-            assert(isinstance(blocktypes, BlockTypeSet))
+            if not isinstance(blocktypes, BlockTypeSet):
+                raise ValueError("%s is not a recognized BlockTypeSet", blocktypes)
             self.blocktypes = blocktypes
 
         if rootTag:
@@ -196,8 +197,8 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
 
             self.rootTag = rootTag
 
-            self.rootTag["BlockIDs"] = blockIDMapping(blocktypes)
-            itemMapping = itemIDMapping(blocktypes)
+            self.rootTag["BlockIDs"] = blockIDMapping(self.blocktypes)
+            itemMapping = itemIDMapping(self.blocktypes)
             if itemMapping is not None:
                 self.rootTag["ItemIDs"] = itemMapping  # Only present for Forge 1.7
 
