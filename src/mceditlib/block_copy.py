@@ -235,8 +235,12 @@ def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint,
             x = allChangedX[i]
             y = allChangedY[i]
             z = allChangedZ[i]
+            if len(x) == 0:
+                continue
             relight.updateLightsByCoord(destDim, x, y, z)
             yield (i, len(allChangedX), "Updating lights...")
+            log.info("Updated section %d/%d (%d cells) (%d,%d,%d)",
+                     i, len(allChangedX), len(x), x[0]>>4, y[0]>>4, z[0]>>4)
 
         i = i or 1
         duration = time.time() - startTime
