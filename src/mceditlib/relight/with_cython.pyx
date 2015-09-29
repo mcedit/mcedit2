@@ -63,6 +63,7 @@ cdef class RelightCtx(object):
     cdef:
         map[section_key_t, RelightSection] section_cache
         map[chunk_key_t, RelightChunk] chunk_cache
+        set[section_key_t] absent_sections
         
         object dimension
         unsigned char [:] brightness
@@ -101,12 +102,24 @@ cdef class RelightCtx(object):
         # later as Cython attempts to decref the uninitialized memoryview and segfaults.
         cdef RelightSection cachedSection = [None, None, None, NULL, 0]
         cdef long long key = section_key(cx, cy, cz)
+
+        # Fast exit for absent sections
+        if self.absent_sections.find(key) != self.absent_sections.end():
+            return NULL
+
         if not self.dimension.containsChunk(cx, cz):
             return NULL
         chunk = self.dimension.getChunk(cx, cz)
-        section = chunk.getSection(cy, create=True)
-        if section is None:
+        try:
+            section = chunk.getSection(cy, create=True)
+        except ValueError:
+            self.absent_sections.insert(key)
             return NULL
+
+        if section is None:
+            self.absent_sections.insert(key)
+            return NULL
+
         if self.section_cache.size() > CACHE_LIMIT:
             # xxx decache something!
             pass
