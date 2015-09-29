@@ -23,6 +23,8 @@ cimport numpy as cnp
 log = logging.getLogger(__name__)
 
 DEF OUTPUT_STATS = False
+IF OUTPUT_STATS:
+    import time
 
 cdef struct RelightSection:
     unsigned short[:,:,:] Blocks
@@ -70,7 +72,8 @@ cdef class RelightCtx(object):
         unsigned char [:] opacity
         IF OUTPUT_STATS:
             unsigned int spreadCount, drawCount, fadeCount
-
+            unsigned int raisedColumns, loweredColumns, columnUpdates
+            object startTime
         int _useBlockLight
 
     def __init__(self, dim):
@@ -80,6 +83,8 @@ cdef class RelightCtx(object):
         self._useBlockLight = 1
         IF OUTPUT_STATS:
             self.spreadCount = self.drawCount = self.fadeCount = 0
+            self.raisedColumns = self.loweredColumns = self.columnUpdates = 0
+            self.startTime = time.time()
 
     cdef void useBlockLight(self):
         self._useBlockLight = 1
@@ -182,7 +187,12 @@ cdef class RelightCtx(object):
         cdef RelightSection cachedSection
         cdef section_key_t key
         IF OUTPUT_STATS:
-            print("RelightCtx Finished: draw=%7d, spread=%7d, fade=%7d" % (self.drawCount, self.spreadCount, self.fadeCount))
+            cdef float duration = time.time() - self.startTime
+            log.info("RelightCtx Finished: draw=%7d, spread=%7d, fade=%7d, sections=%d "
+                     "raisedColumns=%d loweredColumns=%d time=%f",
+                     self.drawCount, self.spreadCount, self.fadeCount, self.section_cache.size(),
+                     self.raisedColumns, self.loweredColumns, duration)
+
         for keyval in self.section_cache:
             key = keyval.first
             cachedSection = keyval.second
@@ -293,14 +303,17 @@ cdef updateSkyLight(RelightCtx ctx,
 
     ctx.useSkyLight()
 
+    # HeightMap stores the block height above the highest opacity>0 block
+    #
+    # Cache old heightmap values
     n = ax.shape[0]
     for i in range(n):
         x = ax[i]
         z = az[i]
         newHeights[chunk_key(x, z)] = ctx.getHeightMap(x, z)
 
-    # HeightMap stores the block height above the highest opacity>0 block
-
+    # Scan requested coords for changes in height value, store
+    # new height values in newHeights
     for i in range(n):
         x = ax[i]
         y = ay[i]
@@ -321,6 +334,8 @@ cdef updateSkyLight(RelightCtx ctx,
                         newHeights[k] = y2 + 1
                         break
 
+    # Scan newHeights for columns whose height changed, and queue the appropriate
+    # lighting updates for columns that shifted up or down.
     for p in newHeights:
         k = p.first
         h = p.second
@@ -345,6 +360,9 @@ cdef updateSkyLight(RelightCtx ctx,
             c.y = h
             ctx.setBlockLight(c.x, c.y, c.z, 15)
             litCoords.push_back(c)
+            IF OUTPUT_STATS:
+                ctx.raisedColumns += 1
+
         if h < oldH:
             # Column shifted down - blocks in changed segment increased light level
             for y2 in range(h, oldH):
@@ -352,7 +370,11 @@ cdef updateSkyLight(RelightCtx ctx,
                 ctx.setBlockLight(c.x, c.y, c.z, 15)
                 litCoords.push_back(c)
 
+            IF OUTPUT_STATS:
+                ctx.loweredColumns += 1
+
         if h != oldH:
+            # Update chunk height map
             ctx.setHeightMap(x, z, h)
 
     #print("Dimming %d, brightening %d" % (dimCoords.size(), litCoords.size()))
@@ -399,7 +421,6 @@ def updateLightsInSelection(dim, selection):
         updateLights(ctx, x, y, z)
 
 cdef void updateLights(RelightCtx ctx, int x, int y, int z):
-    # import pdb; pdb.set_trace()
     cdef char previousLight = ctx.getBlockLight(x, y, z)
     cdef char light = ctx.getBlockBrightness(x, y, z)
     ctx.setBlockLight(x, y, z, light)
