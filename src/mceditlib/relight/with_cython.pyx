@@ -422,11 +422,12 @@ def updateLightsInSelection(dim, selection):
 
 cdef void updateLights(RelightCtx ctx, int x, int y, int z):
     cdef char previousLight = ctx.getBlockLight(x, y, z)
-    cdef char light = ctx.getBlockBrightness(x, y, z)
-    ctx.setBlockLight(x, y, z, light)
+    cdef char light
+    ctx.setBlockLight(x, y, z, ctx.getBlockBrightness(x, y, z))
 
     # should be able to often skip this if we can get block's previous opacity in here... bluh
     drawLight(ctx, x, y, z)
+    light = ctx.getBlockLight(x, y, z)
 
     if previousLight < light:
         spreadLight(ctx, x, y, z)
