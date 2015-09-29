@@ -462,12 +462,12 @@ class WorldView(QGLWidget):
                     self.wheelPos += 120
                     clicks -= 1
 
-                if action.button == action.WHEEL_UP and clicks < 0:
+                if action.button == action.WHEEL_UP and clicks > 0:
                     for i in range(abs(clicks)):
                         action.keyPressEvent(event)
 
-                if action.button == action.WHEEL_DOWN and clicks > 0:
-                    for i in range(clicks):
+                if action.button == action.WHEEL_DOWN and clicks < 0:
+                    for i in range(abs(clicks)):
                         action.keyPressEvent(event)
 
 

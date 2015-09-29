@@ -297,6 +297,9 @@ class CameraWorldView(WorldView):
         else:
             self.updateOrthoMatrices()
 
+        self.updateModelviewMatrix()
+
+    def updateModelviewMatrix(self):
         modelview = QtGui.QMatrix4x4()
         modelview.lookAt(QtGui.QVector3D(*self.centerPoint),
                          QtGui.QVector3D(*(self.centerPoint + self.cameraVector)),
