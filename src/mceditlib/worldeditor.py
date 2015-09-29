@@ -666,6 +666,10 @@ class WorldEditorDimension(object):
     def hasLights(self):
         return self.adapter.hasLights
 
+    @property
+    def hasSkyLight(self):
+        return self.dimName not in ("DIM1", "DIM-1")
+
     # --- Bounds ---
 
     _bounds = None

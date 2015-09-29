@@ -373,7 +373,8 @@ def updateLightsByCoord(dim, x, y, z):
 
     ctx = RelightCtx(dim)
 
-    updateSkyLight(ctx, ax, ay, az)
+    if dim.hasSkyLight:
+        updateSkyLight(ctx, ax, ay, az)
 
     for i in range(<size_t>len(ax)):
         updateLights(ctx, ax[i], ay[i], az[i])
