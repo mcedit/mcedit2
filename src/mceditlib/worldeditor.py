@@ -815,7 +815,11 @@ class WorldEditorDimension(object):
         return exhaust(self.exportSchematicIter(selection))
 
     def importSchematicIter(self, schematic, destPoint):
-        dim = schematic.getDimension()
+        if hasattr(schematic, 'getDimension'):
+            # accept either WorldEditor or WorldEditorDimension
+            dim = schematic.getDimension()
+        else:
+            dim = schematic
         return copyBlocksIter(self, dim, dim.bounds, destPoint, biomes=True, create=True)
 
     def importSchematic(self, schematic, destPoint):
