@@ -208,10 +208,13 @@ class WorldView(QGLWidget):
         super(WorldView, self).destroy()
 
     def __str__(self):
-        if self.dimension:
-            dimName = displayName(self.dimension.worldEditor.filename) + ": " + self.dimension.dimName
-        else:
-            dimName = "None"
+        try:
+            if self.dimension:
+                dimName = displayName(self.dimension.worldEditor.filename) + ": " + self.dimension.dimName
+            else:
+                dimName = "None"
+        except Exception as e:
+            return "%s trying to get node name" % e
         return "%s(%r)" % (self.__class__.__name__, dimName)
 
     def createCompass(self):
