@@ -73,7 +73,10 @@ def displaySchematic(schematic):
     if QtGui.qApp is None:
         _swv_app = QtGui.QApplication([])
 
-    dim = schematic.getDimension()
+    if hasattr(schematic, 'getDimension'):
+        dim = schematic.getDimension()
+    else:
+        dim = schematic
 
     resourceLoader = minecraftinstall.getSelectedResourceLoader()  # xxx select using dim.blocktypes
     blockModels = BlockModels(schematic.blocktypes, resourceLoader)
