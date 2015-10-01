@@ -82,7 +82,7 @@ class TextureAtlas(object):
         self.overrideMaxSize = overrideMaxSize
         self.blockModels = blockModels
         self.blocktypes = world.blocktypes
-        self._filename = world.filename
+        self._filename = world.filename if hasattr(world, 'filename') else "Unknown"
         self.resourceLoader = resourceLoader
         self._lightTexture = None
         self._terrainTexture = None
