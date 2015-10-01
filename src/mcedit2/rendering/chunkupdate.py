@@ -381,17 +381,21 @@ class SectionUpdate(object):
 
     def areaLights(self, lightName):
         chunkSection = self.chunkSection
+        chunkWidth, chunkLength, chunkHeight = self.Blocks.shape
+        shape = (chunkWidth + 4, chunkLength + 4, chunkHeight + 4)
+
         if not hasattr(chunkSection, lightName):
-            return numpy.array([[[15]]], numpy.uint8)
+            ret = numpy.zeros(shape, numpy.uint8)
+            ret[:] = 15
+            return ret
 
         def Light(cs):
             return getattr(cs, lightName)
 
         neighboringChunks = self.chunkUpdate.neighboringChunks
 
-        chunkWidth, chunkLength, chunkHeight = self.Blocks.shape
 
-        areaLights = numpy.empty((chunkWidth + 4, chunkLength + 4, chunkHeight + 4), numpy.uint8)
+        areaLights = numpy.empty(shape, numpy.uint8)
         if lightName == "SkyLight":
             default = 15
         else:
