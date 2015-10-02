@@ -10,6 +10,7 @@ from PySide.QtCore import Qt
 from mcedit2.editorsession import PendingImport
 from mcedit2.editortools import EditorTool
 from mcedit2.command import SimpleRevisionCommand
+from mcedit2.handles.boxhandle import BoxHandle
 from mcedit2.rendering.scenegraph.matrix import TranslateNode
 from mcedit2.rendering.scenegraph.scenenode import Node
 from mcedit2.rendering.selection import SelectionBoxNode, SelectionFaceNode, boxFaceUnderCursor
@@ -82,9 +83,14 @@ class MoveFinishCommand(SimpleRevisionCommand):
         self.moveTool.removePendingImport(self.pendingImport)
 
 
-class PendingImportNode(Node):
+class PendingImportNode(Node, QtCore.QObject):
+    __node_id_counter = 0
+
     def __init__(self, pendingImport, textureAtlas):
         super(PendingImportNode, self).__init__()
+        PendingImportNode.__node_id_counter += 1
+        self.id = PendingImportNode.__node_id_counter
+
         self.pendingImport = pendingImport
         dim = pendingImport.sourceDim
 
@@ -100,14 +106,14 @@ class PendingImportNode(Node):
         self.positionTranslateNode.addChild(self.worldSceneTranslateNode)
 
         box = BoundingBox(self.pos, pendingImport.bounds.size)
-        self.outlineNode = SelectionBoxNode()
-        self.outlineNode.filled = False
-        self.outlineNode.selectionBox = box
-        self.addChild(self.outlineNode)
 
-        self.faceHoverNode = SelectionFaceNode()
-        self.faceHoverNode.selectionBox = box
-        self.addChild(self.faceHoverNode)
+        self.handleNode = BoxHandle()
+        self.handleNode.bounds = box
+        self.handleNode.resizable = False
+        self.handleNode.boundsChanged.connect(self.handleBoundsChanged)
+        self.handleNode.boundsChangedDone.connect(self.handleBoundsChangedDone)
+
+        self.addChild(self.handleNode)
 
         self.pos = pendingImport.pos
 
@@ -115,25 +121,27 @@ class PendingImportNode(Node):
                                   list(pendingImport.selection.chunkPositions()))
         self.loader.timer.start()
 
+    def handleBoundsChanged(self, bounds):
+        self.pos = bounds.origin
+
+    # newPos, oldPos
+    importMoved = QtCore.Signal(object, object)
+
+    def handleBoundsChangedDone(self, bounds, oldBounds):
+        self.importMoved.emit(bounds.origin, oldBounds.origin)
+
     @property
     def pos(self):
         return self.positionTranslateNode.translateOffset
 
     @pos.setter
     def pos(self, value):
+        if value == self.positionTranslateNode.translateOffset:
+            return
+
         self.positionTranslateNode.translateOffset = value
         bounds = BoundingBox(value, self.pendingImport.bounds.size)
-        self.outlineNode.selectionBox = bounds
-        self.faceHoverNode.selectionBox = bounds
-
-    def hoverFace(self, face):
-        if face is not None:
-            self.faceHoverNode.color = 0.3, 1, 1
-            self.faceHoverNode.visible = True
-
-            self.faceHoverNode.face = face
-        else:
-            self.faceHoverNode.visible = False
+        self.handleNode.bounds = bounds
 
 class RotationWidget(QtGui.QWidget):
     def __init__(self):
@@ -184,8 +192,6 @@ class RotationWidget(QtGui.QWidget):
         self.zRotSpinBox.setValue(value)
 
         self.emitRotationChanged(self.zRotSlider.isSliderDown())
-
-
 
 
 class MoveTool(EditorTool):
@@ -260,6 +266,8 @@ class MoveTool(EditorTool):
         self.importsListModel.appendRow(item)
         self.importsListWidget.setCurrentIndex(self.importsListModel.index(self.importsListModel.rowCount()-1, 0))
         node = self.pendingImportNodes[pendingImport] = PendingImportNode(pendingImport, self.editorSession.textureAtlas)
+        node.importMoved.connect(self.importDidMove)
+
         self.overlayNode.addChild(node)
         self.currentImport = pendingImport
 
@@ -272,7 +280,7 @@ class MoveTool(EditorTool):
         if node:
             self.overlayNode.removeChild(node)
 
-    def doMoveOffsetCommand(self, oldPoint, newPoint):
+    def importDidMove(self, newPoint, oldPoint):
         if newPoint != oldPoint:
             command = MoveOffsetCommand(self, oldPoint, newPoint)
             self.editorSession.pushCommand(command)
@@ -297,67 +305,34 @@ class MoveTool(EditorTool):
     def currentImport(self, value):
         self._currentImport = value
         self.pointInput.setEnabled(value is not None)
-        for node in self.pendingImportNodes.itervalues():
-            node.outlineNode.wireColor = (.2, 1., .2, .5) if node.pendingImport is value else (1, 1, 1, .3)
+        # Set current import to different color?
+        # for node in self.pendingImportNodes.itervalues():
+        #     node.outlineNode.wireColor = (.2, 1., .2, .5) if node.pendingImport is value else (1, 1, 1, .3)
 
     @property
     def currentImportNode(self):
         return self.pendingImportNodes.get(self.currentImport)
 
-    @property
-    def schematicBox(self):
-        box = self.currentImport.selection
-        return BoundingBox(self.movePosition, box.size)
-
     # --- Mouse events ---
-
-    def dragMovePoint(self, ray):
-        """
-        Return a point representing the intersection between the mouse ray
-         and an imaginary plane coplanar to the dragged face
-
-        :type ray: Ray
-        :rtype: Vector
-        """
-        dim = self.dragStartFace.dimension
-        return ray.intersectPlane(dim, self.dragStartPoint[dim])
 
     def mouseMove(self, event):
         # Hilite face cursor is over
-        if self.currentImport is None:
-            return
-
-        node = self.currentImportNode
-        if node:
-            point, face = boxFaceUnderCursor(self.schematicBox, event.ray)
-            node.hoverFace(face)
+        if self.currentImport is not None:
+            self.currentImportNode.handleNode.mouseMove(event)
 
         # Highlight face of box to move along, or else axis pointers to grab and drag?
-        pass
 
     def mouseDrag(self, event):
-        # Move box using face or axis pointers
-        if self.currentImport is None:
-            return
-        if self.dragStartFace is None:
-            return
-
-        delta = self.dragMovePoint(event.ray) - self.dragStartPoint
-        self.movePosition = self.dragStartMovePosition + map(int, delta)
+        self.mouseMove(event)
 
     def mousePress(self, event):
         if self.currentImport is not None:
-            point, face = boxFaceUnderCursor(self.schematicBox, event.ray)
-            self.dragStartFace = face
-            self.dragStartPoint = point
-            self.dragStartMovePosition = self.movePosition
+            self.currentImportNode.handleNode.mousePress(event)
 
     def mouseRelease(self, event):
-        # Don't paste cut selection in yet. Wait for tool switch or "Confirm" button press. Begin new revision
-        # for paste operation, paste stored world, store revision after paste (should be previously stored revision
-        # +2), commit MoveCommand to undo history.
         if self.currentImport is not None:
-            self.doMoveOffsetCommand(self.dragStartMovePosition, self.movePosition)
+            self.currentImportNode.handleNode.mouseRelease(event)
+
 
     def toolActive(self):
         self.editorSession.selectionTool.hideSelectionWalls = True

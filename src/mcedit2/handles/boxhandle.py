@@ -27,6 +27,8 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
     dragStartPoint = None
     dragStartFace = None
 
+    dragStartMovePosition = None
+
     oldBounds = None
 
     hiliteFace = True
@@ -42,14 +44,17 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
         mouse button is released.
 
         The handle initially has no box; the first mouse action will define
-        the initial box with height=0. Subsequent mouse actions will move or resize
-        the box.
+        the initial box with height=0. If a subsequent mouse action does not intersect
+        the box, a new initial box will be created; otherwise, the existing box will be
+        moved or resized.
 
         Mouse events must be forwarded to the handle using mousePress, mouseDrag, and
         mouseRelease.
 
         A modifier can be set (default Shift) to move the box instead of resizing it;
-        or the `resizable` attribute can be set to False to always move the box.
+        or the `resizable` attribute can be set to False to always move the box. When
+        `resizable` is False, new initial boxes cannot be created.
+
         :return:
         :rtype:
         """
@@ -61,7 +66,9 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
         self.addChild(self.faceDragNode)
 
     boundsChanged = QtCore.Signal(BoundingBox)
-    boundsChangedDone = QtCore.Signal(BoundingBox, bool)
+
+    # newBox, oldBox
+    boundsChangedDone = QtCore.Signal(BoundingBox, BoundingBox)
 
     @property
     def bounds(self):
@@ -185,10 +192,11 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
 
     def endResize(self, event):
         self.bounds = self.boxFromDragResize(self.oldBounds, event.ray)
+        oldBounds = self.oldBounds
         self.oldBounds = None
         self.dragResizeFace = None
         self.faceDragNode.visible = False
-        self.boundsChangedDone.emit(self.bounds, False)
+        self.boundsChangedDone.emit(self.bounds, oldBounds)
 
     # --- Create ---
 
@@ -205,18 +213,42 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
         newBox = self.boxFromDragSelect(event.ray)
         self.dragStartPoint = None
         self.bounds = newBox
-        self.boundsChangedDone.emit(newBox, True)
+        self.boundsChangedDone.emit(newBox, None)
+
+    # --- Move helpers ---
+
+
+    def dragMovePoint(self, ray):
+        """
+        Return a point representing the intersection between the mouse ray
+         and an imaginary plane coplanar to the dragged face
+
+        :type ray: Ray
+        :rtype: Vector
+        """
+        dim = self.dragStartFace.dimension
+        return ray.intersectPlane(dim, self.dragStartPoint[dim])
 
     # --- Move ---
 
     def beginMove(self, event):
-        pass
+        point, face = boxFaceUnderCursor(self.bounds, event.ray)
+        self.dragStartFace = face
+        self.dragStartPoint = point
+        self.dragStartMovePosition = self.bounds.origin
+        self.oldBounds = self.bounds
 
     def continueMove(self, event):
-        pass
+        if self.dragStartFace is None:
+            return
+
+        delta = self.dragMovePoint(event.ray) - self.dragStartPoint
+        movePosition = self.dragStartMovePosition + map(int, delta)
+        self.bounds = BoundingBox(movePosition, self.bounds.size)
 
     def endMove(self, event):
-        pass
+        self.boundsChangedDone.emit(self.bounds, self.oldBounds)
+        self.dragStartFace = None
 
     # --- Update ---
 

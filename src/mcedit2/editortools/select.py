@@ -255,11 +255,11 @@ class SelectionTool(EditorTool):
         if box is not None:
             self.selectionNode.selection = self.createShapedSelection(box)
 
-    def boxHandleResizedDone(self, box, newSelection):
+    def boxHandleResizedDone(self, box, oldBox):
         if box is not None:
             selection = self.createShapedSelection(box)
             command = SelectCommand(self.editorSession, selection)
-            if not newSelection:
+            if oldBox is not None:
                 command.setText(self.tr("Resize Selection"))
             self.editorSession.undoStack.push(command)
             self.updateNodes()

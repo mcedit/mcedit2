@@ -319,7 +319,7 @@ class GenerateTool(EditorTool):
         self.currentGenerator.boundsChanged(bounds)
         self.updatePreview()
 
-    def boundsDidChangeDone(self, bounds, newSelection):
+    def boundsDidChangeDone(self, bounds, oldBounds):
         # box finished resize
         if not self.currentGenerator:
             return
