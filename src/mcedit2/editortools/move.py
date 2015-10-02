@@ -4,7 +4,7 @@
 from __future__ import absolute_import, division, print_function
 import logging
 
-from PySide import QtGui
+from PySide import QtGui, QtCore
 
 from PySide.QtCore import Qt
 from mcedit2.editorsession import PendingImport
@@ -15,6 +15,7 @@ from mcedit2.rendering.selection import SelectionBoxNode, SelectionFaceNode, box
 from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.worldscene import WorldScene
+from mcedit2.util.load_ui import load_ui
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
 from mcedit2.widgets.coord_widget import CoordinateWidget
@@ -127,6 +128,59 @@ class PendingImportNode(TranslateNode):
         else:
             self.faceHoverNode.visible = False
 
+class RotationWidget(QtGui.QWidget):
+    def __init__(self):
+        super(RotationWidget, self).__init__()
+        load_ui("rotation_widget.ui", baseinstance=self)
+
+        self.xRotSlider.valueChanged.connect(self.setXRot)
+        self.yRotSlider.valueChanged.connect(self.setYRot)
+        self.zRotSlider.valueChanged.connect(self.setZRot)
+
+        self.xRotSpinBox.valueChanged.connect(self.setXRot)
+        self.yRotSpinBox.valueChanged.connect(self.setYRot)
+        self.zRotSpinBox.valueChanged.connect(self.setZRot)
+
+        self.xRot = self.yRot = self.zRot = 0
+
+    rotationChanged = QtCore.Signal(object, bool)
+
+    def emitRotationChanged(self, live):
+        self.rotationChanged.emit((self.xRot, self.yRot, self.zRot), live)
+
+    def setXRot(self, value):
+        if self.xRot == value:
+            return
+
+        self.xRot = value
+        self.xRotSlider.setValue(value)
+        self.xRotSpinBox.setValue(value)
+
+        self.emitRotationChanged(self.xRotSlider.isSliderDown())
+
+    def setYRot(self, value):
+        if self.yRot == value:
+            return
+
+        self.yRot = value
+        self.yRotSlider.setValue(value)
+        self.yRotSpinBox.setValue(value)
+
+        self.emitRotationChanged(self.yRotSlider.isSliderDown())
+
+    def setZRot(self, value):
+        if self.zRot == value:
+            return
+
+        self.zRot = value
+        self.zRotSlider.setValue(value)
+        self.zRotSpinBox.setValue(value)
+
+        self.emitRotationChanged(self.zRotSlider.isSliderDown())
+
+
+
+
 class MoveTool(EditorTool):
     iconName = "move"
     name = "Move"
@@ -152,13 +206,22 @@ class MoveTool(EditorTool):
 
         self.pointInput = CoordinateWidget()
         self.pointInput.pointChanged.connect(self.pointInputChanged)
+
+        self.rotationInput = RotationWidget()
+        self.rotationInput.rotationChanged.connect(self.rotationChanged)
+
         confirmButton = QtGui.QPushButton("Confirm")  # xxxx should be in worldview
         confirmButton.clicked.connect(self.confirmImport)
         self.toolWidget.setLayout(Column(self.importsListWidget,
                                          self.pointInput,
+                                         self.rotationInput,
                                          confirmButton,
                                          None))
 
+
+    def rotationChanged(self, rots):
+        rotX, rotY, rotZ = rots
+        log.info("Rotations: %s", rots)
 
     @property
     def movePosition(self):
