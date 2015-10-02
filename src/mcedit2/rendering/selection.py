@@ -157,7 +157,9 @@ class SelectionScene(scenenode.Node):
         self.renderSelection = selection & NonAirMaskSelection(self.dimension, selection)
         self.groupNode.clear()
         self._loader = None
-        if selection.chunkCount < 16:
+
+    def loadImmediateChunks(self):
+        if self.selection.chunkCount < 16:
             exhaust(self.loadSections())
 
             self.loadTimer.setInterval(333)

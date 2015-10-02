@@ -263,6 +263,7 @@ class SelectionTool(EditorTool):
                 command.setText(self.tr("Resize Selection"))
             self.editorSession.undoStack.push(command)
             self.updateNodes()
+            self.selectionNode.loadImmediateChunks()
 
     def mousePress(self, event):
         self.boxHandleNode.mousePress(event)
