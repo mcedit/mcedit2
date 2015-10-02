@@ -11,6 +11,7 @@ from mcedit2.editorsession import PendingImport
 from mcedit2.editortools import EditorTool
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.rendering.scenegraph.matrix import TranslateNode
+from mcedit2.rendering.scenegraph.scenenode import Node
 from mcedit2.rendering.selection import SelectionBoxNode, SelectionFaceNode, boxFaceUnderCursor
 from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.depths import DepthOffset
@@ -81,13 +82,14 @@ class MoveFinishCommand(SimpleRevisionCommand):
         self.moveTool.removePendingImport(self.pendingImport)
 
 
-class PendingImportNode(TranslateNode):
+class PendingImportNode(Node):
     def __init__(self, pendingImport, textureAtlas):
         super(PendingImportNode, self).__init__()
         self.pendingImport = pendingImport
-        self.pos = pendingImport.pos
-
         dim = pendingImport.sourceDim
+
+        self.positionTranslateNode = TranslateNode()
+        self.addChild(self.positionTranslateNode)
 
         self.worldSceneTranslateNode = TranslateNode()
         self.worldScene = WorldScene(dim, textureAtlas, bounds=pendingImport.selection)
@@ -95,9 +97,9 @@ class PendingImportNode(TranslateNode):
 
         self.worldSceneTranslateNode.translateOffset = -self.pendingImport.selection.origin
         self.worldSceneTranslateNode.addChild(self.worldScene)
-        self.addChild(self.worldSceneTranslateNode)
+        self.positionTranslateNode.addChild(self.worldSceneTranslateNode)
 
-        box = BoundingBox((0, 0, 0), pendingImport.bounds.size)
+        box = BoundingBox(self.pos, pendingImport.bounds.size)
         self.outlineNode = SelectionBoxNode()
         self.outlineNode.filled = False
         self.outlineNode.selectionBox = box
@@ -107,17 +109,22 @@ class PendingImportNode(TranslateNode):
         self.faceHoverNode.selectionBox = box
         self.addChild(self.faceHoverNode)
 
+        self.pos = pendingImport.pos
+
         self.loader = WorldLoader(self.worldScene,
                                   list(pendingImport.selection.chunkPositions()))
         self.loader.timer.start()
 
     @property
     def pos(self):
-        return self.translateOffset
+        return self.positionTranslateNode.translateOffset
 
     @pos.setter
     def pos(self, value):
-        self.translateOffset = value
+        self.positionTranslateNode.translateOffset = value
+        bounds = BoundingBox(value, self.pendingImport.bounds.size)
+        self.outlineNode.selectionBox = bounds
+        self.faceHoverNode.selectionBox = bounds
 
     def hoverFace(self, face):
         if face is not None:
