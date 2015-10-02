@@ -69,7 +69,12 @@ class ViewAction(QtCore.QObject):
             modifiers = self.modifiers  # pressing modifier key by itself has modifiers set, but releasing modifiers does not
 
         return self.key == key and (self.modifiers & modifiers or self.modifiers == modifiers)
-
+    
+    def matchModifiers(self, event):
+        return (self.modifiers is None or
+                (self.modifiers & event.modifiers() or
+                 self.modifiers == event.modifiers()))
+        
     def mouseMoveEvent(self, event):
         """
         Called when the mouse moves while the bound keys or buttons are pressed.
@@ -194,7 +199,7 @@ class UseToolMouseAction(ViewAction):
 class TrackingMouseAction(ViewAction):
     button = Qt.NoButton
     hidden = True
-
+    modifiers = None
     labelText = "Mouse Tracking (Don't change!)"
     settingsKey = None
 

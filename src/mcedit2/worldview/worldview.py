@@ -424,7 +424,7 @@ class WorldView(QGLWidget):
         self.augmentMouseEvent(event)
         for action in self.viewActions:
             if action.button & event.button():
-                if action.modifiers & event.modifiers() or action.modifiers == event.modifiers():
+                if action.matchModifiers(event):
                     if not action.key or action.key in self.pressedKeys:
                         action.mousePressEvent(event)
 
@@ -433,7 +433,7 @@ class WorldView(QGLWidget):
         for action in self.viewActions:
             if not action.button or action.button == event.buttons() or action.button & event.buttons():
                 # Important! mouseMove checks event.buttons(), press and release check event.button()
-                if action.modifiers & event.modifiers() or action.modifiers == event.modifiers():
+                if action.matchModifiers(event):
                     if not action.key or action.key in self.pressedKeys:
                         action.mouseMoveEvent(event)
         self.cursorMoved.emit(event)
@@ -443,7 +443,7 @@ class WorldView(QGLWidget):
         self.augmentMouseEvent(event)
         for action in self.viewActions:
             if action.button & event.button():
-                if action.modifiers & event.modifiers() or action.modifiers == event.modifiers():
+                if action.matchModifiers(event):
                     if not action.key or action.key in self.pressedKeys:
                         action.mouseReleaseEvent(event)
 
