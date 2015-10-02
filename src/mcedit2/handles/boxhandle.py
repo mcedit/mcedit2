@@ -35,7 +35,10 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
 
     _resizable = True
     modifier = QtCore.Qt.ShiftModifier
+
     isMoving = False
+    isCreating = False
+    isResizing = False
 
     def __init__(self):
         """
@@ -157,10 +160,10 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
     # --- Resize ---
 
     def beginResize(self, event):
+        log.info("beginResize")
         point, face = boxFaceUnderCursor(self.bounds, event.ray)
 
         if face is not None:
-            log.info("Beginning drag resize")
             self.dragResizeFace = face
             # Choose a dimension perpendicular to the dragged face
             # Try not to pick a dimension close to edge-on with the view vector
@@ -175,6 +178,7 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
             self.dragResizeDimension = dim
             self.dragResizePosition = point[self.dragResizeDimension]
             self.oldBounds = self.bounds
+            self.isResizing = True
             return True
         else:
             # Didn't hit - start new selection
@@ -191,11 +195,13 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
         self.bounds = newBox
 
     def endResize(self, event):
+        log.info("endResize")
         self.bounds = self.boxFromDragResize(self.oldBounds, event.ray)
         oldBounds = self.oldBounds
         self.oldBounds = None
         self.dragResizeFace = None
         self.faceDragNode.visible = False
+        self.isResizing = False
         self.boundsChangedDone.emit(self.bounds, oldBounds)
 
     # --- Create ---
@@ -203,6 +209,7 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
     def beginCreate(self, event):
         self.dragStartPoint = event.blockPosition
         self.dragStartFace = faces.FaceYIncreasing  # event.blockFace
+        self.isCreating = True
 
     def continueCreate(self, event):
         # Show new box being dragged out
@@ -211,7 +218,9 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
 
     def endCreate(self, event):
         newBox = self.boxFromDragSelect(event.ray)
+        self.isCreating = False
         self.dragStartPoint = None
+        self.dragResizeFace = None
         self.bounds = newBox
         self.boundsChangedDone.emit(newBox, None)
 
@@ -237,6 +246,7 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
         self.dragStartPoint = point
         self.dragStartMovePosition = self.bounds.origin
         self.oldBounds = self.bounds
+        self.isMoving = True
 
     def continueMove(self, event):
         if self.dragStartFace is None:
@@ -249,6 +259,7 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
     def endMove(self, event):
         self.boundsChangedDone.emit(self.bounds, self.oldBounds)
         self.dragStartFace = None
+        self.isMoving = False
 
     # --- Update ---
 
@@ -277,7 +288,9 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
     # --- Mouse events ---
 
     def mousePress(self, event):
-        if self.resizable and not self.moveModifierDown(event):
+        if self.moveModifierDown(event):
+            self.beginMove(event)
+        elif self.resizable:
             # Find side of existing selection to drag
             # xxxx can't do this with disjoint selections?
             if self.bounds is not None:
@@ -286,30 +299,28 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
             # Get ready to start new selection
             if self.bounds is None:
                 self.beginCreate(event)
-        else:
-            self.beginMove(event)
 
     def mouseMove(self, event):
         # Called whether or not the mouse button is held.
-        if self.resizable and not self.moveModifierDown(event):
-            if self.dragStartPoint:
+        if self.isMoving:
+            self.continueMove(event)
+        elif self.resizable:
+            if self.isCreating:
                 self.continueCreate(event)
 
-            elif self.bounds is not None:
-                if self.dragResizeFace is not None:
-                    self.continueResize(event)
-        else:
-            self.continueMove(event)
+            if self.isResizing:
+                self.continueResize(event)
 
         if self.hiliteFace:
             self.updateMouseHover(event)
 
     def mouseRelease(self, event):
-        if self.resizable and not self.moveModifierDown(event):
-            if self.dragStartPoint:
+        if self.isMoving:
+            self.endMove(event)
+        elif self.resizable:
+            if self.isCreating:
                 self.endCreate(event)
 
-            elif self.dragResizeFace is not None:
+            elif self.isResizing:
                 self.endResize(event)
-        else:
-            self.endMove(event)
+
