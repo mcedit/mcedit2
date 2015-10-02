@@ -176,6 +176,7 @@ class UseToolMouseAction(ViewAction):
     labelText = "Use Tool (Don't change!)"
     hidden = True
     settingsKey = None
+    modifiers = None  # really?
 
     editorTab = weakrefprop()
 
