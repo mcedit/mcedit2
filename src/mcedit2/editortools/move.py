@@ -354,9 +354,7 @@ class MoveTool(EditorTool):
 
     def toolInactive(self):
         self.editorSession.selectionTool.hideSelectionWalls = False
-
-        for node in self.pendingImportNodes.itervalues():
-            node.hoverFace(None)
+        # hide hovers for box handles?
 
     def confirmImport(self):
         if self.currentImport is None:
