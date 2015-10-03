@@ -34,11 +34,31 @@ class RotateRenderNode(RenderstateRenderNode):
 class RotateNode(Node):
     RenderNodeClass = RotateRenderNode
 
-    def __init__(self, degrees, axis):
+    def __init__(self, degrees=0, axis=(0, 1, 0)):
         super(RotateNode, self).__init__()
         self.degrees = degrees
         self.axis = axis
 
+    _degrees = 0
+    _axis = (0, 1, 0)
+
+    @property
+    def degrees(self):
+        return self._degrees
+
+    @degrees.setter
+    def degrees(self, value):
+        self._degrees = value
+        self.dirty = True
+
+    @property
+    def axis(self):
+        return self._axis
+
+    @axis.setter
+    def axis(self, value):
+        self._axis = value
+        self.dirty = True
 
 class TranslateRenderNode(RenderstateRenderNode):
     def __init__(self, sceneNode):
