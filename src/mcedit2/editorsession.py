@@ -74,7 +74,20 @@ class PendingImport(object):
 
         bounds = self.selection
         self.rotateAnchor = bounds.origin + bounds.size * 0.5
-        
+
+    @property
+    def importPos(self):
+        if self.transformedDim is None:
+            return self.pos
+        return self.pos + self.transformedDim.bounds.origin - self.selection.origin
+
+    @property
+    def importDim(self):
+        if self.transformedDim is not None:
+            return self.transformedDim
+        else:
+            return self.sourceDim
+
     @property
     def rotation(self):
         return self._rotation

@@ -22,6 +22,7 @@ from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
 from mcedit2.widgets.coord_widget import CoordinateWidget
 from mcedit2.widgets.layout import Column
+from mceditlib.export import extractSchematicFromIter
 from mceditlib.geometry import Vector
 from mceditlib.selection import BoundingBox
 
@@ -424,6 +425,7 @@ class MoveTool(EditorTool):
         if self.currentImport is not None:
             self.currentImportNode.handleNode.mouseRelease(event)
 
+    # --- Editor events ---
 
     def toolActive(self):
         self.editorSession.selectionTool.hideSelectionWalls = True
@@ -452,21 +454,32 @@ class MoveTool(EditorTool):
             return
 
         command = MoveFinishCommand(self, self.currentImport)
-
+        destDim = self.editorSession.currentDimension
         with command.begin():
-            # TODO don't use intermediate schematic...
             if self.currentImport.isMove:
-                export = self.currentImport.sourceDim.exportSchematicIter(self.currentImport.selection)
-                schematic = showProgress("Copying...", export)
-                dim = schematic.getDimension()
-                fill = self.editorSession.currentDimension.fillBlocksIter(self.currentImport.selection, "air")
-                showProgress("Clearing...", fill)
-            else:
-                dim = self.currentImport.sourceDim
+                sourceDim = self.currentImport.importDim
+                destBox = BoundingBox(self.currentImport.importPos, sourceDim.bounds.size)
 
-            task = self.editorSession.currentDimension.copyBlocksIter(dim, dim.bounds,
-                                                                      self.currentImport.pos,
-                                                                      biomes=True, create=True)
+                # Use intermediate schematic only if source and destination overlap.
+                if sourceDim.bounds.intersect(destBox).volume:
+                    export = extractSchematicFromIter(sourceDim, self.currentImport.selection)
+                    schematic = showProgress(self.tr("Copying..."), export)
+                    sourceDim = schematic.getDimension()
+
+            else:
+                # Use source as-is
+                sourceDim = self.currentImport.importDim
+
+            # Copy to destination
+            task = destDim.copyBlocksIter(sourceDim, sourceDim.bounds,
+                                          self.currentImport.importPos,
+                                          biomes=True, create=True)
+
             showProgress(self.tr("Pasting..."), task)
+
+            # Clear source
+            if self.currentImport.isMove:
+                fill = destDim.fillBlocksIter(self.currentImport.selection, "air")
+                showProgress(self.tr("Clearing..."), fill)
 
         self.editorSession.pushCommand(command)
