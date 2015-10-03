@@ -170,7 +170,8 @@ class PendingImportNode(Node, QtCore.QObject):
     importMoved = QtCore.Signal(object, object)
 
     def handleBoundsChangedDone(self, bounds, oldBounds):
-        self.importMoved.emit(bounds.origin, oldBounds.origin)
+        if bounds.origin != oldBounds.origin:
+            self.importMoved.emit(bounds.origin, oldBounds.origin)
 
     def setPreviewRotation(self, rots):
         self.rotateNode.visible = True
