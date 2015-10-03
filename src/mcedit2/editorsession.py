@@ -22,6 +22,7 @@ from mcedit2.util.directories import getUserSchematicsDirectory
 from mcedit2.util.mimeformats import MimeFormats
 from mcedit2.widgets.mcedockwidget import MCEDockWidget
 from mcedit2.widgets.spinslider import SpinSlider
+from mceditlib.transform import DimensionTransform, SelectionTransform
 from mceditlib.util import exhaust
 from mceditlib.util.lazyprop import weakrefprop
 from mcedit2.util.raycast import rayCastInBounds
@@ -67,6 +68,37 @@ class PendingImport(object):
         self.pos = pos
         self.sourceDim = sourceDim
         self.isMove = isMove
+        self._rotation = (0, 0, 0)
+        self._scale = (0, 0, 0)
+        self.transformedDim = None
+
+        bounds = self.selection
+        self.rotateAnchor = bounds.origin + bounds.size * 0.5
+        
+    @property
+    def rotation(self):
+        return self._rotation
+    
+    @rotation.setter
+    def rotation(self, value):
+        self._rotation = value
+        self.updateTransform()
+        
+    @property
+    def scale(self):
+        return self._rotation
+    
+    @scale.setter
+    def scale(self, value):
+        self._rotation = value
+        self.updateTransform()
+        
+    def updateTransform(self):
+        if self.rotation == (0, 0, 0) and self.scale == (0, 0, 0):
+            self.transformedDim = None
+        else:
+            selectionDim = SelectionTransform(self.sourceDim, self.selection)
+            self.transformedDim = DimensionTransform(selectionDim, self.rotateAnchor, *self.rotation)
 
     def __repr__(self):
         return "%s(%r, %r, %r)" % (self.__class__.__name__, self.sourceDim, self.selection, self.pos)
