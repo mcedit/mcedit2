@@ -1,7 +1,7 @@
 """
     export.py
 
-    Extracting schematic files of diffeerent formats
+    Extracting schematic files of different formats
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import atexit
@@ -15,20 +15,15 @@ from mceditlib.util import exhaust
 
 log = logging.getLogger(__name__)
 
-def extractSchematicFrom(sourceDim, box, entities=True):
-    return exhaust(extractSchematicFromIter(sourceDim, box, entities))
+
+def extractSchematicFrom(sourceDim, box, *a, **kw):
+    return exhaust(extractSchematicFromIter(sourceDim, box, *a, **kw))
 
 
-def extractSchematicFromIter(sourceDim, box, entities=True):
-    p = adjustExtractionParameters(sourceDim, box)
-    if p is None:
-        yield None
-        return
-    newbox, destPoint = p
-
+def extractSchematicFromIter(sourceDim, box, *a, **kw):
     editor = createSchematic(shape=box.size, blocktypes=sourceDim.blocktypes)
     dim = editor.getDimension()
-    for i in copyBlocksIter(dim, sourceDim, newbox, destPoint, entities=entities, biomes=True):
+    for i in copyBlocksIter(dim, sourceDim, box, (0, 0, 0), *a, **kw):
         yield i
 
     yield editor
@@ -76,70 +71,3 @@ def extractSchematicFromIter(sourceDim, box, entities=True):
 #         for i in level.extractZipSchematicIter(box):
 #             yield i
 
-
-def adjustExtractionParameters(dim, box):
-    """
-    Shrink `box` to fit within the bounds of `dim` and return the shrunken
-    box and the new destination point within the extracted schematic.
-
-    Should not be needed as copyBlocks should just skip those chunk sections
-    that are not present or outside of `dim`'s bounds.
-
-    :param dim:
-    :type dim:
-    :param box:
-    :type box:
-    :return:
-    :rtype:
-    """
-    x, y, z = box.origin
-    w, h, l = box.size
-    destX = destY = destZ = 0
-    bounds = dim.bounds
-
-    if y < 0:
-        destY -= y
-        h += y
-        y = 0
-
-    if y >= bounds.maxy:
-        return
-
-    if y + h >= bounds.maxy:
-        h -= y + h - bounds.maxy
-        y = bounds.maxy - h
-
-    if h <= 0:
-        return
-
-    #if dim.Width:
-    if x < 0:
-        w += x
-        destX -= x
-        x = 0
-    if x >= bounds.maxx:
-        return
-
-    if x + w >= bounds.maxx:
-        w = bounds.maxx - x
-
-    if w <= 0:
-        return
-
-    if z < 0:
-        l += z
-        destZ -= z
-        z = 0
-
-    if z >= bounds.maxz:
-        return
-
-    if z + l >= bounds.maxz:
-        l = bounds.maxz - z
-
-    if l <= 0:
-        return
-
-    box = BoundingBox((x, y, z), (w, h, l))
-
-    return box, (destX, destY, destZ)
