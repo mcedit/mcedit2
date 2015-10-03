@@ -11,7 +11,7 @@ from mcedit2.editorsession import PendingImport
 from mcedit2.editortools import EditorTool
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.handles.boxhandle import BoxHandle
-from mcedit2.rendering.scenegraph.matrix import TranslateNode
+from mcedit2.rendering.scenegraph.matrix import TranslateNode, RotateNode
 from mcedit2.rendering.scenegraph.scenenode import Node
 from mcedit2.rendering.selection import SelectionBoxNode, SelectionFaceNode, boxFaceUnderCursor
 from mcedit2.rendering.scenegraph import scenenode
@@ -83,6 +83,38 @@ class MoveFinishCommand(SimpleRevisionCommand):
         self.moveTool.removePendingImport(self.pendingImport)
 
 
+class Rotate3DNode(Node):
+    def __init__(self):
+        super(Rotate3DNode, self).__init__()
+        self.anchorNode = TranslateNode()
+        self.rotXNode = RotateNode(axis=(1, 0, 0))
+        self.rotYNode = RotateNode(axis=(0, 1, 0))
+        self.rotZNode = RotateNode(axis=(0, 0, 1))
+        self.recenterNode = TranslateNode()
+
+        super(Rotate3DNode, self).addChild(self.anchorNode)
+        self.anchorNode.addChild(self.rotXNode)
+        self.rotXNode.addChild(self.rotYNode)
+        self.rotYNode.addChild(self.rotZNode)
+        self.rotZNode.addChild(self.recenterNode)
+
+    def addChild(self, node):
+        self.recenterNode.addChild(node)
+
+    def removeChild(self, node):
+        self.recenterNode.removeChild(node)
+
+    def setRotation(self, rots):
+        rx, ry, rz = rots
+        self.rotXNode.degrees = rx
+        self.rotYNode.degrees = ry
+        self.rotZNode.degrees = rz
+
+    def setAnchor(self, point):
+        self.anchorNode.translateOffset = point
+        self.recenterNode.translateOffset = -point
+
+
 class PendingImportNode(Node, QtCore.QObject):
     __node_id_counter = 0
 
@@ -91,19 +123,28 @@ class PendingImportNode(Node, QtCore.QObject):
         PendingImportNode.__node_id_counter += 1
         self.id = PendingImportNode.__node_id_counter
 
+        self.textureAtlas = textureAtlas
         self.pendingImport = pendingImport
         dim = pendingImport.sourceDim
 
         self.positionTranslateNode = TranslateNode()
+        self.rotateNode = Rotate3DNode()
         self.addChild(self.positionTranslateNode)
+        self.positionTranslateNode.addChild(self.rotateNode)
+
+        self.rotateNode.setAnchor(self.pendingImport.bounds.size * 0.5)
 
         self.worldSceneTranslateNode = TranslateNode()
         self.worldScene = WorldScene(dim, textureAtlas, bounds=pendingImport.selection)
         self.worldScene.depthOffsetNode.depthOffset = DepthOffset.PreviewRenderer
 
+        self.transformedWorldTranslateNode = TranslateNode()
+        self.transformedWorldScene = None
+        self.addChild(self.transformedWorldTranslateNode)
+
         self.worldSceneTranslateNode.translateOffset = -self.pendingImport.selection.origin
         self.worldSceneTranslateNode.addChild(self.worldScene)
-        self.positionTranslateNode.addChild(self.worldSceneTranslateNode)
+        self.rotateNode.addChild(self.worldSceneTranslateNode)
 
         box = BoundingBox(self.pos, pendingImport.bounds.size)
 
@@ -130,6 +171,44 @@ class PendingImportNode(Node, QtCore.QObject):
     def handleBoundsChangedDone(self, bounds, oldBounds):
         self.importMoved.emit(bounds.origin, oldBounds.origin)
 
+    def setPreviewRotation(self, rots):
+        self.rotateNode.visible = True
+        self.worldSceneTranslateNode.visible = True
+        self.transformedWorldTranslateNode.visible = False
+        self.rotateNode.setRotation(rots)
+
+    def setRotation(self, rots):
+        self.pendingImport.rotation = rots
+        self.updateTransformedScene()
+
+    def updateTransformedScene(self):
+        if self.pendingImport.transformedDim is not None:
+            self.rotateNode.visible = False
+            self.worldSceneTranslateNode.visible = False
+            self.transformedWorldTranslateNode.visible = True
+
+            if self.transformedWorldScene:
+                self.transformedWorldTranslateNode.removeChild(self.transformedWorldScene)
+
+            self.transformedWorldScene = WorldScene(self.pendingImport.transformedDim,
+                                                    self.textureAtlas)
+            self.transformedWorldScene.depthOffsetNode.depthOffset = DepthOffset.PreviewRenderer
+            self.transformedWorldTranslateNode.addChild(self.transformedWorldScene)
+            self.transformedWorldTranslateNode.translateOffset = self.pos - self.pendingImport.rotateAnchor + self.pendingImport.bounds.size * 0.5
+
+            cPos = list(self.pendingImport.transformedDim.chunkPositions())
+            self.loader = WorldLoader(self.transformedWorldScene,
+                                      cPos)
+            self.loader.timer.start()
+
+        else:
+            self.rotateNode.visible = True
+            self.worldSceneTranslateNode.visible = True
+            self.transformedWorldTranslateNode.visible = False
+            if self.transformedWorldScene:
+                self.transformedWorldTranslateNode.removeChild(self.transformedWorldScene)
+                self.transformedWorldScene = None
+
     @property
     def pos(self):
         return self.positionTranslateNode.translateOffset
@@ -152,6 +231,10 @@ class RotationWidget(QtGui.QWidget):
         self.yRotSlider.valueChanged.connect(self.setYRot)
         self.zRotSlider.valueChanged.connect(self.setZRot)
 
+        self.xRotSlider.sliderReleased.connect(self.sliderReleased)
+        self.yRotSlider.sliderReleased.connect(self.sliderReleased)
+        self.zRotSlider.sliderReleased.connect(self.sliderReleased)
+
         self.xRotSpinBox.valueChanged.connect(self.setXRot)
         self.yRotSpinBox.valueChanged.connect(self.setYRot)
         self.zRotSpinBox.valueChanged.connect(self.setZRot)
@@ -162,6 +245,9 @@ class RotationWidget(QtGui.QWidget):
 
     def emitRotationChanged(self, live):
         self.rotationChanged.emit((self.xRot, self.yRot, self.zRot), live)
+
+    def sliderReleased(self):
+        self.emitRotationChanged(False)
 
     def setXRot(self, value):
         if self.xRot == value:
@@ -232,9 +318,14 @@ class MoveTool(EditorTool):
                                          None))
 
 
-    def rotationChanged(self, rots):
-        rotX, rotY, rotZ = rots
-        log.info("Rotations: %s", rots)
+    def rotationChanged(self, rots, live):
+        if self.currentImport:
+            if live:
+                self.currentImportNode.setPreviewRotation(rots)
+            else:
+                self.currentImportNode.setRotation(rots)
+
+            self.editorSession.updateView()
 
     @property
     def movePosition(self):
