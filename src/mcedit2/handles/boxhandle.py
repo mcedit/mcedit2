@@ -288,7 +288,7 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
     # --- Mouse events ---
 
     def mousePress(self, event):
-        if self.moveModifierDown(event):
+        if self.moveModifierDown(event) or not self.resizable:
             self.beginMove(event)
         elif self.resizable:
             # Find side of existing selection to drag
