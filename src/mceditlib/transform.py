@@ -9,6 +9,7 @@ import itertools
 import numpy as np
 from mceditlib.cachefunc import lru_cache_object
 from mceditlib.geometry import Vector
+from mceditlib.multi_block import getBlocks
 from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
@@ -91,45 +92,20 @@ def npRotate(axis, angle):
     return rotate
 
 
-class RotatedSection(object):
+class TransformedSection(object):
     def __init__(self, transform, cx, cy, cz):
         self.transform = transform
         self.cx = cx
         self.Y = cy
         self.cz = cz
-        
-        shape = (16, 16, 16)
 
-        self.Blocks = np.zeros(shape, dtype='uint16')
-        self.Data = np.zeros(shape, dtype='uint8')
-
-        y, z, x = np.indices(shape)
-
-        x += (cx << 4)
-        y += (cy << 4)
-        z += (cz << 4)
-        w = np.ones(x.shape)
-
-        x = x.ravel()
-        y = y.ravel()
-        z = z.ravel()
-        w = w.ravel()
-
-        coords = np.vstack([x, y, z, w]).T
-
-        transformed_coords = coords * self.transform.matrix
-        transformed_coords = np.floor(transformed_coords).astype('int32')
-        x, y, z, w = transformed_coords.T
-
-        result = self.transform.dimension.getBlocks(x, y, z, return_Data=True)
-        self.Blocks[:] = result.Blocks.reshape(shape)
-        self.Data[:] = result.Data.reshape(shape)
+        self.transform.initSection(self)
 
     @property
     def blocktypes(self):
         return self.transform.blocktypes
 
-class RotatedChunk(object):
+class TransformedChunk(object):
     def __init__(self, transform, cx, cz):
         self.transform = self.dimension = transform
         self.cx = cx
@@ -152,25 +128,19 @@ class RotatedChunk(object):
     def blocktypes(self):
         return self.transform.blocktypes
 
-class RotationTransform(object):
-    def __init__(self, dimension, anchor, rotX, rotY, rotZ):
-        self.rotX = rotX
-        self.rotY = rotY
-        self.rotZ = rotZ
-        self.anchor = anchor
+
+class DimensionTransformBase(object):
+    def __init__(self, dimension):
         self.dimension = dimension
-
-        self.matrix = rotationMatrix(anchor, rotX, rotY, rotZ)
-
-        self._transformedBounds = transformBounds(dimension.bounds, self.matrix)
-
         self.sectionCache = lru_cache_object(self._createSection, 1000)
 
+    _transformedBounds = NotImplemented
+
     def _createSection(self, cx, cy, cz):
-        return RotatedSection(self, cx, cy, cz)
+        return TransformedSection(self, cx, cy, cz)
 
     def getChunk(self, cx, cz):
-        return RotatedChunk(self, cx, cz)
+        return TransformedChunk(self, cx, cz)
 
     def chunkCount(self):
         return self.bounds.chunkCount
@@ -192,3 +162,85 @@ class RotationTransform(object):
     @property
     def bounds(self):
         return self._transformedBounds
+
+    def getBlocks(self, x, y, z,
+                  return_Blocks=True,
+                  return_Data=False,
+                  return_BlockLight=False,
+                  return_SkyLight=False,
+                  return_Biomes=False):
+        return getBlocks(self, x, y, z,
+                         return_Blocks,
+                         return_Data,
+                         return_BlockLight,
+                         return_SkyLight,
+                         return_Biomes)
+
+class SelectionTransform(DimensionTransformBase):
+    def __init__(self, dimension, selection):
+        """
+
+        :param dimension:
+        :type dimension:
+        :param selection:
+        :type selection: SelectionBox
+        :return:
+        :rtype:
+        """
+        super(SelectionTransform, self).__init__(dimension)
+        self._transformedBounds = selection
+
+    def initSection(self, section):
+        shape = (16, 16, 16)
+        cx, cy, cz = section.cx, section.Y, section.cz
+
+        section.Blocks = np.zeros(shape, dtype='uint16')
+        section.Data = np.zeros(shape, dtype='uint8')
+
+        if self.dimension.containsChunk(cx, cz):
+            chunk = self.dimension.getChunk(cx, cz)
+            baseSection = chunk.getSection(cy)
+            if baseSection is not None:
+                sectionMask = self._transformedBounds.section_mask(cx, cy, cz)
+                section.Blocks[sectionMask] = baseSection.Blocks[sectionMask]
+                section.Data[sectionMask] = baseSection.Data[sectionMask]
+
+class DimensionTransform(DimensionTransformBase):
+    def __init__(self, dimension, anchor, rotX, rotY, rotZ):
+        super(DimensionTransform, self).__init__(dimension)
+        self.rotX = rotX
+        self.rotY = rotY
+        self.rotZ = rotZ
+        self.anchor = anchor
+
+        self.matrix = rotationMatrix(anchor, rotX, rotY, rotZ)
+
+        self._transformedBounds = transformBounds(dimension.bounds, self.matrix)
+
+    def initSection(self, section):
+        shape = (16, 16, 16)
+
+        section.Blocks = np.zeros(shape, dtype='uint16')
+        section.Data = np.zeros(shape, dtype='uint8')
+
+        y, z, x = np.indices(shape)
+
+        x += (section.cx << 4)
+        y += (section.Y << 4)
+        z += (section.cz << 4)
+        w = np.ones(x.shape)
+
+        x = x.ravel()
+        y = y.ravel()
+        z = z.ravel()
+        w = w.ravel()
+
+        coords = np.vstack([x, y, z, w]).T
+
+        transformed_coords = coords * self.matrix
+        transformed_coords = np.floor(transformed_coords).astype('int32')
+        x, y, z, w = transformed_coords.T
+
+        result = self.dimension.getBlocks(x, y, z, return_Data=True)
+        section.Blocks[:] = result.Blocks.reshape(shape)
+        section.Data[:] = result.Data.reshape(shape)
