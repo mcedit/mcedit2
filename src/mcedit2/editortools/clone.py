@@ -77,10 +77,6 @@ class CloneTool(EditorTool):
     def __init__(self, editorSession, *args, **kwargs):
         super(CloneTool, self).__init__(editorSession, *args, **kwargs)
 
-        self.dragStartFace = None
-        self.dragStartPoint = None
-        self.dragStartClonePosition = None
-
         self.originPoint = None
         self.offsetPoint = None
 
@@ -121,9 +117,10 @@ class CloneTool(EditorTool):
         self.pendingClone = None  # Do this after creating pointInput to disable inputs
 
     def pointInputChanged(self, value):
-        self.offsetPoint = value
-        self.pendingClone.pos = value
-        self.updateTiling()
+        if self.offsetPoint != value:
+            self.offsetPoint = value
+            self.pendingClone.pos = value
+            self.updateTiling()
 
     def setTileX(self, value):
         self.tileX = value
@@ -155,8 +152,13 @@ class CloneTool(EditorTool):
             self.pendingCloneNodes.append(node)
             self.overlayNode.addChild(node)
 
-        if len(self.pendingCloneNodes):
+        # This is stupid.
+        if self.mainCloneNode:
+            self.mainCloneNode.importMoved.disconnect(self.cloneDidMove)
+
+        if repeatCount > 0:
             self.mainCloneNode = self.pendingCloneNodes[0]
+            self.mainCloneNode.importMoved.connect(self.cloneDidMove)
         else:
             self.mainCloneNode = None
 
@@ -207,8 +209,8 @@ class CloneTool(EditorTool):
 
     def toolInactive(self):
         self.editorSession.selectionTool.hideSelectionWalls = False
-        if self.mainCloneNode:
-            self.mainCloneNode.hoverFace(None)
+        # if self.mainCloneNode:
+        #     self.mainCloneNode.hoverFace(None)
 
         self.confirmClone()
         
@@ -250,50 +252,25 @@ class CloneTool(EditorTool):
 
     # --- Mouse events ---
 
-    def dragClonePoint(self, ray):
-        """
-        Return a point representing the intersection between the mouse ray
-         and an imaginary plane coplanar to the dragged face
-
-        :type ray: Ray
-        :rtype: Vector
-        """
-        dim = self.dragStartFace.dimension
-        return ray.intersectPlane(dim, self.dragStartPoint[dim])
-
     def mouseMove(self, event):
-        # Hilite face cursor is over
-        if self.pendingClone is None:
-            return
-
-        point, face = boxFaceUnderCursor(self.pendingClone.bounds, event.ray)
-        self.mainCloneNode.hoverFace(face)
-
-        # Highlight face of box to move along, or else axis pointers to grab and drag?
-        pass
+        if self.mainCloneNode is not None:
+            self.mainCloneNode.mouseMove(event)
 
     def mouseDrag(self, event):
-        # Clone box using face or axis pointers
-        if self.pendingClone is None:
-            return
-        if self.dragStartFace is None:
-            return
-
-        delta = self.dragClonePoint(event.ray) - self.dragStartPoint
-        self.clonePosition = self.dragStartClonePosition + map(int, delta)
+        if self.mainCloneNode is not None:
+            self.mainCloneNode.mouseMove(event)
 
     def mousePress(self, event):
-        if self.pendingClone is not None:
-            point, face = boxFaceUnderCursor(self.pendingClone.bounds, event.ray)
-            self.dragStartFace = face
-            self.dragStartPoint = point
-            self.dragStartClonePosition = self.clonePosition
+        if self.mainCloneNode is not None:
+            self.mainCloneNode.mousePress(event)
 
     def mouseRelease(self, event):
-        if self.pendingClone is not None:
-            self.doCloneOffsetCommand(self.dragStartClonePosition, self.clonePosition)
+        if self.mainCloneNode is not None:
+            self.mainCloneNode.mouseRelease(event)
 
-    def doCloneOffsetCommand(self, oldPoint, newPoint):
+    # --- Box handle events ---
+
+    def cloneDidMove(self, newPoint, oldPoint):
         log.info("clone offset command: %s %s", oldPoint, newPoint)
         if newPoint != oldPoint:
             command = CloneOffsetCommand(self, oldPoint, newPoint)
