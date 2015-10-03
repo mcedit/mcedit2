@@ -223,6 +223,18 @@ class PendingImportNode(Node, QtCore.QObject):
         bounds = BoundingBox(value, self.pendingImport.bounds.size)
         self.handleNode.bounds = bounds
 
+    # --- Mouse events ---
+
+    # inherit from BoxHandle?
+    def mouseMove(self, event):
+        self.handleNode.mouseMove(event)
+
+    def mousePress(self, event):
+        self.handleNode.mousePress(event)
+
+    def mouseRelease(self, event):
+        self.handleNode.mouseRelease(event)
+
 class RotationWidget(QtGui.QWidget):
     def __init__(self):
         super(RotationWidget, self).__init__()
@@ -410,7 +422,7 @@ class MoveTool(EditorTool):
     def mouseMove(self, event):
         # Hilite face cursor is over
         if self.currentImport is not None:
-            self.currentImportNode.handleNode.mouseMove(event)
+            self.currentImportNode.mouseMove(event)
 
         # Highlight face of box to move along, or else axis pointers to grab and drag?
 
@@ -419,11 +431,11 @@ class MoveTool(EditorTool):
 
     def mousePress(self, event):
         if self.currentImport is not None:
-            self.currentImportNode.handleNode.mousePress(event)
+            self.currentImportNode.mousePress(event)
 
     def mouseRelease(self, event):
         if self.currentImport is not None:
-            self.currentImportNode.handleNode.mouseRelease(event)
+            self.currentImportNode.mouseRelease(event)
 
     # --- Editor events ---
 
