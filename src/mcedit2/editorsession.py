@@ -171,6 +171,7 @@ class EditorSession(QtCore.QObject):
         self.undoStack = MCEUndoStack()
 
         self.resourceLoader = minecraftinstall.getResourceLoaderForFilename(filename)
+        self.currentDimension = None
 
         self.loader = None
         self.blockModels = None
@@ -215,7 +216,6 @@ class EditorSession(QtCore.QObject):
                 raise IOError("Uh-oh")
 
         self.worldEditor.requireRevisions()
-        self.currentDimension = None
 
         progress("Creating menus...")
 
