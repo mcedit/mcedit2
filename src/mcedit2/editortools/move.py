@@ -329,14 +329,19 @@ class MoveTool(EditorTool):
         self.rotationInput = RotationWidget()
         self.rotationInput.rotationChanged.connect(self.rotationChanged)
 
+        self.copyOptionsWidget = QtGui.QGroupBox(self.tr("Options"))
+
+        self.copyAirCheckbox = QtGui.QCheckBox(self.tr("Copy Air"))
+        self.copyOptionsWidget.setLayout(Column(self.copyAirCheckbox))
+
         confirmButton = QtGui.QPushButton("Confirm")  # xxxx should be in worldview
         confirmButton.clicked.connect(self.confirmImport)
         self.toolWidget.setLayout(Column(self.importsListWidget,
                                          self.pointInput,
                                          self.rotationInput,
+                                         self.copyOptionsWidget,
                                          confirmButton,
                                          None))
-
 
     def rotationChanged(self, rots, live):
         if self.currentImport:
@@ -492,7 +497,8 @@ class MoveTool(EditorTool):
             # Copy to destination
             task = destDim.copyBlocksIter(sourceDim, sourceDim.bounds,
                                           self.currentImport.importPos,
-                                          biomes=True, create=True)
+                                          biomes=True, create=True,
+                                          copyAir=self.copyAirCheckbox.isChecked())
 
             showProgress(self.tr("Pasting..."), task)
 
