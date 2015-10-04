@@ -861,6 +861,11 @@ class EditorSession(QtCore.QObject):
 
     def urlsWereDropped(self, mimeData, position, face):
         log.info("URLs dropped:\n%s", mimeData.urls())
+        for url in mimeData.urls():
+            if url.isLocalFile():
+                filename = url.toLocalFile()
+                self.importSchematic(filename)
+                break
 
     def mapItemWasDropped(self, mimeData, position, face):
         log.info("Map item dropped.")
