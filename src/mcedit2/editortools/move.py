@@ -196,7 +196,8 @@ class PendingImportNode(Node, QtCore.QObject):
                                                     self.textureAtlas)
             self.transformedWorldScene.depthOffsetNode.depthOffset = DepthOffset.PreviewRenderer
             self.transformedWorldTranslateNode.addChild(self.transformedWorldScene)
-            self.transformedWorldTranslateNode.translateOffset = self.pos - self.pendingImport.rotateAnchor + self.pendingImport.bounds.size * 0.5
+
+            self.updateTransformedSceneOffset()
 
             cPos = list(self.pendingImport.transformedDim.chunkPositions())
             self.loader = WorldLoader(self.transformedWorldScene,
@@ -211,6 +212,9 @@ class PendingImportNode(Node, QtCore.QObject):
                 self.transformedWorldTranslateNode.removeChild(self.transformedWorldScene)
                 self.transformedWorldScene = None
 
+    def updateTransformedSceneOffset(self):
+        self.transformedWorldTranslateNode.translateOffset = self.pos - self.pendingImport.rotateAnchor + self.pendingImport.bounds.size * 0.5
+
     @property
     def pos(self):
         return self.positionTranslateNode.translateOffset
@@ -221,6 +225,8 @@ class PendingImportNode(Node, QtCore.QObject):
             return
 
         self.positionTranslateNode.translateOffset = value
+        self.updateTransformedSceneOffset()
+
         bounds = BoundingBox(value, self.pendingImport.bounds.size)
         self.handleNode.bounds = bounds
 
