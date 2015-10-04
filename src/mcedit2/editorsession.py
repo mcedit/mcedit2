@@ -916,6 +916,8 @@ class EditorSession(QtCore.QObject):
         pos, face = rayCastInBounds(ray, self.currentDimension)
         if pos is None:
             pos = ray.point
+        else:
+            pos = pos + face.vector
 
         name = os.path.basename(filename)
         dim = schematic.getDimension()
