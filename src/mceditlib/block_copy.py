@@ -6,33 +6,35 @@
 """
 import time
 import logging
+
+import numpy
+
+import mceditlib.blocktypes as blocktypes
 from mceditlib import relight
 from mceditlib.selection import BoundingBox, SectionBox
 
 log = logging.getLogger(__name__)
 
-import numpy
-import mceditlib.blocktypes as blocktypes
 
-def sourceMaskFunc(blocksToCopy):
+def sourceMaskFunc(blocksToCopy, copyAir=False):
     if blocksToCopy is not None:
         typemask = numpy.zeros(blocktypes.id_limit, dtype='bool')
         typemask[blocksToCopy] = 1
+    else:
+        typemask = numpy.ones(blocktypes.id_limit, dtype='bool')
 
-        def maskedSourceMask(sourceBlocks):
-            return typemask[sourceBlocks]
+    typemask[0] = copyAir
 
-        return maskedSourceMask
+    def maskedSourceMask(sourceBlocks):
+        return typemask[sourceBlocks]
 
-    def unmaskedSourceMask(_sourceBlocks):
-        return numpy.ones((1,), bool)
-
-    return unmaskedSourceMask
+    return maskedSourceMask
 
 
 def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint,
                    blocksToCopy=None, entities=True, create=False, biomes=False,
-                   updateLights="all", replaceUnknownWith=None):
+                   updateLights="all", replaceUnknownWith=None,
+                   copyAir=False):
     """
     Copy blocks and entities from the `sourceBox` area of `sourceDim` to `destDim` starting at `destinationPoint`.
 
@@ -65,7 +67,7 @@ def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint,
         allChangedY = []
         allChangedZ = []
 
-    makeSourceMask = sourceMaskFunc(blocksToCopy)
+    makeSourceMask = sourceMaskFunc(blocksToCopy, copyAir)
 
     copyOffset = destBox.origin - sourceSelection.origin
 
