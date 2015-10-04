@@ -200,6 +200,7 @@ class CloneTool(EditorTool):
         # blocks will be moved.
         pos = self.editorSession.currentSelection.origin
         self.originPoint = pos
+        self.offsetPoint = pos
         pendingImport = PendingImport(self.editorSession.currentDimension, pos,
                                       self.editorSession.currentSelection,
                                       self.tr("<Cloned Object>"))
