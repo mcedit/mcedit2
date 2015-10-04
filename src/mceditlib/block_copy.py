@@ -223,8 +223,18 @@ def copyBlocksIter(destDim, sourceDim, sourceSelection, destinationPoint,
                 destDim.addTileEntity(newEntity)
 
     duration = time.time() - startTime
+    if i != 0:
+        chunkTime = 1000 * duration/i
+    else:
+        chunkTime = 0
+
+    if duration != 0:
+        cps = i / duration
+    else:
+        cps = 0
+
     log.info("Duration: %0.3fs, %d/%d chunks, %0.2fms per chunk (%0.2f chunks per second)",
-             duration, i, sourceSelection.chunkCount, 1000 * duration/i, i/duration)
+             duration, i, sourceSelection.chunkCount, chunkTime, cps)
     log.info("Copied %d/%d entities and %d/%d tile entities",
              entitiesCopied, entitiesSeen, tileEntitiesCopied, tileEntitiesSeen)
 
