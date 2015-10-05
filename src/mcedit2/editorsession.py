@@ -20,6 +20,7 @@ from mcedit2.util import minecraftinstall
 from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.directories import getUserSchematicsDirectory
 from mcedit2.util.mimeformats import MimeFormats
+from mcedit2.util.resources import resourcePath
 from mcedit2.widgets.mcedockwidget import MCEDockWidget
 from mcedit2.widgets.spinslider import SpinSlider
 from mceditlib.transform import DimensionTransform, SelectionTransform
@@ -169,6 +170,7 @@ class EditorSession(QtCore.QObject):
 
         QtCore.QObject.__init__(self)
         self.undoStack = MCEUndoStack()
+        self.lastSaveIndex = 0
 
         self.resourceLoader = minecraftinstall.getResourceLoaderForFilename(filename)
         self.currentDimension = None
@@ -371,7 +373,20 @@ class EditorSession(QtCore.QObject):
         self.mapPanel = MapPanel(self)
         self.worldInfoPanel = WorldInfoPanel(self)
         self.panels = [self.playerPanel, self.worldInfoPanel, self.mapPanel]
-        self.panelActions = []
+        self.topToolbarActions = []
+
+        fillIcon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/fill.png"))
+        self.actionFill.setIcon(fillIcon)
+        self.topToolbarActions.append(self.actionFill)
+
+        saveIcon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/save.png"))
+        saveIcon.addFile(resourcePath("mcedit2/assets/mcedit2/icons/save_ok.png"), mode=QtGui.QIcon.Disabled)
+
+        self.actionSave = QtGui.QAction(saveIcon, self.tr("Save"), self, triggered=self.save)
+        self.actionSave.setEnabled(False)
+
+        self.topToolbarActions.append(self.actionSave)
+
 
         # --- Tools ---
 
@@ -410,8 +425,8 @@ class EditorSession(QtCore.QObject):
         dimButton.setMenu(dimMenu)
         dimButton.setPopupMode(QtGui.QToolButton.InstantPopup)
 
-        self.panelActions.append(dimAction)
-        self.panelActions.append(None)
+        self.topToolbarActions.append(dimAction)
+        self.topToolbarActions.append(None)
 
         # --- Versions/Resource Packs ---
 
@@ -432,7 +447,7 @@ class EditorSession(QtCore.QObject):
         self.versionRPWidget = QtGui.QStackedWidget()
         self.versionRPWidget.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
         self.versionRPAction.setDefaultWidget(self.versionRPWidget)
-        self.panelActions.append(versionRPAction)
+        self.topToolbarActions.append(versionRPAction)
 
         QtGui.qApp.toolbarTextToggled.connect(self.toolbarTextChanged)
         self.toolbarTextChanged(True)  # xxx
@@ -699,6 +714,8 @@ class EditorSession(QtCore.QObject):
         saveTask = self.worldEditor.saveChangesIter()
         showProgress("Saving...", saveTask)
         self.dirty = False
+        self.actionSave.setEnabled(False)
+        self.lastSaveIndex = self.undoStack.index()
 
     # - Edit -
 
@@ -931,10 +948,12 @@ class EditorSession(QtCore.QObject):
 
     def undoIndexChanged(self, index):
         self.updateView()
+        self.actionSave.setEnabled(index != self.lastSaveIndex)
 
     def pushCommand(self, command):
         log.info("Pushing command %s" % command.text())
         self.undoStack.push(command)
+        self.actionSave.setEnabled(True)
 
     def setUndoBlock(self, callback):
         self.undoStack.setUndoBlock(callback)

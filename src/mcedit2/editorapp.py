@@ -529,24 +529,25 @@ class MCEditApp(QtGui.QApplication):
             for menu in session.menus:
                 menuBar.insertMenu(self.mainWindow.menuWindow.menuAction(), menu)
 
-            for panel in self.globalPanels:
-                self.mainWindow.panelsToolBar.addAction(panel.toggleViewAction())
-            for panel in session.panels:
-                self.mainWindow.panelsToolBar.addAction(panel.toggleViewAction())
-
-            self.mainWindow.panelsToolBar.addSeparator()
-            for action in session.panelActions:
+            for action in session.topToolbarActions:
                 if action is None:
                     self.mainWindow.panelsToolBar.addSeparator()
                 else:
                     self.mainWindow.panelsToolBar.addAction(action)
+
+            for panel in session.panels:
+                self.mainWindow.panelsToolBar.addAction(panel.toggleViewAction())
+
+            self.mainWindow.panelsToolBar.addSeparator()
+
+            for panel in self.globalPanels:
+                self.mainWindow.panelsToolBar.addAction(panel.toggleViewAction())
 
             for action in session.toolActions:
                 if action is None:
                     self.mainWindow.toolsToolBar.addSeparator()
                 else:
                     self.mainWindow.toolsToolBar.addAction(action)
-
 
             self.loaderInfo.object = session.loader
             view = session.editorTab.currentView()
