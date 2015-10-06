@@ -881,7 +881,7 @@ class EditorSession(QtCore.QObject):
         for url in mimeData.urls():
             if url.isLocalFile():
                 filename = url.toLocalFile()
-                self.importSchematic(filename)
+                self.importSchematic(filename, position + face.vector)
                 break
 
     def mapItemWasDropped(self, mimeData, position, face):
@@ -927,18 +927,24 @@ class EditorSession(QtCore.QObject):
 
     # --- Library support ---
 
-    def importSchematic(self, filename):
+    def importSchematic(self, filename, importPos=None):
         schematic = WorldEditor(filename, readonly=True)
         ray = self.editorTab.currentView().rayAtCenter()
-        pos, face = rayCastInBounds(ray, self.currentDimension)
-        if pos is None:
-            pos = ray.point
+        if importPos is not None:
+            pos = importPos
         else:
-            pos = pos + face.vector
+            pos, face = rayCastInBounds(ray, self.currentDimension)
+            if pos is None:
+                pos = ray.point
+            else:
+                pos = pos + face.vector
 
         name = os.path.basename(filename)
         dim = schematic.getDimension()
-        imp = PendingImport(schematic.getDimension(), pos, dim.bounds, name)
+        center = dim.bounds.center
+        bottomCenter = pos - (center[0], 0, center[2])
+
+        imp = PendingImport(schematic.getDimension(), bottomCenter, dim.bounds, name)
         command = PasteImportCommand(self, imp, "Import %s" % name)
         self.undoStack.push(command)
 
