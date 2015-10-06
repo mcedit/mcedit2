@@ -57,12 +57,71 @@ log = logging.getLogger(__name__)
 sessionSettings = Settings().getNamespace("editorsession")
 currentViewSetting = sessionSettings.getOption("currentview", unicode, "cam")
 
-# An EditorSession is a world currently opened for editing, the state of the editor including the
-# current selection box, the editor tab containing its viewports, its command history, its shared OpenGL context,
-# a separate instance of each editor tool (why?), and the ChunkLoader that coordinates loading
-# chunks into its viewports.
-
 class PendingImport(object):
+    """
+    An object representing a schematic, etc that is currently being imported and can be
+    moved/rotated/scaled by the user.
+
+    Parameters
+    ----------
+
+    sourceDim: WorldEditorDimension
+        The object that will be imported.
+    pos: Vector
+        The position in the currently edited world where the object will be imported.
+    selection: SelectionBox
+        Defines the portion of sourceDim that will be imported. For importing
+        .schematic files, this is usually the schematic's bounds. For importing/moving
+        a selected part of a world, this is the shaped selection created by the
+        Select tool.
+    text: unicode
+        A user-readable name for this import to be displayed in the "pending imports"
+        list, when multiple-importing is enabled.
+    isMove: bool
+        A flag that tells whether the imported object is being moved or copied. If it is
+        being moved, the previous position of the object is filled with air and cleared
+        of entities.
+
+    Attributes
+    ----------
+
+    importPos: Vector
+        The effective position where the object is to be imported. When the
+        PendingImport's rotation or scale is the default, this will be the
+        same as `self.pos`, otherwise it will be the position where the transformed
+        object will be imported. Changing this attribute will also change `self.pos`
+        to the pre-transform position accordingly.
+
+    importDim: WorldEditorDimension
+        The effective dimension to be imported. When the rotation or scale is the
+        default, this will be the same as `self.sourceDim`; otherwise, it will be a
+        TransformedDimension, which is a read-only proxy that acts as a scaled and
+        rotated form of `self.sourceDim`.
+
+    rotation: tuple of float
+        The rotation transform to be applied during import, in the form
+        (rotX, rotY, rotZ). Rotation is applied around the center point given
+        by `self.rotateAnchor`
+
+    scale: tuple of float
+        The scale transform to be applied during import, in the form
+        (rotX, rotY, rotZ). Scaling is applied around the center point given
+        by `self.rotateAnchor`
+
+    rotateAnchor: Vector
+        The anchor point that acts as the "center" when applying rotation
+        and scale transforms, in source coordinates. By default,
+        this is the center of `self.selection`.
+
+    bounds: BoundingBox
+        The axis-aligned bounding box that completely encloses `self.selection`, moved
+        to the position given by `self.pos`, in destination coordinates.
+
+    importBounds: BoundingBox
+        The axis-aligned bounding box that completely encloses the transformed dimension
+        `self.transformedDim` in destination coordinates.
+
+    """
     def __init__(self, sourceDim, pos, selection, text, isMove=False):
         self.selection = selection
         self.text = text
@@ -139,21 +198,38 @@ class PasteImportCommand(QtGui.QUndoCommand):
 
 
 class EditorSession(QtCore.QObject):
+    """
+    An EditorSession is a world currently opened for editing, the state of the editor
+    including the current selection box, the editor tab containing its viewports,
+    its command history, its shared OpenGL context, a separate instance of each editor
+    tool (why?), and the ChunkLoader that coordinates loading chunks into its viewports.
+
+    Parameters
+    ----------
+    filename: unicode
+        Path to file to open in editor.
+    configuredBlocks: list of BlockDefinitions
+        Blocks definitions set by the user, from ConfigureBlocksDialog.getDefinedBlocks()
+    readonly: bool
+        If True, editing is disabled and the world cannot be modified or saved.
+    progressCallback: function(int, int, unicode)
+        Called while initializing the EditorSession to report progress. Parameters to the
+        callback are (current, maximum, status):
+
+            current: int
+                Current progress
+            maximum: int
+                Maximum progress
+            status: unicode
+                Status text to display
+
+    Attributes
+    ----------
+
+    Haha, good luck.
+    """
     def __init__(self, filename, configuredBlocks, readonly=False,
                  progressCallback=None):
-        """
-
-        :param filename:
-        :type filename: str
-        :param configuredBlocks:
-        :type configuredBlocks: dict???
-        :param readonly:
-        :type readonly: bool
-        :param progressCallback:
-        :type progressCallback: callable
-        :return:
-        :rtype:
-        """
         from mcedit2 import __version__ as v
 
         progressMax = 8  # fixme
