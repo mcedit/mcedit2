@@ -282,16 +282,13 @@ class AnvilChunkData(object):
         """
 
         :param cy: Section number (y coordinate >> 4)
-        :param create: If False, returns None if the section is not present, otherwise creates the section.
+        :param create: If False, returns None if the section is not present or could not
+            be created, otherwise creates the section.
         :returns: The requested section, or None if it wasn't created.
         :rtype: AnvilSection
-        :raises: ValueError if create is True and the requested section can't be stored in this chunk.
         """
         if (cy << 4) > self.adapter.maxHeight or cy < 0:
-            if create:
-                raise ValueError("Requested section %s exceeds world height" % cy)
-            else:
-                return None
+            return None
 
         section = self._sections.get(cy)
         if not section:
