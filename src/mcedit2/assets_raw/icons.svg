@@ -1010,14 +1010,14 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="4"
-     inkscape:cx="40.54128"
+     inkscape:cx="40.79128"
      inkscape:cy="71.634579"
      inkscape:document-units="px"
-     inkscape:current-layer="g5167"
+     inkscape:current-layer="g4721"
      showgrid="false"
-     inkscape:window-width="1678"
+     inkscape:window-width="1665"
      inkscape:window-height="1058"
-     inkscape:window-x="234"
+     inkscape:window-x="247"
      inkscape:window-y="-8"
      inkscape:window-maximized="1"
      inkscape:snap-global="true"
@@ -2343,11 +2343,12 @@
          id="g4721"
          style="display:inline">
         <g
-           id="g4723">
+           id="g4723"
+           style="stroke:#505050;stroke-opacity:1">
           <path
              id="path4725"
              d="m 49.851029,77.330202 0,47.134268 -52.5344087,0 0,-67.175148 32.0583797,0 z"
-             style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:url(#linearGradient4708);fill-opacity:1;stroke:#000000;stroke-width:2.29504704;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
+             style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:url(#linearGradient4708);fill-opacity:1;stroke:#505050;stroke-width:2.29504704;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate"
              inkscape:connector-curvature="0"
              sodipodi:nodetypes="cccccc" />
           <path
@@ -2355,20 +2356,20 @@
              inkscape:connector-curvature="0"
              id="path4727"
              d="m 29.242827,56.795499 0,20.294418 20.294419,0"
-             style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:none;stroke:#000000;stroke-width:2.29504752;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
+             style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:none;stroke:#505050;stroke-width:2.29504752;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate" />
         </g>
       </g>
       <g
          transform="translate(0.20148708,0.75)"
          id="g4729">
         <circle
-           style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#1439cd;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:4;marker:none;enable-background:accumulate"
+           style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#717171;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:4;marker:none;enable-background:accumulate"
            id="circle4731"
            cx="62.5"
            cy="76.75"
            r="26" />
         <path
-           style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#11c03a;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:4;marker:none;enable-background:accumulate"
+           style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#8d8d8d;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:4;marker:none;enable-background:accumulate"
            d="M 43.8125,72.958333 C 50.854167,61.854167 58.979167,50.479167 62.5,60.229167 c 3.520833,9.75 -7.041667,36.291666 -7.041667,23.5625 0,-12.729167 -1.625,-15.4375 -4.333333,-10.833334 -2.708333,4.604167 -8.9375,4.333334 -7.3125,0 z"
            id="path4733"
            inkscape:connector-curvature="0" />
@@ -2389,7 +2390,7 @@
            inkscape:connector-curvature="0" />
         <circle
            id="circle4741"
-           style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:none;stroke:#181800;stroke-width:3.99999976;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker:none;enable-background:accumulate"
+           style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:none;stroke:#505050;stroke-width:3.99999976;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker:none;enable-background:accumulate"
            cx="62.5"
            cy="76.75"
            r="26" />
