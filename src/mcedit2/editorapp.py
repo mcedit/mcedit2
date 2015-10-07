@@ -23,6 +23,7 @@ from mcedit2.util.load_ui import load_ui
 from mcedit2.util.objgraphwidget import ObjGraphWidget
 from mcedit2.util.qglcontext import setDefaultFormat
 from mcedit2.util.resources import resourcePath
+from mcedit2.util.showprogress import MCEProgressDialog
 from mcedit2.util.worldloader import LoaderTimer
 from mcedit2.widgets import prefsdialog, configureblocksdialog
 from mcedit2.widgets.blocktype_list import BlockListWidget
@@ -684,11 +685,11 @@ class MCEditApp(QtGui.QApplication):
 
     def loadFile(self, filename, readonly=False):
         self.hideWorldList()
-        fileLoadingDialog = QtGui.QProgressDialog(self.tr("Loading world..."),
-                                                  None,
-                                                  0,
-                                                  1,
-                                                  self.mainWindow)
+        fileLoadingDialog = MCEProgressDialog(self.tr("Loading world..."),
+                                              None,
+                                              0,
+                                              1,
+                                              self.mainWindow)
         fileLoadingDialog.setAutoReset(False)
         fileLoadingDialog.setWindowModality(Qt.WindowModal)
         fileLoadingDialog.setMinimumDuration(0)

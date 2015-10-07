@@ -14,6 +14,24 @@ log = logging.getLogger(__name__)
 
 timeBeforeDialog = 0.2
 
+
+class MCEProgressDialog(QtGui.QProgressDialog):
+
+    def __init__(self, *a):
+        flags = Qt.Dialog | Qt.CustomizeWindowHint | Qt.WindowTitleHint | Qt.WindowSystemMenuHint
+        a = a + (flags,)
+        super(MCEProgressDialog, self).__init__(*a)
+
+    def close(self):
+        pass
+
+    def reject(self):
+        pass
+
+    def closeEvent(self, event):
+        event.ignore()
+
+
 def showProgress(text, *tasks, **kwargs):
     """
     Show a progress dialog for the given task(s). Each task should be an iterable,
@@ -35,7 +53,9 @@ def showProgress(text, *tasks, **kwargs):
     shown = False
     with LoaderTimer.stopCtx():
 
-        dialog = QtGui.QProgressDialog(QtGui.qApp.mainWindow)
+        dialog = MCEProgressDialog(QtGui.qApp.mainWindow)
+        if not cancel:
+            dialog.setCancelButtonText(None)
         dialog.setWindowTitle(text)
         dialog.setWindowModality(Qt.WindowModal)
         log.info("Starting progress: %d tasks." % len(tasks))

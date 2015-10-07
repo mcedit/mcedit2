@@ -12,6 +12,7 @@ from mcedit2.util import qglcontext
 
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.screen import centerWidgetInScreen
+from mcedit2.util.showprogress import MCEProgressDialog
 
 log = logging.getLogger(__name__)
 
@@ -86,8 +87,8 @@ class ErrorDialog(QtGui.QDialog):
         url = None
 
         progressText = self.tr("Uploading to pastebin...")
-        dialog = QtGui.QProgressDialog(progressText,
-                                       None, 0, 0, self)
+        dialog = MCEProgressDialog(progressText,
+                                         None, 0, 0, self)
         dialog.setLabelText(progressText)
         dialog.setWindowTitle(progressText)
         dialog.setStatusTip(progressText)

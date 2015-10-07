@@ -27,7 +27,7 @@ from mceditlib.transform import DimensionTransform, SelectionTransform
 from mceditlib.util import exhaust
 from mceditlib.util.lazyprop import weakrefprop
 from mcedit2.util.raycast import rayCastInBounds
-from mcedit2.util.showprogress import showProgress
+from mcedit2.util.showprogress import showProgress, MCEProgressDialog
 from mcedit2.util.undostack import MCEUndoStack
 from mcedit2.widgets.inspector import InspectorWidget
 from mcedit2.worldview.viewaction import UseToolMouseAction, TrackingMouseAction
@@ -617,7 +617,7 @@ class EditorSession(QtCore.QObject):
     def changeResourcePack(self, packName):
         packDisplayName = packName or "(default)"
         log.info("Changing to resource pack %s", packName)
-        dialog = QtGui.QProgressDialog(QtGui.qApp.mainWindow)
+        dialog = MCEProgressDialog(QtGui.qApp.mainWindow)
         dialog.setRange(0, 0)
         dialog.setValue(0)
         dialog.setWindowTitle(self.tr("Changing resource pack..."))
@@ -634,7 +634,7 @@ class EditorSession(QtCore.QObject):
 
     def changeMCVersion(self, version):
         versionDisplayName = version or "(current)"
-        dialog = QtGui.QProgressDialog(QtGui.qApp.mainWindow)
+        dialog = MCEProgressDialog(QtGui.qApp.mainWindow)
         dialog.setRange(0, 0)
         dialog.setValue(0)
         dialog.setWindowTitle(self.tr("Changing Minecraft version..."))
