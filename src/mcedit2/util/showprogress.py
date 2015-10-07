@@ -31,38 +31,50 @@ def showProgress(text, *tasks, **kwargs):
     """
     progress = None
     cancel = kwargs.pop('cancel', None)
+    start = time.time()
+    shown = False
     with LoaderTimer.stopCtx():
 
         dialog = QtGui.QProgressDialog(QtGui.qApp.mainWindow)
         dialog.setWindowTitle(text)
         dialog.setWindowModality(Qt.WindowModal)
-        #dialog.show()
         log.info("Starting progress: %d tasks." % len(tasks))
-        maximum = len(tasks) * 100
+        totalMaximum = len(tasks) * 100
         for i, task in enumerate(tasks):
             log.info("Task #%d", i)
             task = rescaleProgress(task, i*100, i*100+100)
             for progress in task:
                 if isinstance(progress, basestring):
                     current = 0
+                    maximum = 0
                     status = progress
                 elif isinstance(progress, tuple):
                     if len(progress) > 2:
-                        current, _, status = progress[:3]
+                        current, maximum, status = progress[:3]
                     else:
-                        current, _ = progress
+                        current, maximum = progress
                         status = ""
                 else:
-                    current = 1
+                    current = 0
+                    maximum = 0
                     status = ""
 
                 dialog.setValue(current)
-                dialog.setMaximum(maximum)
+                if maximum == 0:
+                    # Task progress is indeterminate
+                    dialog.setMaximum(0)
+                else:
+                    dialog.setMaximum(totalMaximum)
                 dialog.setLabelText(status)
-                #QtGui.QApplication.processEvents()
+                if time.time() > start + timeBeforeDialog:
+                    if not shown:
+                        dialog.show()
+                        shown = True
+                    QtGui.QApplication.processEvents()
+
                 if dialog.wasCanceled():
                     return False
 
-        dialog.close()
+        dialog.hide()
         return progress
 
