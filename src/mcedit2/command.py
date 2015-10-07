@@ -25,7 +25,9 @@ class SimplePerformCommand(QtGui.QUndoCommand):
         if not self.performed:
             self.editorSession.beginUndo()
             self.perform()
-            self.editorSession.commitUndo()
+            task = self.editorSession.commitUndoIter()
+            showProgress(QtGui.qApp.tr("Writing undo history"), task)
+
         else:
             self.editorSession.undoForward()
 
