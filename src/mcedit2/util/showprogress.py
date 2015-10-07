@@ -95,6 +95,6 @@ def showProgress(text, *tasks, **kwargs):
                 if dialog.wasCanceled():
                     return False
 
-        dialog.hide()
+        dialog.reset()
         return progress
 
