@@ -6,6 +6,7 @@ import logging
 from OpenGL import GL
 from mcedit2.rendering.scenegraph.rendernode import RenderstateRenderNode
 from mcedit2.rendering.scenegraph.scenenode import Node
+from mceditlib.geometry import Vector
 
 log = logging.getLogger(__name__)
 
@@ -84,7 +85,7 @@ class TranslateRenderNode(RenderstateRenderNode):
 class TranslateNode(Node):
     RenderNodeClass = TranslateRenderNode
 
-    def __init__(self, translateOffset=(0., 0., 0.)):
+    def __init__(self, translateOffset=Vector(0., 0., 0.)):
         super(TranslateNode, self).__init__()
         self._translateOffset = translateOffset
 
@@ -94,7 +95,7 @@ class TranslateNode(Node):
 
     @translateOffset.setter
     def translateOffset(self, value):
-        self._translateOffset = value
+        self._translateOffset = Vector(*value)
         self.dirty = True
 
 
