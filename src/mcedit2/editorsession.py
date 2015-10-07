@@ -141,6 +141,13 @@ class PendingImport(object):
             return self.pos
         return self.pos + self.transformedDim.bounds.origin - self.selection.origin
 
+    @importPos.setter
+    def importPos(self, pos):
+        if self.transformedDim is None:
+            self.pos = pos
+        else:
+            self.pos = pos - self.transformedDim.bounds.origin + self.selection.origin
+
     @property
     def importDim(self):
         if self.transformedDim is not None:
@@ -179,8 +186,14 @@ class PendingImport(object):
     @property
     def bounds(self):
         return BoundingBox(self.pos, self.selection.size)
-        #return BoundingBox(self.pos, self.sourceDim.bounds.size)
 
+    @property
+    def importBounds(self):
+        if self.transformedDim is not None:
+            size = self.transformedDim.bounds.size
+        else:
+            size = self.selection.size
+        return BoundingBox(self.importPos, size)
 
 class PasteImportCommand(QtGui.QUndoCommand):
     def __init__(self, editorSession, pendingImport, text, *args, **kwargs):

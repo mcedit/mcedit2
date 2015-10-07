@@ -51,7 +51,6 @@ class MoveSelectionCommand(SimpleRevisionCommand):
 
 
 class MoveOffsetCommand(QtGui.QUndoCommand):
-
     def __init__(self, moveTool, oldPoint, newPoint):
         super(MoveOffsetCommand, self).__init__()
         self.setText(moveTool.tr("Move Object"))
@@ -80,7 +79,7 @@ class MoveFinishCommand(SimpleRevisionCommand):
     def redo(self):
         super(MoveFinishCommand, self).redo()
         self.previousSelection = self.editorSession.currentSelection
-        self.editorSession.currentSelection = self.pendingImport.bounds
+        self.editorSession.currentSelection = self.pendingImport.importBounds
         self.moveTool.removePendingImport(self.pendingImport)
 
 
@@ -128,6 +127,10 @@ class PendingImportNode(Node, QtCore.QObject):
         self.pendingImport = pendingImport
         dim = pendingImport.sourceDim
 
+        # positionTranslateNode contains the non-transformed preview of the imported
+        # object, including its world scene. This preview will be rotated model-wise
+        # while the user is dragging the rotate controls.
+
         self.positionTranslateNode = TranslateNode()
         self.rotateNode = Rotate3DNode()
         self.addChild(self.positionTranslateNode)
@@ -135,9 +138,17 @@ class PendingImportNode(Node, QtCore.QObject):
 
         self.rotateNode.setAnchor(self.pendingImport.bounds.size * 0.5)
 
+        # worldSceneTranslateNode is contained by positionTranslateNode, and
+        # serves to translate the world scene back to 0, 0, 0 so the positionTranslateNode
+        # can translate by the current position.
+
         self.worldSceneTranslateNode = TranslateNode()
         self.worldScene = WorldScene(dim, textureAtlas, bounds=pendingImport.selection)
         self.worldScene.depthOffsetNode.depthOffset = DepthOffset.PreviewRenderer
+
+        # transformedWorldTranslateNode contains the transformed preview of the imported
+        # object, including a world scene that displays the object wrapped by a
+        # DimensionTransform.
 
         self.transformedWorldTranslateNode = TranslateNode()
         self.transformedWorldScene = None
@@ -147,31 +158,46 @@ class PendingImportNode(Node, QtCore.QObject):
         self.worldSceneTranslateNode.addChild(self.worldScene)
         self.rotateNode.addChild(self.worldSceneTranslateNode)
 
-        box = BoundingBox(self.pos, pendingImport.bounds.size)
+        # handleNode displays a bounding box that can be moved around, and responds
+        # to mouse events.
+
+        box = BoundingBox(pendingImport.importPos, pendingImport.importBounds.size)
 
         self.handleNode = BoxHandle()
         self.handleNode.bounds = box
         self.handleNode.resizable = False
+
+        self.updateTransformedScene()
+        self.pos = pendingImport.pos
+
         self.handleNode.boundsChanged.connect(self.handleBoundsChanged)
         self.handleNode.boundsChangedDone.connect(self.handleBoundsChangedDone)
 
         self.addChild(self.handleNode)
 
-        self.pos = pendingImport.pos
-
+        # loads the non-transformed world scene asynchronously.
         self.loader = WorldLoader(self.worldScene,
                                   list(pendingImport.selection.chunkPositions()))
         self.loader.startLoader()
 
-    def handleBoundsChanged(self, bounds):
-        self.pos = bounds.origin
-
-    # newPos, oldPos
+    # Emitted when the user finishes dragging the box handle and releases the mouse
+    # button. Arguments are (newPosition, oldPosition).
     importMoved = QtCore.Signal(object, object)
 
     def handleBoundsChangedDone(self, bounds, oldBounds):
-        if bounds.origin != oldBounds.origin:
-            self.importMoved.emit(bounds.origin, oldBounds.origin)
+        point = self.getPosFromBox(bounds.origin)
+        oldPoint = self.getPosFromBox(oldBounds.origin)
+        if point != oldPoint:
+            self.importMoved.emit(point, oldPoint)
+
+    def handleBoundsChanged(self, bounds):
+        point = self.getPosFromBox(bounds.origin)
+        if self.pos != point:
+            self.pos = point
+
+    def getPosFromBox(self, point):
+        offset = self.pendingImport.pos - self.pendingImport.importPos
+        return point + offset
 
     def setPreviewRotation(self, rots):
         self.rotateNode.visible = True
@@ -182,9 +208,11 @@ class PendingImportNode(Node, QtCore.QObject):
     def setRotation(self, rots):
         self.pendingImport.rotation = rots
         self.updateTransformedScene()
+        self.updateBoxHandle()
 
     def updateTransformedScene(self):
         if self.pendingImport.transformedDim is not None:
+            log.info("Showing transformed scene")
             self.rotateNode.visible = False
             self.worldSceneTranslateNode.visible = False
             self.transformedWorldTranslateNode.visible = True
@@ -205,6 +233,7 @@ class PendingImportNode(Node, QtCore.QObject):
             self.loader.startLoader()
 
         else:
+            log.info("Hiding transformed scene")
             self.rotateNode.visible = True
             self.worldSceneTranslateNode.visible = True
             self.transformedWorldTranslateNode.visible = False
@@ -224,10 +253,17 @@ class PendingImportNode(Node, QtCore.QObject):
         if value == self.positionTranslateNode.translateOffset:
             return
 
-        self.positionTranslateNode.translateOffset = value
+        self.positionTranslateNode.translateOffset = Vector(*value)
         self.updateTransformedSceneOffset()
-
-        bounds = BoundingBox(value, self.pendingImport.bounds.size)
+        self.updateBoxHandle()
+        
+    def updateBoxHandle(self):
+        if self.transformedWorldScene is None:
+            bounds = BoundingBox(self.pos, self.pendingImport.bounds.size)
+        else:
+            origin = self.pos - self.pendingImport.pos + self.pendingImport.importPos
+            bounds = BoundingBox(origin, self.pendingImport.importBounds.size)
+        #if self.handleNode.bounds.size != bounds.size:
         self.handleNode.bounds = bounds
 
     # --- Mouse events ---
@@ -241,6 +277,7 @@ class PendingImportNode(Node, QtCore.QObject):
 
     def mouseRelease(self, event):
         self.handleNode.mouseRelease(event)
+
 
 class RotationWidget(QtGui.QWidget):
     def __init__(self):
