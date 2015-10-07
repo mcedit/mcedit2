@@ -220,7 +220,7 @@ class BrushTool(EditorTool):
         self.cursorNode.addChild(self.cursorBoxNode)
 
         self.brushLoader = WorldLoader(self.cursorWorldScene)
-        self.brushLoader.timer.start()
+        self.brushLoader.startLoader()
 
 
 # xxx button palette?

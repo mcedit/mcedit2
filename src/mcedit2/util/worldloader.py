@@ -6,6 +6,7 @@ import contextlib
 import logging
 import weakref
 from PySide import QtCore
+import time
 from mcedit2.util import profiler
 
 log = logging.getLogger(__name__)
@@ -55,6 +56,12 @@ class WorldLoader(object):
         self.timer.setInterval(0)
         self.chunkPositions = chunkPositions
         self.chunkIter = self.work()
+
+    def startLoader(self, duration=0.12):
+        self.timer.start()
+        start = time.time()
+        while time.time() < start + duration:
+            self.loadChunk()
 
     def loadChunk(self):
         try:

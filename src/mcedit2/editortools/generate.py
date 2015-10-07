@@ -412,7 +412,7 @@ class GenerateTool(EditorTool):
             if dim.chunkCount() <= self.instantDisplayChunks:
                 exhaust(self.loader.work())
             else:
-                self.loader.timer.start()
+                self.loader.startLoader()
         else:
             self.clearSchematic()
 

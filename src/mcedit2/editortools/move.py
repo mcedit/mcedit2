@@ -161,7 +161,7 @@ class PendingImportNode(Node, QtCore.QObject):
 
         self.loader = WorldLoader(self.worldScene,
                                   list(pendingImport.selection.chunkPositions()))
-        self.loader.timer.start()
+        self.loader.startLoader()
 
     def handleBoundsChanged(self, bounds):
         self.pos = bounds.origin
@@ -202,7 +202,7 @@ class PendingImportNode(Node, QtCore.QObject):
             cPos = list(self.pendingImport.transformedDim.chunkPositions())
             self.loader = WorldLoader(self.transformedWorldScene,
                                       cPos)
-            self.loader.timer.start()
+            self.loader.startLoader()
 
         else:
             self.rotateNode.visible = True

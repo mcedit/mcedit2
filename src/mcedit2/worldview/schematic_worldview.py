@@ -85,8 +85,8 @@ def displaySchematic(schematic):
     _swv_view = SchematicWorldView(dim, textureAtlas)
 
     loader = WorldLoader(_swv_view.worldScene)
-    loader.timer.start()
     loader.timer.timeout.connect(_swv_view.update)
+    loader.startLoader()
 
     centerWidgetInScreen(_swv_view, resize=0.75)
 
