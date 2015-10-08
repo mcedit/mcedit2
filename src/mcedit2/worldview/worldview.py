@@ -505,7 +505,7 @@ class WorldView(QGLWidget):
 
     def rayCastInView(self, ray):
         try:
-            result = raycast.rayCastInBounds(ray, self.dimension, maxDistance=2000)
+            result = raycast.rayCastInBounds(ray, self.dimension, maxDistance=200)
             position, face = result
 
         except (raycast.MaxDistanceError, ValueError):
