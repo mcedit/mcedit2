@@ -33,29 +33,44 @@ class MoveSelectionCommand(SimpleRevisionCommand):
     def undo(self):
         super(MoveSelectionCommand, self).undo()
         self.moveTool.currentImport = None
-        self.moveTool.removePendingImport(self.pendingImport)
+        #self.moveTool.removePendingImport(self.pendingImport)
         self.moveTool.editorSession.chooseTool("Select")
 
     def redo(self):
         self.moveTool.currentImport = self.pendingImport
-        self.moveTool.addPendingImport(self.pendingImport)
+        #self.moveTool.addPendingImport(self.pendingImport)
         self.moveTool.editorSession.chooseTool("Move")
         super(MoveSelectionCommand, self).redo()
 
 
 class MoveOffsetCommand(QtGui.QUndoCommand):
-    def __init__(self, moveTool, oldPoint, newPoint):
+    def __init__(self, oldPoint, newPoint, pendingImport):
         super(MoveOffsetCommand, self).__init__()
-        self.setText(moveTool.tr("Move Object"))
+        self.pendingImport = pendingImport
+        self.setText(QtGui.qApp.tr("Move Object"))
         self.newPoint = newPoint
         self.oldPoint = oldPoint
-        self.moveTool = moveTool
 
     def undo(self):
-        self.moveTool.movePosition = self.oldPoint
+        self.pendingImport.basePosition = self.oldPoint
 
     def redo(self):
-        self.moveTool.movePosition = self.newPoint
+        self.pendingImport.basePosition = self.newPoint
+
+
+class MoveRotateCommand(QtGui.QUndoCommand):
+    def __init__(self, oldRotation, newRotation, pendingImport):
+        super(MoveRotateCommand, self).__init__()
+        self.pendingImport = pendingImport
+        self.setText(QtGui.qApp.tr("Rotate Object"))
+        self.newRotation = newRotation
+        self.oldRotation = oldRotation
+
+    def undo(self):
+        self.pendingImport.rotation = self.oldRotation
+
+    def redo(self):
+        self.pendingImport.rotation = self.newRotation
 
 
 class MoveFinishCommand(SimpleRevisionCommand):
@@ -63,10 +78,12 @@ class MoveFinishCommand(SimpleRevisionCommand):
         super(MoveFinishCommand, self).__init__(moveTool.editorSession, moveTool.tr("Finish Move"), *args, **kwargs)
         self.pendingImport = pendingImport
         self.moveTool = moveTool
+        self.previousSelection = None
 
     def undo(self):
         super(MoveFinishCommand, self).undo()
-        self.moveTool.addPendingImport(self.pendingImport)
+        #self.moveTool.addPendingImport(self.pendingImport)
+        self.moveTool.currentImport = self.pendingImport
         self.editorSession.currentSelection = self.previousSelection
         self.editorSession.chooseTool("Move")
 
@@ -74,7 +91,8 @@ class MoveFinishCommand(SimpleRevisionCommand):
         super(MoveFinishCommand, self).redo()
         self.previousSelection = self.editorSession.currentSelection
         self.editorSession.currentSelection = self.pendingImport.importBounds
-        self.moveTool.removePendingImport(self.pendingImport)
+        self.moveTool.currentImport = None
+        #self.moveTool.removePendingImport(self.pendingImport)
 
 
 class RotationWidget(QtGui.QWidget):
@@ -97,6 +115,19 @@ class RotationWidget(QtGui.QWidget):
         self.xRot = self.yRot = self.zRot = 0
 
     rotationChanged = QtCore.Signal(object, bool)
+
+    @property
+    def rotation(self):
+        return self.xRot, self.yRot, self.zRot
+
+    @rotation.setter
+    def rotation(self, value):
+        if value == self.rotation:
+            return
+        xRot, yRot, zRot = value
+        self.setXRot(xRot)
+        self.setYRot(yRot)
+        self.setZRot(zRot)
 
     def emitRotationChanged(self, live):
         self.rotationChanged.emit((self.xRot, self.yRot, self.zRot), live)
@@ -142,21 +173,10 @@ class MoveTool(EditorTool):
     def __init__(self, editorSession, *args, **kwargs):
         super(MoveTool, self).__init__(editorSession, *args, **kwargs)
         self.overlayNode = scenenode.Node()
-
-        self.dragStartFace = None
-        self.dragStartPoint = None
-
-        self.pendingImports = []
-
-        self.pendingImportNodes = {}
+        self._currentImport = None
+        self._currentImportNode = None
 
         self.toolWidget = QtGui.QWidget()
-
-        self.importsListWidget = QtGui.QListView()
-        self.importsListModel = QtGui.QStandardItemModel()
-        self.importsListWidget.setModel(self.importsListModel)
-        self.importsListWidget.clicked.connect(self.listClicked)
-        self.importsListWidget.doubleClicked.connect(self.listDoubleClicked)
 
         self.pointInput = CoordinateWidget()
         self.pointInput.pointChanged.connect(self.pointInputChanged)
@@ -171,8 +191,7 @@ class MoveTool(EditorTool):
 
         confirmButton = QtGui.QPushButton("Confirm")  # xxxx should be in worldview
         confirmButton.clicked.connect(self.confirmImport)
-        self.toolWidget.setLayout(Column(self.importsListWidget,
-                                         self.pointInput,
+        self.toolWidget.setLayout(Column(self.pointInput,
                                          self.rotationInput,
                                          self.copyOptionsWidget,
                                          confirmButton,
@@ -183,86 +202,46 @@ class MoveTool(EditorTool):
             if live:
                 self.currentImportNode.setPreviewRotation(rots)
             else:
-                self.currentImportNode.setRotation(rots)
+                command = MoveRotateCommand(self.currentImport.rotation, rots, self.currentImport)
+                self.editorSession.pushCommand(command)
 
             self.editorSession.updateView()
 
-    @property
-    def movePosition(self):
-        return None if self.currentImport is None else self.currentImport.pos
-
-    @movePosition.setter
-    def movePosition(self, value):
-        """
-
-        :type value: Vector
-        """
-        self.pointInput.point = value
-        self.pointInputChanged(value)
-
     def pointInputChanged(self, value):
         if value is not None:
-            self.currentImport.pos = value
-            self.currentImportNode.pos = value
+            self.currentImport.basePosition = value
 
     # --- Pending imports ---
 
-    def addPendingImport(self, pendingImport):
-        log.info("Added import: %s", pendingImport)
-        self.pendingImports.append(pendingImport)
-        item = QtGui.QStandardItem()
-        item.setEditable(False)
-        item.setText(pendingImport.text)
-        item.setData(pendingImport, Qt.UserRole)
-        self.importsListModel.appendRow(item)
-        self.importsListWidget.setCurrentIndex(self.importsListModel.index(self.importsListModel.rowCount()-1, 0))
-        node = self.pendingImportNodes[pendingImport] = PendingImportNode(pendingImport, self.editorSession.textureAtlas)
-        node.importMoved.connect(self.importDidMove)
-
-        self.overlayNode.addChild(node)
-        self.currentImport = pendingImport
-
-    def removePendingImport(self, pendingImport):
-        index = self.pendingImports.index(pendingImport)
-        self.pendingImports.remove(pendingImport)
-        self.importsListModel.removeRows(index, 1)
-        self.currentImport = self.pendingImports[-1] if len(self.pendingImports) else None
-        node = self.pendingImportNodes.pop(pendingImport)
-        if node:
-            self.overlayNode.removeChild(node)
-
     def importDidMove(self, newPoint, oldPoint):
         if newPoint != oldPoint:
-            command = MoveOffsetCommand(self, oldPoint, newPoint)
+            command = MoveOffsetCommand(oldPoint, newPoint, self.currentImport)
             self.editorSession.pushCommand(command)
-
-    def listClicked(self, index):
-        item = self.importsListModel.itemFromIndex(index)
-        pendingImport = item.data(Qt.UserRole)
-        self.currentImport = pendingImport
-
-    def listDoubleClicked(self, index):
-        item = self.importsListModel.itemFromIndex(index)
-        pendingImport = item.data(Qt.UserRole)
-        self.editorSession.editorTab.currentView().centerOnPoint(pendingImport.bounds.center)
-
-    _currentImport = None
 
     @property
     def currentImport(self):
         return self._currentImport
 
     @currentImport.setter
-    def currentImport(self, value):
-        self._currentImport = value
-        self.pointInput.setEnabled(value is not None)
+    def currentImport(self, pendingImport):
+        self._currentImport = pendingImport
+        self.pointInput.setEnabled(pendingImport is not None)
         # Set current import to different color?
         # for node in self.pendingImportNodes.itervalues():
         #     node.outlineNode.wireColor = (.2, 1., .2, .5) if node.pendingImport is value else (1, 1, 1, .3)
+        if pendingImport is None:
+            if self._currentImportNode is not None:
+                self.overlayNode.removeChild(self._currentImportNode)
+                self._currentImportNode = None
+        else:
+            node = PendingImportNode(pendingImport, self.editorSession.textureAtlas)
+            node.importMoved.connect(self.importDidMove)
+            self._currentImportNode = node
+            self.overlayNode.addChild(node)
 
     @property
     def currentImportNode(self):
-        return self.pendingImportNodes.get(self.currentImport)
+        return self._currentImportNode
 
     # --- Mouse events ---
 
@@ -289,6 +268,7 @@ class MoveTool(EditorTool):
     def toolActive(self):
         self.editorSession.selectionTool.hideSelectionWalls = True
         if self.currentImport is None:
+            self.rotationInput.rotation = (0, 0, 0)
             if self.editorSession.currentSelection is None:
                 return
 
@@ -315,12 +295,14 @@ class MoveTool(EditorTool):
         command = MoveFinishCommand(self, self.currentImport)
         destDim = self.editorSession.currentDimension
         with command.begin():
+            log.info("Move: starting")
             if self.currentImport.isMove:
                 sourceDim = self.currentImport.importDim
                 destBox = BoundingBox(self.currentImport.importPos, sourceDim.bounds.size)
 
                 # Use intermediate schematic only if source and destination overlap.
                 if sourceDim.bounds.intersect(destBox).volume:
+                    log.info("Move: using temporary")
                     export = extractSchematicFromIter(sourceDim, self.currentImport.selection)
                     schematic = showProgress(self.tr("Copying..."), export)
                     sourceDim = schematic.getDimension()
@@ -330,6 +312,7 @@ class MoveTool(EditorTool):
                 sourceDim = self.currentImport.importDim
 
             # Copy to destination
+            log.info("Move: copying")
             task = destDim.copyBlocksIter(sourceDim, sourceDim.bounds,
                                           self.currentImport.importPos,
                                           biomes=True, create=True,
@@ -337,6 +320,7 @@ class MoveTool(EditorTool):
 
             showProgress(self.tr("Pasting..."), task)
 
+            log.info("Move: clearing")
             # Clear source
             if self.currentImport.isMove:
                 fill = destDim.fillBlocksIter(self.currentImport.selection, "air")

@@ -3,7 +3,8 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
-from PySide import QtCore
+from PySide import QtCore, QtGui
+from PySide.QtCore import Qt
 from mcedit2.handles.boxhandle import BoxHandle
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.scenegraph.matrix import TranslateNode, RotateNode
@@ -16,14 +17,80 @@ from mceditlib.transform import SelectionTransform, DimensionTransform
 
 log = logging.getLogger(__name__)
 
+class PendingImportsGroup(QtCore.QObject):
+    def __init__(self):
+        super(PendingImportsGroup, self).__init__()
+
+        self.pendingImports = []
+
+        self.pendingImportNodes = {}
+
+    def addPendingImport(self, pendingImport):
+        log.info("Added import: %s", pendingImport)
+        self.pendingImports.append(pendingImport)
+        item = QtGui.QStandardItem()
+        item.setEditable(False)
+        item.setText(pendingImport.text)
+        item.setData(pendingImport, Qt.UserRole)
+        self.importsListModel.appendRow(item)
+        self.importsListWidget.setCurrentIndex(self.importsListModel.index(self.importsListModel.rowCount()-1, 0))
+        node = self.pendingImportNodes[pendingImport] = PendingImportNode(pendingImport, self.editorSession.textureAtlas)
+        node.importMoved.connect(self.importDidMove)
+
+        self.overlayNode.addChild(node)
+        self.currentImport = pendingImport
+
+    def removePendingImport(self, pendingImport):
+        index = self.pendingImports.index(pendingImport)
+        self.pendingImports.remove(pendingImport)
+        self.importsListModel.removeRows(index, 1)
+        self.currentImport = self.pendingImports[-1] if len(self.pendingImports) else None
+        node = self.pendingImportNodes.pop(pendingImport)
+        if node:
+            self.overlayNode.removeChild(node)
+    #
+    # def listClicked(self, index):
+    #     item = self.importsListModel.itemFromIndex(index)
+    #     pendingImport = item.data(Qt.UserRole)
+    #     self.currentImport = pendingImport
+
+    def listDoubleClicked(self, index):
+        item = self.importsListModel.itemFromIndex(index)
+        pendingImport = item.data(Qt.UserRole)
+        self.editorSession.editorTab.currentView().centerOnPoint(pendingImport.bounds.center)
+
 
 class PendingImportNode(Node, QtCore.QObject):
     __node_id_counter = 0
 
     def __init__(self, pendingImport, textureAtlas):
+        """
+        A scenegraph node displaying an object that will be imported later, including
+        live and deferred views of the object with transformed items, and a BoxHandle
+        for moving the item.
+
+        Parameters
+        ----------
+
+        pendingImport: PendingImport
+            The object to be imported. The PendingImportNode responds to changes in this
+            object's position, rotation, and scale.
+        textureAtlas: TextureAtlas
+            The textures and block models used to render the preview of the object.
+
+        Attributes
+        ----------
+
+        basePosition: Vector
+            The pre-transform position of the pending import. This is equal to
+            `self.pendingImport.basePosition` except when the node is currently being
+            dragged.
+        transformedPosition: Vector
+            The post-transform position of the pending import. This is equal to
+            `self.pendingImport.importPos` except when the node is currently being
+            dragged, scaled, or rotated.
+        """
         super(PendingImportNode, self).__init__()
-        PendingImportNode.__node_id_counter += 1
-        self.id = PendingImportNode.__node_id_counter
 
         self.textureAtlas = textureAtlas
         self.pendingImport = pendingImport
@@ -38,7 +105,7 @@ class PendingImportNode(Node, QtCore.QObject):
         self.addChild(self.positionTranslateNode)
         self.positionTranslateNode.addChild(self.rotateNode)
 
-        self.rotateNode.setAnchor(self.pendingImport.bounds.size * 0.5)
+        self.rotateNode.setAnchor(self.pendingImport.selection.size * 0.5)
 
         # worldSceneTranslateNode is contained by positionTranslateNode, and
         # serves to translate the world scene back to 0, 0, 0 so the positionTranslateNode
@@ -70,7 +137,7 @@ class PendingImportNode(Node, QtCore.QObject):
         self.handleNode.resizable = False
 
         self.updateTransformedScene()
-        self.pos = pendingImport.pos
+        self.basePosition = pendingImport.basePosition
 
         self.handleNode.boundsChanged.connect(self.handleBoundsChanged)
         self.handleNode.boundsChangedDone.connect(self.handleBoundsChangedDone)
@@ -82,23 +149,26 @@ class PendingImportNode(Node, QtCore.QObject):
                                   list(pendingImport.selection.chunkPositions()))
         self.loader.startLoader()
 
+        self.pendingImport.positionChanged.connect(self.setPosition)
+        self.pendingImport.rotationChanged.connect(self.setRotation)
+
     # Emitted when the user finishes dragging the box handle and releases the mouse
     # button. Arguments are (newPosition, oldPosition).
     importMoved = QtCore.Signal(object, object)
 
     def handleBoundsChangedDone(self, bounds, oldBounds):
-        point = self.getPosFromBox(bounds.origin)
-        oldPoint = self.getPosFromBox(oldBounds.origin)
+        point = self.getBaseFromTransformed(bounds.origin)
+        oldPoint = self.getBaseFromTransformed(oldBounds.origin)
         if point != oldPoint:
             self.importMoved.emit(point, oldPoint)
 
     def handleBoundsChanged(self, bounds):
-        point = self.getPosFromBox(bounds.origin)
-        if self.pos != point:
-            self.pos = point
+        point = self.getBaseFromTransformed(bounds.origin)
+        if self.basePosition != point:
+            self.basePosition = point
 
-    def getPosFromBox(self, point):
-        offset = self.pendingImport.pos - self.pendingImport.importPos
+    def getBaseFromTransformed(self, point):
+        offset = self.pendingImport.basePosition - self.pendingImport.importPos
         return point + offset
 
     def setPreviewRotation(self, rots):
@@ -108,7 +178,6 @@ class PendingImportNode(Node, QtCore.QObject):
         self.rotateNode.setRotation(rots)
 
     def setRotation(self, rots):
-        self.pendingImport.rotation = rots
         self.updateTransformedScene()
         self.updateBoxHandle()
 
@@ -144,14 +213,18 @@ class PendingImportNode(Node, QtCore.QObject):
                 self.transformedWorldScene = None
 
     def updateTransformedSceneOffset(self):
-        self.transformedWorldTranslateNode.translateOffset = self.pos - self.pendingImport.rotateAnchor + self.pendingImport.bounds.size * 0.5
+        self.transformedWorldTranslateNode.translateOffset = self.transformedPosition - self.pendingImport.importDim.bounds.origin
 
     @property
-    def pos(self):
+    def transformedPosition(self):
+        return self.basePosition + self.pendingImport.importPos - self.pendingImport.basePosition
+
+    @property
+    def basePosition(self):
         return self.positionTranslateNode.translateOffset
 
-    @pos.setter
-    def pos(self, value):
+    @basePosition.setter
+    def basePosition(self, value):
         if value == self.positionTranslateNode.translateOffset:
             return
 
@@ -159,11 +232,14 @@ class PendingImportNode(Node, QtCore.QObject):
         self.updateTransformedSceneOffset()
         self.updateBoxHandle()
 
+    def setPosition(self, pos):
+        self.basePosition = pos
+
     def updateBoxHandle(self):
         if self.transformedWorldScene is None:
-            bounds = BoundingBox(self.pos, self.pendingImport.bounds.size)
+            bounds = BoundingBox(self.basePosition, self.pendingImport.bounds.size)
         else:
-            origin = self.pos - self.pendingImport.pos + self.pendingImport.importPos
+            origin = self.transformedPosition
             bounds = BoundingBox(origin, self.pendingImport.importBounds.size)
         #if self.handleNode.bounds.size != bounds.size:
         self.handleNode.bounds = bounds
@@ -181,7 +257,7 @@ class PendingImportNode(Node, QtCore.QObject):
         self.handleNode.mouseRelease(event)
 
 
-class PendingImport(object):
+class PendingImport(QtCore.QObject):
     """
     An object representing a schematic, etc that is currently being imported and can be
     moved/rotated/scaled by the user.
@@ -191,7 +267,7 @@ class PendingImport(object):
 
     sourceDim: WorldEditorDimension
         The object that will be imported.
-    pos: Vector
+    basePosition: Vector
         The position in the currently edited world where the object will be imported.
     selection: SelectionBox
         Defines the portion of sourceDim that will be imported. For importing
@@ -212,8 +288,8 @@ class PendingImport(object):
     importPos: Vector
         The effective position where the object is to be imported. When the
         PendingImport's rotation or scale is the default, this will be the
-        same as `self.pos`, otherwise it will be the position where the transformed
-        object will be imported. Changing this attribute will also change `self.pos`
+        same as `self.basePosition`, otherwise it will be the position where the transformed
+        object will be imported. Changing this attribute will also change `self.basePosition`
         to the pre-transform position accordingly.
 
     importDim: WorldEditorDimension
@@ -239,7 +315,7 @@ class PendingImport(object):
 
     bounds: BoundingBox
         The axis-aligned bounding box that completely encloses `self.selection`, moved
-        to the position given by `self.pos`, in destination coordinates.
+        to the position given by `self.basePosition`, in destination coordinates.
 
     importBounds: BoundingBox
         The axis-aligned bounding box that completely encloses the transformed dimension
@@ -247,9 +323,11 @@ class PendingImport(object):
 
     """
     def __init__(self, sourceDim, pos, selection, text, isMove=False):
+        super(PendingImport, self).__init__()
+
         self.selection = selection
         self.text = text
-        self.pos = pos
+        self._pos = pos
         self.sourceDim = sourceDim
         self.isMove = isMove
         self._rotation = (0, 0, 0)
@@ -259,18 +337,34 @@ class PendingImport(object):
         bounds = self.selection
         self.rotateAnchor = bounds.origin + bounds.size * 0.5
 
+    positionChanged = QtCore.Signal(object)
+    rotationChanged = QtCore.Signal(object)
+    scaleChanged = QtCore.Signal(object)
+
+    @property
+    def basePosition(self):
+        return self._pos
+
+    @basePosition.setter
+    def basePosition(self, value):
+        if value == self._pos:
+            return
+
+        self._pos = Vector(*value)
+        self.positionChanged.emit(self._pos)
+
     @property
     def importPos(self):
         if self.transformedDim is None:
-            return self.pos
-        return self.pos + self.transformedDim.bounds.origin - self.selection.origin
+            return self.basePosition
+        return self.basePosition + self.transformedDim.bounds.origin - self.selection.origin
 
     @importPos.setter
     def importPos(self, pos):
         if self.transformedDim is None:
-            self.pos = pos
+            self.basePosition = pos
         else:
-            self.pos = pos - self.transformedDim.bounds.origin + self.selection.origin
+            self.basePosition = pos - self.transformedDim.bounds.origin + self.selection.origin
 
     @property
     def importDim(self):
@@ -285,8 +379,11 @@ class PendingImport(object):
 
     @rotation.setter
     def rotation(self, value):
-        self._rotation = value
+        if self._rotation == value:
+            return
+        self._rotation = Vector(*value)
         self.updateTransform()
+        self.rotationChanged.emit(self._rotation)
 
     @property
     def scale(self):
@@ -294,7 +391,10 @@ class PendingImport(object):
 
     @scale.setter
     def scale(self, value):
-        self._rotation = value
+        if self._scale == value:
+            return
+        self._scale = Vector(*value)
+        self.scaleChanged.emit(self._scale)
         self.updateTransform()
 
     def updateTransform(self):
@@ -305,11 +405,12 @@ class PendingImport(object):
             self.transformedDim = DimensionTransform(selectionDim, self.rotateAnchor, *self.rotation)
 
     def __repr__(self):
-        return "%s(%r, %r, %r)" % (self.__class__.__name__, self.sourceDim, self.selection, self.pos)
+        return "%s(%r, %r, %r)" % (
+            self.__class__.__name__, self.sourceDim, self.selection, self.basePosition)
 
     @property
     def bounds(self):
-        return BoundingBox(self.pos, self.selection.size)
+        return BoundingBox(self.basePosition, self.selection.size)
 
     @property
     def importBounds(self):
@@ -330,10 +431,10 @@ class Rotate3DNode(Node):
         self.recenterNode = TranslateNode()
 
         super(Rotate3DNode, self).addChild(self.anchorNode)
-        self.anchorNode.addChild(self.rotXNode)
-        self.rotXNode.addChild(self.rotYNode)
-        self.rotYNode.addChild(self.rotZNode)
-        self.rotZNode.addChild(self.recenterNode)
+        self.anchorNode.addChild(self.rotZNode)
+        self.rotZNode.addChild(self.rotYNode)
+        self.rotYNode.addChild(self.rotXNode)
+        self.rotXNode.addChild(self.recenterNode)
 
     def addChild(self, node):
         self.recenterNode.addChild(node)
