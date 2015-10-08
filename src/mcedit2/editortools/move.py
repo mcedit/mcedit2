@@ -5,21 +5,14 @@ from __future__ import absolute_import, division, print_function
 import logging
 
 from PySide import QtGui, QtCore
-
 from PySide.QtCore import Qt
-from mcedit2.editorsession import PendingImport
+
 from mcedit2.editortools import EditorTool
 from mcedit2.command import SimpleRevisionCommand
-from mcedit2.handles.boxhandle import BoxHandle
-from mcedit2.rendering.scenegraph.matrix import TranslateNode, RotateNode
-from mcedit2.rendering.scenegraph.scenenode import Node
-from mcedit2.rendering.selection import SelectionBoxNode, SelectionFaceNode, boxFaceUnderCursor
+from mcedit2.imports import PendingImportNode, PendingImport
 from mcedit2.rendering.scenegraph import scenenode
-from mcedit2.rendering.depths import DepthOffset
-from mcedit2.rendering.worldscene import WorldScene
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.showprogress import showProgress
-from mcedit2.util.worldloader import WorldLoader
 from mcedit2.widgets.coord_widget import CoordinateWidget
 from mcedit2.widgets.layout import Column
 from mceditlib.export import extractSchematicFromIter
@@ -64,6 +57,7 @@ class MoveOffsetCommand(QtGui.QUndoCommand):
     def redo(self):
         self.moveTool.movePosition = self.newPoint
 
+
 class MoveFinishCommand(SimpleRevisionCommand):
     def __init__(self, moveTool, pendingImport, *args, **kwargs):
         super(MoveFinishCommand, self).__init__(moveTool.editorSession, moveTool.tr("Finish Move"), *args, **kwargs)
@@ -81,202 +75,6 @@ class MoveFinishCommand(SimpleRevisionCommand):
         self.previousSelection = self.editorSession.currentSelection
         self.editorSession.currentSelection = self.pendingImport.importBounds
         self.moveTool.removePendingImport(self.pendingImport)
-
-
-class Rotate3DNode(Node):
-    def __init__(self):
-        super(Rotate3DNode, self).__init__()
-        self.anchorNode = TranslateNode()
-        self.rotXNode = RotateNode(axis=(1, 0, 0))
-        self.rotYNode = RotateNode(axis=(0, 1, 0))
-        self.rotZNode = RotateNode(axis=(0, 0, 1))
-        self.recenterNode = TranslateNode()
-
-        super(Rotate3DNode, self).addChild(self.anchorNode)
-        self.anchorNode.addChild(self.rotXNode)
-        self.rotXNode.addChild(self.rotYNode)
-        self.rotYNode.addChild(self.rotZNode)
-        self.rotZNode.addChild(self.recenterNode)
-
-    def addChild(self, node):
-        self.recenterNode.addChild(node)
-
-    def removeChild(self, node):
-        self.recenterNode.removeChild(node)
-
-    def setRotation(self, rots):
-        rx, ry, rz = rots
-        self.rotXNode.degrees = rx
-        self.rotYNode.degrees = ry
-        self.rotZNode.degrees = rz
-
-    def setAnchor(self, point):
-        self.anchorNode.translateOffset = point
-        self.recenterNode.translateOffset = -point
-
-
-class PendingImportNode(Node, QtCore.QObject):
-    __node_id_counter = 0
-
-    def __init__(self, pendingImport, textureAtlas):
-        super(PendingImportNode, self).__init__()
-        PendingImportNode.__node_id_counter += 1
-        self.id = PendingImportNode.__node_id_counter
-
-        self.textureAtlas = textureAtlas
-        self.pendingImport = pendingImport
-        dim = pendingImport.sourceDim
-
-        # positionTranslateNode contains the non-transformed preview of the imported
-        # object, including its world scene. This preview will be rotated model-wise
-        # while the user is dragging the rotate controls.
-
-        self.positionTranslateNode = TranslateNode()
-        self.rotateNode = Rotate3DNode()
-        self.addChild(self.positionTranslateNode)
-        self.positionTranslateNode.addChild(self.rotateNode)
-
-        self.rotateNode.setAnchor(self.pendingImport.bounds.size * 0.5)
-
-        # worldSceneTranslateNode is contained by positionTranslateNode, and
-        # serves to translate the world scene back to 0, 0, 0 so the positionTranslateNode
-        # can translate by the current position.
-
-        self.worldSceneTranslateNode = TranslateNode()
-        self.worldScene = WorldScene(dim, textureAtlas, bounds=pendingImport.selection)
-        self.worldScene.depthOffsetNode.depthOffset = DepthOffset.PreviewRenderer
-
-        # transformedWorldTranslateNode contains the transformed preview of the imported
-        # object, including a world scene that displays the object wrapped by a
-        # DimensionTransform.
-
-        self.transformedWorldTranslateNode = TranslateNode()
-        self.transformedWorldScene = None
-        self.addChild(self.transformedWorldTranslateNode)
-
-        self.worldSceneTranslateNode.translateOffset = -self.pendingImport.selection.origin
-        self.worldSceneTranslateNode.addChild(self.worldScene)
-        self.rotateNode.addChild(self.worldSceneTranslateNode)
-
-        # handleNode displays a bounding box that can be moved around, and responds
-        # to mouse events.
-
-        box = BoundingBox(pendingImport.importPos, pendingImport.importBounds.size)
-
-        self.handleNode = BoxHandle()
-        self.handleNode.bounds = box
-        self.handleNode.resizable = False
-
-        self.updateTransformedScene()
-        self.pos = pendingImport.pos
-
-        self.handleNode.boundsChanged.connect(self.handleBoundsChanged)
-        self.handleNode.boundsChangedDone.connect(self.handleBoundsChangedDone)
-
-        self.addChild(self.handleNode)
-
-        # loads the non-transformed world scene asynchronously.
-        self.loader = WorldLoader(self.worldScene,
-                                  list(pendingImport.selection.chunkPositions()))
-        self.loader.startLoader()
-
-    # Emitted when the user finishes dragging the box handle and releases the mouse
-    # button. Arguments are (newPosition, oldPosition).
-    importMoved = QtCore.Signal(object, object)
-
-    def handleBoundsChangedDone(self, bounds, oldBounds):
-        point = self.getPosFromBox(bounds.origin)
-        oldPoint = self.getPosFromBox(oldBounds.origin)
-        if point != oldPoint:
-            self.importMoved.emit(point, oldPoint)
-
-    def handleBoundsChanged(self, bounds):
-        point = self.getPosFromBox(bounds.origin)
-        if self.pos != point:
-            self.pos = point
-
-    def getPosFromBox(self, point):
-        offset = self.pendingImport.pos - self.pendingImport.importPos
-        return point + offset
-
-    def setPreviewRotation(self, rots):
-        self.rotateNode.visible = True
-        self.worldSceneTranslateNode.visible = True
-        self.transformedWorldTranslateNode.visible = False
-        self.rotateNode.setRotation(rots)
-
-    def setRotation(self, rots):
-        self.pendingImport.rotation = rots
-        self.updateTransformedScene()
-        self.updateBoxHandle()
-
-    def updateTransformedScene(self):
-        if self.pendingImport.transformedDim is not None:
-            log.info("Showing transformed scene")
-            self.rotateNode.visible = False
-            self.worldSceneTranslateNode.visible = False
-            self.transformedWorldTranslateNode.visible = True
-
-            if self.transformedWorldScene:
-                self.transformedWorldTranslateNode.removeChild(self.transformedWorldScene)
-
-            self.transformedWorldScene = WorldScene(self.pendingImport.transformedDim,
-                                                    self.textureAtlas)
-            self.transformedWorldScene.depthOffsetNode.depthOffset = DepthOffset.PreviewRenderer
-            self.transformedWorldTranslateNode.addChild(self.transformedWorldScene)
-
-            self.updateTransformedSceneOffset()
-
-            cPos = list(self.pendingImport.transformedDim.chunkPositions())
-            self.loader = WorldLoader(self.transformedWorldScene,
-                                      cPos)
-            self.loader.startLoader()
-
-        else:
-            log.info("Hiding transformed scene")
-            self.rotateNode.visible = True
-            self.worldSceneTranslateNode.visible = True
-            self.transformedWorldTranslateNode.visible = False
-            if self.transformedWorldScene:
-                self.transformedWorldTranslateNode.removeChild(self.transformedWorldScene)
-                self.transformedWorldScene = None
-
-    def updateTransformedSceneOffset(self):
-        self.transformedWorldTranslateNode.translateOffset = self.pos - self.pendingImport.rotateAnchor + self.pendingImport.bounds.size * 0.5
-
-    @property
-    def pos(self):
-        return self.positionTranslateNode.translateOffset
-
-    @pos.setter
-    def pos(self, value):
-        if value == self.positionTranslateNode.translateOffset:
-            return
-
-        self.positionTranslateNode.translateOffset = Vector(*value)
-        self.updateTransformedSceneOffset()
-        self.updateBoxHandle()
-        
-    def updateBoxHandle(self):
-        if self.transformedWorldScene is None:
-            bounds = BoundingBox(self.pos, self.pendingImport.bounds.size)
-        else:
-            origin = self.pos - self.pendingImport.pos + self.pendingImport.importPos
-            bounds = BoundingBox(origin, self.pendingImport.importBounds.size)
-        #if self.handleNode.bounds.size != bounds.size:
-        self.handleNode.bounds = bounds
-
-    # --- Mouse events ---
-
-    # inherit from BoxHandle?
-    def mouseMove(self, event):
-        self.handleNode.mouseMove(event)
-
-    def mousePress(self, event):
-        self.handleNode.mousePress(event)
-
-    def mouseRelease(self, event):
-        self.handleNode.mouseRelease(event)
 
 
 class RotationWidget(QtGui.QWidget):

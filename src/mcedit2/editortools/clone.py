@@ -6,7 +6,7 @@ import logging
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.editorsession import PendingImport
 from mcedit2.editortools import EditorTool
-from mcedit2.editortools.move import PendingImportNode
+from mcedit2.imports import PendingImportNode, PendingImport
 from mcedit2.rendering.scenegraph import scenenode
 from PySide import QtGui
 from mcedit2.rendering.selection import boxFaceUnderCursor

@@ -4,7 +4,6 @@ import os
 
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
-
 from mcedit2.rendering.blockmodels import BlockModels
 
 from mcedit2 import editortools
@@ -13,6 +12,7 @@ from mcedit2.editorcommands.fill import fillCommand
 from mcedit2.editorcommands.find_replace import FindReplaceDialog
 from mcedit2.editorcommands.analyze import AnalyzeOutputDialog
 from mcedit2.editortools.select import SelectCommand
+from mcedit2.imports import PendingImport
 from mcedit2.panels.player import PlayerPanel
 from mcedit2.panels.map import MapPanel
 from mcedit2.panels.worldinfo import WorldInfoPanel
@@ -23,7 +23,6 @@ from mcedit2.util.mimeformats import MimeFormats
 from mcedit2.util.resources import resourcePath
 from mcedit2.widgets.mcedockwidget import MCEDockWidget
 from mcedit2.widgets.spinslider import SpinSlider
-from mceditlib.transform import DimensionTransform, SelectionTransform
 from mceditlib.util import exhaust
 from mceditlib.util.lazyprop import weakrefprop
 from mcedit2.util.raycast import rayCastInBounds
@@ -57,143 +56,6 @@ log = logging.getLogger(__name__)
 sessionSettings = Settings().getNamespace("editorsession")
 currentViewSetting = sessionSettings.getOption("currentview", unicode, "cam")
 
-class PendingImport(object):
-    """
-    An object representing a schematic, etc that is currently being imported and can be
-    moved/rotated/scaled by the user.
-
-    Parameters
-    ----------
-
-    sourceDim: WorldEditorDimension
-        The object that will be imported.
-    pos: Vector
-        The position in the currently edited world where the object will be imported.
-    selection: SelectionBox
-        Defines the portion of sourceDim that will be imported. For importing
-        .schematic files, this is usually the schematic's bounds. For importing/moving
-        a selected part of a world, this is the shaped selection created by the
-        Select tool.
-    text: unicode
-        A user-readable name for this import to be displayed in the "pending imports"
-        list, when multiple-importing is enabled.
-    isMove: bool
-        A flag that tells whether the imported object is being moved or copied. If it is
-        being moved, the previous position of the object is filled with air and cleared
-        of entities.
-
-    Attributes
-    ----------
-
-    importPos: Vector
-        The effective position where the object is to be imported. When the
-        PendingImport's rotation or scale is the default, this will be the
-        same as `self.pos`, otherwise it will be the position where the transformed
-        object will be imported. Changing this attribute will also change `self.pos`
-        to the pre-transform position accordingly.
-
-    importDim: WorldEditorDimension
-        The effective dimension to be imported. When the rotation or scale is the
-        default, this will be the same as `self.sourceDim`; otherwise, it will be a
-        TransformedDimension, which is a read-only proxy that acts as a scaled and
-        rotated form of `self.sourceDim`.
-
-    rotation: tuple of float
-        The rotation transform to be applied during import, in the form
-        (rotX, rotY, rotZ). Rotation is applied around the center point given
-        by `self.rotateAnchor`
-
-    scale: tuple of float
-        The scale transform to be applied during import, in the form
-        (rotX, rotY, rotZ). Scaling is applied around the center point given
-        by `self.rotateAnchor`
-
-    rotateAnchor: Vector
-        The anchor point that acts as the "center" when applying rotation
-        and scale transforms, in source coordinates. By default,
-        this is the center of `self.selection`.
-
-    bounds: BoundingBox
-        The axis-aligned bounding box that completely encloses `self.selection`, moved
-        to the position given by `self.pos`, in destination coordinates.
-
-    importBounds: BoundingBox
-        The axis-aligned bounding box that completely encloses the transformed dimension
-        `self.transformedDim` in destination coordinates.
-
-    """
-    def __init__(self, sourceDim, pos, selection, text, isMove=False):
-        self.selection = selection
-        self.text = text
-        self.pos = pos
-        self.sourceDim = sourceDim
-        self.isMove = isMove
-        self._rotation = (0, 0, 0)
-        self._scale = (0, 0, 0)
-        self.transformedDim = None
-
-        bounds = self.selection
-        self.rotateAnchor = bounds.origin + bounds.size * 0.5
-
-    @property
-    def importPos(self):
-        if self.transformedDim is None:
-            return self.pos
-        return self.pos + self.transformedDim.bounds.origin - self.selection.origin
-
-    @importPos.setter
-    def importPos(self, pos):
-        if self.transformedDim is None:
-            self.pos = pos
-        else:
-            self.pos = pos - self.transformedDim.bounds.origin + self.selection.origin
-
-    @property
-    def importDim(self):
-        if self.transformedDim is not None:
-            return self.transformedDim
-        else:
-            return self.sourceDim
-
-    @property
-    def rotation(self):
-        return self._rotation
-    
-    @rotation.setter
-    def rotation(self, value):
-        self._rotation = value
-        self.updateTransform()
-        
-    @property
-    def scale(self):
-        return self._rotation
-    
-    @scale.setter
-    def scale(self, value):
-        self._rotation = value
-        self.updateTransform()
-        
-    def updateTransform(self):
-        if self.rotation == (0, 0, 0) and self.scale == (0, 0, 0):
-            self.transformedDim = None
-        else:
-            selectionDim = SelectionTransform(self.sourceDim, self.selection)
-            self.transformedDim = DimensionTransform(selectionDim, self.rotateAnchor, *self.rotation)
-
-    def __repr__(self):
-        return "%s(%r, %r, %r)" % (self.__class__.__name__, self.sourceDim, self.selection, self.pos)
-
-    @property
-    def bounds(self):
-        return BoundingBox(self.pos, self.selection.size)
-
-    @property
-    def importBounds(self):
-        if self.transformedDim is not None:
-            size = self.transformedDim.bounds.size
-        else:
-            size = self.selection.size
-        return BoundingBox(self.importPos, size)
 
 class PasteImportCommand(QtGui.QUndoCommand):
     def __init__(self, editorSession, pendingImport, text, *args, **kwargs):
