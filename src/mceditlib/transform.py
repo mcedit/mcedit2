@@ -82,8 +82,28 @@ def npRotate(axis, angle):
     else:
         raise ValueError("Unknown axis: %r" % axis)
 
-    s = math.sin(math.radians(angle))
-    c = math.cos(math.radians(angle))
+    angle %= 360
+
+    exact_sin = {
+        0: 0,
+        90: 1,
+        180: 0,
+        270: -1,
+    }
+    exact_cos = {
+        0: 1,
+        90: 0,
+        180: -1,
+        270: 0,
+    }
+
+    if angle % 90 != 0:
+        s = math.sin(math.radians(angle))
+        c = math.cos(math.radians(angle))
+    else:
+        s = exact_sin[angle]
+        c = exact_cos[angle]
+
     rotate = np.matrix([[x*x*(1-c)+c,    x*y*(1-c)-z*s,  x*z*(1-c)+y*s,  0],
                            [y*x*(1-c)+z*s,  y*y*(1-c)+c,    y*z*(1-c)-x*s,  0],
                            [x*z*(1-c)-y*s,  y*z*(1-c)+x*s,  z*z*(1-c)+c,    0],
