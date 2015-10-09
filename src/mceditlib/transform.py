@@ -47,6 +47,9 @@ def rotationMatrix(anchor, rotX, rotY, rotZ):
     translate[3, 1] = anchor[1]
     translate[3, 2] = anchor[2]
 
+    # Rotate around center of cells.
+    anchor = Vector(*anchor) - (0.5, 0.5, 0.5)
+
     reverse_translate = np.matrix(np.identity(4))
     reverse_translate[3, 0] = -anchor[0]
     reverse_translate[3, 1] = -anchor[1]
