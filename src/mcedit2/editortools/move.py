@@ -12,6 +12,7 @@ from mcedit2.command import SimpleRevisionCommand
 from mcedit2.imports import PendingImportNode, PendingImport
 from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.util.load_ui import load_ui
+from mcedit2.util.resources import resourcePath
 from mcedit2.util.showprogress import showProgress
 from mcedit2.widgets.coord_widget import CoordinateWidget
 from mcedit2.widgets.layout import Column
@@ -112,7 +113,37 @@ class RotationWidget(QtGui.QWidget):
         self.yRotSpinBox.valueChanged.connect(self.setYRot)
         self.zRotSpinBox.valueChanged.connect(self.setZRot)
 
+        icon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/right_angle.png"))
+        self.xRot90Button.setIcon(icon)
+        self.yRot90Button.setIcon(icon)
+        self.zRot90Button.setIcon(icon)
+
+        self.xRot90Button.clicked.connect(self.xRot90Clicked)
+        self.yRot90Button.clicked.connect(self.yRot90Clicked)
+        self.zRot90Button.clicked.connect(self.zRot90Clicked)
+
         self.xRot = self.yRot = self.zRot = 0
+
+    def rot90(self, angle):
+        if angle < 90:
+            angle = 90
+        elif angle < 180:
+            angle = 180
+        elif angle < 270:
+            angle = 270
+        else:
+            angle = 0
+
+        return angle
+
+    def xRot90Clicked(self):
+        self.setXRot(self.rot90(self.xRot))
+
+    def yRot90Clicked(self):
+        self.setYRot(self.rot90(self.yRot))
+
+    def zRot90Clicked(self):
+        self.setZRot(self.rot90(self.zRot))
 
     rotationChanged = QtCore.Signal(object, bool)
 
