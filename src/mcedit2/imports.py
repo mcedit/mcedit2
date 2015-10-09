@@ -180,6 +180,7 @@ class PendingImportNode(Node, QtCore.QObject):
     def setRotation(self, rots):
         self.updateTransformedScene()
         self.updateBoxHandle()
+        self.rotateNode.setRotation(rots)
 
     def updateTransformedScene(self):
         if self.pendingImport.transformedDim is not None:
