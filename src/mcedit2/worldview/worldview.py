@@ -516,7 +516,7 @@ class WorldView(QGLWidget):
             #
             # face = faces.FaceYIncreasing
             # position = p.intfloor()
-            defaultDistance = 20
+            defaultDistance = 200
             position = (ray.point + ray.vector * defaultDistance).intfloor()
             face = faces.FaceUp
 
