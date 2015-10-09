@@ -65,10 +65,11 @@ class PasteImportCommand(QtGui.QUndoCommand):
         self.pendingImport = pendingImport
 
     def undo(self):
-        self.editorSession.moveTool.removePendingImport(self.pendingImport)
+        self.editorSession.moveTool.currentImport = None
+        self.editorSession.chooseTool("Select")
 
     def redo(self):
-        self.editorSession.moveTool.addPendingImport(self.pendingImport)
+        self.editorSession.moveTool.currentImport = self.pendingImport
         self.editorSession.chooseTool("Move")
 
 
