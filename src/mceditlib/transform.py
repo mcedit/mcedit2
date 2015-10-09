@@ -23,6 +23,8 @@ def boundsCorners(bounds):
     return list(corners)
 
 def transformBounds(bounds, matrix):
+    # matrix goes from dest to source; we need source to dest here, so get inverse
+    matrix = np.linalg.inv(matrix)
     corners = np.array(boundsCorners(bounds))
     corners = np.hstack([corners, ([1],)*8])
     corners = corners * matrix
