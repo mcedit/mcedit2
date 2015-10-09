@@ -238,6 +238,7 @@ class MoveTool(EditorTool):
             node.importMoved.connect(self.importDidMove)
             self._currentImportNode = node
             self.overlayNode.addChild(node)
+            self.rotationInput.rotation = pendingImport.rotation
 
     @property
     def currentImportNode(self):
