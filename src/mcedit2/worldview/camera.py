@@ -106,26 +106,51 @@ class CameraKeyControls(object):
         self.right = 0
         self.up = 0
         self.down = 0
+
+        self.speed = 0
+        self.maxSpeed = 10
+        self.minSpeed = 1
+
+        self.accelUp = 0.07
+
         self.tickTimer = QtCore.QTimer(interval=33, timeout=self.tickCamera)
         self.tickTimer.start()
+
+    def anyKey(self):
+        return any([self.forward, self.backward,
+                    self.left, self.right,
+                    self.up, self.down])
 
     def tickCamera(self):
         vector = self.worldView.cameraVector
         point = self.worldView.centerPoint
-        up = (0, 1, 0)
+        up = Vector(0, 1, 0)
         left = vector.cross(up).normalize()
+
+        if self.anyKey():
+            self.speed += self.accelUp
+            self.speed = max(self.speed, self.minSpeed)
+        else:
+            self.speed = 0
+
+        self.speed = max(0, min(self.maxSpeed, self.speed))
+
+        vector = vector * self.speed
+        up = up * self.speed
+        left = left * self.speed
+
         if self.forward:
-            point = point + vector
+            point += vector
         if self.backward:
-            point = point - vector
+            point -= vector
         if self.left:
-            point = point - left
+            point -= left
         if self.right:
-            point = point + left
+            point += left
         if self.up:
-            point = point + up
+            point += up
         if self.down:
-            point = point - up
+            point -= up
 
         self.worldView.centerPoint = point
 
