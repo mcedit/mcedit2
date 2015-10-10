@@ -527,7 +527,6 @@ class AnvilWorldAdapter(object):
         try:
             metadataTag = nbt.load(buf=self.selectedRevision.readFile("level.dat"))
             self.metadata = AnvilWorldMetadata(metadataTag)
-            self.loadBlockMapping()
         except (EnvironmentError, zlib.error, NBTFormatError) as e:
             log.info("Error loading level.dat, trying level.dat_old ({0})".format(e))
             try:
@@ -542,6 +541,8 @@ class AnvilWorldAdapter(object):
 
         if self.metadata.version != VERSION_ANVIL:
             raise LevelFormatError("Pre-Anvil world formats are not supported (for now)")
+
+        self.loadBlockMapping()
 
     def loadBlockMapping(self):
         if self.metadata.is1_8World():
