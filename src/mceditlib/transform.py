@@ -36,6 +36,13 @@ def transformBounds(bounds, matrix):
     maxy = max(corners[:, 1])
     maxz = max(corners[:, 2])
 
+    if maxx % 1:
+        maxx += 1
+    if maxy % 1:
+        maxy += 1
+    if maxz % 1:
+        maxz += 1
+
     newbox = BoundingBox(origin=Vector(minx, miny, minz).intfloor(),
                          maximum=Vector(maxx, maxy, maxz).intfloor())
     return newbox
