@@ -92,6 +92,7 @@ class MoveFinishCommand(SimpleRevisionCommand):
         self.editorSession.currentSelection = self.pendingImport.importBounds
         self.moveTool.currentImport = None
         #self.moveTool.removePendingImport(self.pendingImport)
+        self.editorSession.chooseTool("Select")
 
 
 class MoveTool(EditorTool):

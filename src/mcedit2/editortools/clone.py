@@ -68,6 +68,7 @@ class CloneFinishCommand(SimpleRevisionCommand):
         self.previousSelection = self.editorSession.currentSelection
         self.editorSession.currentSelection = self.pendingImport.bounds
         self.cloneTool.pendingClone = None
+        self.editorSession.chooseTool("Select")
 
 
 class CloneTool(EditorTool):
