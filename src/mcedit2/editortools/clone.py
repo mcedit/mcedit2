@@ -13,6 +13,7 @@ from mcedit2.rendering.selection import boxFaceUnderCursor
 from mcedit2.util.showprogress import showProgress
 from mcedit2.widgets.coord_widget import CoordinateWidget
 from mcedit2.widgets.layout import Column, Row
+from mcedit2.widgets.rotation_widget import RotationWidget
 
 log = logging.getLogger(__name__)
 
@@ -89,6 +90,10 @@ class CloneTool(EditorTool):
         self.toolWidget = QtGui.QWidget()
         self.pointInput = CoordinateWidget()
         self.pointInput.pointChanged.connect(self.pointInputChanged)
+
+        self.rotationInput = RotationWidget()
+        self.rotationInput.rotationChanged.connect(self.rotationChanged)
+
         confirmButton = QtGui.QPushButton(self.tr("Confirm"))  # xxxx should be in worldview
         confirmButton.clicked.connect(self.confirmClone)
 
@@ -96,22 +101,14 @@ class CloneTool(EditorTool):
         self.repeatCountInput = QtGui.QSpinBox(minimum=1, maximum=100, value=1)
         self.repeatCountInput.valueChanged.connect(self.setRepeatCount)
 
-        self.tileX = self.tileY = self.tileZ = False
-
-        self.tileXCheckbox = QtGui.QCheckBox(self.tr("Tile X"))
-        self.tileXCheckbox.toggled.connect(self.setTileX)
-
-        self.tileYCheckbox = QtGui.QCheckBox(self.tr("Tile Y"))
-        self.tileYCheckbox.toggled.connect(self.setTileY)
-
-        self.tileZCheckbox = QtGui.QCheckBox(self.tr("Tile Z"))
-        self.tileZCheckbox.toggled.connect(self.setTileZ)
+        self.rotateRepeatsCheckbox = QtGui.QCheckBox(self.tr("Rotate Repeats"))
+        self.rotateOffsetCheckbox = QtGui.QCheckBox(self.tr("Rotate Offset"))
 
         self.toolWidget.setLayout(Column(self.pointInput,
+                                         self.rotationInput,
+                                         Row(self.rotateRepeatsCheckbox,
+                                             self.rotateOffsetCheckbox),
                                          Row(QtGui.QLabel(self.tr("Repeat count: ")), self.repeatCountInput),
-                                         Row(self.tileXCheckbox,
-                                             self.tileYCheckbox,
-                                             self.tileZCheckbox),
                                          confirmButton,
                                          None))
 
@@ -122,6 +119,15 @@ class CloneTool(EditorTool):
             self.offsetPoint = value
             self.pendingClone.pos = value
             self.updateTiling()
+
+    def rotationChanged(self, rots, live):
+        if live:
+            if self.mainCloneNode:
+                self.mainCloneNode.setPreviewRotation(rots)
+        else:
+            if self.pendingClone and self.pendingClone.rotation != rots:
+                self.pendingClone.rotation = rots
+                self.updateTiling()
 
     def setTileX(self, value):
         self.tileX = value
