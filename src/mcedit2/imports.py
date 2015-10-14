@@ -101,6 +101,8 @@ class PendingImportNode(Node, QtCore.QObject):
 
         dim = pendingImport.sourceDim
 
+        self.transformedPosition = Vector(0, 0, 0)
+
         # positionTranslateNode contains the non-transformed preview of the imported
         # object, including its world scene. This preview will be rotated model-wise
         # while the user is dragging the rotate controls.
@@ -241,10 +243,6 @@ class PendingImportNode(Node, QtCore.QObject):
         self.transformedWorldTranslateNode.translateOffset = self.transformedPosition - self.pendingImport.importDim.bounds.origin
 
     @property
-    def transformedPosition(self):
-        return self.basePosition + self.pendingImport.transformOffset
-
-    @property
     def basePosition(self):
         return self.positionTranslateNode.translateOffset
 
@@ -255,6 +253,7 @@ class PendingImportNode(Node, QtCore.QObject):
             return
 
         self.positionTranslateNode.translateOffset = value
+        self.transformedPosition = self.basePosition + self.pendingImport.transformOffset
         self.updateTransformedSceneOffset()
         self.updateBoxHandle()
 
@@ -370,6 +369,10 @@ class PendingImport(QtCore.QObject):
         self.transformedDim = None
 
         self.transformOffset = Vector(0, 0, 0)
+        self.importPos = Vector(0, 0, 0)
+        self.importBounds = BoundingBox()
+
+        self.updateImportPos()
 
         bounds = self.selection
         self.rotateAnchor = bounds.origin + bounds.size * 0.5
@@ -388,20 +391,18 @@ class PendingImport(QtCore.QObject):
             return
 
         self._pos = Vector(*value)
+        self.updateImportPos()
         self.positionChanged.emit(self._pos)
 
-    @property
-    def importPos(self):
+    def updateImportPos(self):
         if self.transformedDim is None:
-            return self.basePosition
-        return self.basePosition + self.transformOffset
-
-    @importPos.setter
-    def importPos(self, pos):
-        if self.transformedDim is None:
-            self.basePosition = pos
+            self.importPos = self.basePosition
+            size = self.selection.size
         else:
-            self.basePosition = pos - self.transformOffset
+            self.importPos = self.basePosition + self.transformOffset
+            size = self.transformedDim.bounds.size
+
+        self.importBounds = BoundingBox(self.importPos, size)
 
     @property
     def importDim(self):
@@ -467,6 +468,8 @@ class PendingImport(QtCore.QObject):
             self.transformedDim = DimensionTransform(selectionDim, self.rotateAnchor, *self.rotation)
             self.transformOffset = self.transformedDim.bounds.origin - self.selection.origin
 
+        self.updateImportPos()
+
     def __repr__(self):
         return "%s(%r, %r, %r)" % (
             self.__class__.__name__, self.sourceDim, self.selection, self.basePosition)
@@ -474,14 +477,6 @@ class PendingImport(QtCore.QObject):
     @property
     def bounds(self):
         return BoundingBox(self.basePosition, self.selection.size)
-
-    @property
-    def importBounds(self):
-        if self.transformedDim is not None:
-            size = self.transformedDim.bounds.size
-        else:
-            size = self.selection.size
-        return BoundingBox(self.importPos, size)
 
 
 class Rotate3DNode(Node):
