@@ -10,7 +10,9 @@ from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.scenegraph.matrix import TranslateNode, RotateNode
 from mcedit2.rendering.scenegraph.scenenode import Node
 from mcedit2.rendering.worldscene import WorldScene
+from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
+from mceditlib.export import extractSchematicFromIter
 from mceditlib.geometry import Vector
 from mceditlib.selection import BoundingBox
 from mceditlib.transform import SelectionTransform, DimensionTransform
@@ -156,6 +158,9 @@ class PendingImportNode(Node, QtCore.QObject):
     # button. Arguments are (newPosition, oldPosition).
     importMoved = QtCore.Signal(object, object)
 
+    # Emitted while the user is dragging the box handle. Argument is the box origin.
+    importIsMoving = QtCore.Signal(object)
+
     def handleBoundsChangedDone(self, bounds, oldBounds):
         point = self.getBaseFromTransformed(bounds.origin)
         oldPoint = self.getBaseFromTransformed(oldBounds.origin)
@@ -166,6 +171,7 @@ class PendingImportNode(Node, QtCore.QObject):
         point = self.getBaseFromTransformed(bounds.origin)
         if self.basePosition != point:
             self.basePosition = point
+            self.importIsMoving.emit(point)
 
     def getBaseFromTransformed(self, point):
         offset = self.pendingImport.basePosition - self.pendingImport.importPos
@@ -226,10 +232,11 @@ class PendingImportNode(Node, QtCore.QObject):
 
     @basePosition.setter
     def basePosition(self, value):
+        value = Vector(*value)
         if value == self.positionTranslateNode.translateOffset:
             return
 
-        self.positionTranslateNode.translateOffset = Vector(*value)
+        self.positionTranslateNode.translateOffset = value
         self.updateTransformedSceneOffset()
         self.updateBoxHandle()
 
@@ -395,9 +402,10 @@ class PendingImport(QtCore.QObject):
 
     @rotation.setter
     def rotation(self, value):
+        value = tuple(value)
         if self._rotation == value:
             return
-        self._rotation = Vector(*value)
+        self._rotation = value
         self.updateTransform()
         self.rotationChanged.emit(self._rotation)
 
