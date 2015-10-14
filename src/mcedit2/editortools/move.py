@@ -226,20 +226,7 @@ class MoveTool(EditorTool):
         destDim = self.editorSession.currentDimension
         with command.begin():
             log.info("Move: starting")
-            if self.currentImport.isMove:
-                sourceDim = self.currentImport.importDim
-                destBox = BoundingBox(self.currentImport.importPos, sourceDim.bounds.size)
-
-                # Use intermediate schematic only if source and destination overlap.
-                if sourceDim.bounds.intersect(destBox).volume:
-                    log.info("Move: using temporary")
-                    export = extractSchematicFromIter(sourceDim, self.currentImport.selection)
-                    schematic = showProgress(self.tr("Copying..."), export)
-                    sourceDim = schematic.getDimension()
-
-            else:
-                # Use source as-is
-                sourceDim = self.currentImport.importDim
+            sourceDim = self.currentImport.getSourceForDim(destDim)
 
             # Copy to destination
             log.info("Move: copying")
