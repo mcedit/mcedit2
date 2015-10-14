@@ -245,7 +245,7 @@ class CloneTool(EditorTool):
             offset = offsetPoint - self.originPoint
             for i in range(self.repeatCount):
                 pos = pos + offset
-                yield pos, rotations
+                yield pos.intfloor(), rotations
                 if rotateRepeats:
                     rotations = [a+b for a,b in zip(rotations, baseRotations)]
                 if rotateOffsets:
