@@ -436,8 +436,9 @@ class BoundingBox(SelectionBox):
         size = maximum - origin
         if any(s<=0 for s in size):
             return ZeroBox
-        #print "Intersect of {0} and {1}: {2}".format(self, box, newbox)
-        return self.__class__(origin, size)
+        # print "Intersect of {0} and {1}: {2}".format(self, box, newbox)
+        # return self.__class__(origin, size)
+        return BoundingBox(origin, size)
 
     def union(self, box):
         """
@@ -453,7 +454,8 @@ class BoundingBox(SelectionBox):
             max(self.maxy, box.maxy),
             max(self.maxz, box.maxz),
         )
-        return self.__class__(origin, maximum - origin)
+        # return self.__class__(origin, maximum - origin)
+        return BoundingBox(origin, maximum - origin)
 
     def expand(self, dx, dy=None, dz=None):
         """
@@ -468,7 +470,8 @@ class BoundingBox(SelectionBox):
         origin = self.origin - (dx, dy, dz)
         size = self.size + (dx * 2, dy * 2, dz * 2)
 
-        return self.__class__(origin, size)
+        # return self.__class__(origin, size)
+        return BoundingBox(origin, size)
 
     def __contains__(self, (x, y, z)):
         if x < self.minx or x >= self.maxx:
