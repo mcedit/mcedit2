@@ -424,7 +424,7 @@ class PendingImport(QtCore.QObject):
                 log.info("Move: using temporary")
                 export = extractSchematicFromIter(sourceDim, self.selection)
                 schematic = showProgress(self.tr("Copying..."), export)
-                return schematic.getDimension()
+                return schematic.getDimension(), schematic.bounds
 
         # Use source as-is
         if self.transformedDim is not None:
