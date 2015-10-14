@@ -226,11 +226,11 @@ class MoveTool(EditorTool):
         destDim = self.editorSession.currentDimension
         with command.begin():
             log.info("Move: starting")
-            sourceDim = self.currentImport.getSourceForDim(destDim)
+            sourceDim, selection = self.currentImport.getSourceForDim(destDim)
 
             # Copy to destination
             log.info("Move: copying")
-            task = destDim.copyBlocksIter(sourceDim, sourceDim.bounds,
+            task = destDim.copyBlocksIter(sourceDim, selection,
                                           self.currentImport.importPos,
                                           biomes=True, create=True,
                                           copyAir=self.copyAirCheckbox.isChecked())

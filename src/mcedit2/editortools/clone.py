@@ -303,9 +303,9 @@ class CloneTool(EditorTool):
             for clone in self.pendingClones:
                 # TODO don't use intermediate schematic...
                 destDim = self.editorSession.currentDimension
-                dim = clone.getSourceForDim(destDim)
+                dim, selection = clone.getSourceForDim(destDim)
 
-                task = destDim.copyBlocksIter(dim, dim.bounds, clone.importPos,
+                task = destDim.copyBlocksIter(dim, selection, clone.importPos,
                                               biomes=True, create=True, copyAir=False)
                 tasks.append(task)
 

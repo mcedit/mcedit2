@@ -415,15 +415,23 @@ class PendingImport(QtCore.QObject):
             sourceDim = self.importDim
             destBox = self.importBounds
 
+            if self.transformedDim is not None:
+                sourceBounds = sourceDim.bounds
+            else:
+                sourceBounds = self.selection
             # Use intermediate schematic only if source and destination overlap.
-            if sourceDim.bounds.intersect(destBox).volume:
+            if sourceBounds.intersect(destBox).volume:
                 log.info("Move: using temporary")
-                export = extractSchematicFromIter(sourceDim, self.importBounds)
+                export = extractSchematicFromIter(sourceDim, self.selection)
                 schematic = showProgress(self.tr("Copying..."), export)
                 return schematic.getDimension()
 
         # Use source as-is
-        return self.importDim
+        if self.transformedDim is not None:
+            selection = self.transformedDim.bounds
+        else:
+            selection = self.selection
+        return self.importDim, selection
 
     @property
     def rotation(self):
