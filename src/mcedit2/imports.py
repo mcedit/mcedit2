@@ -161,7 +161,7 @@ class PendingImportNode(Node, QtCore.QObject):
         # loads the non-transformed world scene asynchronously.
         self.loader = WorldLoader(self.worldScene,
                                   list(pendingImport.selection.chunkPositions()))
-        self.loader.startLoader()
+        self.loader.startLoader(0.1 if self.hasHandle else 0.0)
 
         self.pendingImport.positionChanged.connect(self.setPosition)
         self.pendingImport.rotationChanged.connect(self.setRotation)
