@@ -100,6 +100,8 @@ class Vector(namedtuple("_Vector", ("x", "y", "z"))):
     def __mul__(self, other):
         if isinstance(other, (int, float)):
             return Vector(self[0] * other, self[1] * other, self[2] * other)
+        elif isinstance(other, numpy.ndarray):
+            return other.__rmul__(self)
 
         return Vector(self[0] * other[0], self[1] * other[1], self[2] * other[2])
 
