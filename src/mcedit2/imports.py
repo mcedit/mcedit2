@@ -9,6 +9,7 @@ from mcedit2.handles.boxhandle import BoxHandle
 from mcedit2.rendering.depths import DepthOffset
 from mcedit2.rendering.scenegraph.matrix import TranslateNode, RotateNode
 from mcedit2.rendering.scenegraph.scenenode import Node
+from mcedit2.rendering.selection import SelectionBoxNode
 from mcedit2.rendering.worldscene import WorldScene
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
@@ -65,7 +66,7 @@ class PendingImportsGroup(QtCore.QObject):
 class PendingImportNode(Node, QtCore.QObject):
     __node_id_counter = 0
 
-    def __init__(self, pendingImport, textureAtlas):
+    def __init__(self, pendingImport, textureAtlas, hasHandle=True):
         """
         A scenegraph node displaying an object that will be imported later, including
         live and deferred views of the object with transformed items, and a BoxHandle
@@ -96,6 +97,8 @@ class PendingImportNode(Node, QtCore.QObject):
 
         self.textureAtlas = textureAtlas
         self.pendingImport = pendingImport
+        self.hasHandle = hasHandle
+
         dim = pendingImport.sourceDim
 
         # positionTranslateNode contains the non-transformed preview of the imported
@@ -134,17 +137,26 @@ class PendingImportNode(Node, QtCore.QObject):
 
         box = BoundingBox(pendingImport.importPos, pendingImport.importBounds.size)
 
-        self.handleNode = BoxHandle()
-        self.handleNode.bounds = box
-        self.handleNode.resizable = False
+        if hasHandle:
+            self.handleNode = BoxHandle()
+            self.handleNode.bounds = box
+            self.handleNode.resizable = False
+            self.boxNode = None
+        else:
+            self.boxNode = SelectionBoxNode()
+            self.boxNode.wireColor = (1, 1, 1, .2)
+            self.boxNode.filled = False
+            self.handleNode = None
+            self.addChild(self.boxNode)
 
         self.updateTransformedScene()
         self.basePosition = pendingImport.basePosition
 
-        self.handleNode.boundsChanged.connect(self.handleBoundsChanged)
-        self.handleNode.boundsChangedDone.connect(self.handleBoundsChangedDone)
+        if hasHandle:
+            self.handleNode.boundsChanged.connect(self.handleBoundsChanged)
+            self.handleNode.boundsChangedDone.connect(self.handleBoundsChangedDone)
 
-        self.addChild(self.handleNode)
+            self.addChild(self.handleNode)
 
         # loads the non-transformed world scene asynchronously.
         self.loader = WorldLoader(self.worldScene,
@@ -208,7 +220,10 @@ class PendingImportNode(Node, QtCore.QObject):
             cPos = list(self.pendingImport.transformedDim.chunkPositions())
             self.loader = WorldLoader(self.transformedWorldScene,
                                       cPos)
-            self.loader.startLoader()
+
+            # ALERT!: self.hasHandle is overloaded with the meaning:
+            #  "not the first clone in a repeated clone"
+            self.loader.startLoader(0.1 if self.hasHandle else 0.0)
 
         else:
             log.info("Hiding transformed scene")
@@ -250,18 +265,27 @@ class PendingImportNode(Node, QtCore.QObject):
             origin = self.transformedPosition
             bounds = BoundingBox(origin, self.pendingImport.importBounds.size)
         #if self.handleNode.bounds.size != bounds.size:
-        self.handleNode.bounds = bounds
+        if self.hasHandle:
+            self.handleNode.bounds = bounds
+        else:
+            self.boxNode.selectionBox = bounds
 
     # --- Mouse events ---
 
     # inherit from BoxHandle?
     def mouseMove(self, event):
+        if not self.hasHandle:
+            return
         self.handleNode.mouseMove(event)
 
     def mousePress(self, event):
+        if not self.hasHandle:
+            return
         self.handleNode.mousePress(event)
 
     def mouseRelease(self, event):
+        if not self.hasHandle:
+            return
         self.handleNode.mouseRelease(event)
 
 

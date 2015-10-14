@@ -200,7 +200,8 @@ class CloneTool(EditorTool):
                                   self.mainPendingClone.selection,
                                   self.mainPendingClone.text + " %d" % len(self.pendingClones))
             node = PendingImportNode(clone,
-                                     self.editorSession.textureAtlas)
+                                     self.editorSession.textureAtlas,
+                                     hasHandle=len(self.pendingClones) == 0)
 
             self.pendingClones.append(clone)
             self.pendingCloneNodes.append(node)
