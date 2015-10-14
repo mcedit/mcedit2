@@ -236,7 +236,7 @@ class CloneTool(EditorTool):
         rotations = baseRotations
 
         matrix = transform.rotationMatrix((0, 0, 0), *rotations)
-        matrix = numpy.linalg.inv(matrix)
+        matrix = numpy.linalg.inv(matrix)[:3, :3]
 
         if offsetPoint is None:
             offsetPoint = self.mainPendingClone.basePosition
@@ -250,9 +250,8 @@ class CloneTool(EditorTool):
                     rotations = [a+b for a,b in zip(rotations, baseRotations)]
                 if rotateOffsets:
                     # Convert to 4-element column and back
-                    offset = tuple(offset) + (0, )
-                    offset = offset * matrix
-                    offset = tuple(offset.T)[:3]
+                    offset = (offset * matrix).T
+                    offset = tuple(float(x) for x in offset)
 
     @property
     def mainPendingClone(self):
