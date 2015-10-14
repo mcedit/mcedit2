@@ -224,7 +224,7 @@ class PendingImportNode(Node, QtCore.QObject):
 
     @property
     def transformedPosition(self):
-        return self.basePosition + self.pendingImport.importPos - self.pendingImport.basePosition
+        return self.basePosition + self.pendingImport.transformOffset
 
     @property
     def basePosition(self):
@@ -342,6 +342,8 @@ class PendingImport(QtCore.QObject):
         self._scale = (0, 0, 0)
         self.transformedDim = None
 
+        self.transformOffset = Vector(0, 0, 0)
+
         bounds = self.selection
         self.rotateAnchor = bounds.origin + bounds.size * 0.5
 
@@ -365,14 +367,14 @@ class PendingImport(QtCore.QObject):
     def importPos(self):
         if self.transformedDim is None:
             return self.basePosition
-        return self.basePosition + self.transformedDim.bounds.origin - self.selection.origin
+        return self.basePosition + self.transformOffset
 
     @importPos.setter
     def importPos(self, pos):
         if self.transformedDim is None:
             self.basePosition = pos
         else:
-            self.basePosition = pos - self.transformedDim.bounds.origin + self.selection.origin
+            self.basePosition = pos - self.transformOffset
 
     @property
     def importDim(self):
@@ -424,9 +426,11 @@ class PendingImport(QtCore.QObject):
     def updateTransform(self):
         if self.rotation == (0, 0, 0) and self.scale == (0, 0, 0):
             self.transformedDim = None
+            self.transformOffset = Vector(0, 0, 0)
         else:
             selectionDim = SelectionTransform(self.sourceDim, self.selection)
             self.transformedDim = DimensionTransform(selectionDim, self.rotateAnchor, *self.rotation)
+            self.transformOffset = self.transformedDim.bounds.origin - self.selection.origin
 
     def __repr__(self):
         return "%s(%r, %r, %r)" % (
