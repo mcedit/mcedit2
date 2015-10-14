@@ -138,7 +138,7 @@ class MoveTool(EditorTool):
 
     def pointInputChanged(self, value):
         if value is not None:
-            self.currentImport.basePosition = value
+            self.importDidMove(value, self.currentImport.basePosition)
 
     # --- Pending imports ---
 
