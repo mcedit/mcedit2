@@ -117,7 +117,6 @@ class CloneTool(EditorTool):
         super(CloneTool, self).__init__(editorSession, *args, **kwargs)
 
         self.originPoint = None
-        self.rotations = (0, 0, 0)
 
         self.pendingClones = []
         self.pendingCloneNodes = []
@@ -163,12 +162,13 @@ class CloneTool(EditorTool):
 
     def rotationChanged(self, rots, live):
         if live:
-            for node in self.pendingCloneNodes:
-                node.setPreviewRotation(rots)
+            for node, (nodePos, nodeRots) in zip(self.pendingCloneNodes, self.getTilingPositions(rotations=rots)):
+                node.setPreviewRotation(nodeRots)
+                node.setPreviewBasePosition(nodePos + node.pendingImport.transformOffset)
             self.editorSession.updateView()
         else:
             if self.mainPendingClone and self.mainPendingClone.rotation != rots:
-                command = CloneRotateCommand(self.rotations, rots, self)
+                command = CloneRotateCommand(self.mainPendingClone.rotation, rots, self)
                 self.editorSession.pushCommand(command)
                 self.updateTiling()
 
@@ -180,7 +180,7 @@ class CloneTool(EditorTool):
         if self.mainPendingClone is None:
             return
         else:
-            self.rotations = rots
+            self.mainPendingClone.rotation = rots
             self.updateTiling()
 
     def updateTiling(self):
@@ -229,10 +229,11 @@ class CloneTool(EditorTool):
 
         self.editorSession.updateView()
 
-    def getTilingPositions(self, offsetPoint=None):
+    def getTilingPositions(self, offsetPoint=None, rotations=None):
         rotateRepeats = self.rotateRepeatsCheckbox.isChecked()
         rotateOffsets = self.rotateOffsetCheckbox.isChecked()
-        rotations = self.rotations
+        baseRotations = rotations or self.mainPendingClone.rotation
+        rotations = baseRotations
 
         matrix = transform.rotationMatrix((0, 0, 0), *rotations)
         matrix = numpy.linalg.inv(matrix)
@@ -246,12 +247,12 @@ class CloneTool(EditorTool):
                 pos = pos + offset
                 yield pos, rotations
                 if rotateRepeats:
-                    rotations = [a+b for a,b in zip(rotations, self.rotations)]
-                # if rotateOffsets:
-                #     # Convert to 4-element column and back
-                #     offset = tuple(offset) + (0, )
-                #     offset = offset * matrix
-                #     offset = tuple(offset.T)[:3]
+                    rotations = [a+b for a,b in zip(rotations, baseRotations)]
+                if rotateOffsets:
+                    # Convert to 4-element column and back
+                    offset = tuple(offset) + (0, )
+                    offset = offset * matrix
+                    offset = tuple(offset.T)[:3]
 
     @property
     def mainPendingClone(self):

@@ -180,7 +180,10 @@ class PendingImportNode(Node, QtCore.QObject):
             self.importMoved.emit(point, oldPoint)
 
     def handleBoundsChanged(self, bounds):
-        point = self.getBaseFromTransformed(bounds.origin)
+        self.setPreviewBasePosition(bounds.origin)
+
+    def setPreviewBasePosition(self, origin):
+        point = self.getBaseFromTransformed(origin)
         if self.basePosition != point:
             self.basePosition = point
             self.importIsMoving.emit(point)
