@@ -1,3 +1,4 @@
+-r requirements-mceditlib.txt
 pyside>=1.2.0
 pyopengl
 cython
@@ -6,6 +7,4 @@ path.py==7.7.1
 ipython==3.2.1
 pygments
 pyzmq
-numpy>=1.9.0, <1.10.0
-arrow
 pastebin
