@@ -84,6 +84,10 @@ As a bonus, you can use the `-debug` flag to enable the Debug menu and a few ext
     python setup.py develop
     mcedit2
 
+If your distro packages python3 as the default version of python instead of python2, you will probably want to set your virtualenv to use python2, i.e.
+
+    virtualenv -p python2 ENV
+
 If you get a `Library not loaded: libpyside-python2.7.1.2.dylib` error, try running `pyside_postinstall.py -install` to fix this. 
 
 If after that, you get a `Library not loaded: /usr/local/lib/QtGui.framework/Versions/4/QtGui` error after that, try installing `qt` using a package manager like Homebrew or apt-get or similar equivalent on your distribution.   You may also need `libxslt-dev` and `python-dev` packages installed before the commands above will work.
