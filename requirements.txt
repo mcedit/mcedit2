@@ -1,7 +1,6 @@
 -r requirements-mceditlib.txt
 pyside>=1.2.0
 pyopengl
-cython
 # path.py 8.1 isn't compatible with IPython 3
 path.py==7.7.1
 ipython==3.2.1
