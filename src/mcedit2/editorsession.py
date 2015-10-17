@@ -25,7 +25,7 @@ from mcedit2.widgets.mcedockwidget import MCEDockWidget
 from mcedit2.widgets.spinslider import SpinSlider
 from mceditlib.util import exhaust
 from mceditlib.util.lazyprop import weakrefprop
-from mcedit2.util.raycast import rayCastInBounds
+from mcedit2.util.raycast import rayCastInBounds, MaxDistanceError
 from mcedit2.util.showprogress import showProgress, MCEProgressDialog
 from mcedit2.util.undostack import MCEUndoStack
 from mcedit2.widgets.inspector import InspectorWidget
@@ -885,9 +885,12 @@ class EditorSession(QtCore.QObject):
         if importPos is not None:
             pos = importPos
         else:
-            pos, face = rayCastInBounds(ray, self.currentDimension)
+            try:
+                pos, face = rayCastInBounds(ray, self.currentDimension)
+            except MaxDistanceError:
+                pos = None
             if pos is None:
-                pos = ray.point
+                pos = ray.point + ray.vector * 100
             else:
                 pos = pos + face.vector
 
