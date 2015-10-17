@@ -141,6 +141,30 @@ class Vector(namedtuple("_Vector", ("x", "y", "z"))):
 
 
 class Ray(object):
+    """
+    A ray in 3D space, starting at an origin point and extending in a direction given
+    by a vector
+
+    Parameters
+    ----------
+    point: Vector
+        The ray's origin point
+    vector: Vector
+        The ray's direction vector
+
+    Attributes
+    ----------
+
+    point: Vector
+    vector: Vector
+
+    Methods
+    ----------
+
+    atHeight(h: int) : Vector
+        Return the intersection of this vector with the plane at y=h.  If the ray
+        does not intersect the plane, returns the ray's origin.
+    """
 
     def __init__(self, point, vector):
         self.point = Vector(*point)

@@ -28,6 +28,18 @@ log = getLogger(__name__)
 blocktypeClassesByName = {"Alpha": PCBlockTypeSet}
 
 def createSchematic(shape, blocktypes='Alpha'):
+    """
+    Create a new .schematic of the given shape and blocktypes and return a WorldEditor.
+
+    Parameters
+    ----------
+    shape : tuple of int
+    blocktypes : BlockTypeSet or str
+
+    Returns
+    -------
+    WorldEditor
+    """
     from mceditlib.worldeditor import WorldEditor
 
     adapter = SchematicFileAdapter(shape=shape, blocktypes=blocktypes)
@@ -69,15 +81,20 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
         the file is y,z,x. This is the same order used in Minecraft 1.4's
         chunk sections.
 
-        :type shape: tuple
-        :param shape: The shape of the schematic as (x, y, z)
-        :type filename: basestring
-        :param filename: Path to a file to load a saved schematic from.
-        :type blocktypes: basestring or BlockTypeSet
-        :param blocktypes: The name of a builtin blocktypes set (one of
+        Parameters
+        ----------
+        shape: tuple of int
+            The shape of the schematic as (x, y, z)
+        filename: basestring
+            Path to a file to load a saved schematic from.
+        blocktypes: basestring or BlockTypeSet
+            The name of a builtin blocktypes set (one of
             "Classic", "Alpha", "Pocket") to indicate allowable blocks. The default
             is Alpha. An instance of BlockTypeSet may be passed instead.
-        :rtype: SchematicFileAdapter
+
+        Returns
+        ----------
+        SchematicFileAdapter
 
         """
         self.EntityRef = PCEntityRef

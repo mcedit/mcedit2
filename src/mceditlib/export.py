@@ -17,6 +17,22 @@ log = logging.getLogger(__name__)
 
 
 def extractSchematicFrom(sourceDim, box, *a, **kw):
+    """
+    Extract a schematic from the given dimension within the given selection box. The
+    minimum corner of the given box becomes the schematic's (0,0,0) coordinate.
+
+    Parameters
+    ----------
+    sourceDim : WorldEditorDimension
+    box : SelectionBox
+    a :
+    kw :
+
+    Returns
+    -------
+    WorldEditor
+
+    """
     return exhaust(extractSchematicFromIter(sourceDim, box, *a, **kw))
 
 
