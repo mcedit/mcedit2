@@ -158,11 +158,11 @@ class MoveTool(EditorTool):
         # Set current import to different color?
         # for node in self.pendingImportNodes.itervalues():
         #     node.outlineNode.wireColor = (.2, 1., .2, .5) if node.pendingImport is value else (1, 1, 1, .3)
-        if pendingImport is None:
-            if self._currentImportNode is not None:
-                self.overlayNode.removeChild(self._currentImportNode)
-                self._currentImportNode = None
-        else:
+        if self._currentImportNode is not None:
+            self.overlayNode.removeChild(self._currentImportNode)
+            self._currentImportNode = None
+
+        if pendingImport is not None:
             node = PendingImportNode(pendingImport, self.editorSession.textureAtlas)
             node.importMoved.connect(self.importDidMove)
             self._currentImportNode = node
