@@ -9,6 +9,7 @@ log = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.INFO)
 
+
 def testThrashing(pc_world):
     if not hasattr(pc_world, '_chunkDataCache'):
         return

@@ -3,6 +3,8 @@ import os
 import shutil
 
 import numpy
+import pytest
+
 from mceditlib.anvil.adapter import AnvilWorldAdapter
 from mceditlib.util import exhaust
 
@@ -10,16 +12,16 @@ from mceditlib.worldeditor import WorldEditor
 from mceditlib import nbt
 from mceditlib.selection import BoundingBox
 from mceditlib.pc.regionfile import RegionFile
-from templevel import mktemp, TempFile
-
 
 __author__ = 'Rio'
 
-def testCreate():
-    temppath = mktemp("AnvilCreate")
+
+def testCreate(tmpdir):
+    temppath = tmpdir.join("AnvilCreate").mkdir()
     pc_world = WorldEditor(filename=temppath, create=True, adapterClass=AnvilWorldAdapter)
     pc_world.close()
     shutil.rmtree(temppath)
+
 
 def testCreateChunks(pc_world):
     dim = pc_world.getDimension()
@@ -28,6 +30,7 @@ def testCreateChunks(pc_world):
     for ch in BoundingBox((0, 0, 0), (32, 0, 32)).chunkPositions():
         dim.createChunk(*ch)
 
+
 def testRecreateChunks(pc_world):
     dim = pc_world.getDimension()
     for x, z in itertools.product(xrange(-1, 3), xrange(-1, 2)):
@@ -35,11 +38,13 @@ def testRecreateChunks(pc_world):
         assert not dim.containsChunk(x, z)
         dim.createChunk(x, z)
 
+
 def testCopyRelight(pc_world, schematic_world):
     destDim = pc_world.getDimension()
     exhaust(destDim.copyBlocksIter(schematic_world.getDimension(), BoundingBox((0, 0, 0), (32, 64, 32,)),
             destDim.bounds.origin))
     pc_world.saveChanges()
+
 
 def testRecompress(pc_world):
     dim = pc_world.getDimension()
@@ -67,11 +72,13 @@ def testRecompress(pc_world):
         for key in keys:
             assert (d[key] == getattr(section, key)).all()
 
-def testBigEndianIntHeightMap():
+
+@pytest.mark.parametrize(['temp_file'], [('AnvilWorld/region/r.0.0.mca',)], indirect=True)
+def testBigEndianIntHeightMap(tmpdir, temp_file):
     """ Test modifying, saving, and loading the new TAG_Int_Array heightmap
     added with the Anvil format.
     """
-    region = RegionFile(TempFile("AnvilWorld/region/r.0.0.mca"))
+    region = RegionFile(temp_file.strpath)
     chunk_data = region.readChunkBytes(0, 0)
     chunk = nbt.load(buf=chunk_data)
 
@@ -79,7 +86,7 @@ def testBigEndianIntHeightMap():
     hm.value[2] = 500
     oldhm = numpy.array(hm.value)
 
-    filename = mktemp("ChangedChunk")
+    filename = tmpdir.join("ChangedChunk")
     chunk.save(filename)
     changedChunk = nbt.load(filename)
     os.unlink(filename)

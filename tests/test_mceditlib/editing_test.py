@@ -1,18 +1,12 @@
 import numpy
 import pytest
-import logging
-from mceditlib.blocktypes import blocktypeConverter
 
+from mceditlib.blocktypes import blocktypeConverter
 from mceditlib.export import extractSchematicFrom
 from mceditlib.selection import BoundingBox
 from mceditlib.worldeditor import WorldEditor
 
-logging.basicConfig(level=logging.INFO)
-
 __author__ = 'Rio'
-
-
-
 
 
 def testGetEntities(any_world):
