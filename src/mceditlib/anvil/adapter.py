@@ -576,7 +576,7 @@ class AnvilWorldAdapter(object):
                         # FML IDs should be allowed to override some of them for 1.8 blocks not in 1.7.
                         count += 1
                         replacedIDs.append(ID)
-                        fakeState = '[0]'
+                        fakeState = '[meta=0]'
                         nameAndState = name + fakeState
                         log.debug("FML1.7: Adding %s = %d", name, ID)
 
@@ -596,7 +596,7 @@ class AnvilWorldAdapter(object):
                         blocktypes.blockJsons[nameAndState] = {
                             'displayName': name,
                             'internalName': name,
-                            'blockState': '[0]',
+                            'blockState': '[meta=0]',
                             'unknown': True,
                         }
 

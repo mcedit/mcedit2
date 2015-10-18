@@ -588,7 +588,7 @@ class EditorSession(QtCore.QObject):
             else:
                 # not automatically created by FML mapping loader
                 ID = blocktypes.IDsByName[internalName]
-                fakeState = '[%d]' % blockDef.meta
+                fakeState = '[meta=%d]' % blockDef.meta
                 nameAndState = internalName + fakeState
                 blocktypes.blockJsons[nameAndState] = {
                     'displayName': internalName,
