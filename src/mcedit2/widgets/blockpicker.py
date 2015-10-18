@@ -56,11 +56,30 @@ log = logging.getLogger(__name__)
 
 
 class BlockTypeIcon(QtGui.QLabel):
-    def __init__(self, block, textureAtlas, *args, **kwargs):
+    def __init__(self, block=None, textureAtlas=None, *args, **kwargs):
         super(BlockTypeIcon, self).__init__(*args, **kwargs)
-        pixmap = BlockTypePixmap(block, textureAtlas)
         self.setMinimumSize(32, 32)
-        self.setPixmap(pixmap)
+        self.setBlock(block)
+        self.setTextureAtlas(textureAtlas)
+        
+    _block = None
+    _textureAtlas = None
+    
+    def setBlock(self, block):
+        self._block = block
+        self.updatePixmap()
+        
+    def setTextureAtlas(self, textureAtlas):
+        self._textureAtlas = textureAtlas
+        self.updatePixmap()
+        
+    def updatePixmap(self):
+        log.info("Updating BlockTypeIcon with %s\t%s", self._block, self._textureAtlas)
+        if self._textureAtlas is not None and self._block is not None:
+            pixmap = BlockTypePixmap(self._block, self._textureAtlas)
+            self.setPixmap(pixmap)
+        else:
+            self.setPixmap(None)
 
 
 @registerCustomWidget
@@ -68,10 +87,63 @@ class BlockTypesItemWidget(QtGui.QWidget):
     def __init__(self, parent=None, blocks=None, textureAtlas=None):
         super(BlockTypesItemWidget, self).__init__(parent)
         self.childWidgets = []
-        self.mainLayout = None
+        self.mainLayout = QtGui.QStackedLayout()
         self.blocks = blocks
         self.textureAtlas = textureAtlas
-        self.setLayout(Column())
+        self.setLayout(self.mainLayout)
+
+        # Empty layout
+        self.emptyWidget = QtGui.QFrame()
+
+        # Single-block layout
+        self.singleBlockIcon = BlockTypeIcon(textureAtlas=textureAtlas)
+
+        self.singleNameLabel = QtGui.QLabel("")
+
+        self.singleInternalNameLabel = QtGui.QLabel("", enabled=False)
+
+        self.singleParentTypeLabel = QtGui.QLabel("")
+
+        labelsColumn = Column(Row(self.singleNameLabel, None,
+                                  self.singleParentTypeLabel),
+                              self.singleInternalNameLabel)
+
+        self.singleBlockLayout = Row(self.singleBlockIcon, (labelsColumn, 1))
+        self.singleBlockWidget = QtGui.QFrame()
+        self.singleBlockWidget.setLayout(self.singleBlockLayout)
+
+        # Multi-block layout
+        multiBlockIcon = QtGui.QFrame()
+        vSpace = 4
+        frameHeight = 64
+        multiBlockIcon.setMinimumSize(64, frameHeight)
+        self.iconLimit = int((frameHeight - 32) / vSpace) + 1
+
+        self.multiBlockSubIcons = icons = [BlockTypeIcon(textureAtlas=textureAtlas)
+                                           for _ in range(self.iconLimit)]
+        x = 0
+        y = 0
+        for i, icon in enumerate(icons):
+            # icon.setMinimumSize(32, 32)
+            icon.setParent(multiBlockIcon)
+            icon.setGeometry(x, y, 32, 32)
+            icon.setFrameStyle(icon.Box)
+            icon.setLineWidth(1)
+            x += 18
+            if i % 2:
+                x -= 32
+            y += vSpace
+
+        self.multiNameLabel = QtGui.QLabel("", wordWrap=True)
+
+        self.multiBlockLayout = Row(multiBlockIcon, (Column(self.multiNameLabel, None), 1))
+        self.multiBlockWidget = QtGui.QFrame()
+        self.multiBlockWidget.setLayout(self.multiBlockLayout)
+
+        #self.mainLayout.addWidget(self.emptyWidget)
+        #self.mainLayout.addWidget(self.singleBlockWidget)
+        #self.mainLayout.addWidget(self.multiBlockWidget)
+
         self.updateContents()
 
     def setBlocks(self, blocks):
@@ -88,74 +160,44 @@ class BlockTypesItemWidget(QtGui.QWidget):
         if self.blocks is None or self.textureAtlas is None:
             return
 
-        for child in self.childWidgets:
-            child.setParent(None)
-        self.childWidgets = []
-        if self.mainLayout:
-            self.layout().takeAt(0)
         blocks = self.blocks
-        textureAtlas = self.textureAtlas
-
+        if self.mainLayout.count():
+            self.mainLayout.takeAt(0)
         if len(blocks) == 0:
+            self.mainLayout.addWidget(self.emptyWidget)
             return
 
         if len(blocks) == 1:
+            self.mainLayout.addWidget(self.singleBlockWidget)
+
             block = blocks[0]
-            blockIcon = BlockTypeIcon(block, textureAtlas)
-            self.childWidgets.append(blockIcon)
-
-            nameLabel = QtGui.QLabel(block.displayName)
-            self.childWidgets.append(nameLabel)
-
+            self.singleBlockIcon.setBlock(block)
+            self.singleBlockIcon.setTextureAtlas(self.textureAtlas)
+            self.singleNameLabel.setText(block.displayName)
+                
             internalNameLimit = 60
             internalName = block.internalName + block.blockState
             if len(internalName) > internalNameLimit:
                 internalName = internalName[:internalNameLimit-3]+"..."
-
-            internalNameLabel = QtGui.QLabel("(%d:%d) %s" % (block.ID, block.meta, internalName), enabled=False)
-            self.childWidgets.append(internalNameLabel)
-
-            parentTypeLabel = QtGui.QLabel("")
-            self.childWidgets.append(parentTypeLabel)
+            self.singleInternalNameLabel.setText("(%d:%d) %s" % (block.ID, block.meta, internalName))
 
             if block.meta != 0:
                 try:
                     parentBlock = block.blocktypeSet[block.internalName]
                     if parentBlock.displayName != block.displayName:
-                        parentTypeLabel.setText("<font color='blue'>%s</font>" % parentBlock.displayName)
+                        self.singleParentTypeLabel.setText("<font color='blue'>%s</font>" % parentBlock.displayName)
                 except KeyError:  # no parent block; parent block is not meta=0; block was ID:meta typed in
                     pass
-
-            labelsColumn = Column(Row(nameLabel, None, parentTypeLabel),
-                                  internalNameLabel)
-
-            self.mainLayout = Row(blockIcon, (labelsColumn, 1))
-            self.layout().addLayout(self.mainLayout)
-
             # row.setSizeConstraint(QtGui.QLayout.SetFixedSize)
         else:
-            frame = QtGui.QFrame()
-            self.childWidgets.append(frame)
-            vSpace = 4
-            frameHeight = 64
-            frame.setMinimumSize(64, frameHeight)
-            iconLimit = int((frameHeight - 32) / vSpace) + 1
+            self.mainLayout.addWidget(self.multiBlockWidget)
 
-            blocksToIcon = blocks[:iconLimit]
-            icons = [BlockTypeIcon(b, textureAtlas) for b in blocksToIcon]
-            self.childWidgets.extend(icons)
-            x = 0
-            y = 0
-            for i, icon in enumerate(icons):
-                # icon.setMinimumSize(32, 32)
-                icon.setParent(frame)
-                icon.setGeometry(x, y, 32, 32)
-                icon.setFrameStyle(icon.Box)
-                icon.setLineWidth(1)
-                x += 18
-                if i % 2:
-                    x -= 32
-                y += vSpace
+            for i in range(self.iconLimit):
+                icon = self.multiBlockSubIcons[i]
+                if i < len(blocks):
+                    icon.setBlock(blocks[i])
+                else:
+                    icon.setBlock(None)
 
             nameLimit = 6
             remaining = len(blocks) - nameLimit
@@ -163,14 +205,9 @@ class BlockTypesItemWidget(QtGui.QWidget):
             iconNames = ", ".join(b.displayName for b in blocksToName)
             if remaining > 0:
                 iconNames += " and %d more..." % remaining
+            self.multiNameLabel.setText(iconNames)
 
-            namesLabel = QtGui.QLabel(iconNames, wordWrap=True)
-            self.childWidgets.append(namesLabel)
-
-            self.mainLayout = Row(frame, (Column(namesLabel, None), 1))
-            self.layout().addLayout(self.mainLayout)
-
-        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        #self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
 
 
 class BlockTypeListFilterModel(QtGui.QSortFilterProxyModel):
