@@ -146,6 +146,7 @@ class MoveTool(EditorTool):
         if newPoint != oldPoint:
             command = MoveOffsetCommand(oldPoint, newPoint, self.currentImport)
             self.editorSession.pushCommand(command)
+            self.pointInput.point = newPoint
 
     @property
     def currentImport(self):
@@ -168,6 +169,8 @@ class MoveTool(EditorTool):
             self._currentImportNode = node
             self.overlayNode.addChild(node)
             self.rotationInput.rotation = pendingImport.rotation
+            self.pointInput.point = pendingImport.basePosition
+            self.pointInput.origin = pendingImport.selection.origin
 
     @property
     def currentImportNode(self):

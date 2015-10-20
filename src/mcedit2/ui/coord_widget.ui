@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>293</width>
-    <height>92</height>
+    <width>121</width>
+    <height>115</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -23,6 +23,20 @@
    <item>
     <layout class="QGridLayout" name="gridLayout" columnstretch="0,1">
      <item row="0" column="1">
+      <widget class="QCheckBox" name="relativeCheckBox">
+       <property name="text">
+        <string>Relative</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>X:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
       <widget class="QSpinBox" name="xInput">
        <property name="minimum">
         <number>-2000000000</number>
@@ -32,31 +46,14 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>X:</string>
-       </property>
-      </widget>
-     </item>
      <item row="2" column="0">
-      <widget class="QLabel" name="label_3">
+      <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>Z:</string>
+        <string>Y:</string>
        </property>
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QSpinBox" name="zInput">
-       <property name="minimum">
-        <number>-2000000000</number>
-       </property>
-       <property name="maximum">
-        <number>2000000000</number>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
       <widget class="QSpinBox" name="yInput">
        <property name="minimum">
         <number>-2000000000</number>
@@ -66,33 +63,28 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label_2">
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_3">
        <property name="text">
-        <string>Y:</string>
+        <string>Z:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QSpinBox" name="zInput">
+       <property name="minimum">
+        <number>-2000000000</number>
+       </property>
+       <property name="maximum">
+        <number>2000000000</number>
        </property>
       </widget>
      </item>
     </layout>
    </item>
   </layout>
-  <zorder>xInput</zorder>
-  <zorder>xMaxInput</zorder>
-  <zorder>label</zorder>
-  <zorder>label_2</zorder>
-  <zorder>yInput</zorder>
-  <zorder>yMaxInput</zorder>
-  <zorder>zMaxInput</zorder>
-  <zorder>zInput</zorder>
-  <zorder>label_3</zorder>
-  <zorder>stackedWidget</zorder>
   <zorder></zorder>
-  <zorder>zMaxInput</zorder>
-  <zorder>yMaxInput</zorder>
-  <zorder>xMaxInput</zorder>
-  <zorder>widthLabel</zorder>
-  <zorder>heightLabel</zorder>
-  <zorder>lengthLabel</zorder>
+  <zorder>relativeCheckBox</zorder>
  </widget>
  <resources/>
  <connections/>
