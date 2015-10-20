@@ -4,7 +4,6 @@ import time
 
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
-from mcedit2.util import profiler
 
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.settings import Settings

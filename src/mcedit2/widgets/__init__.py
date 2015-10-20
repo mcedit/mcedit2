@@ -7,7 +7,6 @@
 import blockpicker
 import blocktype_list
 import infopanel
-import log_view
 import objectinspector
 import shapewidget
 import nbttree

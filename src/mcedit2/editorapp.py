@@ -29,7 +29,6 @@ from mcedit2.widgets import prefsdialog, configureblocksdialog
 from mcedit2.widgets.blocktype_list import BlockListWidget
 from mcedit2.editorsession import EditorSession
 from mcedit2.widgets.layout import setWidgetError, Column, Row
-from mcedit2.widgets.log_view import LogViewFrame
 from mcedit2.rendering.chunkloader import ChunkLoaderInfo
 from mcedit2.util import profiler
 from mcedit2.util.ipython_widget import terminal_widget
@@ -187,13 +186,6 @@ class MCEditApp(QtGui.QApplication):
         self.debugMenu.addAction(self.inspectorDockWidget.toggleViewAction())
         self.inspectorDockWidget.close()
 
-        self.logViewWidget = LogViewFrame(mainWindow)
-        self.logViewDockWidget = MCEDockWidget("Error Log", mainWindow, objectName="ErrorsWidget")
-        self.logViewDockWidget.setWidget(self.logViewWidget)
-        mainWindow.addDockWidget(Qt.BottomDockWidgetArea, self.logViewDockWidget)
-        self.debugMenu.addAction(self.logViewDockWidget.toggleViewAction())
-        self.logViewDockWidget.close()
-
         self.profileView = ProfilerWidget()
         self.profileDockWidget = MCEDockWidget("Profiler", mainWindow, objectName="ProfilerWidget")
         self.profileDockWidget.setWidget(self.profileView)
@@ -257,7 +249,6 @@ class MCEditApp(QtGui.QApplication):
 
         # -- Window Menu --
         mainWindow.menuWindow.addAction(self.undoDockWidget.toggleViewAction())
-        mainWindow.menuWindow.addAction(self.logViewDockWidget.toggleViewAction())
         mainWindow.menuWindow.addAction(self.libraryDockWidget.toggleViewAction())
 
         # -- Options Menu --
@@ -946,8 +937,6 @@ class MCEditApp(QtGui.QApplication):
             self.mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.profileDockWidget)
             self.mainWindow.addDockWidget(Qt.RightDockWidgetArea, self.textureAtlasDockWidget)
             self.mainWindow.addDockWidget(Qt.BottomDockWidgetArea, self.infoDockWidget)
-            self.mainWindow.addDockWidget(Qt.BottomDockWidgetArea, self.logViewDockWidget)
-            self.mainWindow.tabifyDockWidget(self.infoDockWidget, self.logViewDockWidget)
 
         else:
             self.mainWindow.menuBar().removeAction(self.debugMenu.menuAction())
@@ -955,7 +944,6 @@ class MCEditApp(QtGui.QApplication):
             self.mainWindow.removeDockWidget(self.profileDockWidget)
             self.mainWindow.removeDockWidget(self.textureAtlasDockWidget)
             self.mainWindow.removeDockWidget(self.infoDockWidget)
-            self.mainWindow.removeDockWidget(self.logViewDockWidget)
 
     # --- App foreground ---
 
