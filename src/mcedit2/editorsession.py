@@ -812,6 +812,9 @@ class EditorSession(QtCore.QObject):
                 self.importSchematic(filename)
 
     def export(self):
+        if self.currentSelection is None:
+            return
+
         # prompt for filename and format. maybe use custom browser to save to export library??
         startingDir = Settings().value("import_dialog/starting_dir", getUserSchematicsDirectory())
         result = QtGui.QFileDialog.getSaveFileName(QtGui.qApp.mainWindow,
