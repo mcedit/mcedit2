@@ -1,32 +1,45 @@
 """
-    replace
+    nbt
 """
-from __future__ import absolute_import, division, print_function
-from collections import namedtuple
-from mcedit2.widgets.mcedockwidget import MCEDockWidget
-from mceditlib import nbt
-from PySide import QtGui, QtCore
+from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+
+from PySide import QtCore
 from PySide.QtCore import Qt
+
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.util import settings
 from mcedit2.util.load_ui import load_ui
-from mcedit2.util.resources import resourcePath
 from mcedit2.util.showprogress import showProgress
-from mcedit2.widgets.blockpicker import BlockTypeButton
-from mcedit2.widgets.layout import Row, Column
+from mcedit2.widgets.mcedockwidget import MCEDockWidget
+from mceditlib import nbt
 from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
 
+nbtReplaceSettings = settings.Settings().getNamespace("findreplace/nbt")
+nbtReplaceSettings.nameField = nbtReplaceSettings.getOption("nameField", unicode, "")
+nbtReplaceSettings.valueField = nbtReplaceSettings.getOption("valueField", unicode, "")
+
+nbtReplaceSettings.entityIDField = nbtReplaceSettings.getOption("entityIDField", unicode, "")
+nbtReplaceSettings.searchEntitiesChecked = nbtReplaceSettings.getOption("searchEntitiesChecked", bool, False)
+
+nbtReplaceSettings.tileEntityIDField = nbtReplaceSettings.getOption("tileEntityIDField", unicode, "")
+nbtReplaceSettings.searchTileEntitiesChecked = nbtReplaceSettings.getOption("searchTileEntitiesChecked", bool, False)
+
+nbtReplaceSettings.replaceNameField = nbtReplaceSettings.getOption("replaceNameField", unicode, "")
+nbtReplaceSettings.replaceValueField = nbtReplaceSettings.getOption("replaceValueField", unicode, "")
+nbtReplaceSettings.replaceValueTagType = nbtReplaceSettings.getOption("replaceValueTagType", int, 0)
+
+
 class NBTResultsEntry(object):
     # namedtuple("NBTResultsEntry", "tagName value id path position uuid resultType")):
-    def __init__(self, model, tagNameIndex, tagName, value, id, path, position, uuid, resultType):
+    def __init__(self, model, tagNameIndex, tagName, value, ID, path, position, uuid, resultType):
         self.model = model
         self.tagNameIndex = tagNameIndex  # xxx REALLY SHOULD change model data through the model itself
         self.tagName = tagName
         self.value = value
-        self.id = id
+        self.id = ID
         self.path = path
         self.position = position
         self.uuid = uuid
@@ -151,125 +164,6 @@ class NBTResultsModel(QtCore.QAbstractItemModel):
     #         self.propertyChanged.emit(entry.tagName, value)
     #         self.dataChanged.emit(index, index)
 
-class FindReplaceBlocks(QtCore.QObject):
-    def __init__(self, editorSession, dialog, *args, **kwargs):
-        super(FindReplaceBlocks, self).__init__(*args, **kwargs)
-        self.editorSession = editorSession
-        self.dialog = dialog
-
-        header = dialog.findReplaceTable.horizontalHeader()
-        header.setResizeMode(0, QtGui.QHeaderView.Stretch)
-        header.setResizeMode(1, QtGui.QHeaderView.Stretch)
-        dialog.findReplaceTable.setRowCount(1)
-        addButton = QtGui.QPushButton("Add...", flat=True, clicked=self.addNewRow)
-        addButton.setIcon(QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/add.png")))
-        addButton.setMinimumHeight(48)
-        addButton.setIconSize(QtCore.QSize(32, 32))
-        addItem = QtGui.QTableWidgetItem(text="Add...")
-        addItem.setSizeHint(addButton.sizeHint())
-        dialog.findReplaceTable.setItem(0, 0, addItem)
-        dialog.findReplaceTable.setSpan(0, 0, 1, 2)
-        dialog.findReplaceTable.setCellWidget(0, 0, addButton)
-        dialog.findReplaceTable.resizeRowsToContents()
-        dialog.findReplaceTable.resizeColumnsToContents()
-        dialog.blocksReplaceButton.clicked.connect(self.doReplace)
-
-    @property
-    def blocktypes(self):
-        return self.editorSession.worldEditor.blocktypes
-
-    def addNewRow(self):
-        self.addRow([self.blocktypes["air"]], self.blocktypes["air"])
-
-    def addRow(self, oldBlocks, newBlock):
-        row = self.dialog.findReplaceTable.rowCount() - 1
-
-        self.dialog.findReplaceTable.insertRow(row)
-        log.info("Row inserted")
-
-        left = QtGui.QTableWidgetItem()
-        right = QtGui.QTableWidgetItem()
-        log.info("Items created")
-
-        def frameButton(button, withRemove=False):
-            frame = QtGui.QFrame()
-            frame.button = button
-            layout = QtGui.QVBoxLayout()
-            layout.addStretch(1)
-            if withRemove:
-                removeButton = QtGui.QPushButton("", flat=True)
-                removeButton.setIcon(QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/remove.png")))
-                removeButton.setIconSize(QtCore.QSize(24, 24))
-
-                def _clicked():
-                    self.removeRow(self.dialog.findReplaceTable.row(left))
-                removeButton.__clicked = _clicked
-                removeButton.clicked.connect(_clicked)
-                layout.addLayout(Row((button, 1), removeButton))
-            else:
-                layout.addWidget(button)
-            layout.addStretch(1)
-            frame.setLayout(layout)
-            return frame
-
-        leftButton = BlockTypeButton(flat=True, multipleSelect=True)
-        leftButton.editorSession = self.editorSession
-        leftButton.blocks = oldBlocks
-        leftFramedButton = frameButton(leftButton)
-        left.setSizeHint(leftFramedButton.sizeHint())
-        log.info("Left button")
-
-        rightButton = BlockTypeButton(flat=True)
-        rightButton.editorSession = self.editorSession
-        rightButton.block = newBlock
-        rightFramedButton = frameButton(rightButton, True)
-        right.setSizeHint(rightFramedButton.sizeHint())
-        log.info("Right button")
-        self.dialog.findReplaceTable.setItem(row, 0, left)
-        self.dialog.findReplaceTable.setItem(row, 1, right)
-        self.dialog.findReplaceTable.setCellWidget(row, 0, leftFramedButton)
-        self.dialog.findReplaceTable.setCellWidget(row, 1, rightFramedButton)
-        self.dialog.findReplaceTable.resizeRowsToContents()
-        #self.findReplaceTable.resizeColumnsToContents()
-        log.info("Done")
-
-    def removeRow(self, row):
-        self.dialog.findReplaceTable.removeRow(row)
-
-    def getReplacements(self):
-        def _get():
-            for row in range(self.dialog.findReplaceTable.rowCount()-1):
-                left = self.dialog.findReplaceTable.cellWidget(row, 0).button
-                right = self.dialog.findReplaceTable.cellWidget(row, 1).button
-                yield left.blocks, right.block
-
-        return list(_get())
-
-    def doReplace(self):
-        replacements = self.getReplacements()
-        command = SimpleRevisionCommand(self.editorSession, "Replace")
-        if self.dialog.replaceBlocksInSelectionCheckbox.isChecked():
-            selection = self.editorSession.currentSelection
-        else:
-            selection = self.editorSession.currentDimension.bounds
-        with command.begin():
-            task = self.editorSession.currentDimension.fillBlocksIter(selection, replacements, updateLights=False)
-            showProgress("Replacing...", task)
-        self.editorSession.pushCommand(command)
-
-nbtReplaceSettings = settings.Settings().getNamespace("findreplace/nbt")
-nbtReplaceSettings.nameField = nbtReplaceSettings.getOption("nameField", unicode, "")
-nbtReplaceSettings.valueField = nbtReplaceSettings.getOption("valueField", unicode, "")
-
-nbtReplaceSettings.entityIDField = nbtReplaceSettings.getOption("entityIDField", unicode, "")
-nbtReplaceSettings.searchEntitiesChecked = nbtReplaceSettings.getOption("searchEntitiesChecked", bool, False)
-
-nbtReplaceSettings.tileEntityIDField = nbtReplaceSettings.getOption("tileEntityIDField", unicode, "")
-nbtReplaceSettings.searchTileEntitiesChecked = nbtReplaceSettings.getOption("searchTileEntitiesChecked", bool, False)
-
-nbtReplaceSettings.replaceNameField = nbtReplaceSettings.getOption("replaceNameField", unicode, "")
-nbtReplaceSettings.replaceValueField = nbtReplaceSettings.getOption("replaceValueField", unicode, "")
-nbtReplaceSettings.replaceValueTagType = nbtReplaceSettings.getOption("replaceValueTagType", int, 0)
 
 class ReplaceValueTagType(object):
     """
@@ -284,8 +178,10 @@ class ReplaceValueTagType(object):
     FLOAT = 6
     DOUBLE = 7
 
+
 class NBTReplaceCommand(SimpleRevisionCommand):
     pass
+
 
 class FindReplaceNBT(QtCore.QObject):
     def __init__(self, editorSession, dialog):
@@ -422,8 +318,6 @@ class FindReplaceNBT(QtCore.QObject):
         if result.resultType == result.TileEntityResult:
             self.editorSession.zoomAndInspectBlock(result.position)
 
-
-
     def find(self):
         searchNames = self.widget.searchNameCheckbox.isChecked()
         targetName = self.widget.nameField.text()
@@ -443,7 +337,6 @@ class FindReplaceNBT(QtCore.QObject):
         if not any((searchNames, searchValues, searchEntities, searchTileEntities)):
             # Nothing to find
             return
-
 
         dim = self.editorSession.currentDimension
         inSelection = self.widget.inSelectionCheckbox.isChecked()
@@ -513,8 +406,6 @@ class FindReplaceNBT(QtCore.QObject):
                                                    uuid=uuid,
                                                    resultType=NBTResultsEntry.EntityResult)
 
-
-
         def _findTileEntitiesInChunk(chunk):
             for tileEntity in chunk.TileEntities:
                 if tileEntity.Position not in selection:
@@ -546,7 +437,6 @@ class FindReplaceNBT(QtCore.QObject):
                                                    position=tileEntity.Position,
                                                    uuid=None,
                                                    resultType=NBTResultsEntry.TileEntityResult)
-
 
         def _find():
             self.resultsDockWidget.show()
@@ -653,50 +543,3 @@ class FindReplaceNBT(QtCore.QObject):
 
     def replaceSelected(self):
         pass
-
-
-
-class FindReplaceDialog(QtGui.QDialog):
-    def __init__(self, editorSession, *args, **kwargs):
-        super(FindReplaceDialog, self).__init__(*args, **kwargs)
-        self.editorSession = editorSession
-        self.blocktypes = editorSession.worldEditor.blocktypes
-        load_ui("find_replace.ui", baseinstance=self)
-
-        self.findReplaceBlocks = FindReplaceBlocks(editorSession, self)
-
-        self.findReplaceNBT = FindReplaceNBT(editorSession, self)
-        self.nbtTab.setLayout(Column(self.findReplaceNBT.widget, margin=0))
-
-        self.resultsWidgets = [
-            # self.findReplaceBlocks.resultsDockWidget,
-            self.findReplaceNBT.resultsDockWidget,
-
-        ]
-
-    def execFindBlocks(self):
-        self.execTab(0)
-
-    def execFindReplaceBlocks(self):
-        self.execTab(1)
-
-    def execFindReplaceItems(self):
-        self.execTab(2)
-
-    def execFindReplaceCommands(self):
-        self.execTab(3)
-
-    def execFindReplaceNBT(self):
-        self.execTab(4)
-
-    def execTab(self, tabIndex):
-        self.tabWidget.setCurrentIndex(tabIndex)
-        self.exec_()
-
-    def exec_(self):
-        self.findReplaceNBT.dialogOpened()
-        # self.findReplaceBlocks.dialogOpened()
-        super(FindReplaceDialog, self).exec_()
-
-
-
