@@ -108,7 +108,7 @@ class EditorSession(QtCore.QObject):
                  progressCallback=None):
         from mcedit2 import __version__ as v
 
-        progressMax = 8  # fixme
+        progressMax = 7  # fixme
         if progressCallback is None:
             def progress(status):
                 pass
