@@ -673,7 +673,25 @@ class FindReplaceDialog(QtGui.QDialog):
             self.findReplaceNBT.resultsDockWidget,
 
         ]
-        self.adjustSize()
+
+    def execFindBlocks(self):
+        self.execTab(0)
+
+    def execFindReplaceBlocks(self):
+        self.execTab(1)
+
+    def execFindReplaceItems(self):
+        self.execTab(2)
+
+    def execFindReplaceCommands(self):
+        self.execTab(3)
+
+    def execFindReplaceNBT(self):
+        self.execTab(4)
+
+    def execTab(self, tabIndex):
+        self.tabWidget.setCurrentIndex(tabIndex)
+        self.exec_()
 
     def exec_(self):
         self.findReplaceNBT.dialogOpened()

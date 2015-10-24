@@ -224,10 +224,27 @@ class EditorSession(QtCore.QObject):
         self.actionFill.setShortcut(QtGui.QKeySequence("Shift+Ctrl+F"))
         self.actionFill.setObjectName("actionFill")
 
-        self.actionFindReplace = QtGui.QAction(self.tr("Find/Replace"), self,
-                                               triggered=self.findReplace, enabled=True)
-        self.actionFindReplace.setShortcut(QtGui.QKeySequence.Find)
-        self.actionFindReplace.setObjectName("actionFindReplace")
+        self.actionFindBlocks = QtGui.QAction(self.tr("Find Blocks"), self,
+                                               triggered=self.findBlocks, enabled=True)
+        self.actionFindBlocks.setShortcut(QtGui.QKeySequence.Find)
+        self.actionFindBlocks.setObjectName("actionFindBlocks")
+
+        self.actionFindReplaceBlocks = QtGui.QAction(self.tr("Find/Replace Blocks"), self,
+                                               triggered=self.findReplaceBlocks, enabled=True)
+        self.actionFindReplaceBlocks.setShortcut(QtGui.QKeySequence.Replace)
+        self.actionFindReplaceBlocks.setObjectName("actionFindReplaceBlocks")
+
+        self.actionFindReplaceItems = QtGui.QAction(self.tr("Find/Replace Items"), self,
+                                               triggered=self.findReplaceItems, enabled=True)
+        self.actionFindReplaceItems.setObjectName("actionFindReplaceItems")
+
+        self.actionFindReplaceCommandText = QtGui.QAction(self.tr("Find/Replace Command Text"), self,
+                                               triggered=self.findReplaceCommands, enabled=True)
+        self.actionFindReplaceCommandText.setObjectName("actionFindReplaceCommands")
+
+        self.actionFindReplaceNBT = QtGui.QAction(self.tr("Find/Replace NBT Data"), self,
+                                               triggered=self.findReplaceNBT, enabled=True)
+        self.actionFindReplaceNBT.setObjectName("actionFindReplaceNBT")
 
         self.actionAnalyze = QtGui.QAction(self.tr("Analyze"), self, triggered=self.analyze,
                                            enabled=True)
@@ -254,7 +271,12 @@ class EditorSession(QtCore.QObject):
         self.menuEdit.addSeparator()
         self.menuEdit.addAction(self.actionFill)
         self.menuEdit.addSeparator()
-        self.menuEdit.addAction(self.actionFindReplace)
+        self.menuEdit.addAction(self.actionFindBlocks)
+        self.menuEdit.addAction(self.actionFindReplaceBlocks)
+        self.menuEdit.addAction(self.actionFindReplaceItems)
+        self.menuEdit.addAction(self.actionFindReplaceCommandText)
+        self.menuEdit.addAction(self.actionFindReplaceNBT)
+        self.menuEdit.addSeparator()
         self.menuEdit.addAction(self.actionAnalyze)
 
         self.menus.append(self.menuEdit)
@@ -699,8 +721,20 @@ class EditorSession(QtCore.QObject):
     def pasteEntities(self):
         NotImplementedYet()
 
-    def findReplace(self):
-        self.findReplaceDialog.exec_()
+    def findBlocks(self):
+        self.findReplaceDialog.execFindBlocks()
+
+    def findReplaceBlocks(self):
+        self.findReplaceDialog.execFindReplaceBlocks()
+
+    def findReplaceItems(self):
+        self.findReplaceDialog.execFindReplaceItems()
+
+    def findReplaceCommands(self):
+        self.findReplaceDialog.execFindReplaceCommands()
+
+    def findReplaceNBT(self):
+        self.findReplaceDialog.execFindReplaceNBT()
 
     def analyze(self):
         if self.currentSelection is None:
