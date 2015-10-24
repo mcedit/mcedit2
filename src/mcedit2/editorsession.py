@@ -745,6 +745,7 @@ class EditorSession(QtCore.QObject):
                                            task.entityCounts,
                                            task.tileEntityCounts,
                                            task.dimension.worldEditor.displayName)
+        outputDialog.exec_()
 
     def deleteSelection(self):
         command = SimpleRevisionCommand(self, "Delete")

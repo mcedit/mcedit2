@@ -27,8 +27,6 @@ class AnalyzeOutputDialog(QtGui.QDialog):
         self.txtButton.clicked.connect(self.export_txt)
         self.csvButton.clicked.connect(self.export_csv)
 
-        self.exec_()
-
     def setupTables(self, blockCount, entityCount, tileEntityCount):
         blockTableView = self.blockOutputTableView
         blockCounts = sorted([(self.editorSession.worldEditor.blocktypes[i & 0xfff, i >> 12], blockCount[i])
