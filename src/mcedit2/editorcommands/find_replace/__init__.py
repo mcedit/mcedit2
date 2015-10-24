@@ -7,7 +7,7 @@ import logging
 
 from PySide import QtGui
 
-from mcedit2.editorcommands.find_replace.blocks import FindReplaceBlocks
+from mcedit2.editorcommands.find_replace.replace_blocks import FindReplaceBlocks
 from mcedit2.editorcommands.find_replace.nbt import FindReplaceNBT
 from mcedit2.util.load_ui import load_ui
 from mcedit2.widgets.layout import Column
