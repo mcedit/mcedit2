@@ -182,75 +182,6 @@ class EditorSession(QtCore.QObject):
         self.menuEdit = QtGui.QMenu(self.tr("Edit"))
         self.menuEdit.setObjectName("menuEdit")
 
-        self.actionCut = QtGui.QAction(self.tr("Cut"), self, triggered=self.cut, enabled=False)
-        self.actionCut.setShortcut(QtGui.QKeySequence.Cut)
-        self.actionCut.setObjectName("actionCut")
-
-        self.actionCopy = QtGui.QAction(self.tr("Copy"), self, triggered=self.copy, enabled=False)
-        self.actionCopy.setShortcut(QtGui.QKeySequence.Copy)
-        self.actionCopy.setObjectName("actionCopy")
-
-        self.actionPaste = QtGui.QAction(self.tr("Paste"), self, triggered=self.paste,
-                                         enabled=False)
-        self.actionPaste.setShortcut(QtGui.QKeySequence.Paste)
-        self.actionPaste.setObjectName("actionPaste")
-
-        self.actionPaste_Blocks = QtGui.QAction(self.tr("Paste Blocks"), self,
-                                                triggered=self.pasteBlocks, enabled=False)
-        self.actionPaste_Blocks.setShortcut(QtGui.QKeySequence("Ctrl+Shift+V"))
-        self.actionPaste_Blocks.setObjectName("actionPaste_Blocks")
-
-        self.actionPaste_Entities = QtGui.QAction(self.tr("Paste Entities"), self,
-                                                  triggered=self.pasteEntities, enabled=False)
-        self.actionPaste_Entities.setShortcut(QtGui.QKeySequence("Ctrl+Alt+V"))
-        self.actionPaste_Entities.setObjectName("actionPaste_Entities")
-
-        self.actionClear = QtGui.QAction(self.tr("Delete"), self, triggered=self.deleteSelection,
-                                         enabled=False)
-        self.actionClear.setShortcut(QtGui.QKeySequence.Delete)
-        self.actionClear.setObjectName("actionClear")
-
-        self.actionDeleteBlocks = QtGui.QAction(self.tr("Delete Blocks"), self,
-                                                triggered=self.deleteBlocks, enabled=False)
-        self.actionDeleteBlocks.setShortcut(QtGui.QKeySequence("Shift+Del"))
-        self.actionDeleteBlocks.setObjectName("actionDeleteBlocks")
-
-        self.actionDeleteEntities = QtGui.QAction(self.tr("Delete Entities"), self,
-                                                  triggered=self.deleteEntities, enabled=False)
-        self.actionDeleteEntities.setShortcut(QtGui.QKeySequence("Shift+Alt+Del"))
-        self.actionDeleteEntities.setObjectName("actionDeleteEntities")
-
-        self.actionFill = QtGui.QAction(self.tr("Fill"), self, triggered=self.fill, enabled=False)
-        self.actionFill.setShortcut(QtGui.QKeySequence("Shift+Ctrl+F"))
-        self.actionFill.setObjectName("actionFill")
-
-        self.actionFindBlocks = QtGui.QAction(self.tr("Find Blocks"), self,
-                                               triggered=self.findBlocks, enabled=True)
-        self.actionFindBlocks.setShortcut(QtGui.QKeySequence.Find)
-        self.actionFindBlocks.setObjectName("actionFindBlocks")
-
-        self.actionFindReplaceBlocks = QtGui.QAction(self.tr("Find/Replace Blocks"), self,
-                                               triggered=self.findReplaceBlocks, enabled=True)
-        self.actionFindReplaceBlocks.setShortcut(QtGui.QKeySequence.Replace)
-        self.actionFindReplaceBlocks.setObjectName("actionFindReplaceBlocks")
-
-        self.actionFindReplaceItems = QtGui.QAction(self.tr("Find/Replace Items"), self,
-                                               triggered=self.findReplaceItems, enabled=True)
-        self.actionFindReplaceItems.setObjectName("actionFindReplaceItems")
-
-        self.actionFindReplaceCommandText = QtGui.QAction(self.tr("Find/Replace Command Text"), self,
-                                               triggered=self.findReplaceCommands, enabled=True)
-        self.actionFindReplaceCommandText.setObjectName("actionFindReplaceCommands")
-
-        self.actionFindReplaceNBT = QtGui.QAction(self.tr("Find/Replace NBT Data"), self,
-                                               triggered=self.findReplaceNBT, enabled=True)
-        self.actionFindReplaceNBT.setObjectName("actionFindReplaceNBT")
-
-        self.actionAnalyze = QtGui.QAction(self.tr("Analyze"), self, triggered=self.analyze,
-                                           enabled=True)
-        # self.actionAnalyze.setShortcut(QtGui.QKeySequence.Analyze)
-        self.actionAnalyze.setObjectName("actionAnalyze")
-
         undoAction = self.undoStack.createUndoAction(self.menuEdit)
         undoAction.setShortcut(QtGui.QKeySequence.Undo)
         redoAction = self.undoStack.createRedoAction(self.menuEdit)
@@ -259,24 +190,118 @@ class EditorSession(QtCore.QObject):
         self.menuEdit.addAction(undoAction)
         self.menuEdit.addAction(redoAction)
         self.menuEdit.addSeparator()
+
+        # ---
+
+        self.actionCut = QtGui.QAction(
+            self.tr("Cut"), self, triggered=self.cut, enabled=False)
+
+        self.actionCut.setShortcut(QtGui.QKeySequence.Cut)
+        self.actionCut.setObjectName("actionCut")
         self.menuEdit.addAction(self.actionCut)
+
+        self.actionCopy = QtGui.QAction(
+            self.tr("Copy"), self, triggered=self.copy, enabled=False)
+
+        self.actionCopy.setShortcut(QtGui.QKeySequence.Copy)
+        self.actionCopy.setObjectName("actionCopy")
         self.menuEdit.addAction(self.actionCopy)
+
+        self.actionPaste = QtGui.QAction(
+            self.tr("Paste"), self, triggered=self.paste, enabled=False)
+
+        self.actionPaste.setShortcut(QtGui.QKeySequence.Paste)
+        self.actionPaste.setObjectName("actionPaste")
         self.menuEdit.addAction(self.actionPaste)
+
+        self.actionPaste_Blocks = QtGui.QAction(
+            self.tr("Paste Blocks"), self, triggered=self.pasteBlocks, enabled=False)
+
+        self.actionPaste_Blocks.setShortcut(QtGui.QKeySequence("Ctrl+Shift+V"))
+        self.actionPaste_Blocks.setObjectName("actionPaste_Blocks")
         self.menuEdit.addAction(self.actionPaste_Blocks)
+
+        self.actionPaste_Entities = QtGui.QAction(
+            self.tr("Paste Entities"), self, triggered=self.pasteEntities, enabled=False)
+
+        self.actionPaste_Entities.setShortcut(QtGui.QKeySequence("Ctrl+Alt+V"))
+        self.actionPaste_Entities.setObjectName("actionPaste_Entities")
         self.menuEdit.addAction(self.actionPaste_Entities)
         self.menuEdit.addSeparator()
+
+        # ---
+
+        self.actionClear = QtGui.QAction(
+            self.tr("Delete"), self, triggered=self.deleteSelection, enabled=False)
+        self.actionClear.setShortcut(QtGui.QKeySequence.Delete)
+        self.actionClear.setObjectName("actionClear")
         self.menuEdit.addAction(self.actionClear)
+
+        self.actionDeleteBlocks = QtGui.QAction(
+            self.tr("Delete Blocks"), self, triggered=self.deleteBlocks, enabled=False)
+
+        self.actionDeleteBlocks.setShortcut(QtGui.QKeySequence("Shift+Del"))
+        self.actionDeleteBlocks.setObjectName("actionDeleteBlocks")
         self.menuEdit.addAction(self.actionDeleteBlocks)
+
+        self.actionDeleteEntities = QtGui.QAction(
+            self.tr("Delete Entities"), self, triggered=self.deleteEntities, enabled=False)
+
+        self.actionDeleteEntities.setShortcut(QtGui.QKeySequence("Shift+Alt+Del"))
+        self.actionDeleteEntities.setObjectName("actionDeleteEntities")
         self.menuEdit.addAction(self.actionDeleteEntities)
         self.menuEdit.addSeparator()
+
+        # ---
+
+        self.actionFill = QtGui.QAction(
+            self.tr("Fill"), self, triggered=self.fill, enabled=False)
+
+        self.actionFill.setShortcut(QtGui.QKeySequence("Shift+Ctrl+F"))
+        self.actionFill.setObjectName("actionFill")
         self.menuEdit.addAction(self.actionFill)
         self.menuEdit.addSeparator()
+
+        # ---
+
+        self.actionFindBlocks = QtGui.QAction(
+            self.tr("Find Blocks"), self, triggered=self.findBlocks, enabled=True)
+        self.actionFindBlocks.setShortcut(QtGui.QKeySequence.Find)
+        self.actionFindBlocks.setObjectName("actionFindBlocks")
         self.menuEdit.addAction(self.actionFindBlocks)
+
+        self.actionFindReplaceBlocks = QtGui.QAction(
+            self.tr("Find/Replace Blocks"), self, triggered=self.findReplaceBlocks, enabled=True)
+
+        self.actionFindReplaceBlocks.setShortcut(QtGui.QKeySequence.Replace)
+        self.actionFindReplaceBlocks.setObjectName("actionFindReplaceBlocks")
         self.menuEdit.addAction(self.actionFindReplaceBlocks)
+
+        self.actionFindReplaceItems = QtGui.QAction(
+            self.tr("Find/Replace Items"), self, triggered=self.findReplaceItems, enabled=True)
+
+        self.actionFindReplaceItems.setObjectName("actionFindReplaceItems")
         self.menuEdit.addAction(self.actionFindReplaceItems)
+
+        self.actionFindReplaceCommandText = QtGui.QAction(
+            self.tr("Find/Replace Command Text"), self, triggered=self.findReplaceCommands, enabled=True)
+
+        self.actionFindReplaceCommandText.setObjectName("actionFindReplaceCommands")
         self.menuEdit.addAction(self.actionFindReplaceCommandText)
+
+        self.actionFindReplaceNBT = QtGui.QAction(
+            self.tr("Find/Replace NBT Data"), self, triggered=self.findReplaceNBT, enabled=True)
+
+        self.actionFindReplaceNBT.setObjectName("actionFindReplaceNBT")
         self.menuEdit.addAction(self.actionFindReplaceNBT)
         self.menuEdit.addSeparator()
+
+        # ---
+
+        self.actionAnalyze = QtGui.QAction(
+            self.tr("Analyze"), self, triggered=self.analyze, enabled=True)
+
+        self.actionAnalyze.setObjectName("actionAnalyze")
         self.menuEdit.addAction(self.actionAnalyze)
 
         self.menus.append(self.menuEdit)
