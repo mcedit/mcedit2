@@ -271,7 +271,10 @@ class SelectionBoxRenderNode(rendernode.RenderNode):
         with gl.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT | GL.GL_ENABLE_BIT | GL.GL_POLYGON_BIT):
             GL.glDepthMask(False)
             GL.glEnable(GL.GL_BLEND)
+            GL.glEnable(GL.GL_POLYGON_OFFSET_LINE)
             GL.glPolygonOffset(self.sceneNode.depth, self.sceneNode.depth)
+
+            GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
 
             if self.sceneNode.filled:
                 # Filled box
@@ -279,14 +282,16 @@ class SelectionBoxRenderNode(rendernode.RenderNode):
                 cubes.drawBox(box)
 
             if self.sceneNode.wire:
-                # Wire box, thinner behind terrain
+                # Wire box, in front of terrain
                 r, g, b, alpha = self.sceneNode.wireColor
                 GL.glColor(r, g, b, alpha)
-                GL.glLineWidth(2.0)
-                cubes.drawBox(box, cubeType=GL.GL_LINES)
+                GL.glLineWidth(3.0)
+                cubes.drawBox(box)
+                # Wire box, behind terrain, thinner
                 GL.glDisable(GL.GL_DEPTH_TEST)
+                GL.glColor(r, g, b, alpha * 0.5)
                 GL.glLineWidth(1.0)
-                cubes.drawBox(box, cubeType=GL.GL_LINES)
+                cubes.drawBox(box)
 
 class SelectionBoxNode(scenenode.Node):
     RenderNodeClass = SelectionBoxRenderNode

@@ -299,14 +299,16 @@ class SelectionCursorRenderNode(rendernode.RenderNode):
         alpha = 0.3
         box = BoundingBox(point, (1, 1, 1))
 
-        with gl.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT | GL.GL_ENABLE_BIT):
+        with gl.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT | GL.GL_ENABLE_BIT | GL.GL_POLYGON_BIT):
             GL.glDepthMask(False)
             GL.glEnable(GL.GL_BLEND)
             GL.glPolygonOffset(DepthOffset.SelectionCursor, DepthOffset.SelectionCursor)
 
             # Wire box
             GL.glColor(1., 1., 1., alpha)
-            cubes.drawBox(box, cubeType=GL.GL_LINES)
+            GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
+
+            cubes.drawBox(box)
 
             # Highlighted face
             GL.glColor(r, g, b, alpha)
