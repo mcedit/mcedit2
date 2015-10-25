@@ -1,5 +1,18 @@
 [
-[50, 5, "minecraft:torch[facing=up]"],
-[75, 5, "minecraft:unlit_redstone_torch[facing=up]"],
-[76, 5, "minecraft:redstone_torch[facing=up]"]
+  [50, 5, "minecraft:torch[facing=up]"],
+  [75, 5, "minecraft:unlit_redstone_torch[facing=up]"],
+  [76, 5, "minecraft:redstone_torch[facing=up]"],
+  [210, 0, "minecraft:repeating_command_block[facing=down]"],
+  [210, 1, "minecraft:repeating_command_block[facing=up]"],
+  [210, 2, "minecraft:repeating_command_block[facing=north]"],
+  [210, 3, "minecraft:repeating_command_block[facing=south]"],
+  [210, 4, "minecraft:repeating_command_block[facing=west]"],
+  [210, 5, "minecraft:repeating_command_block[facing=east]"],
+  [211, 0, "minecraft:chained_command_block[facing=down]"],
+  [211, 1, "minecraft:chained_command_block[facing=up]"],
+  [211, 2, "minecraft:chained_command_block[facing=north]"],
+  [211, 3, "minecraft:chained_command_block[facing=south]"],
+  [211, 4, "minecraft:chained_command_block[facing=west]"],
+  [211, 5, "minecraft:chained_command_block[facing=east]"]
+
 ]

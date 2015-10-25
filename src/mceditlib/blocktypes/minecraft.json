@@ -9,7 +9,18 @@
   {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=true,decayable=false,variant=jungle]", "biomeTintType": "foliage"},
   {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=true,decayable=true,variant=jungle]", "biomeTintType": "foliage"},
   {"internalName": "minecraft:tallgrass", "blockState": "minecraft:tallgrass[type=tall_grass]", "biomeTintType": "grass"},
-  {"internalName": "minecraft:tallgrass", "blockState": "minecraft:tallgrass[type=fern]", "biomeTintType": "grass"}
-
+  {"internalName": "minecraft:tallgrass", "blockState": "minecraft:tallgrass[type=fern]", "biomeTintType": "grass"},
+  {"internalName": "minecraft:repeating_command_block", "blockState": "minecraft:repeating_command_block[facing=down]", "displayName": "Repeating Command Block"},
+  {"internalName": "minecraft:repeating_command_block", "blockState": "minecraft:repeating_command_block[facing=up]", "displayName": "Repeating Command Block"},
+  {"internalName": "minecraft:repeating_command_block", "blockState": "minecraft:repeating_command_block[facing=north]", "displayName": "Repeating Command Block"},
+  {"internalName": "minecraft:repeating_command_block", "blockState": "minecraft:repeating_command_block[facing=south]", "displayName": "Repeating Command Block"},
+  {"internalName": "minecraft:repeating_command_block", "blockState": "minecraft:repeating_command_block[facing=west]", "displayName": "Repeating Command Block"},
+  {"internalName": "minecraft:repeating_command_block", "blockState": "minecraft:repeating_command_block[facing=east]", "displayName": "Repeating Command Block"},
+  {"internalName": "minecraft:chained_command_block", "blockState": "minecraft:chained_command_block[facing=down]", "displayName": "Chained Command Block"},
+  {"internalName": "minecraft:chained_command_block", "blockState": "minecraft:chained_command_block[facing=up]", "displayName": "Chained Command Block"},
+  {"internalName": "minecraft:chained_command_block", "blockState": "minecraft:chained_command_block[facing=north]", "displayName": "Chained Command Block"},
+  {"internalName": "minecraft:chained_command_block", "blockState": "minecraft:chained_command_block[facing=south]", "displayName": "Chained Command Block"},
+  {"internalName": "minecraft:chained_command_block", "blockState": "minecraft:chained_command_block[facing=west]", "displayName": "Chained Command Block"},
+  {"internalName": "minecraft:chained_command_block", "blockState": "minecraft:chained_command_block[facing=east]", "displayName": "Chained Command Block"}
 
 ]
