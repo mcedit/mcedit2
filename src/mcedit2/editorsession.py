@@ -454,6 +454,8 @@ class EditorSession(QtCore.QObject):
         self.inspectorDockWidget.hide()
         self.dockWidgets.append((Qt.RightDockWidgetArea, self.inspectorDockWidget))
 
+        self.editorOverlay.addChild(self.inspectorWidget.overlayNode)
+
         if len(self.toolActions):
             # Must be called after toolChanged is connected to editorTab
             self.toolActions[0].trigger()

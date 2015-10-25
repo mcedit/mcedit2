@@ -7,12 +7,14 @@ import traceback
 
 from PySide import QtGui
 from mcedit2.command import SimpleRevisionCommand
+from mcedit2.rendering import depths
 from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.selection import SelectionBoxNode
 
 from mcedit2.widgets.inspector.tileentities.chest import ChestEditorWidget, DispenserEditorWidget, HopperEditorWidget
 from mcedit2.util.load_ui import load_ui
 from mcedit2.widgets.inspector.tileentities.command import CommandBlockEditorWidget
+from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
 
@@ -57,9 +59,13 @@ class InspectorWidget(QtGui.QWidget):
 
         self.currentChunk = None
 
-        # xxxx unused! how!
-        self.selectionNode = None
         self.overlayNode = scenenode.Node()
+        self.selectionNode = SelectionBoxNode()
+        self.selectionNode.depth = depths.DepthOffset.SelectionCursor
+        self.selectionNode.filled = False
+        self.selectionNode.wireColor = (0.2, 0.9, .2, .8)
+
+        self.overlayNode.addChild(self.selectionNode)
 
         self.chunkTabWidget.currentChanged.connect(self.chunkTabDidChange)
 
@@ -67,7 +73,15 @@ class InspectorWidget(QtGui.QWidget):
         self.lightPopulatedInput.toggled.connect(self.lightPopulatedDidChange)
         self.inhabitedTimeInput.valueChanged.connect(self.inhabitedTimeDidChange)
         self.updateTimeInput.valueChanged.connect(self.updateTimeDidChange)
-
+    
+    def hide(self, *args, **kwargs):
+        super(InspectorWidget, self).hide(*args, **kwargs)
+        self.overlayNode.visible = False
+    
+    def show(self, *args, **kwargs):
+        super(InspectorWidget, self).show(*args, **kwargs)
+        self.overlayNode.visible = True
+    
     def inspectBlock(self, pos):
         self.entity = None
 
@@ -122,6 +136,10 @@ class InspectorWidget(QtGui.QWidget):
 
         self.removeTileEntityButton.setEnabled(self.tileEntity is not None)
 
+        blockBox = BoundingBox((x, y, z), (1, 1, 1))
+
+        self.selectionNode.selectionBox = blockBox
+
     def inspectEntity(self, entity):
         self.tileEntity = None
 
@@ -140,13 +158,11 @@ class InspectorWidget(QtGui.QWidget):
 
         self.entityNBTEditor.setRootTagRef(entity)
 
+        # xxx entity bounds per type
 
-    # def toolInactive(self):
-    #     if self.selectionNode:
-    #         self.overlayNode.removeChild(self.selectionNode)
-    #         self.selectionNode = None
-    #         self.currentChunk = None
-    #         self.updateChunkWidget()
+        entityBox = BoundingBox((x-.5, y, z-.5), (1, 2, 1))
+
+        self.selectionNode.selectionBox = entityBox
 
     def inspectChunk(self, cx, cz):
         dim = self.editorSession.currentDimension
@@ -155,12 +171,6 @@ class InspectorWidget(QtGui.QWidget):
             self.setSelectedChunk(chunk)
 
     def setSelectedChunk(self, chunk):
-        if self.selectionNode is None:
-            self.selectionNode = SelectionBoxNode()
-            self.selectionNode.filled = False
-            self.selectionNode.color = (0.3, 0.3, 1, .3)
-            self.overlayNode.addChild(self.selectionNode)
-
         self.selectionNode.selectionBox = chunk.bounds
         self.currentChunk = chunk
         self.updateChunkWidget()
