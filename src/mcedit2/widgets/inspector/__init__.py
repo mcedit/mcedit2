@@ -77,6 +77,22 @@ class InspectorWidget(QtGui.QWidget):
         self.blockYLabel.setText(str(y))
         self.blockZLabel.setText(str(z))
 
+        blockID = self.editorSession.currentDimension.getBlockID(x, y, z)
+        blockData = self.editorSession.currentDimension.getBlockData(x, y, z)
+        blockLight = self.editorSession.currentDimension.getBlockLight(x, y, z)
+        skyLight = self.editorSession.currentDimension.getSkyLight(x, y, z)
+
+        self.blockIDLabel.setText(str(blockID))
+        self.blockDataLabel.setText(str(blockData))
+        self.blockLightLabel.setText(str(blockLight))
+        self.skyLightLabel.setText(str(skyLight))
+
+        block = self.editorSession.currentDimension.getBlock(x, y, z)
+
+        self.blockNameLabel.setText(block.displayName)
+        self.blockInternalNameLabel.setText(block.internalName)
+        self.blockStateLabel.setText(str(block.blockState))
+
         if self.blockEditorWidget:
             self.blockTabWidget.removeTab(0)
             self.blockEditorWidget = None
