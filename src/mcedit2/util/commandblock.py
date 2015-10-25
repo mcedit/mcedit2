@@ -5,13 +5,15 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 
+from mceditlib.selection import BoundingBox
+
 log = logging.getLogger(__name__)
 
 """
 /achievement	    Gives or removes an achievement from a player.	Op	—	—	—	Players	—
 /blockdata	        Modifies the data tag of a block.	Op	—	Blocks	—	—	—
 /clear	            Clears items from player inventory.	Op	—	—	—	Players	—
-/clone	            Copies blocks from one place to another.	Op	—	Blocks	—	—	—
+    /clone	            Copies blocks from one place to another.	Op	—	Blocks	—	—	—
 /defaultgamemode	Sets the default game mode.	Op	—	—	—	—	World
 /difficulty	        Sets the difficulty level.	Op	—	—	—	Players	—
 /effect	            Add or remove status effects.	Op	—	—	Entities	Players	—
@@ -61,6 +63,10 @@ The following commands use the command block's name (defaults to @) in their
 output: /me, /say, and /tell.
 """
 
+class ParseError(ValueError):
+    """
+    Raised when parsing command text fails (due to wrong number of arguments, for example)
+    """
 
 def ParseCommand(commandText):
     if commandText[0] == "/":
@@ -91,21 +97,52 @@ def parseCoord(text):
 
 
 def formatCoords(cmd):
+    return formatCoordTuple(cmd.x, cmd.relX,
+                            cmd.y, cmd.relY,
+                            cmd.z, cmd.relZ)
+
+def formatCoordTuple(x, relX, y, relY, z, relZ):
     text = ""
-    if cmd.x is not None:
-        if cmd.relX:
+    if x is not None:
+        if relX:
             text += "~"
-        text += str(cmd.x) + " "
-    if cmd.y is not None:
-        if cmd.relY:
-            text += "~"
-        text += str(cmd.y) + " "
-    if cmd.z is not None:
-        if cmd.relZ:
-            text += "~"
-        text += str(cmd.z)
+        if x or not relX:
+            text += str(x)
+        text += " "
+
+        if y is not None:
+            if relY:
+                text += "~"
+            if y or not relY:
+                text += str(y)
+            text += " "
+
+            if z is not None:
+                if relZ:
+                    text += "~"
+                if z or not relZ:
+                    text += str(z)
     return text
 
+def formatDetectCoords(cmd):
+    text = ""
+    if cmd.relDX:
+        text += "~"
+    if cmd.dx or not cmd.relDX:
+        text += str(cmd.dx)
+    text += " "
+
+    if cmd.relDY:
+        text += "~"
+    if cmd.dy or not cmd.relDY:
+        text += str(cmd.dy)
+    text += " "
+    if cmd.relDZ:
+        text += "~"
+    if cmd.dz or not cmd.relDZ:
+        text += str(cmd.dz)
+
+    return text
 
 def formatRepr(cmd, attrs):
     args = ", ".join("%s=%s" % (a, getattr(cmd, a)) for a in attrs)
@@ -121,21 +158,248 @@ class UnknownCommand(object):
         return "/%s %s" % (self.name, self.args)
 
 
-def argsplit(args, numargs):
+def argsplit(args, numargs, required=0):
     """
     Like str.split(), but always returns a list of length `numargs`
     """
 
     args = args.split(None, numargs-1)
+    if len(args) < required:
+        raise ParseError("Not enough arguments to command.")
     if len(args) < numargs:
         args = args + [""] * (numargs - len(args))
     return args
 
+class TargetSelector(object):
+    playerName = None
+    targetVariable = None
+    targetArgs = ()
 
-class SetBlockCommand(object):
-    name = "setblock"
-    relX = relY = relZ = False
+    def __str__(self):
+        if self.playerName is not None:
+            return self.playerName
+        else:
+            selectorArgs = []
+            implicitArgs = []
+            for key, value in self.targetArgs:
+                if key == 'x' and len(implicitArgs) == 0:
+                    implicitArgs.append(value)
+                elif key == 'y' and len(implicitArgs) == 1:
+                    implicitArgs.append(value)
+                elif key == 'z' and len(implicitArgs) == 2:
+                    implicitArgs.append(value)
+                elif key == 'r' and len(implicitArgs) == 3:
+                    implicitArgs.append(value)
+                else:
+                    selectorArgs.append(key + "=" + value)
+
+            selectorText = ",".join(implicitArgs + selectorArgs)
+
+            return "@%s[%s]" % (self.targetVariable, selectorText)
+
+
+    def __init__(self, selectorText):
+        if selectorText[0] == "@":
+            if len(selectorText) < 2:
+                raise ParseError("Target selector has @ without target variable.")
+
+            targetVariable = selectorText[1]
+            targetArgText = selectorText[2:]
+
+            if targetArgText[0] != '[' and targetArgText[-1] != ']':
+                raise ParseError("Selector arguments must be enclosed in [].")
+
+            targetArgText = targetArgText[1:-1]
+            targetArgs = targetArgText.split(",")
+
+            parsedArgs = []
+            implicitKeys = list('xyzr')
+
+            for arg in targetArgs:
+                if '=' not in arg:
+                    if len(implicitKeys):
+                        key = implicitKeys.pop(0)
+                        value = arg
+                    else:
+                        raise ParseError("Selector argument must be in the form key=value.")
+                else:
+                    key, value = arg.split('=', 1)
+
+                parsedArgs.append((key, value))
+
+            self.targetVariable = targetVariable
+            self.targetArgs = parsedArgs
+
+        else:
+            # No '@', so this is a player selector
+            self.playerName = selectorText
+
+    int_keys = {'x', 'y', 'z', 'r', 'rm', 'c', 'l', 'lm', 'dx', 'dy', 'dz',
+                'rx', 'rxm', 'ry', 'rym'}
+
+    def getArg(self, arg):
+        for key, value in self.targetArgs:
+            if key == arg:
+                if key in self.int_keys or key.startswith("score_"):
+                    value = int(value)
+                    return value
+        return None
+
+    def setArg(self, arg, value):
+        value = str(value)
+        self.targetArgs = [(k, v) for k, v in self.targetArgs if k != arg]
+        self.targetArgs.append((arg, value))
+
+def resolvePosition(point, x, relX, y, relY, z, relZ):
+    if relX:
+        x = point[0] + x
+    if relY:
+        y = point[1] + y
+    if relZ:
+        z = point[2] + z
+
+    return x, y, z
+
+class PositionalCommand(object):
     x = y = z = 0
+    relX = relY = relZ = False
+    
+    def resolvePosition(self, point):
+        return resolvePosition(point, self.x, self.relX, self.y, self.relY, self.z, self.relZ)
+        
+class CloneCommand(object):
+    name = "clone"
+    maskMode = "replace"
+    cloneMode = "normal"
+    tileName = None
+
+    def resolveS1(self, point):
+        return resolvePosition(point, 
+                               self.sx1, self.relSX1, 
+                               self.sy1, self.relSY1, 
+                               self.sz1, self.relSZ1)
+
+    def resolveS2(self, point):
+        return resolvePosition(point, 
+                               self.sx2, self.relSX2, 
+                               self.sy2, self.relSY2, 
+                               self.sz2, self.relSZ2)
+
+    def resolveDestination(self, point):
+        return resolvePosition(point,
+                               self.dx, self.relDX,
+                               self.dy, self.relDY,
+                               self.dz, self.relDZ)
+
+    def resolveSourceBounds(self, point):
+        sourceP1 = self.resolveS1(point)
+        sourceP2 = self.resolveS2(point)
+        return BoundingBox(sourceP1, (1, 1, 1)).union(BoundingBox(sourceP2, (1, 1, 1)))
+
+    def __str__(self):
+        args = formatCoordTuple(self.sx1, self.relSX1,
+                                self.sy1, self.relSY1,
+                                self.sz1, self.relSZ1)
+        args += " "
+        args += formatCoordTuple(self.sx2, self.relSX2,
+                                 self.sy2, self.relSY2,
+                                 self.sz2, self.relSZ2)
+        args += " "
+        args += formatCoordTuple(self.dx, self.relDX,
+                                 self.dy, self.relDY,
+                                 self.dz, self.relDZ)
+
+        if self.maskMode != CloneCommand.maskMode:
+            args += " " + self.maskMode
+        if self.cloneMode != CloneCommand.cloneMode:
+            args += " " + self.cloneMode
+        if self.tileName:
+            args += " " + self.tileName
+
+        return "/%s %s" % (self.name, args)
+    
+    def __init__(self, args):
+        sx1, sy1, sz1, sx2, sy2, sz2, dx, dy, dz, rest = argsplit(args, 10, required=9)
+
+        self.sx1, self.relSX1 = parseCoord(sx1)
+        self.sy1, self.relSY1 = parseCoord(sy1)
+        self.sz1, self.relSZ1 = parseCoord(sz1)
+        self.sx2, self.relSX2 = parseCoord(sx2)
+        self.sy2, self.relSY2 = parseCoord(sy2)
+        self.sz2, self.relSZ2 = parseCoord(sz2)
+        self.dx, self.relDX = parseCoord(dx)
+        self.dy, self.relDY = parseCoord(dy)
+        self.dz, self.relDZ = parseCoord(dz)
+
+        maskMode, rest = argsplit(args, 2)
+        if maskMode in ("filtered", "masked", "replace"):
+            self.maskMode = maskMode
+            cloneMode, rest = argsplit(args, 2)
+        else:
+            cloneMode = maskMode
+
+        if cloneMode in ("force", "move", "normal"):
+            self.cloneMode = cloneMode
+            tileName = rest
+        else:
+            tileName = cloneMode
+
+        self.tileName = tileName
+
+        if self.maskMode == "filtered":
+            if not self.tileName:
+                raise ParseError("Filtered clone command must have tileName as the last argument.")
+
+
+
+
+class ExecuteCommand(PositionalCommand):
+    name = "execute"
+    subcommand = None
+    targetSelector = None
+    
+    dx = dy = dz = None
+    relDX = relDY = relDZ = False
+
+    def __str__(self):
+        args = str(self.targetSelector)
+        args += " " + formatCoords(self)
+        if None not in (self.dx, self.dy, self.dz):
+            args += " " + formatDetectCoords(self)
+            args += " " + self.blockID
+            args += " " + self.blockData
+
+        args += " " + str(self.subcommand)
+
+        return "/%s %s" % (self.name, args)
+
+    def __init__(self, args):
+        selectorText, x, y, z, rest = argsplit(args, 5, required=4)
+        self.targetSelector = TargetSelector(selectorText)
+    
+        # x, y, z are relative to the entity that is targeted.
+        self.x, self.relX = parseCoord(x)
+        self.y, self.relY = parseCoord(y)
+        self.z, self.relZ = parseCoord(z)
+
+        if rest.startswith("detect"):
+            _detect, dx, dy, dz, blockID, blockData, rest = argsplit(rest, 7)
+            
+            # dx, dy, dz are relative to the x, y, z computed from the entity
+            self.dx, self.relDX = parseCoord(dx)
+            self.dy, self.relDY = parseCoord(dy)
+            self.dz, self.relDZ = parseCoord(dz)
+
+            self.blockID = blockID
+            self.blockData = blockData
+
+        commandText = rest
+
+        self.subcommand = ParseCommand(commandText)
+            
+
+class SetBlockCommand(PositionalCommand):
+    name = "setblock"
     dataValue = -1
     tileName = None
     oldBlockHandling = "replace"
@@ -181,10 +445,8 @@ class SetBlockCommand(object):
         self.dataTag = dataTag
 
 
-class TestForBlockCommand(object):
+class TestForBlockCommand(PositionalCommand):
     name = "testforblock"
-    relX = relY = relZ = False
-    x = y = z = 0
     dataTag = ""
 
     def __repr__(self):
@@ -201,15 +463,14 @@ class TestForBlockCommand(object):
 
         return "/%s %s" % (self.name, args)
 
-
     def __init__(self, args):
-        x, y, z, tileName, rest = args.split(None, 4)
+        x, y, z, tileName, rest = argsplit(args, 5)
         self.x, self.relX = parseCoord(x)
         self.y, self.relY = parseCoord(y)
         self.z, self.relZ = parseCoord(z)
         self.tileName = tileName
 
-        dataValue, dataTag = rest.split(None, 1)
+        dataValue, dataTag = argsplit(args, 2)
         try:
             dataValue = int(dataValue)
         except ValueError:
@@ -220,7 +481,7 @@ class TestForBlockCommand(object):
         self.dataTag = dataTag
 
 
-class SummonCommand(object):
+class SummonCommand(PositionalCommand):
     name = "summon"
     entityName = NotImplemented
 
@@ -270,7 +531,7 @@ _commandClasses = {}
 def addCommandClass(cls):
     _commandClasses[cls.name] = cls
 
-_cc = [SummonCommand, TestForBlockCommand, SetBlockCommand]
+_cc = [SummonCommand, TestForBlockCommand, SetBlockCommand, ExecuteCommand, CloneCommand]
 
 for cc in _cc:
     addCommandClass(cc)
@@ -282,6 +543,8 @@ def main():
     testCommands = [
         r'/summon Zombie 2.5 63 -626.5 {Health:18,HealF:18,IsVillager:0,Attributes:[{Name:"generic.followRange",Base:6},{Name:"generic.movementSpeed",Base:0.2},{Name:"generic.knockbackResistance",Base:1.0}],Equipment:[{id:283},{},{},{},{id:332, Age:5980}],PersistenceRequired:1}',
         r'/setblock ~ ~3 ~ air',
+        r'/execute @e[type=ArmorStand,x=-1562,y=13,z=-117,r=1] ~ ~59 ~ /clone ~-5 ~-7 ~-8 ~5 ~-7 ~8 ~-5 ~-32 ~-8',
+        r'/clone ~-5 ~-4 ~-8 ~5 ~-4 ~8 ~-5 ~-54 ~-8'
     ]
     for cmdText in testCommands:
         testReencode(cmdText)
@@ -289,10 +552,12 @@ def main():
 
 def testReencode(cmdText):
     cmd = ParseCommand(cmdText)
-    assert not isinstance(cmd, UnknownCommand)
+    assert not isinstance(cmd, UnknownCommand), "Command \"%s...\" is an UnknownCommand" % cmdText[:20]
     newCmdText = str(cmd)
+    #assert cmdText == newCmdText, "Expected: \n%s\nFound: \n%s" % (cmdText, newCmdText)
+
     newNewCmdText = str(ParseCommand(newCmdText))
-    assert newNewCmdText == newCmdText, "Expected: \n%s\nFound: \n%s" % (newCmdText, newNewCmdText)
+    assert newCmdText == newNewCmdText, "Expected: \n%s\nFound: \n%s" % (newCmdText, newNewCmdText)
 
 def testReencodeWithDataTag(cmdText):
     cmd = ParseCommand(cmdText)
