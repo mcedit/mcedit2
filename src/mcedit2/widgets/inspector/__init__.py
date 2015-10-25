@@ -8,9 +8,10 @@ import traceback
 from PySide import QtGui
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.rendering import depths
+from mcedit2.rendering.command_visuals import CommandVisuals
 from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.selection import SelectionBoxNode
-
+from mcedit2.util.commandblock import ParseCommand
 from mcedit2.widgets.inspector.tileentities.chest import ChestEditorWidget, DispenserEditorWidget, HopperEditorWidget
 from mcedit2.util.load_ui import load_ui
 from mcedit2.widgets.inspector.tileentities.command import CommandBlockEditorWidget
@@ -67,6 +68,8 @@ class InspectorWidget(QtGui.QWidget):
 
         self.overlayNode.addChild(self.selectionNode)
 
+        self.commandBlockVisualsNode = None
+
         self.chunkTabWidget.currentChanged.connect(self.chunkTabDidChange)
 
         self.terrainPopulatedInput.toggled.connect(self.terrainPopulatedDidChange)
@@ -81,8 +84,14 @@ class InspectorWidget(QtGui.QWidget):
     def show(self, *args, **kwargs):
         super(InspectorWidget, self).show(*args, **kwargs)
         self.overlayNode.visible = True
-    
+
+    def clearVisuals(self):
+        if self.commandBlockVisualsNode:
+            self.overlayNode.removeChild(self.commandBlockVisualsNode)
+            self.commandBlockVisualsNode = None
+
     def inspectBlock(self, pos):
+        self.clearVisuals()
         self.entity = None
 
         self.stackedWidget.setCurrentWidget(self.pageInspectBlock)
@@ -139,9 +148,20 @@ class InspectorWidget(QtGui.QWidget):
         blockBox = BoundingBox((x, y, z), (1, 1, 1))
 
         self.selectionNode.selectionBox = blockBox
+        if self.tileEntity is not None:
+            if self.tileEntity.id == "Control":
+                try:
+                    commandObj = ParseCommand(self.tileEntity.Command)
+                    visuals = CommandVisuals((x, y, z), commandObj)
+                    self.commandBlockVisualsNode = visuals
+                    self.overlayNode.addChild(visuals)
+                except Exception as e:
+                    log.warn("Failed to parse command.", exc_info=1)
+
 
     def inspectEntity(self, entity):
         self.tileEntity = None
+        self.clearVisuals()
 
         self.entity = entity
         self.stackedWidget.setCurrentWidget(self.pageInspectEntity)
@@ -165,6 +185,8 @@ class InspectorWidget(QtGui.QWidget):
         self.selectionNode.selectionBox = entityBox
 
     def inspectChunk(self, cx, cz):
+        self.clearVisuals()
+
         dim = self.editorSession.currentDimension
         if dim.containsChunk(cx, cz):
             chunk = dim.getChunk(cx, cz)
