@@ -10,40 +10,41 @@ from mceditlib.selection import BoundingBox
 log = logging.getLogger(__name__)
 
 """
+    /fill	            Fills a region with a specific block.	Op	—	Blocks	—	—	—
+    /give	            Gives an item to a player.	Op	—	—	—	Players	—
+    /playsound	        Plays a sound.	Op	—	—	—	Players	—
+        /blockdata	        Modifies the data tag of a block.	Op	—	Blocks	—	—	—
+        /clone	            Copies blocks from one place to another.	Op	—	Blocks	—	—	—
+        /execute	        Executes another command.	Op	—	—	—	—	—
+        /setblock	        Changes a block to another block.	Op	—	Blocks	—	—	—
+        /summon	            Summons an entity.	Op	—	—	Entities	—	—
+        /testforblock	    Tests whether a block is in a location.	Op	—	Blocks	—	—	—
+
 /achievement	    Gives or removes an achievement from a player.	Op	—	—	—	Players	—
-/blockdata	        Modifies the data tag of a block.	Op	—	Blocks	—	—	—
 /clear	            Clears items from player inventory.	Op	—	—	—	Players	—
-    /clone	            Copies blocks from one place to another.	Op	—	Blocks	—	—	—
 /defaultgamemode	Sets the default game mode.	Op	—	—	—	—	World
 /difficulty	        Sets the difficulty level.	Op	—	—	—	Players	—
 /effect	            Add or remove status effects.	Op	—	—	Entities	Players	—
 /enchant	        Enchants a player item.	Op	—	—	—	Players	—
 /entitydata	        Modifies the data tag of an entity.	Op	—	—	Entities	—	—
-/execute	        Executes another command.	Op	—	—	—	—	—
-/fill	            Fills a region with a specific block.	Op	—	Blocks	—	—	—
 /gamemode	        Sets a player's game mode.	Op	—	—	—	Players	—
 /gamerule	        Sets or queries a game rule value.	Op	—	—	—	—	World
-/give	            Gives an item to a player.	Op	—	—	—	Players	—
 /help	            Provides help for commands.	—	—	—	—	—	—
 /kill	            Kills entities (players, mobs, items, etc.).	Op	—	—	Entities	Players	—
 /list	            Lists players on the server.	Op	MP	—	—	Players	—
 /me	                Displays a message about yourself.	—	—	—	—	Players	—
 /particle	        Creates particles.	Op	—	—	—	Players	—
-/playsound	        Plays a sound.	Op	—	—	—	Players	—
 /replaceitem	    Replaces items in inventories.	Op	—	Blocks	Entities	Players	—
 /say	            Displays a message to multiple players.	Op	—	—	—	—	—
 /scoreboard	        Manages objectives, players, and teams.	Op	—	—	Entities	Players	—
 /seed	            Displays the world seed.	Op	—	—	—	—	World
-        /setblock	        Changes a block to another block.	Op	—	Blocks	—	—	—
 /setworldspawn	    Sets the world spawn.	Op	—	—	—	—	World
 /spawnpoint	        Sets the spawn point for a player.	Op	—	—	—	Players	—
 /spreadplayers	    Teleports entities to random locations.	Op	—	—	Entities	Players	—
 /stats	            Update objectives from command results.	Op	—	Blocks	Entities	Players	—
-        /summon	            Summons an entity.	Op	—	—	Entities	—	—
 /tell	            Displays a private message to other players.	—	—	—	—	Players	—
 /tellraw	        Displays a JSON message to players.	Op	—	—	—	Players	—
 /testfor	        Counts entities matching specified conditions.	Op	—	—	Entities	Players	—
-        /testforblock	    Tests whether a block is in a location.	Op	—	Blocks	—	—	—
 /testforblocks	    Tests whether the blocks in two regions match.	Op	—	Blocks	—	—	—
 /time	            Changes or queries the world's game time.	Op	—	—	—	—	World
 /title	            Manages screen titles.	Op	—	—	—	Players	—
@@ -78,7 +79,11 @@ def ParseCommand(commandText):
     if cmdClass is None:
         return UnknownCommand(name, args)
     else:
-        return cmdClass(args)
+        try:
+            return cmdClass(args)
+        except Exception as e:
+            log.warn("Parse error while parsing command %r", commandText)
+            raise
 
 
 def parseCoord(text):
@@ -170,6 +175,13 @@ def argsplit(args, numargs, required=0):
         args = args + [""] * (numargs - len(args))
     return args
 
+
+def argpop(args):
+    """
+    Pop one arg off the front of args and return (arg, rest)
+    """
+    return argsplit(args, 2)
+
 class TargetSelector(object):
     playerName = None
     targetVariable = None
@@ -195,7 +207,11 @@ class TargetSelector(object):
 
             selectorText = ",".join(implicitArgs + selectorArgs)
 
-            return "@%s[%s]" % (self.targetVariable, selectorText)
+            ret = "@" + self.targetVariable
+            if selectorText:
+                ret += "[%s]" % (selectorText,)
+
+            return ret
 
 
     def __init__(self, selectorText):
@@ -205,27 +221,27 @@ class TargetSelector(object):
 
             targetVariable = selectorText[1]
             targetArgText = selectorText[2:]
-
-            if targetArgText[0] != '[' and targetArgText[-1] != ']':
-                raise ParseError("Selector arguments must be enclosed in [].")
-
-            targetArgText = targetArgText[1:-1]
-            targetArgs = targetArgText.split(",")
-
             parsedArgs = []
-            implicitKeys = list('xyzr')
+            if len(targetArgText):
+                if targetArgText[0] != '[' and targetArgText[-1] != ']':
+                    raise ParseError("Selector arguments must be enclosed in [].")
 
-            for arg in targetArgs:
-                if '=' not in arg:
-                    if len(implicitKeys):
-                        key = implicitKeys.pop(0)
-                        value = arg
+                targetArgText = targetArgText[1:-1]
+                targetArgs = targetArgText.split(",")
+
+                implicitKeys = list('xyzr')
+
+                for arg in targetArgs:
+                    if '=' not in arg:
+                        if len(implicitKeys):
+                            key = implicitKeys.pop(0)
+                            value = arg
+                        else:
+                            raise ParseError("Selector argument must be in the form key=value.")
                     else:
-                        raise ParseError("Selector argument must be in the form key=value.")
-                else:
-                    key, value = arg.split('=', 1)
+                        key, value = arg.split('=', 1)
 
-                parsedArgs.append((key, value))
+                    parsedArgs.append((key, value))
 
             self.targetVariable = targetVariable
             self.targetArgs = parsedArgs
@@ -260,30 +276,47 @@ def resolvePosition(point, x, relX, y, relY, z, relZ):
 
     return x, y, z
 
-class PositionalCommand(object):
-    x = y = z = 0
-    relX = relY = relZ = False
-    
-    def resolvePosition(self, point):
-        return resolvePosition(point, self.x, self.relX, self.y, self.relY, self.z, self.relZ)
-        
-class CloneCommand(object):
-    name = "clone"
-    maskMode = "replace"
-    cloneMode = "normal"
-    tileName = None
+
+_commandClasses = {}
+
+def register_command(cls):
+    _commandClasses[cls.name] = cls
+    return cls
+
+@register_command
+class GiveCommand(object):
+    name = "give"
+    amount = None
+    data = None
+    dataTag = None
+
+    def __str__(self):
+        raise NotImplementedError("Implement me!!")
+
+    def __init__(self, args):
+        target, item, rest = argsplit(args, 3, required=2)
+        self.targetSelector = TargetSelector(target)
+        self.item = item
+
+        self.amount, rest = argpop(rest)
+        if rest:
+            self.data, rest = argpop(rest)
+            if rest:
+                self.dataTag = rest
+
+class BoundingBoxCommand(object):
 
     def resolveS1(self, point):
-        return resolvePosition(point, 
-                               self.sx1, self.relSX1, 
-                               self.sy1, self.relSY1, 
-                               self.sz1, self.relSZ1)
+        return resolvePosition(point,
+                               self.x1, self.relX1,
+                               self.y1, self.relY1,
+                               self.z1, self.relZ1)
 
     def resolveS2(self, point):
-        return resolvePosition(point, 
-                               self.sx2, self.relSX2, 
-                               self.sy2, self.relSY2, 
-                               self.sz2, self.relSZ2)
+        return resolvePosition(point,
+                               self.x2, self.relX2,
+                               self.y2, self.relY2,
+                               self.z2, self.relZ2)
 
     def resolveDestination(self, point):
         return resolvePosition(point,
@@ -291,19 +324,54 @@ class CloneCommand(object):
                                self.dy, self.relDY,
                                self.dz, self.relDZ)
 
-    def resolveSourceBounds(self, point):
+    def resolveBoundingBox(self, point):
         sourceP1 = self.resolveS1(point)
         sourceP2 = self.resolveS2(point)
         return BoundingBox(sourceP1, (1, 1, 1)).union(BoundingBox(sourceP2, (1, 1, 1)))
 
+    def parseCoordPair(self, x1, y1, z1, x2, y2, z2):
+        self.x1, self.relX1 = parseCoord(x1)
+        self.y1, self.relY1 = parseCoord(y1)
+        self.z1, self.relZ1 = parseCoord(z1)
+        self.x2, self.relX2 = parseCoord(x2)
+        self.y2, self.relY2 = parseCoord(y2)
+        self.z2, self.relZ2 = parseCoord(z2)
+
+    x1 = y1 = z1 = None
+    relX1 = relY1 = relZ1 = False
+
+    x2 = y2 = z2 = None
+    relX2 = relY2 = relZ2 = False
+
+
+@register_command
+class FillCommand(BoundingBoxCommand):
+    name = "fill"
+    
     def __str__(self):
-        args = formatCoordTuple(self.sx1, self.relSX1,
-                                self.sy1, self.relSY1,
-                                self.sz1, self.relSZ1)
+        raise NotImplementedError
+
+    def __init__(self, args):
+        x1, y1, z1, x2, y2, z2, tileName, rest = argsplit(args, 8, required=7)
+        self.parseCoordPair(x1, y1, z1, x2, y2, z2)
+        self.tileName = tileName
+
+
+@register_command
+class CloneCommand(BoundingBoxCommand):
+    name = "clone"
+    maskMode = "replace"
+    cloneMode = "normal"
+    tileName = None
+
+    def __str__(self):
+        args = formatCoordTuple(self.x1, self.relX1,
+                                self.y1, self.relY1,
+                                self.z1, self.relZ1)
         args += " "
-        args += formatCoordTuple(self.sx2, self.relSX2,
-                                 self.sy2, self.relSY2,
-                                 self.sz2, self.relSZ2)
+        args += formatCoordTuple(self.x2, self.relX2,
+                                 self.y2, self.relY2,
+                                 self.z2, self.relZ2)
         args += " "
         args += formatCoordTuple(self.dx, self.relDX,
                                  self.dy, self.relDY,
@@ -319,14 +387,10 @@ class CloneCommand(object):
         return "/%s %s" % (self.name, args)
     
     def __init__(self, args):
-        sx1, sy1, sz1, sx2, sy2, sz2, dx, dy, dz, rest = argsplit(args, 10, required=9)
+        x1, y1, z1, x2, y2, z2, dx, dy, dz, rest = argsplit(args, 10, required=9)
 
-        self.sx1, self.relSX1 = parseCoord(sx1)
-        self.sy1, self.relSY1 = parseCoord(sy1)
-        self.sz1, self.relSZ1 = parseCoord(sz1)
-        self.sx2, self.relSX2 = parseCoord(sx2)
-        self.sy2, self.relSY2 = parseCoord(sy2)
-        self.sz2, self.relSZ2 = parseCoord(sz2)
+        self.parseCoordPair(x1, y1, z1, x2, y2, z2)
+
         self.dx, self.relDX = parseCoord(dx)
         self.dy, self.relDY = parseCoord(dy)
         self.dz, self.relDZ = parseCoord(dz)
@@ -351,8 +415,53 @@ class CloneCommand(object):
                 raise ParseError("Filtered clone command must have tileName as the last argument.")
 
 
+class PositionalCommand(object):
+    x = y = z = 0
+    relX = relY = relZ = False
+
+    def resolvePosition(self, point):
+        return resolvePosition(point, self.x, self.relX, self.y, self.relY, self.z, self.relZ)
 
 
+@register_command
+class PlaySoundCommand(PositionalCommand):
+    name = "playsound"
+
+    def __str__(self):
+        raise NotImplementedError("Implement me!!")
+
+    def __init__(self, args):
+        self.sound, target, rest = argsplit(args, 3, required=2)
+        self.targetSelector = TargetSelector(target)
+
+        if rest:
+            x, y, z, rest = argsplit(rest, 4)
+            self.x, self.relX = parseCoord(x)
+            self.y, self.relY = parseCoord(y)
+            self.z, self.relZ = parseCoord(z)
+            if rest:
+                self.volume, self.pitch, self.minimumVolume = argsplit(rest, 3)
+
+
+@register_command
+class BlockdataCommand(PositionalCommand):
+    name = "blockdata"
+
+    def __str__(self):
+        args = formatCoords(self)
+        args += " " + self.dataTag
+
+        return "/%s %s" % (self.name, args)
+
+    def __init__(self, args):
+        x, y, z, dataTag = argsplit(args, 4, required=4)
+        self.x, self.relX = parseCoord(x)
+        self.y, self.relY = parseCoord(y)
+        self.z, self.relZ = parseCoord(z)
+        self.dataTag = dataTag
+
+
+@register_command
 class ExecuteCommand(PositionalCommand):
     name = "execute"
     subcommand = None
@@ -398,6 +507,7 @@ class ExecuteCommand(PositionalCommand):
         self.subcommand = ParseCommand(commandText)
             
 
+@register_command
 class SetBlockCommand(PositionalCommand):
     name = "setblock"
     dataValue = -1
@@ -445,6 +555,7 @@ class SetBlockCommand(PositionalCommand):
         self.dataTag = dataTag
 
 
+@register_command
 class TestForBlockCommand(PositionalCommand):
     name = "testforblock"
     dataTag = ""
@@ -481,6 +592,7 @@ class TestForBlockCommand(PositionalCommand):
         self.dataTag = dataTag
 
 
+@register_command
 class SummonCommand(PositionalCommand):
     name = "summon"
     entityName = NotImplemented
@@ -523,20 +635,6 @@ class SummonCommand(PositionalCommand):
         self.x = x
         self.y = y
         self.z = z
-
-
-_commandClasses = {}
-
-
-def addCommandClass(cls):
-    _commandClasses[cls.name] = cls
-
-_cc = [SummonCommand, TestForBlockCommand, SetBlockCommand, ExecuteCommand, CloneCommand]
-
-for cc in _cc:
-    addCommandClass(cc)
-
-del _cc
 
 
 def main():
