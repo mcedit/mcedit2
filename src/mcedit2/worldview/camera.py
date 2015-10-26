@@ -277,7 +277,7 @@ class CameraWorldView(WorldView):
 
     def createSceneGraph(self):
         scenegraph = super(CameraWorldView, self).createSceneGraph()
-        self.matrixNode.addChild(self.workplaneNode)
+        self.worldNode.addChild(self.workplaneNode)
         return scenegraph
 
     def augmentEvent(self, x, y, event):
@@ -329,7 +329,7 @@ class CameraWorldView(WorldView):
         modelview.lookAt(QtGui.QVector3D(*self.centerPoint),
                          QtGui.QVector3D(*(self.centerPoint + self.cameraVector)),
                          QtGui.QVector3D(0, 1, 0))
-        self.matrixNode.modelview = modelview
+        self.matrixState.modelview = modelview
 
     def updateOrthoMatrices(self):
         w, h = self.width(), self.height()
@@ -338,7 +338,7 @@ class CameraWorldView(WorldView):
 
         projection = QtGui.QMatrix4x4()
         projection.ortho(-w/2, w/2, -h/2, h/2, -2000, 2000)
-        self.matrixNode.projection = projection
+        self.matrixState.projection = projection
 
     def updatePerspectiveMatrices(self):
         w, h = self.width(), self.height()
@@ -349,7 +349,7 @@ class CameraWorldView(WorldView):
 
         projection = QtGui.QMatrix4x4()
         projection.perspective(fovy, w / h, 0.05, 2048)
-        self.matrixNode.projection = projection
+        self.matrixState.projection = projection
 
     @lazyprop
     def cameraVector(self):

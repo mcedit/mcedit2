@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 
 class ChunkSectionsRenderer(ChunkMeshBase):
     layer = Layer.ChunkSections
-    renderstate = renderstates.RenderstateEntityNode
+    renderstate = renderstates.RenderstateEntity
     color = (255, 200, 255)
 
     vertexTemplate = numpy.zeros((6, 4, 4), 'float32')

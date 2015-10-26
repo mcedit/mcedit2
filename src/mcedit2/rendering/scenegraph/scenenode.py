@@ -18,11 +18,20 @@ class Node(object):
         self._children = []
         self._dirty = True
         self._parents = []
+        self.states = []
         self.childrenChanged = False
         self.descendentNeedsUpdate = False
 
     def __repr__(self):
         return "%s(visible=%s, children=%d)" % (self.__class__.__name__, self.visible, len(self._children))
+
+    def addState(self, obj):
+        self.states.append(obj)
+        obj.addParent(self)
+
+    def removeState(self, obj):
+        self.states.remove(obj)
+        obj.removeParent(self)
 
     def addParent(self, obj):
         for parent in self._parents:
@@ -143,15 +152,3 @@ class NamedChildrenNode(Node):
     @property
     def children(self):
         return self._children.itervalues()
-
-
-class RenderstateNode(Node):
-    def __init__(self, nodeClass):
-        super(RenderstateNode, self).__init__()
-        self.RenderNodeClass = nodeClass
-
-    def __repr__(self):
-        return "RenderstateNode(nodeClass=%r, visible=%s, children=%d)" % (self.RenderNodeClass.__name__,
-                                                                           self.visible, len(self._children))
-
-

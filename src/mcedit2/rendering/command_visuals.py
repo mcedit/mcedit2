@@ -6,8 +6,8 @@ import logging
 
 from OpenGL import GL
 
-from mcedit2.rendering.scenegraph.depth_test import DepthFuncNode
-from mcedit2.rendering.scenegraph.misc import LineWidthNode
+from mcedit2.rendering.scenegraph.depth_test import DepthFunc
+from mcedit2.rendering.scenegraph.misc import LineWidth
 from mcedit2.rendering.scenegraph.scenenode import Node
 from mcedit2.rendering.scenegraph.vertex_array import VertexNode
 from mcedit2.rendering.selection import SelectionBoxNode
@@ -68,16 +68,16 @@ def LineArcNode(p1, p2, color):
     arcNode = Node()
 
     lineNode = LineStripNode(points, rgba)
+    arcNode.addChild(lineNode)
 
-    lineWidthNode = LineWidthNode(3.0)
-    lineWidthNode.addChild(lineNode)
+    arcNode.addState(LineWidth(3.0))
 
-    arcNode.addChild(lineWidthNode)
+    backLineNode = Node()
+    backLineNode.addChild(lineNode)
+    arcNode.addChild(backLineNode)
 
-    depthNode = DepthFuncNode(GL.GL_GREATER)
-    depthNode.addChild(lineNode)
-
-    arcNode.addChild(depthNode)
+    backLineNode.addState(DepthFunc(GL.GL_GREATER))
+    backLineNode.addState(LineWidth(1.0))
 
     return arcNode
 

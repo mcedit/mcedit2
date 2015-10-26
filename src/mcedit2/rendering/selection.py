@@ -11,11 +11,10 @@ from PySide import QtCore
 import numpy
 
 from mcedit2.rendering import cubes
-from mcedit2.rendering.scenegraph import scenenode, rendernode
+from mcedit2.rendering.scenegraph import scenenode, rendernode, states
 from mcedit2.rendering.chunknode import ChunkGroupNode, ChunkNode
-from mcedit2.rendering.depths import DepthOffset
-from mcedit2.rendering.renderstates import _RenderstateAlphaBlendNode
-from mcedit2.rendering.scenegraph.scenenode import RenderstateNode
+from mcedit2.rendering.depths import DepthOffsets
+from mcedit2.rendering.renderstates import _RenderstateAlphaBlend
 from mcedit2.rendering.scenegraph.vertex_array import VertexNode
 from mcedit2.rendering.vertexarraybuffer import QuadVertexArrayBuffer
 from mcedit2.util import profiler
@@ -23,12 +22,11 @@ from mcedit2.util.glutils import gl
 from mceditlib import faces
 from mceditlib.exceptions import ChunkNotPresent
 from mceditlib.selection import SectionBox, BoundingBox, SelectionBox, rayIntersectsBox
-from mceditlib.util import exhaust
 
 log = logging.getLogger(__name__)
 
 
-class CullFaceRenderNode(rendernode.RenderstateRenderNode):
+class CullFace(states.SceneNodeState):
     def enter(self):
         GL.glEnable(GL.GL_CULL_FACE)
 
@@ -97,7 +95,6 @@ class NonAirMaskSelection(SelectionBox):
         return mask
 
 
-
 class SelectionScene(scenenode.Node):
     def __init__(self):
         """
@@ -106,12 +103,13 @@ class SelectionScene(scenenode.Node):
         :rtype:
         """
         super(SelectionScene, self).__init__()
-        self.cullNode = RenderstateNode(CullFaceRenderNode)
-        self.blendNode = RenderstateNode(_RenderstateAlphaBlendNode)
+        self.cullFace = CullFace()
+        self.blend = _RenderstateAlphaBlend()
         self.groupNode = ChunkGroupNode()
-        self.cullNode.addChild(self.blendNode)
-        self.blendNode.addChild(self.groupNode)
-        self.addChild(self.cullNode)
+        self.addState(self.cullFace)
+        self.addState(self.blend)
+        self.addChild(self.groupNode)
+
         self.loadTimer = QtCore.QTimer(timeout=self.loadMore)
         self.loadTimer.setInterval(0)
         self.loadTimer.start()
@@ -144,11 +142,11 @@ class SelectionScene(scenenode.Node):
 
     @property
     def filled(self):
-        return self.cullNode.visible
+        return self.visible
 
     @filled.setter
     def filled(self, value):
-        self.cullNode.visible = value
+        self.visible = value
 
     def updateSelection(self):
         if self.dimension is None or self.selection is None:
@@ -296,7 +294,7 @@ class SelectionBoxRenderNode(rendernode.RenderNode):
 class SelectionBoxNode(scenenode.Node):
     RenderNodeClass = SelectionBoxRenderNode
     _selectionBox = None
-    depth = DepthOffset.Selection
+    depth = DepthOffsets.Selection
     wire = True
 
     _filled = True
@@ -365,7 +363,7 @@ class SelectionFaceNode(scenenode.Node):
     RenderNodeClass = SelectionFaceRenderNode
     _selectionBox = None
     _face = faces.FaceYIncreasing
-    depth = DepthOffset.Selection
+    depth = DepthOffsets.Selection
 
     @property
     def selectionBox(self):

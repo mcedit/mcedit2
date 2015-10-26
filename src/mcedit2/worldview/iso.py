@@ -118,7 +118,7 @@ class IsoWorldView(WorldView):
 
         projection = QtGui.QMatrix4x4()
         projection.ortho(-w/2, w/2, -h/2, h/2, -2000, 8000)
-        self.matrixNode.projection = projection
+        self.matrixState.projection = projection
 
         modelview = QtGui.QMatrix4x4()
         #modelview.rotate(self.xrot, 1., 0., 0.)
@@ -128,7 +128,7 @@ class IsoWorldView(WorldView):
                          QtGui.QVector3D(*self.centerPoint),
                          QtGui.QVector3D(0, 1, 0),
                          )
-        self.matrixNode.modelview = modelview
+        self.matrixState.modelview = modelview
 
 class RotateMouseAction(ViewAction):
     button = Qt.MiddleButton

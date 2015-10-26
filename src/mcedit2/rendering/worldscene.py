@@ -7,7 +7,6 @@ import sys
 import collections
 import itertools
 
-from OpenGL import GL
 import numpy
 
 from mcedit2.rendering.layers import Layer
@@ -16,10 +15,11 @@ from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering import renderstates
 from mcedit2.rendering.chunknode import ChunkNode, ChunkGroupNode
 from mcedit2.rendering.chunkupdate import ChunkRenderInfo
-from mcedit2.rendering.depths import DepthOffset
+from mcedit2.rendering.depths import DepthOffsets
 from mcedit2.rendering.geometrycache import GeometryCache
-from mcedit2.rendering.scenegraph.depth_test import DepthOffsetNode
-from mcedit2.rendering.scenegraph.texture_atlas import TextureAtlasNode
+from mcedit2.rendering.scenegraph.depth_test import DepthOffset
+from mcedit2.rendering.scenegraph.scenenode import Node
+from mcedit2.rendering.scenegraph.texture_atlas import TextureAtlasState
 from mcedit2.util.glutils import Texture
 from mcedit2.util.load_png import loadPNGData
 from mceditlib.anvil.biome_types import BiomeTypes
@@ -203,15 +203,18 @@ class WorldScene(scenenode.Node):
 
         self.dimension = dimension
         self.textureAtlas = textureAtlas
-        self.depthOffsetNode = DepthOffsetNode(DepthOffset.Renderer)
-        self.addChild(self.depthOffsetNode)
+        self.depthOffset = DepthOffset(DepthOffsets.Renderer)
+        self.addState(self.depthOffset)
 
-        self.textureAtlasNode = TextureAtlasNode(textureAtlas)
-        self.depthOffsetNode.addChild(self.textureAtlasNode)
+        self.textureAtlasNode = Node()
+        self.textureAtlasState = TextureAtlasState(textureAtlas)
+        self.textureAtlasNode.addState(self.textureAtlasState)
+        self.addChild(self.textureAtlasNode)
 
         self.renderstateNodes = {}
         for rsClass in renderstates.allRenderstates:
-            rsNode = scenenode.RenderstateNode(rsClass)
+            rsNode = Node()
+            rsNode.addState(rsClass())
             self.textureAtlasNode.addChild(rsNode)
             self.renderstateNodes[rsClass] = rsNode
 
@@ -233,7 +236,7 @@ class WorldScene(scenenode.Node):
     def setTextureAtlas(self, textureAtlas):
         if textureAtlas is not self.textureAtlas:
             self.textureAtlas = textureAtlas
-            self.textureAtlasNode.textureAtlas = textureAtlas
+            self.textureAtlasState.textureAtlas = textureAtlas
             self.updateTask.textureAtlas = textureAtlas
             self.discardAllChunks()
 

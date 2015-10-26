@@ -4,47 +4,40 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 from OpenGL import GL
-from mcedit2.rendering.scenegraph.rendernode import RenderstateRenderNode, RenderNode
+from mcedit2.rendering.scenegraph import states, rendernode
 from mcedit2.rendering.scenegraph.scenenode import Node
 
 log = logging.getLogger(__name__)
 
 
-class PolygonModeRenderNode(RenderstateRenderNode):
+class PolygonMode(states.SceneNodeState):
     def enter(self):
         GL.glPushAttrib(GL.GL_POLYGON_BIT)
-        GL.glPolygonMode(self.sceneNode.face, self.sceneNode.mode)
+        GL.glPolygonMode(self.face, self.mode)
 
     def exit(self):
         GL.glPopAttrib()
 
-
-class PolygonModeNode(Node):
-    RenderNodeClass = PolygonModeRenderNode
-
     def __init__(self, face, mode):
-        super(PolygonModeNode, self).__init__()
+        super(PolygonMode, self).__init__()
         self.face = face
         self.mode = mode
 
 
-class LineWidthRenderNode(RenderstateRenderNode):
+class LineWidth(states.SceneNodeState):
     def enter(self):
         GL.glPushAttrib(GL.GL_LINE_BIT)
-        GL.glLineWidth(self.sceneNode.lineWidth)
+        GL.glLineWidth(self.lineWidth)
 
     def exit(self):
         GL.glPopAttrib()
 
-
-class LineWidthNode(Node):
-    RenderNodeClass = LineWidthRenderNode
-
     def __init__(self, lineWidth):
-        super(LineWidthNode, self).__init__()
+        super(LineWidth, self).__init__()
         self.lineWidth = lineWidth
 
-class ClearRenderNode(RenderNode):
+
+class ClearRenderNode(rendernode.RenderNode):
     def drawSelf(self):
         color = self.sceneNode.clearColor
         if color is None:

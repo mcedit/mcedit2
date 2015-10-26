@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 
 class HeightLevelBlockMesh(ChunkMeshBase):
-    renderstate = renderstates.RenderstateHeightLevelNode
+    renderstate = renderstates.RenderstateHeightLevel
     layer = Layer.HeightMap
     def makeChunkVertices(self, chunk, limitBox):
         """

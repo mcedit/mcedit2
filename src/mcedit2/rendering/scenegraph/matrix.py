@@ -4,39 +4,27 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 from OpenGL import GL
-from mcedit2.rendering.scenegraph.rendernode import RenderstateRenderNode
-from mcedit2.rendering.scenegraph.scenenode import Node
+from mcedit2.rendering.scenegraph import states
 from mceditlib.geometry import Vector
 
 log = logging.getLogger(__name__)
 
 
-class RotateRenderNode(RenderstateRenderNode):
-    def __init__(self, sceneNode):
-        """
-
-        :type sceneNode: TranslateNode
-        """
-        super(RotateRenderNode, self).__init__(sceneNode)
-
+class Rotate(states.SceneNodeState):
     def __repr__(self):
-        return "RotateRenderNode(%s, %s)" % (self.sceneNode.degrees, self.sceneNode.axis)
+        return "Rotate(%s, %s)" % (self.degrees, self.axis)
 
     def enter(self):
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glPushMatrix()
-        GL.glRotate(self.sceneNode.degrees, *self.sceneNode.axis)
+        GL.glRotate(self.degrees, *self.axis)
 
     def exit(self):
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glPopMatrix()
 
-
-class RotateNode(Node):
-    RenderNodeClass = RotateRenderNode
-
     def __init__(self, degrees=0, axis=(0, 1, 0)):
-        super(RotateNode, self).__init__()
+        super(Rotate, self).__init__()
         self.degrees = degrees
         self.axis = axis
 
@@ -61,32 +49,22 @@ class RotateNode(Node):
         self._axis = value
         self.dirty = True
 
-class TranslateRenderNode(RenderstateRenderNode):
-    def __init__(self, sceneNode):
-        """
 
-        :type sceneNode: TranslateNode
-        """
-        super(TranslateRenderNode, self).__init__(sceneNode)
-
+class Translate(states.SceneNodeState):
     def __repr__(self):
-        return "TranslateRenderNode(%s)" % (self.sceneNode.translateOffset,)
+        return "Translate(%s)" % (self.translateOffset,)
 
     def enter(self):
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glPushMatrix()
-        GL.glTranslate(*self.sceneNode.translateOffset)
+        GL.glTranslate(*self.translateOffset)
 
     def exit(self):
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glPopMatrix()
 
-
-class TranslateNode(Node):
-    RenderNodeClass = TranslateRenderNode
-
     def __init__(self, translateOffset=Vector(0., 0., 0.)):
-        super(TranslateNode, self).__init__()
+        super(Translate, self).__init__()
         self._translateOffset = translateOffset
 
     @property
@@ -99,60 +77,45 @@ class TranslateNode(Node):
         self.dirty = True
 
 
-class ScaleRenderNode(RenderstateRenderNode):
-    def __init__(self, sceneNode):
-        """
-
-        :type sceneNode: TranslateNode
-        """
-        super(ScaleRenderNode, self).__init__(sceneNode)
-
+class Scale(states.SceneNodeState):
     def __repr__(self):
-        return "RotateRenderNode(%s, %s)" % (self.sceneNode.degrees, self.sceneNode.axis)
+        return "Scale(%s)" % (self.scale,)
 
     def enter(self):
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glPushMatrix()
-        GL.glScale(*self.sceneNode.scale)
+        GL.glScale(*self.scale)
 
     def exit(self):
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glPopMatrix()
 
-
-class ScaleNode(Node):
-    RenderNodeClass = ScaleRenderNode
-
     def __init__(self, scale):
-        super(ScaleNode, self).__init__()
+        super(Scale, self).__init__()
         self.scale = scale
 
 
-class MatrixRenderNode(RenderstateRenderNode):
+class MatrixState(states.SceneNodeState):
     def enter(self):
-        projection = self.sceneNode.projection
+        projection = self.projection
         if projection is not None:
             GL.glMatrixMode(GL.GL_PROJECTION)
             GL.glPushMatrix()
             GL.glLoadMatrixd(projection.data())
 
-        modelview = self.sceneNode.modelview
+        modelview = self.modelview
         if modelview is not None:
             GL.glMatrixMode(GL.GL_MODELVIEW)
             GL.glPushMatrix()
             GL.glLoadMatrixd(modelview.data())
 
     def exit(self):
-        if self.sceneNode.projection is not None:
+        if self.projection is not None:
             GL.glMatrixMode(GL.GL_PROJECTION)
             GL.glPopMatrix()
-        if self.sceneNode.modelview is not None:
+        if self.modelview is not None:
             GL.glMatrixMode(GL.GL_MODELVIEW)
             GL.glPopMatrix()
-
-
-class MatrixNode(Node):
-    RenderNodeClass = MatrixRenderNode
 
     _projection = None
 
@@ -194,9 +157,9 @@ class MatrixNode(Node):
         self.dirty = True
 
 
-class OrthoRenderNode(RenderstateRenderNode):
+class Ortho(states.SceneNodeState):
     def enter(self):
-        w, h = self.sceneNode.size
+        w, h = self.size
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glPushMatrix()
         GL.glLoadIdentity()
@@ -206,12 +169,8 @@ class OrthoRenderNode(RenderstateRenderNode):
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glPopMatrix()
 
-
-class OrthoNode(Node):
-    RenderNodeClass = OrthoRenderNode
-
     def __init__(self, size=(1, 1)):
-        super(OrthoNode, self).__init__()
+        super(Ortho, self).__init__()
         self._size = size
 
     @property

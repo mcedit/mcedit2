@@ -63,7 +63,7 @@ class SchematicWorldView(CameraWorldView):
         modelview.lookAt(QtGui.QVector3D(*cameraPos),
                          QtGui.QVector3D(*(cameraPos + self.cameraVector)),
                          QtGui.QVector3D(0, 1, 0))
-        self.matrixNode.modelview = modelview
+        self.matrixState.modelview = modelview
 
 
 _swv_app = None

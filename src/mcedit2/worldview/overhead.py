@@ -51,9 +51,9 @@ class OverheadWorldView(WorldView):
 
         projection = QtGui.QMatrix4x4()
         projection.ortho(-w/2, w/2, -h/2, h/2, -1000, 2000)
-        self.matrixNode.projection = projection
+        self.matrixState.projection = projection
 
         modelview = QtGui.QMatrix4x4()
         modelview.rotate(90., 1., 0., 0.)
         modelview.translate(-self.centerPoint[0], 0, -self.centerPoint[2])
-        self.matrixNode.modelview = modelview
+        self.matrixState.modelview = modelview

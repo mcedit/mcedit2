@@ -20,8 +20,9 @@ from mcedit2.rendering.chunknode import ChunkNode
 from mcedit2.rendering.frustum import Frustum
 from mcedit2.rendering.geometrycache import GeometryCache
 from mcedit2.rendering.layers import Layer
-from mcedit2.rendering.scenegraph.matrix import MatrixNode, OrthoNode
+from mcedit2.rendering.scenegraph.matrix import MatrixState, Ortho
 from mcedit2.rendering.scenegraph.misc import ClearNode
+from mcedit2.rendering.scenegraph.scenenode import Node
 from mcedit2.rendering.scenegraph.vertex_array import VertexNode
 from mcedit2.rendering.textureatlas import TextureAtlas
 from mcedit2.rendering.vertexarraybuffer import VertexArrayBuffer
@@ -120,8 +121,8 @@ class WorldView(QGLWidget):
         self.autoUpdateInterval = 0.5  # frequency of screen redraws in response to loaded chunks
 
         self.compassNode = self.createCompass()
-        self.compassOrthoNode = OrthoNode((1, float(self.height()) / self.width()))
-        self.compassOrthoNode.addChild(self.compassNode)
+        self.compassOrtho = Ortho((1, float(self.height()) / self.width()))
+        self.compassNode.addState(self.compassOrtho)
 
         self.viewActions = []
         self.pressedKeys = set()
@@ -134,7 +135,7 @@ class WorldView(QGLWidget):
             geometryCache = GeometryCache()
         self.geometryCache = geometryCache
 
-        self.matrixNode = None
+        self.worldNode = None
         self.skyNode = None
         self.overlayNode = scenenode.Node()
 
@@ -232,19 +233,21 @@ class WorldView(QGLWidget):
         self.skyNode = sky.SkyNode()
         self.loadableChunksNode = loadablechunks.LoadableChunksNode(self.dimension)
 
-        self.matrixNode = MatrixNode()
+        self.worldNode = Node()
+        self.matrixState = MatrixState()
+        self.worldNode.addState(self.matrixState)
         self._updateMatrices()
 
-        self.matrixNode.addChild(self.loadableChunksNode)
-        self.matrixNode.addChild(self.worldScene)
-        self.matrixNode.addChild(self.overlayNode)
+        self.worldNode.addChild(self.loadableChunksNode)
+        self.worldNode.addChild(self.worldScene)
+        self.worldNode.addChild(self.overlayNode)
 
         sceneGraph.addChild(clearNode)
         sceneGraph.addChild(self.skyNode)
-        sceneGraph.addChild(self.matrixNode)
-        sceneGraph.addChild(self.compassOrthoNode)
+        sceneGraph.addChild(self.worldNode)
+        sceneGraph.addChild(self.compassNode)
         if self.cursorNode:
-            self.matrixNode.addChild(self.cursorNode)
+            self.worldNode.addChild(self.cursorNode)
 
         return sceneGraph
 
@@ -256,10 +259,10 @@ class WorldView(QGLWidget):
 
     def setToolCursor(self, cursorNode):
         if self.cursorNode:
-            self.matrixNode.removeChild(self.cursorNode)
+            self.worldNode.removeChild(self.cursorNode)
         self.cursorNode = cursorNode
         if cursorNode:
-            self.matrixNode.addChild(cursorNode)
+            self.worldNode.addChild(cursorNode)
 
     def setToolOverlays(self, overlayNodes):
         self.overlayNode.clear()
@@ -277,12 +280,12 @@ class WorldView(QGLWidget):
         """
         Subclasses must implement updateMatrices to set the projection and modelview matrices.
 
-        Should set self.matrixNode.projection and self.matrixNode.modelview
+        Should set self.worldNode.projection and self.worldNode.modelview
         """
         raise NotImplementedError
 
     def updateFrustum(self):
-        matrix = self.matrixNode.projection * self.matrixNode.modelview
+        matrix = self.matrixState.projection * self.matrixState.modelview
         self.frustum = Frustum.fromViewingMatrix(numpy.array(matrix.data()))
 
     def getViewCorners(self):
@@ -301,7 +304,7 @@ class WorldView(QGLWidget):
         :rtype: list[QVector4D]
         """
         corners = [QtGui.QVector4D(x, y, z, 1.) for x, y, z in itertools.product((-1., 1.), (-1., 1.), (0., 1. ))]
-        matrix = self.matrixNode.projection * self.matrixNode.modelview
+        matrix = self.matrixState.projection * self.matrixState.modelview
         matrix, inverted = matrix.inverted()
         worldCorners = [matrix.map(corner) for corner in corners]
         worldCorners = [Vector(*((corner / corner.w()).toTuple()[:3])) for corner in worldCorners]
@@ -335,7 +338,7 @@ class WorldView(QGLWidget):
 
     def resizeEvent(self, event):
         center = self.viewCenter()
-        self.compassOrthoNode.size = (1, float(self.height()) / self.width())
+        self.compassOrtho.size = (1, float(self.height()) / self.width())
         super(WorldView, self).resizeEvent(event)
         # log.info("WorldView: resized. moving to %s", center)
         # self.centerOnPoint(center)
@@ -540,8 +543,6 @@ class WorldView(QGLWidget):
             with profiler.context("renderScene"):
                 rendernode.renderScene(self.renderGraph)
 
-
-
     @property
     def fps(self):
         samples = 3
@@ -569,7 +570,7 @@ class WorldView(QGLWidget):
     def pointsAtPositions(self, *screenPoints):
         w = float(self.width())
         h = float(self.height())
-        matrix = self.matrixNode.projection * self.matrixNode.modelview
+        matrix = self.matrixState.projection * self.matrixState.modelview
         inverse, ok = matrix.inverted()
 
         if not ok or 0 in (w, h):

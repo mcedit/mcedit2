@@ -5,15 +5,13 @@ from __future__ import absolute_import, division, print_function
 import logging
 
 from mcedit2.rendering.scenegraph import scenenode
-from mcedit2.rendering.scenegraph.matrix import TranslateRenderNode
+from mcedit2.rendering.scenegraph.matrix import Translate
 from mcedit2.rendering.scenegraph.scenenode import NamedChildrenNode
 
 log = logging.getLogger(__name__)
 
 
 class ChunkNode(scenenode.Node):
-    RenderNodeClass = TranslateRenderNode
-
     def __init__(self, chunkPosition):
         """
 
@@ -25,7 +23,9 @@ class ChunkNode(scenenode.Node):
         super(ChunkNode, self).__init__()
         self.chunkPosition = chunkPosition
         cx, cz = chunkPosition
-        self.translateOffset = (cx << 4, 0, cz << 4)
+        self.translate = Translate()
+        self.translate.translateOffset = (cx << 4, 0, cz << 4)
+        self.addState(self.translate)
 
 
 class ChunkGroupNode(NamedChildrenNode):

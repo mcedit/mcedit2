@@ -113,7 +113,7 @@ class MeshBase(object):
     layer = Layer.Blocks
     renderType = NotImplemented
     extraTextures = ()
-    renderstate = renderstates.RenderstateAlphaTestNode
+    renderstate = renderstates.RenderstateAlphaTest
     sceneNode = None
 
     # def bufferSize(self):

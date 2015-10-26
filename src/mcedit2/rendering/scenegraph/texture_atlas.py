@@ -5,20 +5,20 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 from OpenGL import GL
 
-from mcedit2.rendering.scenegraph.rendernode import RenderstateRenderNode
 from mcedit2.rendering.scenegraph.scenenode import Node
+from mcedit2.rendering.scenegraph.states import SceneNodeState
 from mcedit2.util import glutils
 
 log = logging.getLogger(__name__)
 
 
-class TextureAtlasRenderNode(RenderstateRenderNode):
+class TextureAtlasState(SceneNodeState):
     def enter(self):
-        if self.sceneNode.textureAtlas is None:
+        if self.textureAtlas is None:
             return
 
         GL.glColor(1., 1., 1., 1.)
-        textureAtlas = self.sceneNode.textureAtlas
+        textureAtlas = self.textureAtlas
         glutils.glActiveTexture(GL.GL_TEXTURE0)
         GL.glEnable(GL.GL_TEXTURE_2D)
         textureAtlas.bindTerrain()
@@ -41,7 +41,7 @@ class TextureAtlasRenderNode(RenderstateRenderNode):
         GL.glEnable(GL.GL_CULL_FACE)
 
     def exit(self):
-        if self.sceneNode.textureAtlas is None:
+        if self.textureAtlas is None:
             return
 
         GL.glDisable(GL.GL_CULL_FACE)
@@ -56,12 +56,8 @@ class TextureAtlasRenderNode(RenderstateRenderNode):
         GL.glMatrixMode(GL.GL_TEXTURE)
         GL.glPopMatrix()
 
-
-class TextureAtlasNode(Node):
-    RenderNodeClass = TextureAtlasRenderNode
-
     def __init__(self, textureAtlas=None):
-        super(TextureAtlasNode, self).__init__()
+        super(TextureAtlasState, self).__init__()
         self.textureAtlas = textureAtlas
 
     @property

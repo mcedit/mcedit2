@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 class TerrainPopulatedRenderer(ChunkMeshBase):
     layer = Layer.TerrainPopulated
-    renderstate = renderstates.RenderstateEntityNode
+    renderstate = renderstates.RenderstateEntity
     color = (255, 200, 155)
 
     vertexTemplate = numpy.zeros((6, 4, 4), 'float32')

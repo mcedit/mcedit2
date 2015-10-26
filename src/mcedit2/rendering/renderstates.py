@@ -6,13 +6,13 @@ import logging
 
 from OpenGL import GL
 
-from mcedit2.rendering.scenegraph import rendernode
-from mcedit2.rendering.depths import DepthOffset
+from mcedit2.rendering.scenegraph import states
+from mcedit2.rendering.depths import DepthOffsets
 
 log = logging.getLogger(__name__)
 
 
-class RenderstatePlainNode(rendernode.RenderstateRenderNode):
+class RenderstatePlain(states.SceneNodeState):
     def enter(self):
         pass
 
@@ -20,7 +20,7 @@ class RenderstatePlainNode(rendernode.RenderstateRenderNode):
         pass
 
 
-class RenderstateVinesNode(rendernode.RenderstateRenderNode):
+class RenderstateVines(states.SceneNodeState):
     def enter(self):
         GL.glPushAttrib(GL.GL_ENABLE_BIT)
         GL.glDisable(GL.GL_CULL_FACE)
@@ -30,7 +30,7 @@ class RenderstateVinesNode(rendernode.RenderstateRenderNode):
         GL.glPopAttrib()
 
 
-class RenderstateLowDetailNode(rendernode.RenderstateRenderNode):
+class RenderstateLowDetail(states.SceneNodeState):
     def enter(self):
         GL.glPushAttrib(GL.GL_ENABLE_BIT)
         GL.glDisable(GL.GL_CULL_FACE)
@@ -40,7 +40,7 @@ class RenderstateLowDetailNode(rendernode.RenderstateRenderNode):
         GL.glPopAttrib()
 
 
-class RenderstateHeightLevelNode(rendernode.RenderstateRenderNode):
+class RenderstateHeightLevel(states.SceneNodeState):
     def enter(self):
         GL.glPushAttrib(GL.GL_ENABLE_BIT | GL.GL_POLYGON_BIT)
         GL.glDisable(GL.GL_CULL_FACE)
@@ -53,7 +53,7 @@ class RenderstateHeightLevelNode(rendernode.RenderstateRenderNode):
         GL.glPopAttrib()
 
 
-class RenderstateAlphaTestNode(rendernode.RenderstateRenderNode):
+class RenderstateAlphaTest(states.SceneNodeState):
     def enter(self):
         GL.glPushAttrib(GL.GL_ENABLE_BIT)
         GL.glEnable(GL.GL_ALPHA_TEST)
@@ -62,7 +62,7 @@ class RenderstateAlphaTestNode(rendernode.RenderstateRenderNode):
         GL.glPopAttrib()
 
 
-class _RenderstateAlphaBlendNode(rendernode.RenderstateRenderNode):
+class _RenderstateAlphaBlend(states.SceneNodeState):
     def enter(self):
         GL.glPushAttrib(GL.GL_ENABLE_BIT)
         GL.glEnable(GL.GL_BLEND)
@@ -71,18 +71,18 @@ class _RenderstateAlphaBlendNode(rendernode.RenderstateRenderNode):
         GL.glPopAttrib()
 
 
-class RenderstateWaterNode(_RenderstateAlphaBlendNode):
+class RenderstateWater(_RenderstateAlphaBlend):
     pass
 
 
-class RenderstateIceNode(_RenderstateAlphaBlendNode):
+class RenderstateIce(_RenderstateAlphaBlend):
     pass
 
 
-class RenderstateEntityNode(rendernode.RenderstateRenderNode):
+class RenderstateEntity(states.SceneNodeState):
     def enter(self):
         GL.glPushAttrib(GL.GL_ENABLE_BIT | GL.GL_POLYGON_BIT)
-        GL.glPolygonOffset(DepthOffset.Renderer-1, DepthOffset.Renderer-1)
+        GL.glPolygonOffset(DepthOffsets.Renderer - 1, DepthOffsets.Renderer - 1)
         GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
         GL.glDisable(GL.GL_TEXTURE_2D)
         GL.glEnable(GL.GL_BLEND)
@@ -91,12 +91,12 @@ class RenderstateEntityNode(rendernode.RenderstateRenderNode):
         GL.glPopAttrib()
 
 allRenderstates = (
-    RenderstateLowDetailNode,
-    RenderstatePlainNode,
-    RenderstateVinesNode,
-    RenderstateAlphaTestNode,
-    RenderstateWaterNode,
-    RenderstateIceNode,
-    RenderstateEntityNode,
-    RenderstateHeightLevelNode,
+    RenderstateLowDetail,
+    RenderstatePlain,
+    RenderstateVines,
+    RenderstateAlphaTest,
+    RenderstateWater,
+    RenderstateIce,
+    RenderstateEntity,
+    RenderstateHeightLevel,
 )

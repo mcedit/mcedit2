@@ -11,8 +11,9 @@ from mcedit2.command import SimplePerformCommand
 from mcedit2.editortools.brush.masklevel import FakeBrushSection
 from mcedit2.editortools.brush.modes import BrushModeClasses
 from mcedit2.rendering import worldscene
-from mcedit2.rendering.depths import DepthOffset
-from mcedit2.rendering.scenegraph.matrix import TranslateNode
+from mcedit2.rendering.depths import DepthOffsets
+from mcedit2.rendering.scenegraph.matrix import Translate
+from mcedit2.rendering.scenegraph.scenenode import Node
 from mcedit2.rendering.selection import SelectionBoxNode
 from mcedit2.util.load_ui import load_ui, registerCustomWidget
 from mcedit2.util.settings import Settings
@@ -108,7 +109,9 @@ class BrushTool(EditorTool):
         BrushModeSetting.connectAndCall(self.modeSettingChanged)
 
         self.cursorWorldScene = None
-        self.cursorNode = TranslateNode()
+        self.cursorNode = Node()
+        self.cursorTranslate = Translate()
+        self.cursorNode.addState(self.cursorTranslate)
 
         self.toolWidget.xSpinSlider.setMinimum(1)
         self.toolWidget.ySpinSlider.setMinimum(1)
@@ -177,7 +180,7 @@ class BrushTool(EditorTool):
         if event.blockPosition:
             vector = (event.blockFace.vector * self.hoverDistance)
             assert isinstance(vector, Vector), "vector isa %s" % type(vector)
-            self.cursorNode.translateOffset = event.blockPosition + vector
+            self.cursorTranslate.translateOffset = event.blockPosition + vector
 
     @property
     def options(self):
@@ -215,7 +218,7 @@ class BrushTool(EditorTool):
         self.cursorBoxNode.filled = False
 
         self.cursorWorldScene = worldscene.WorldScene(cursorLevel, self.editorSession.textureAtlas)
-        self.cursorWorldScene.depthOffsetNode.depthOffset = DepthOffset.PreviewRenderer
+        self.cursorWorldScene.depthOffset.depthOffset = DepthOffsets.PreviewRenderer
         self.cursorNode.addChild(self.cursorWorldScene)
         self.cursorNode.addChild(self.cursorBoxNode)
 

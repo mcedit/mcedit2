@@ -62,7 +62,7 @@ class InspectorWidget(QtGui.QWidget):
 
         self.overlayNode = scenenode.Node()
         self.selectionNode = SelectionBoxNode()
-        self.selectionNode.depth = depths.DepthOffset.SelectionCursor
+        self.selectionNode.depth = depths.DepthOffsets.SelectionCursor
         self.selectionNode.filled = False
         self.selectionNode.wireColor = (0.2, 0.9, .2, .8)
 

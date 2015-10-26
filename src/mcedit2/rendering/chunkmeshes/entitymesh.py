@@ -8,19 +8,21 @@ from OpenGL import GL
 import numpy
 
 from mcedit2.rendering import renderstates
+from mcedit2.rendering.command_visuals import CommandVisuals
 from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.blockmeshes import standardCubeTemplates
 from mcedit2.rendering.blockmeshes import ChunkMeshBase
 from mcedit2.rendering.chunkmeshes.entity import models
 from mcedit2.rendering.layers import Layer
-from mcedit2.rendering.scenegraph.bind_texture import BindTextureNode
-from mcedit2.rendering.scenegraph.matrix import TranslateNode, RotateNode, ScaleNode
-from mcedit2.rendering.scenegraph.misc import PolygonModeNode, LineWidthNode
-from mcedit2.rendering.scenegraph.depth_test import DepthFuncNode
+from mcedit2.rendering.scenegraph.bind_texture import BindTexture
+from mcedit2.rendering.scenegraph.matrix import Translate, Rotate, Scale
+from mcedit2.rendering.scenegraph.misc import PolygonMode, LineWidth
+from mcedit2.rendering.scenegraph.depth_test import DepthFunc
 from mcedit2.rendering.scenegraph.scenenode import Node
 from mcedit2.rendering.scenegraph.vertex_array import VertexNode
 from mcedit2.rendering.slices import _XYZ
 from mcedit2.rendering.vertexarraybuffer import QuadVertexArrayBuffer
+from mcedit2.util.commandblock import ParseCommand
 from mceditlib.anvil.entities import PCPaintingEntityRefBase
 
 log = logging.getLogger(__name__)
@@ -30,7 +32,7 @@ log = logging.getLogger(__name__)
 # TODO: so we don't have to iterate TileEntities over and over
 
 class EntityMeshBase(ChunkMeshBase):
-    renderstate = renderstates.RenderstateEntityNode
+    renderstate = renderstates.RenderstateEntity
     detailLevels = (0, 1, 2)
 
     def _computeVertices(self, positions, colors, offset=False, chunkPosition=(0, 0)):
@@ -156,9 +158,9 @@ allCommands = [
 ]
 
 if __name__ == '__main__':
-    colors = {c: computeCommandColor(c) for c in allCommands}
+    _colors = {c: computeCommandColor(c) for c in allCommands}
     from pprint import pprint
-    pprint(colors)
+    pprint(_colors)
 
 # Guard against randomized hash functions
 # Ensure the same colors are used across platforms and executions
@@ -236,15 +238,15 @@ class TileEntityLocationMesh(EntityMeshBase):
         tiles = self._computeVertices(tilePositions, defaultColor, chunkPosition=chunk.chunkPosition)
 
         vertexNode = VertexNode([tiles])
-        polyNode = PolygonModeNode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
-        polyNode.addChild(vertexNode)
-        lineNode = LineWidthNode(2.0)
-        lineNode.addChild(polyNode)
-        depthNode = DepthFuncNode(GL.GL_ALWAYS)
-        depthNode.addChild(lineNode)
+        polygonMode = PolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
+        vertexNode.addState(polygonMode)
+        lineWidth = LineWidth(2.0)
+        vertexNode.addState(lineWidth)
+        depthFunc = DepthFunc(GL.GL_ALWAYS)
+        vertexNode.addState(depthFunc)
 
         self.sceneNode = Node()
-        self.sceneNode.addChild(depthNode)
+        self.sceneNode.addChild(vertexNode)
 
         vertexNode = VertexNode([tiles])
         self.sceneNode.addChild(vertexNode)
@@ -280,15 +282,12 @@ class CommandBlockLocationMesh(EntityMeshBase):
         tiles = self._computeVertices(tilePositions, tileColors, chunkPosition=chunk.chunkPosition)
 
         vertexNode = VertexNode([tiles])
-        polyNode = PolygonModeNode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
-        polyNode.addChild(vertexNode)
-        lineNode = LineWidthNode(2.0)
-        lineNode.addChild(polyNode)
-        depthNode = DepthFuncNode(GL.GL_ALWAYS)
-        depthNode.addChild(lineNode)
+        vertexNode.addState(PolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE))
+        vertexNode.addState(LineWidth(2.0))
+        vertexNode.addState(DepthFunc(GL.GL_ALWAYS))
 
         self.sceneNode = Node()
-        self.sceneNode.addChild(depthNode)
+        self.sceneNode.addChild(vertexNode)
 
 
 class CommandBlockColorsMesh(EntityMeshBase):
@@ -372,11 +371,9 @@ class ItemFrameMesh(EntityMeshBase):
 
             vertexNode = VertexNode([vertexBuffer])
             if mapTex is not None:
-                bindTexNode = BindTextureNode(mapTex)
-                bindTexNode.addChild(vertexNode)
-                nodes.append(bindTexNode)
-            else:
-                nodes.append(vertexNode)
+                bindTexture = BindTexture(mapTex)
+                vertexNode.addState(bindTexture)
+            nodes.append(vertexNode)
 
         self.sceneNode = scenenode.Node()
         for node in nodes:
@@ -403,14 +400,16 @@ def entityModelNode(ref, model, modelTex, chunk):
     vertexBuffer.texcoord[:] = modelVerts[..., 3:5]
 
     node = VertexNode([vertexBuffer])
-    rotateNode = RotateNode(ref.Rotation[0], (0., 1., 0.))
-    rotateNode.addChild(node)
-    translateNode = TranslateNode((ref.Position - (chunk.cx << 4, 0, chunk.cz << 4)))
-    translateNode.addChild(rotateNode)
 
-    textureNode = BindTextureNode(modelTex, (1./model.texWidth, 1./model.texHeight, 1))
-    textureNode.addChild(translateNode)
-    return textureNode
+    rotate = Rotate(ref.Rotation[0], (0., 1., 0.))
+    node.addState(rotate)
+
+    translate = Translate((ref.Position - (chunk.cx << 4, 0, chunk.cz << 4)))
+    node.addState(translate)
+
+    bindTexture = BindTexture(modelTex, (1./model.texWidth, 1./model.texHeight, 1))
+    node.addState(bindTexture)
+    return node
 
 
 class MonsterModelRenderer(ChunkMeshBase):
@@ -463,28 +462,32 @@ def chestEntityModelNode(ref, model, modelTex, chunk, facing, largeX, largeZ):
         "south": 0,
         "west": 90
     }
-    decenterTranslateNode = TranslateNode((-0.5, -0.5, -0.5))
-    decenterTranslateNode.addChild(node)
+    decenterState = Translate((-0.5, -0.5, -0.5))
+    node.addState(decenterState)
 
-    rotateNode = RotateNode(rotations[facing], (0., 1., 0.))
-    # rotateNode = RotateNode(0, (0., 1., 0.))
-    rotateNode.addChild(decenterTranslateNode)
+    rotate = Rotate(rotations[facing], (0., 1., 0.))
+    node.addState(rotate)
+
     dx = dz = 0
     if largeX and facing == "north":
         dx = 1.
     if largeZ and facing == "east":
         dz = -1.
-    recenterTranslateNode = TranslateNode((0.5+dx, 0.5, 0.5+dz))
-    recenterTranslateNode.addChild(rotateNode)
-    x, y, z = (ref.Position - (chunk.cx << 4, 0, chunk.cz << 4))
-    scaleNode = ScaleNode((1., -1., -1.))
-    scaleNode.addChild(recenterTranslateNode)
-    posTranslateNode = TranslateNode((x, y+1., z+1.))
-    posTranslateNode.addChild(scaleNode)
 
-    textureNode = BindTextureNode(modelTex, (1./model.texWidth, 1./model.texHeight, 1))
-    textureNode.addChild(posTranslateNode)
-    return textureNode
+    recenterState = Translate((0.5 + dx, 0.5, 0.5 + dz))
+    node.addState(recenterState)
+
+    x, y, z = (ref.Position - (chunk.cx << 4, 0, chunk.cz << 4))
+
+    scale = Scale((1., -1., -1.))
+    node.addState(scale)
+
+    posTranslate = Translate((x, y + 1., z + 1.))
+    node.addState(posTranslate)
+
+    bindTexture = BindTexture(modelTex, (1./model.texWidth, 1./model.texHeight, 1))
+    node.addState(bindTexture)
+    return node
 
 class TileEntityModelRenderer(ChunkMeshBase):
     layer = Layer.TileEntities
@@ -558,15 +561,12 @@ class MonsterLocationRenderer(EntityMeshBase):
         yield
 
         vertexNode = VertexNode(monsters)
-        polyNode = PolygonModeNode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
-        polyNode.addChild(vertexNode)
-        lineNode = LineWidthNode(2.0)
-        lineNode.addChild(polyNode)
-        depthNode = DepthFuncNode(GL.GL_ALWAYS)
-        depthNode.addChild(lineNode)
+        vertexNode.addState(PolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE))
+        vertexNode.addState(LineWidth(2.0))
+        vertexNode.addState(DepthFunc(GL.GL_ALWAYS))
 
         self.sceneNode = Node()
-        self.sceneNode.addChild(depthNode)
+        self.sceneNode.addChild(vertexNode)
 
         vertexNode = VertexNode(monsters)
         self.sceneNode.addChild(vertexNode)

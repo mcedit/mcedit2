@@ -10,7 +10,7 @@ from OpenGL import GL
 
 from mcedit2.rendering.scenegraph import scenenode, rendernode
 from mcedit2.util.glutils import Texture, gl
-from mcedit2.rendering.depths import DepthOffset
+from mcedit2.rendering.depths import DepthOffsets
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class LoadableChunksRenderNode(rendernode.RenderNode):
 
             GL.glEnable(GL.GL_BLEND)
             GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
-            GL.glPolygonOffset(DepthOffset.ChunkMarkers, DepthOffset.ChunkMarkers)
+            GL.glPolygonOffset(DepthOffsets.ChunkMarkers, DepthOffsets.ChunkMarkers)
             GL.glEnable(GL.GL_DEPTH_TEST)
 
             GL.glEnableClientState(GL.GL_TEXTURE_COORD_ARRAY)

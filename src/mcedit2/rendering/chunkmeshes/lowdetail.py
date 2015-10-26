@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 
 class LowDetailBlockMesh(ChunkMeshBase):
-    renderstate = renderstates.RenderstateLowDetailNode
+    renderstate = renderstates.RenderstateLowDetail
     detailLevels = (1,)
     #
     #    def drawFaceVertices(self, buf):

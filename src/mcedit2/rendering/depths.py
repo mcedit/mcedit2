@@ -13,7 +13,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE."""
 
 
-class DepthOffset(object):
+class DepthOffsets(object):
     # back
     ChunkMarkers = 2
     Renderer = 1

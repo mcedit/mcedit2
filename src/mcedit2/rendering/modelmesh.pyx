@@ -34,7 +34,7 @@ for i, (r, g, b) in enumerate(lRedstonePowerColors):
     redstonePowerColors[i*4+3] = 255
 
 class BlockModelMesh(object):
-    renderstate = renderstates.RenderstateAlphaTestNode
+    renderstate = renderstates.RenderstateAlphaTest
     def __init__(self, sectionUpdate):
         """
 

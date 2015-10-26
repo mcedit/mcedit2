@@ -4,12 +4,13 @@
 from __future__ import absolute_import, division, print_function
 import logging
 import weakref
+from contextlib import contextmanager
 
 from OpenGL import GL
 import numpy
 
 from mcedit2.rendering import cubes
-from mcedit2.rendering.depths import DepthOffset
+from mcedit2.rendering.depths import DepthOffsets
 from mcedit2.util import profiler
 from mcedit2.util.glutils import DisplayList
 
@@ -91,12 +92,25 @@ class RenderNode(object):
                     node.compile()
             self.childNeedsRecompile = False
 
+        for state in self.sceneNode.states:
+            state.compile()
         self.displayList.compile(self.draw)
+
+    @contextmanager
+    def enterStates(self):
+        for state in self.sceneNode.states:
+            state.enter()
+        try:
+            yield
+        finally:
+            for state in reversed(self.sceneNode.states):
+                state.exit()
 
     def draw(self):
         rendernode_log("draw", self)
-        self.drawSelf()
-        self.drawChildren()
+        with self.enterStates():
+            self.drawSelf()
+            self.drawChildren()
 
     def drawChildren(self):
         if len(self.children):
@@ -118,18 +132,6 @@ class RenderNode(object):
         for child in self.children:
             child.destroy()
         self.displayList.destroy()
-
-class RenderstateRenderNode(RenderNode):
-    def draw(self):
-        self.enter()
-        self.drawChildren()
-        self.exit()
-
-    def enter(self):
-        raise NotImplementedError
-
-    def exit(self):
-        raise NotImplementedError
 
 """
 UNUSED??
@@ -164,9 +166,13 @@ def createRenderNode(sceneNode):
     :type sceneNode: Node
     :rtype: mcedit2.rendering.rendernode.RenderNode
     """
-    renderNode = sceneNode.RenderNodeClass(sceneNode)
-    updateRenderNode(renderNode)
-    return renderNode
+    try:
+        renderNode = sceneNode.RenderNodeClass(sceneNode)
+        updateRenderNode(renderNode)
+        return renderNode
+    except Exception:
+        log.error("Failed to create render node for %s with class %s", sceneNode, sceneNode.RenderNodeClass)
+        raise
 
 logUpdateRenderNode = False
 
