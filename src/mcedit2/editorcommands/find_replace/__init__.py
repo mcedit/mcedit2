@@ -7,6 +7,7 @@ import logging
 
 from PySide import QtGui
 
+from mcedit2.editorcommands.find_replace.command_text import FindReplaceCommandText
 from mcedit2.editorcommands.find_replace.replace_blocks import FindReplaceBlocks
 from mcedit2.editorcommands.find_replace.nbt import FindReplaceNBT
 from mcedit2.util.load_ui import load_ui
@@ -23,6 +24,9 @@ class FindReplaceDialog(QtGui.QDialog):
         load_ui("find_replace.ui", baseinstance=self)
 
         self.findReplaceBlocks = FindReplaceBlocks(editorSession, self)
+
+        self.findReplaceCommandText = FindReplaceCommandText(editorSession, self)
+        self.commandBlocksTab.setLayout(Column(self.findReplaceCommandText.widget, margin=0))
 
         self.findReplaceNBT = FindReplaceNBT(editorSession, self)
         self.nbtTab.setLayout(Column(self.findReplaceNBT.widget, margin=0))
