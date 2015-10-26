@@ -18,6 +18,13 @@ from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
 
+_visualClasses = {}
+
+
+def register_visual(cls):
+    _visualClasses[cls.commandName] = cls
+    return cls
+
 
 def LineStripNode(points, rgba):
     vertexArray = VertexArrayBuffer(len(points), GL.GL_LINE_STRIP, False, False)
@@ -83,38 +90,121 @@ def CommandVisuals(pos, commandObj):
     else:
         return visualCls(pos, commandObj)
 
-class SetBlockVisuals(Node):
-    commandName = "setblock"
+
+class PositionalVisuals(Node):
+    color = (0.2, 0.9, 0.7, 0.6)
 
     def __init__(self, pos, commandObj):
-        super(SetBlockVisuals, self).__init__()
+        super(PositionalVisuals, self).__init__()
 
         x, y, z = commandObj.resolvePosition(pos)
+
+        boxNode = SelectionBoxNode()
+        boxNode.filled = False
+        boxNode.wireColor = self.color
+        boxNode.selectionBox = BoundingBox((x, y, z), (1, 1, 1))
+
+        lineNode = LineArcNode(Vector(*pos) + (0.5, 0.5, 0.5), (x+.5, y+.5, z+.5), self.color)
+
+        self.addChild(boxNode)
+        self.addChild(lineNode)
+
+
+class TargetedVisuals(Node):
+    def __init__(self, pos, commandObj):
+        super(TargetedVisuals, self).__init__()
+
+        selector = commandObj.targetSelector
+        if selector.playerName is not None:
+            return
+
+        selectorPos = [selector.getArg(a) for a in 'xyz']
+        if None in selectorPos:
+            return
 
         color = (0.2, 0.9, 0.7, 0.6)
 
         boxNode = SelectionBoxNode()
         boxNode.filled = False
         boxNode.wireColor = color
-        boxNode.selectionBox = BoundingBox((x, y, z), (1, 1, 1))
+        boxNode.selectionBox = BoundingBox(selectorPos, (1, 1, 1))
 
-        lineNode = LineArcNode(Vector(*pos) + (0.5, 0.5, 0.5), (x+.5, y+.5, z+.5), color)
+        lineNode = LineArcNode(Vector(*pos) + (0.5, 0.5, 0.5),
+                               Vector(*selectorPos) + (.5, .5, .5), color)
 
         self.addChild(boxNode)
         self.addChild(lineNode)
 
+
+@register_visual
+class GiveVisuals(TargetedVisuals):
+    commandName = "give"
+
+
+@register_visual
+class PlaySoundVisuals(TargetedVisuals):
+    commandName = "playsound"
+
+
+@register_visual
+class SetBlockVisuals(PositionalVisuals):
+    color = (0.2, 0.9, 0.7, 0.6)
+    commandName = "setblock"
+
+@register_visual
+class SummonVisuals(PositionalVisuals):
+    color = (0.9, 0.2, 0.4, 0.6)
+    commandName = "summon"
+
+
+@register_visual
+class TestForBlockVisuals(PositionalVisuals):
+    color = (0.5, 0.2, 0.7, 0.6)
+    commandName = "testforblock"
+
+
+@register_visual
+class BlockdataVisuals(PositionalVisuals):
+    color = (0.2, 0.6, 0.9, 0.6)
+    commandName = "blockdata"
+
+
+class BoundingBoxVisuals(Node):
+    boxColor = (0.4, 0.2, 0.7, 0.6)
+
+    def __init__(self, pos, commandObj):
+        super(BoundingBoxVisuals, self).__init__()
+        box = commandObj.resolveBoundingBox(pos)
+        boxNode = SelectionBoxNode()
+        boxNode.filled = False
+        boxNode.wireColor = self.boxColor
+        boxNode.selectionBox = box
+        lineToBoxNode = LineArcNode(Vector(*pos) + (0.5, 0.5, 0.5),
+                                    box.center, self.boxColor)
+
+        self.addChild(boxNode)
+        self.addChild(lineToBoxNode)
+
+
+@register_visual
+class FillVisuals(BoundingBoxVisuals):
+    boxColor = (0.9, 0.6, 0.3, 0.6)
+    commandName = "fill"
+
+
+@register_visual
 class CloneVisuals(Node):
     commandName = "clone"
 
     def __init__(self, pos, commandObj):
         super(CloneVisuals, self).__init__()
 
-        sourceBox = commandObj.resolveSourceBounds(pos)
+        sourceBox = commandObj.resolveBoundingBox(pos)
 
         dest = commandObj.resolveDestination(pos)
         destBox = BoundingBox(dest, sourceBox.size)
 
-        sourceColor = (0.2, 0.4, 0.9, 0.6)
+        sourceColor = (0.3, 0.5, 0.9, 0.6)
         destColor = (0.0, 0.0, 0.9, 0.6)
 
         sourceBoxNode = SelectionBoxNode()
@@ -137,6 +227,7 @@ class CloneVisuals(Node):
         self.addChild(lineToDestNode)
 
 
+@register_visual
 class ExecuteVisuals(Node):
     commandName = "execute"
 
@@ -201,5 +292,3 @@ class ExecuteVisuals(Node):
             subvisuals = CommandVisuals(targetPos, commandObj.subcommand)
             self.addChild(subvisuals)
 
-_visualClasses = {cls.commandName: cls
-                  for cls in [ExecuteVisuals,SetBlockVisuals,CloneVisuals]}
