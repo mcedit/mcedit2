@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function
 import logging
 
+import time
 from OpenGL import GL
 
 from PySide import QtCore
@@ -158,11 +159,10 @@ class SelectionScene(scenenode.Node):
         self.groupNode.clear()
         self._loader = None
 
-    def loadImmediateChunks(self):
-        if self.selection.chunkCount < 16:
-            exhaust(self.loadSections())
-
-            self.loadTimer.setInterval(333)
+    def loadImmediateChunks(self, duration=0.05):
+        start = time.time()
+        while time.time() - duration < start:
+            self.loadMore()
 
     _loader = None
 

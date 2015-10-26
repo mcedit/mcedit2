@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 
+import time
 from OpenGL import GL
 from PySide import QtGui, QtCore
 
@@ -251,9 +252,14 @@ class SelectionTool(EditorTool):
             self.selectionNode.visible = False
             self.faceHoverNode.visible = False
 
+    lastResizeTime = time.time()
+
     def boxHandleResized(self, box):
         if box is not None:
             self.selectionNode.selection = self.createShapedSelection(box)
+            if time.time() - self.lastResizeTime > 0.025:
+                self.selectionNode.loadImmediateChunks(0.025)
+            self.lastResizeTime = time.time()
 
     def boxHandleResizedDone(self, box, oldBox):
         if box is not None:
@@ -289,6 +295,7 @@ class SelectionTool(EditorTool):
     def createShapedSelection(self, box):
         return self.shapeInput.currentShape.createShapedSelection(box, self.editorSession.currentDimension)
 
+
 class SelectionCursorRenderNode(rendernode.RenderNode):
     def drawSelf(self):
         point = self.sceneNode.point
@@ -315,9 +322,9 @@ class SelectionCursorRenderNode(rendernode.RenderNode):
             cubes.drawFace(box, self.sceneNode.face)
 
 
-
 class SelectionCursor(scenenode.Node):
     RenderNodeClass = SelectionCursorRenderNode
+
     def __init__(self, point=Vector(0, 0, 0), face=faces.FaceXDecreasing, color=(.3, .3, 1)):
         super(SelectionCursor, self).__init__()
         self._point = point
