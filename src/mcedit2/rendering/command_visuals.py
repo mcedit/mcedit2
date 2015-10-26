@@ -26,8 +26,10 @@ def LineStripNode(points, rgba):
     node = VertexNode([vertexArray])
     return node
 
-arcSegments = 20
+
 def LineArcNode(p1, p2, color):
+    arcSegments = 20
+
     rgba = [c * 255 for c in color]
     points = [p1]
     x, y, z = p1
@@ -35,11 +37,12 @@ def LineArcNode(p1, p2, color):
     dz = p2[2] - p1[2]
     dx /= arcSegments
     dz /= arcSegments
-    # heightDiff = p1[1] - p2[1]
+    heightDiff = p2[1] - p1[1]
     # maxRise = 8
 
     # initial y-velocity
-    dy = 0.5
+    dy = 0.3 if heightDiff >= 0 else -0.3
+    dy += 2 * heightDiff / arcSegments
 
     # the height of p2 without gravity
 
@@ -70,7 +73,6 @@ def LineArcNode(p1, p2, color):
     arcNode.addChild(depthNode)
 
     return arcNode
-
 
 
 def CommandVisuals(pos, commandObj):
