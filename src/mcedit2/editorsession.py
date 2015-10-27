@@ -1086,14 +1086,17 @@ class EditorSession(QtCore.QObject):
                                                   self.editorTab.currentView().fps)
 
     def updateStatusFromEvent(self, event):
+        self.updateStatus(event.blockPosition, event.view)
+
+    def updateStatus(self, blockPosition, view):
         from mcedit2 import editorapp
 
-        if event.blockPosition:
-            id = self.currentDimension.getBlockID(*event.blockPosition)
-            data = self.currentDimension.getBlockData(*event.blockPosition)
+        if blockPosition:
+            id = self.currentDimension.getBlockID(*blockPosition)
+            data = self.currentDimension.getBlockData(*blockPosition)
             block = self.worldEditor.blocktypes[id, data]
-            biomeID = self.currentDimension.getBiomeID(event.blockPosition[0],
-                                                       event.blockPosition[2])
+            biomeID = self.currentDimension.getBiomeID(blockPosition[0],
+                                                       blockPosition[2])
             biome = self.biomeTypes.types.get(biomeID)
             if biome is not None:
                 biomeName = biome.name
@@ -1101,11 +1104,11 @@ class EditorSession(QtCore.QObject):
                 biomeName = "Unknown biome"
 
             biomeText = "%s (%d)" % (biomeName, biomeID)
-            editorapp.MCEditApp.app.updateStatusLabel(event.blockPosition, block, biomeText,
-                                                      self.loader.cps, event.view.fps)
+            editorapp.MCEditApp.app.updateStatusLabel(blockPosition, block, biomeText,
+                                                      self.loader.cps, view.fps)
         else:
             editorapp.MCEditApp.app.updateStatusLabel('(N/A)', None, None, self.loader.cps,
-                                                      event.view.fps)
+                                                      view.fps)
 
     def viewMousePress(self, event):
         self.updateStatusFromEvent(event)
@@ -1379,6 +1382,7 @@ class EditorTab(QtGui.QWidget):
     def viewOffsetChanged(self, view):
         self.miniMap.centerOnPoint(view.viewCenter())
         self.miniMap.currentViewMatrixChanged(view)
+        self.editorSession.updateStatus(None, view)
 
     def _addView(self, frame):
         self.views.append(frame.worldView)
