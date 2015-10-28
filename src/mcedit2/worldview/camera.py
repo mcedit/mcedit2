@@ -109,11 +109,11 @@ class CameraKeyControls(object):
 
         self.speed = 0
         self.maxSpeed = 10
-        self.minSpeed = 1
+        self.minSpeed = 0.5
 
-        self.accelUp = 0.07
+        self.accelUp = 0.004
 
-        self.tickTimer = QtCore.QTimer(interval=33, timeout=self.tickCamera)
+        self.tickTimer = QtCore.QTimer(interval=15, timeout=self.tickCamera)
         self.tickTimer.start()
 
     def anyKey(self):
