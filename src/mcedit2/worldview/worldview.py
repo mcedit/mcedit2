@@ -525,7 +525,7 @@ class WorldView(QGLWidget):
 
         return position, face
 
-    maxFPS = 30
+    maxFPS = 45
 
     @profiler.function
     def glDraw(self, *args, **kwargs):
