@@ -1,3 +1,4 @@
+from mceditlib.anvil.adapter import AnvilWorldAdapter
 from mceditlib.export import extractSchematicFrom
 from mceditlib.schematic import createSchematic
 from mceditlib.selection import BoundingBox
@@ -11,7 +12,7 @@ __author__ = 'Rio'
 @pytest.fixture
 def extid_pc_world(tmpdir):
     filename = tmpdir.join("pc_extended_ids").strpath
-    level = WorldEditor(filename, create=True)
+    level = WorldEditor(filename, create=True, adapterClass=AnvilWorldAdapter)
     dim = level.getDimension()
 
     dim.createChunk(0, 0)
@@ -23,11 +24,15 @@ def extid_pc_world(tmpdir):
 
 
 def test_schematic_extended_ids(tmpdir):
-    s = createSchematic(shape=(1, 1, 5))
+    filename = tmpdir.join("schematic_extended_ids.schematic").strpath
 
+    s = createSchematic(shape=(1, 1, 5))
     s.adapter.Blocks[0,0,0] = 2048
-    s.filename = tmpdir.join("schematic_extended_ids.schematic").strpath
-    s.saveChanges()
+    s.saveToFile(filename)
+    del s
+
+    s = WorldEditor(filename)
+
     assert s.adapter.Blocks[0,0,0] == 2048
 
 
@@ -38,8 +43,8 @@ def test_extid_extract(tmpdir, extid_pc_world):
                  (15, 16, 16),
                  (15, 16, 15),
                  ]:
-        schem = extractSchematicFrom(extid_pc_world, BoundingBox((0, 0, 0), size))
-        filename = tmpdir.join("extid_extract_%s" % "_".join(size)).strpath
+        schem = extractSchematicFrom(extid_pc_world.getDimension(), BoundingBox((0, 0, 0), size))
+        filename = tmpdir.join("extid_extract_%s_%s_%s" % size).strpath
         schem.filename = filename
         schem.saveChanges()
         del schem

@@ -2,7 +2,7 @@
     conftest
 """
 
-from os.path import dirname
+from os.path import dirname, basename
 
 import py
 import pytest
@@ -28,7 +28,7 @@ def _temp_file(tmpdir, filename):
     source = TEST_FILES_DIR.join(filename)
     assert source.exists()
 
-    target = tmpdir.join(filename)
+    target = tmpdir.join(basename(filename))
     source.copy(target)
 
     return target
@@ -49,7 +49,7 @@ def schematic_world(tmpdir, request):
 
 
 @pytest.fixture(params=["AnvilWorld", "Floating.schematic"])
-def any_world(request):
+def any_world(tmpdir, request):
     if request.param == "PocketWorldAdapter.zip":
         raise NotImplementedError("Pocket worlds not implemented")
         # def unpackPocket(tmpname):
@@ -59,4 +59,4 @@ def any_world(request):
 
         # return TempLevel("XXX", createFunc=unpackPocket)
 
-    return _temp_level(request.param)
+    return _temp_level(tmpdir, request.param)

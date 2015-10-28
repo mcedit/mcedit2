@@ -1,12 +1,14 @@
 import time
 import numpy
+import pytest
+
 from mceditlib import nbt
 
 __author__ = 'Rio'
 
 def testLoad(indev_file):
     "Load an indev level."
-    level = nbt.load(indev_file)
+    level = nbt.load(indev_file.strpath)
 
     # The root tag must have a name, and so must any tag within a TAG_Compound
     print level.name
@@ -19,11 +21,12 @@ def testLoad(indev_file):
 
     return level
 
-def testLoadUncompressed(self):
-    rootTag = nbt.load(TempFile("uncompressed.nbt"))
+@pytest.mark.parametrize(['temp_file'], [('uncompressed.nbt',)], indirect=True)
+def testLoadUncompressed(self, temp_file):
+    rootTag = nbt.load(temp_file.strpath)
 
-def testCreate(self):
-    "Create an indev level."
+@pytest.mark.fixture
+def created_nbt():
 
     # The root of an NBT file is always a TAG_Compound.
     level = nbt.TAG_Compound(name="MinecraftLevel")
@@ -84,16 +87,19 @@ def testCreate(self):
 
     return level
 
-def testToStrings(self):
-    level = self.testCreate()
+def testCreate(created_nbt):
+    assert created_nbt is not None
+
+def testToStrings(created_nbt):
+    level = created_nbt
     repr(level)
     repr(level["Map"]["Blocks"])
     repr(level["Entities"])
 
     str(level)
 
-def testModify(self):
-    level = self.testCreate()
+def testModify(created_nbt):
+    level = created_nbt
 
     # Most of the value types work as expected. Here, we replace the entire tag with a TAG_String
     level["About"]["Author"] = nbt.TAG_String("YARRR~!")
@@ -118,43 +124,37 @@ def testMultipleCompound(self):
 
     pass
 
-def testSave(self, tmpdir):
+def testSave(tmpdir, created_nbt):
 
-    level = self.testCreate()
+    level = created_nbt
     level["Environment"]["SurroundingWaterHeight"].value += 6
 
     # Save the entire TAG structure to a different file.
-    level.save(str(tmpdir.join("testSave.mclevel")))
+    level.save(tmpdir.join("testSave.mclevel").strpath)
 
 
-def testList(self):
+def testList():
     tag = nbt.TAG_List()
     tag.append(nbt.TAG_Int(258))
     del tag[0]
 
-def testErrors(self):
+def testErrors(created_nbt):
     """
     attempt to name elements of a TAG_List
     named list elements are not allowed by the NBT spec,
     so we must discard any names when writing a list.
     """
 
-    level = self.testCreate()
+    level = created_nbt
     level["Map"]["Spawn"][0].name = "Torg Potter"
     data = level.save()
     newlevel = nbt.load(buf=data)
 
     n = newlevel["Map"]["Spawn"][0].name
-    if n:
-        print "Named list element failed: %s" % n
+    assert not n, "Named list element failed: %s" % n
 
     # attempt to delete non-existent TAG_Compound elements
     # this generates a KeyError like a python dict does.
-    level = self.testCreate()
-    try:
+    with pytest.raises(KeyError):
         del level["DEADBEEF"]
-    except KeyError:
-        pass
-    else:
-        assert False
 

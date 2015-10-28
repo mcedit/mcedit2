@@ -17,7 +17,7 @@ def testThrashing(pc_world):
     dim = pc_world.getDimension()
     recent = deque(maxlen=10)
     assert dim.chunkCount() > 200
-    
+
     for cx, cz in dim.chunkPositions():
         _ = dim.getChunk(cx, cz)
         for lastChunkPos in recent:

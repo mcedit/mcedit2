@@ -17,10 +17,10 @@ __author__ = 'Rio'
 
 
 def testCreate(tmpdir):
-    temppath = tmpdir.join("AnvilCreate").mkdir()
-    pc_world = WorldEditor(filename=temppath, create=True, adapterClass=AnvilWorldAdapter)
+    temppath = tmpdir.join("AnvilCreate")
+    temppath.mkdir()
+    pc_world = WorldEditor(filename=temppath.strpath, create=True, adapterClass=AnvilWorldAdapter)
     pc_world.close()
-    shutil.rmtree(temppath)
 
 
 def testCreateChunks(pc_world):
@@ -73,7 +73,8 @@ def testRecompress(pc_world):
             assert (d[key] == getattr(section, key)).all()
 
 
-@pytest.mark.parametrize(['temp_file'], [('AnvilWorld/region/r.0.0.mca',)], indirect=True)
+@pytest.mark.parametrize(['temp_file'], [('AnvilWorld/region/r.0.0.mca',)],
+                         ids=['AnvilWorld'], indirect=True)
 def testBigEndianIntHeightMap(tmpdir, temp_file):
     """ Test modifying, saving, and loading the new TAG_Int_Array heightmap
     added with the Anvil format.
@@ -86,7 +87,7 @@ def testBigEndianIntHeightMap(tmpdir, temp_file):
     hm.value[2] = 500
     oldhm = numpy.array(hm.value)
 
-    filename = tmpdir.join("ChangedChunk")
+    filename = tmpdir.join("ChangedChunk").strpath
     chunk.save(filename)
     changedChunk = nbt.load(filename)
     os.unlink(filename)
