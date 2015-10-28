@@ -52,7 +52,7 @@ def test_rotation_transform(pc_world, schematic_world):
         displaySchematic(sch_dim_transformed)
 
 def test_selection_rotation_transform(schematic_world):
-
+    pytest.skip()
     selection = BoundingBox((10, 10, 10), (100, 100, 100))
     sch_dim = schematic_world.getDimension()
     sch_dim_selection = SelectionTransform(sch_dim, selection)
