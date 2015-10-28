@@ -12,18 +12,19 @@ from mceditlib.worldeditor import WorldEditor
 
 _TEST_FILES_DIR = "test_files"
 
-# from $PROJECT/src/mceditlib/test/templevel.py, get to $PROJECT/test_files
+# from $PROJECT/tests/test_mceditlib/conftest.py, get to $PROJECT/test_files
 
-_PROJECT = dirname(dirname(dirname(dirname(__file__))))
+_PROJECT = dirname(dirname(dirname(__file__)))
 TEST_FILES_DIR = py.path.local(_PROJECT).join(_TEST_FILES_DIR)
 
 @pytest.fixture
-def temp_level(temp_file):
-    return WorldEditor(temp_file.strpath)
-
-@pytest.fixture
 def temp_file(tmpdir, request):
-    filename = request.param
+    return _temp_file(tmpdir, request.param)
+
+def _temp_level(tmpdir, filename):
+    return WorldEditor(_temp_file(tmpdir, filename).strpath)
+
+def _temp_file(tmpdir, filename):
     source = TEST_FILES_DIR.join(filename)
     assert source.exists()
 
@@ -34,17 +35,17 @@ def temp_file(tmpdir, request):
 
 @pytest.fixture
 def indev_file(tmpdir):
-    return TempFile(tmpdir, "indev.mclevel")
+    return _temp_file(tmpdir, "indev.mclevel")
 
 
 @pytest.fixture
 def pc_world(tmpdir):
-    return TempLevel(tmpdir, "AnvilWorld")
+    return _temp_level(tmpdir, "AnvilWorld")
 
 
 @pytest.fixture(params=["Station.schematic"])
 def schematic_world(tmpdir, request):
-    return TempLevel(tmpdir, request.param)
+    return _temp_level(tmpdir, request.param)
 
 
 @pytest.fixture(params=["AnvilWorld", "Floating.schematic"])
@@ -58,4 +59,4 @@ def any_world(request):
 
         # return TempLevel("XXX", createFunc=unpackPocket)
 
-    return TempLevel(request.param)
+    return _temp_level(request.param)
