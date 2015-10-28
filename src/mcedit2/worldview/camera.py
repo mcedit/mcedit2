@@ -8,6 +8,7 @@ import math
 from math import degrees, atan, tan, radians, cos, sin
 
 import numpy
+import time
 from PySide.QtCore import Qt
 from PySide import QtGui, QtCore
 from mcedit2.rendering.workplane import WorkplaneNode
@@ -107,13 +108,16 @@ class CameraKeyControls(object):
         self.up = 0
         self.down = 0
 
+        # Speeds in blocks per second
         self.speed = 0
-        self.maxSpeed = 10
-        self.minSpeed = 0.5
+        self.maxSpeed = 50
+        self.minSpeed = 8  # Minecraft walking speed
 
-        self.accelUp = 0.004
+        self.accelUp = 0.1
 
-        self.tickTimer = QtCore.QTimer(interval=15, timeout=self.tickCamera)
+        self.lastTickTime = None
+        self.tickInterval = 0.015
+        self.tickTimer = QtCore.QTimer(interval=1000 * self.tickInterval, timeout=self.tickCamera)
         self.tickTimer.start()
 
     def anyKey(self):
@@ -122,35 +126,49 @@ class CameraKeyControls(object):
                     self.up, self.down])
 
     def tickCamera(self):
+        if self.lastTickTime is None:
+            ticks = 1
+            self.lastTickTime = time.time()
+        else:
+            t = time.time()
+            tickInterval = t - self.lastTickTime
+            self.lastTickTime = t
+            ticks, remainder = divmod(tickInterval, self.tickInterval)
+            self.lastTickTime -= remainder
+            ticks = int(ticks)
+
         vector = self.worldView.cameraVector
         point = self.worldView.centerPoint
         up = Vector(0, 1, 0)
         left = vector.cross(up).normalize()
 
-        if self.anyKey():
-            self.speed += self.accelUp
-            self.speed = max(self.speed, self.minSpeed)
-        else:
-            self.speed = 0
+        for _ in range(ticks):
+            if self.anyKey():
+                self.speed += self.accelUp
+                self.speed = max(self.speed, self.minSpeed)
+            else:
+                self.speed = 0
+                break
 
-        self.speed = max(0, min(self.maxSpeed, self.speed))
+            self.speed = max(0, min(self.maxSpeed, self.speed))
+            speed = self.speed * self.tickInterval
 
-        vector = vector * self.speed
-        up = up * self.speed
-        left = left * self.speed
+            vector = vector * speed
+            up = up * speed
+            left = left * speed
 
-        if self.forward:
-            point += vector
-        if self.backward:
-            point -= vector
-        if self.left:
-            point -= left
-        if self.right:
-            point += left
-        if self.up:
-            point += up
-        if self.down:
-            point -= up
+            if self.forward:
+                point += vector
+            if self.backward:
+                point -= vector
+            if self.left:
+                point -= left
+            if self.right:
+                point += left
+            if self.up:
+                point += up
+            if self.down:
+                point -= up
 
         self.worldView.centerPoint = point
 
