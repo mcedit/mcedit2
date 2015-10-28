@@ -13,11 +13,13 @@ logging.basicConfig(level=logging.INFO)
 def testThrashing(pc_world):
     if not hasattr(pc_world, '_chunkDataCache'):
         return
-    pc_world.setCacheLimit(50)
+    pc_world.setCacheLimit(200)
     dim = pc_world.getDimension()
     recent = deque(maxlen=10)
+    assert dim.chunkCount() > 200
+    
     for cx, cz in dim.chunkPositions():
-        chunk = dim.getChunk(cx, cz)
+        _ = dim.getChunk(cx, cz)
         for lastChunkPos in recent:
             if lastChunkPos not in pc_world._chunkDataCache:
                 raise ValueError(
