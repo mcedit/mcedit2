@@ -58,6 +58,22 @@ def worldMeshVertexSize(worldMesh):
 
 log = logging.getLogger(__name__)
 
+
+class BufferSwapper(QtCore.QObject):
+    def __init__(self, view):
+        super(BufferSwapper, self).__init__()
+        self.view = view
+        self.swapDone.connect(view.swapDone)
+
+    swapDone = QtCore.Signal()
+
+    def swap(self):
+        self.view.makeCurrent()
+        self.view.swapBuffers()
+        self.view.doneCurrent()
+        self.swapDone.emit()
+
+
 class WorldView(QGLWidget):
     """
     Superclass for the following views:
@@ -84,6 +100,8 @@ class WorldView(QGLWidget):
     mouseBlockPos = Vector(0, 0, 0)
     mouseBlockFace = faces.FaceYIncreasing
 
+    doSwapBuffers = QtCore.Signal()
+
     def __init__(self, dimension, textureAtlas=None, geometryCache=None, sharedGLWidget=None):
         """
 
@@ -105,6 +123,15 @@ class WorldView(QGLWidget):
         self.textureAtlas = None
 
         validateWidgetQGLContext(self)
+
+        self.setAutoBufferSwap(False)
+
+        self.bufferSwapDone = True
+        self.bufferSwapThread = QtCore.QThread()
+        self.bufferSwapper = BufferSwapper(self)
+        self.bufferSwapper.moveToThread(self.bufferSwapThread)
+        self.doSwapBuffers.connect(self.bufferSwapper.swap)
+        self.bufferSwapThread.start()
 
         self.setAcceptDrops(True)
         self.setSizePolicy(QtGui.QSizePolicy.Policy.Expanding, QtGui.QSizePolicy.Policy.Expanding)
@@ -206,6 +233,7 @@ class WorldView(QGLWidget):
     def destroy(self):
         self.makeCurrent()
         self.renderGraph.destroy()
+        self.bufferSwapThread.quit()
         super(WorldView, self).destroy()
 
     def __str__(self):
@@ -529,6 +557,8 @@ class WorldView(QGLWidget):
 
     @profiler.function
     def glDraw(self, *args, **kwargs):
+        if not self.bufferSwapDone:
+            return
         frameInterval = 1.0 / self.maxFPS
         if time.time() - self.frameSamples[-1] < frameInterval:
             return
@@ -542,6 +572,13 @@ class WorldView(QGLWidget):
 
             with profiler.context("renderScene"):
                 rendernode.renderScene(self.renderGraph)
+
+        self.doneCurrent()
+        self.bufferSwapDone = False
+        self.doSwapBuffers.emit()
+
+    def swapDone(self):
+        self.bufferSwapDone = True
 
     @property
     def fps(self):
