@@ -462,6 +462,8 @@ class AnvilWorldAdapter(object):
         else:
             self.loadMetadata()
 
+        self.loadBlockMapping()
+
     def __repr__(self):
         return "AnvilWorldAdapter(%r)" % self.filename
 
@@ -541,8 +543,6 @@ class AnvilWorldAdapter(object):
 
         if self.metadata.version != VERSION_ANVIL:
             raise LevelFormatError("Pre-Anvil world formats are not supported (for now)")
-
-        self.loadBlockMapping()
 
     def loadBlockMapping(self):
         if self.metadata.is1_8World():
