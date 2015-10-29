@@ -81,11 +81,9 @@ class RenderNode(object):
         return self.displayList.getList()
 
     def callList(self):
-        rendernode_log("callList", self)
         self.displayList.call()
 
     def compile(self):
-        rendernode_log("compile", self)
         if self.childNeedsRecompile:
             for node in self.children:
                 if node.sceneNode.visible:
@@ -107,7 +105,6 @@ class RenderNode(object):
                 state.exit()
 
     def draw(self):
-        rendernode_log("draw", self)
         with self.enterStates():
             self.drawSelf()
             self.drawChildren()
@@ -174,26 +171,6 @@ def createRenderNode(sceneNode):
         log.error("Failed to create render node for %s with class %s", sceneNode, sceneNode.RenderNodeClass)
         raise
 
-logUpdateRenderNode = False
-
-rendernode_file = None
-
-def rendernode_log(msg, node, *a):
-    if not logUpdateRenderNode:
-        return
-
-    global rendernode_file
-    if rendernode_file is None:
-        rendernode_file = open("rendernode.log", "w")
-
-    if len(a):
-        msg = msg % a
-
-    msg = str(node) + ": " + msg
-
-    rendernode_file.write(msg)
-    rendernode_file.write("\n")
-
 
 def updateRenderNode(renderNode):
     """
@@ -211,24 +188,19 @@ def updateRenderNode(renderNode):
     :type renderNode: mcedit2.rendering.rendernode.RenderNode
     """
     sceneNode = renderNode.sceneNode
-    rendernode_log("updateRenderNode", sceneNode)
 
     if sceneNode.dirty:
-        rendernode_log("dirty", sceneNode)
         renderNode.invalidate()
         sceneNode.dirty = False
 
     if sceneNode.childrenChanged:
-        rendernode_log("childrenChanged", sceneNode)
         updateChildren(renderNode)
         sceneNode.childrenChanged = False
 
     if sceneNode.descendentNeedsUpdate:
-        rendernode_log("descendentNeedsUpdate", sceneNode)
         for renderChild in renderNode.children:
             updateRenderNode(renderChild)
         sceneNode.descendentNeedsUpdate = False
-
 
 def updateChildren(renderNode):
     """
@@ -242,12 +214,10 @@ def updateChildren(renderNode):
     """
     sceneNode = renderNode.sceneNode
     orphans = []
-    rendernode_log("childrenChanged", sceneNode)
 
     # Find renderNode children whose sceneNode is no longer this node's sceneNode
     for renderChild in renderNode.children:
         if not renderChild.sceneNode.hasParent(sceneNode):
-            rendernode_log("orphaned", renderChild)
             orphans.append(renderChild)
 
     for node in orphans:
@@ -258,10 +228,9 @@ def updateChildren(renderNode):
     for index, sceneChild in enumerate(sceneNode.children):
         renderChild = renderNode.childrenBySceneNode.get(sceneChild)
         if renderChild is None:
-            renderChild = createRenderNode(sceneChild)
-            renderNode.insertNode(index, renderChild)
+            renderNode.insertNode(index, createRenderNode(sceneChild))
             sceneChild.dirty = False
-            rendernode_log("new child", renderChild)
+
 
 
 def renderScene(renderNode):
@@ -271,11 +240,4 @@ def renderScene(renderNode):
         renderNode.compile()
     with profiler.context("renderNode.callList"):
         renderNode.callList()
-
-    global rendernode_file, logUpdateRenderNode
-    logUpdateRenderNode = False
-    if rendernode_file:
-        rendernode_file.close()
-        rendernode_file = None
-
 
