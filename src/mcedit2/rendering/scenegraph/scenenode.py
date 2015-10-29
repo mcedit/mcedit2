@@ -13,17 +13,18 @@ log = logging.getLogger(__name__)
 class Node(object):
     RenderNodeClass = rendernode.RenderNode
 
-    def __init__(self):
+    def __init__(self, name=None):
         super(Node, self).__init__()
         self._children = []
         self._dirty = True
         self._parents = []
         self.states = []
+        self.name = name
         self.childrenChanged = False
         self.descendentNeedsUpdate = False
 
     def __repr__(self):
-        return "%s(visible=%s, children=%d)" % (self.__class__.__name__, self.visible, len(self._children))
+        return "%s(%r, visible=%s, children=%d)" % (self.name, self.__class__.__name__, self.visible, len(self._children))
 
     def addState(self, obj):
         self.states.append(obj)

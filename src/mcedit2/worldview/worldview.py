@@ -164,7 +164,7 @@ class WorldView(QGLWidget):
 
         self.worldNode = None
         self.skyNode = None
-        self.overlayNode = scenenode.Node()
+        self.overlayNode = scenenode.Node("WorldView Overlay")
 
         self.sceneGraph = None
         self.renderGraph = None
@@ -253,7 +253,7 @@ class WorldView(QGLWidget):
         return worldscene.WorldScene(self.dimension, self.textureAtlas, self.geometryCache)
 
     def createSceneGraph(self):
-        sceneGraph = scenenode.Node()
+        sceneGraph = scenenode.Node("WorldView SceneGraph")
         self.worldScene = self.createWorldScene()
         self.worldScene.setVisibleLayers(self.layerToggleGroup.getVisibleLayers())
 
@@ -261,7 +261,7 @@ class WorldView(QGLWidget):
         self.skyNode = sky.SkyNode()
         self.loadableChunksNode = loadablechunks.LoadableChunksNode(self.dimension)
 
-        self.worldNode = Node()
+        self.worldNode = Node("World Container")
         self.matrixState = MatrixState()
         self.worldNode.addState(self.matrixState)
         self._updateMatrices()
