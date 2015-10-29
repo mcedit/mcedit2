@@ -88,6 +88,21 @@ class IChunkLoaderClient(object):
         :param (cx, cz): chunk position
         """
 
+    def chunkInvalid(self, (cx, cz), deleted):
+        """
+        Called when the revision changes indicate a chunk is modified or deleted.
+
+        Parameters
+        ----------
+        deleted : bool
+            True if the chunk was deleted.
+
+        Returns
+        -------
+        None
+
+        """
+
 class ChunkLoader(QtCore.QObject):
     chunkCompleted = QtCore.Signal()
     allChunksDone = QtCore.Signal()
@@ -185,10 +200,11 @@ class ChunkLoader(QtCore.QObject):
 
             invalidChunks = self.invalidChunks.pop(self.dimension.dimName, [])
             for c in invalidChunks:
+                deleted = not self.dimension.containsChunk(*c)
                 for ref in self.clients:
                     client = ref()
                     if client:
-                        client.chunkInvalid(c)
+                        client.chunkInvalid(c, deleted)
 
             for ref in self.clients:
                 client = ref()

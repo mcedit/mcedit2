@@ -673,7 +673,6 @@ class WorldView(QGLWidget):
 
     def chunkNotPresent(self, cPos):
         self.worldScene.chunkNotPresent(cPos)
-        self.loadableChunksNode.dirty = True  # gross.
 
     def recieveChunk(self, chunk):
         t = time.time()
@@ -695,8 +694,11 @@ class WorldView(QGLWidget):
 
         return self.worldScene.workOnChunk(chunk, visibleSections)
 
-    def chunkInvalid(self, (cx, cz)):
+    def chunkInvalid(self, (cx, cz), deleted):
         self.worldScene.invalidateChunk(cx, cz)
+        if deleted:
+            self.loadableChunksNode.dirty = True
+            
         self.resetLoadOrder()
 
     def setLayerVisible(self, layerName, visible):

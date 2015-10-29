@@ -165,7 +165,7 @@ class SlicedWorldScene(scenenode.Node):
             for _ in mesh.workOnChunk(c, sections):
                 yield _
 
-    def chunkInvalid(self, c):
+    def chunkInvalid(self, c, deleted):
         for mesh in self.sliceScenes.values():
             mesh.invalidateChunk(*c)
 
