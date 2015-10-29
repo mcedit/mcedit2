@@ -111,7 +111,7 @@ class CameraKeyControls(object):
         # Speeds in blocks per second
         self.speed = 0
         self.maxSpeed = 50
-        self.minSpeed = 8  # Minecraft walking speed
+        self.minSpeed = 16
 
         self.accelUp = 0.1
 
