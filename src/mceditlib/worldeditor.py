@@ -539,6 +539,16 @@ class WorldEditor(object):
         if self._allChunks is not None:
             self._allChunks[dimName].discard((cx, cz))
 
+        self._chunkDataCache.decache(cx, cz, dimName)
+        chunk = None
+        for c in self.recentChunks:
+            if c.chunkPosition == (cx, cz) and c.dimName == dimName:
+                chunk = c
+                break
+
+        if chunk:
+            self.recentChunks.remove(chunk)
+
     # --- World metadata ---
 
     def getWorldMetadata(self):
