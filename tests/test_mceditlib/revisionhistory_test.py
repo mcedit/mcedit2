@@ -18,7 +18,7 @@ from mceditlib import nbt
 @pytest.fixture
 def history(tmpdir):
     filename = "AnvilWorld"
-    tmpname = copy_temp_file(filename)
+    tmpname = copy_temp_file(tmpdir, filename)
     return RevisionHistory(tmpname)
 
 

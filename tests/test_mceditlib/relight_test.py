@@ -4,7 +4,8 @@ import numpy
 
 logging.basicConfig(level=logging.INFO)
 
-def test_relight(pc_world):
+
+def test_relight(schematic_world, pc_world):
     anvilDim = pc_world.getDimension()
     bounds = anvilDim.bounds
     point = bounds.origin + (bounds.size * (0.5, 0.5, 0.5))
@@ -15,8 +16,7 @@ def test_relight(pc_world):
     for c in chunks:
         anvilDim.deleteChunk(*c)
 
-    station = TempLevel("station.schematic")
-    stationDim = station.getDimension()
+    stationDim = schematic_world.getDimension()
     anvilDim.copyBlocks(stationDim, stationDim.bounds, point, create=True)
 
     pc_world.saveChanges()

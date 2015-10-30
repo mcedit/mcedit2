@@ -45,8 +45,7 @@ def test_extid_extract(tmpdir, extid_pc_world):
                  ]:
         schem = extractSchematicFrom(extid_pc_world.getDimension(), BoundingBox((0, 0, 0), size))
         filename = tmpdir.join("extid_extract_%s_%s_%s" % size).strpath
-        schem.filename = filename
-        schem.saveChanges()
+        schem.saveToFile(filename)
         del schem
         schem = WorldEditor(filename)
         assert (schem.adapter.Blocks > 255).any()

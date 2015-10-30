@@ -22,7 +22,7 @@ def testLoad(indev_file):
     return level
 
 @pytest.mark.parametrize(['temp_file'], [('uncompressed.nbt',)], indirect=True)
-def testLoadUncompressed(self, temp_file):
+def testLoadUncompressed(temp_file):
     rootTag = nbt.load(temp_file.strpath)
 
 @pytest.fixture
