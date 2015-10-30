@@ -24,8 +24,8 @@ def test_relight(schematic_world, pc_world):
     cz = int(point.z + 32) >> 4
 
     def check():
-        sl = numpy.sum(pc_world.getChunk(cx, cz).SkyLight)
-        bl = numpy.sum(pc_world.getChunk(cx, cz).BlockLight)
+        sl = numpy.sum(anvilDim.getChunk(cx, cz).SkyLight)
+        bl = numpy.sum(anvilDim.getChunk(cx, cz).BlockLight)
         assert (sl, bl) == (341328, 43213)
 
     check()
