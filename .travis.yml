@@ -14,6 +14,9 @@ python:
 
 
 install:
+  # Install wheel, upgrade pip to use wheel-cache
+  - pip install -U pip wheel
+  
   # Download-progress bars break Travis's log view. Disable them by piping output
   # through another program (if output is not a tty, no progress bars)
   # Install dependencies.
