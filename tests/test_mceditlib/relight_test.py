@@ -1,12 +1,10 @@
 from mceditlib.worldeditor import WorldEditor
-from templevel import TempLevel
 import logging
 import numpy
 
 logging.basicConfig(level=logging.INFO)
 
-def test_relight():
-    pc_world = TempLevel("AnvilWorld")
+def test_relight(pc_world):
     anvilDim = pc_world.getDimension()
     bounds = anvilDim.bounds
     point = bounds.origin + (bounds.size * (0.5, 0.5, 0.5))
@@ -34,8 +32,7 @@ def test_relight():
 
     pc_world.close()
 
-
-    pc_world = WorldEditor(templevel.tmpname)
+    pc_world = WorldEditor(pc_world.filename)
     check()
 
 

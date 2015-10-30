@@ -2,26 +2,29 @@
     revisionhistory_test
 """
 from mceditlib.revisionhistory import RevisionHistory
-from mceditlib.test.templevel import TempFile
 
 import logging
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+from .conftest import copy_temp_file
 
 import pytest
 
 from mceditlib import nbt
 
+
 @pytest.fixture
-def history():
+def history(tmpdir):
     filename = "AnvilWorld"
-    tmpname = TempFile(filename)
+    tmpname = copy_temp_file(filename)
     return RevisionHistory(tmpname)
+
 
 def readChunkTag(rev, cx, cz):
     return nbt.load(buf=rev.readChunkBytes(cx, cz, ""))
+
 
 def writeChunkTag(rev, cx, cz, tag):
     return rev.writeChunkBytes(cx, cz, "", tag.save(compressed=False))

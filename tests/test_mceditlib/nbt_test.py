@@ -25,7 +25,7 @@ def testLoad(indev_file):
 def testLoadUncompressed(self, temp_file):
     rootTag = nbt.load(temp_file.strpath)
 
-@pytest.mark.fixture
+@pytest.fixture
 def created_nbt():
 
     # The root of an NBT file is always a TAG_Compound.
@@ -118,7 +118,7 @@ def testModify(created_nbt):
     level["Entities"][0] = nbt.TAG_Compound([nbt.TAG_String("Creeper", "id"),
                                              nbt.TAG_List([nbt.TAG_Double(d) for d in (1, 1, 1)], "Pos")])
 
-def testMultipleCompound(self):
+def testMultipleCompound():
     """ According to rumor, some TAG_Compounds store several tags with the same name. Once I find a chunk file
     with such a compound, I need to test TAG_Compound.get_all()"""
 

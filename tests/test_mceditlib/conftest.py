@@ -19,12 +19,12 @@ TEST_FILES_DIR = py.path.local(_PROJECT).join(_TEST_FILES_DIR)
 
 @pytest.fixture
 def temp_file(tmpdir, request):
-    return _temp_file(tmpdir, request.param)
+    return copy_temp_file(tmpdir, request.param)
 
-def _temp_level(tmpdir, filename):
-    return WorldEditor(_temp_file(tmpdir, filename).strpath)
+def copy_temp_level(tmpdir, filename):
+    return WorldEditor(copy_temp_file(tmpdir, filename).strpath)
 
-def _temp_file(tmpdir, filename):
+def copy_temp_file(tmpdir, filename):
     source = TEST_FILES_DIR.join(filename)
     assert source.exists()
 
@@ -35,17 +35,17 @@ def _temp_file(tmpdir, filename):
 
 @pytest.fixture
 def indev_file(tmpdir):
-    return _temp_file(tmpdir, "indev.mclevel")
+    return copy_temp_file(tmpdir, "indev.mclevel")
 
 
 @pytest.fixture
 def pc_world(tmpdir):
-    return _temp_level(tmpdir, "AnvilWorld")
+    return copy_temp_level(tmpdir, "AnvilWorld")
 
 
 @pytest.fixture(params=["Station.schematic"])
 def schematic_world(tmpdir, request):
-    return _temp_level(tmpdir, request.param)
+    return copy_temp_level(tmpdir, request.param)
 
 
 @pytest.fixture(params=["AnvilWorld", "Floating.schematic"])
@@ -59,4 +59,4 @@ def any_world(tmpdir, request):
 
         # return TempLevel("XXX", createFunc=unpackPocket)
 
-    return _temp_level(tmpdir, request.param)
+    return copy_temp_level(tmpdir, request.param)
