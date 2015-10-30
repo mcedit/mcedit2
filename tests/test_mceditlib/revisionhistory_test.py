@@ -6,7 +6,6 @@ from mceditlib.revisionhistory import RevisionHistory
 import logging
 
 log = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 from .conftest import copy_temp_file
 

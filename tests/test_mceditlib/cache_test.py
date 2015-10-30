@@ -5,10 +5,6 @@ from __future__ import absolute_import, division, print_function
 from collections import deque
 import logging
 
-log = logging.getLogger(__name__)
-
-logging.basicConfig(level=logging.INFO)
-
 
 def testThrashing(pc_world):
     if not hasattr(pc_world, '_chunkDataCache'):

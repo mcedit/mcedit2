@@ -1,8 +1,6 @@
 from mceditlib.worldeditor import WorldEditor
-import logging
 import numpy
 
-logging.basicConfig(level=logging.INFO)
 
 
 def test_relight(schematic_world, pc_world):

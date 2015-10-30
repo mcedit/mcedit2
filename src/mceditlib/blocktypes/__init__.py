@@ -14,8 +14,6 @@ from mceditlib.blocktypes.json_resources import openResource, getJsonFile
 
 
 log = getLogger(__name__)
-import logging
-logging.basicConfig(level=logging.INFO)
 
 MCYDecreasing = 0
 MCYIncreasing = 1
