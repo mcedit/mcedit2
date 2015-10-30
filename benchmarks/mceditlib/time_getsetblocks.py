@@ -1,8 +1,9 @@
 import numpy
-from mceditlib.test.templevel import TempLevel
+
+from benchmarks import bench_temp_level
 from mceditlib.selection import BoundingBox
 
-level = TempLevel("AnvilWorld")
+level = bench_temp_level("AnvilWorld")
 dim = level.getDimension()
 box = BoundingBox(dim.bounds.origin, (64, 32, 64))
 

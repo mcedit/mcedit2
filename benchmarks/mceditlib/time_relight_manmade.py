@@ -2,10 +2,11 @@
 import numpy
 import sys
 import time
+
+from benchmarks import bench_temp_level
 from mceditlib.selection import BoundingBox
 
 from mceditlib.worldeditor import WorldEditor
-from mceditlib.test import templevel
 from mceditlib import relight
 
 
@@ -20,7 +21,7 @@ def do_copy(dim, station, relight):
     return reduce(lambda a, b: a.union(b), boxes)
 
 def manmade_relight(test):
-    world = templevel.TempLevel("AnvilWorld")
+    world = bench_temp_level("AnvilWorld")
     dim = world.getDimension()
     stationEditor = WorldEditor("test_files/station.schematic")
     station = stationEditor.getDimension()
@@ -57,7 +58,7 @@ def manmade_relight(test):
 
     if test == "smart" or test == "all":
         def allSections():
-            world = templevel.TempLevel("AnvilWorld")
+            world = bench_temp_level("AnvilWorld")
             dim = world.getDimension()
 
             start = time.time()
@@ -71,7 +72,7 @@ def manmade_relight(test):
 
     if test == "section" or test == "all":
         def perSection():
-            world = templevel.TempLevel("AnvilWorld")
+            world = bench_temp_level("AnvilWorld")
             dim = world.getDimension()
 
             start = time.time()

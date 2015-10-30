@@ -1,10 +1,10 @@
+from benchmarks import bench_temp_level
 from mceditlib.util import exhaust
-from templevel import TempLevel
 import logging
 logging.basicConfig(level=logging.INFO)
 
 def timeFill():
-    temp = TempLevel("AnvilWorld")
+    temp = bench_temp_level("AnvilWorld")
     editor = temp
     dim = editor.getDimension()
     editor.loadedChunkLimit = 1

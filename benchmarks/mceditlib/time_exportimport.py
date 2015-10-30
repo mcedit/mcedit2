@@ -1,7 +1,7 @@
+from benchmarks import bench_temp_level
 from mceditlib.export import extractSchematicFrom
-from templevel import TempLevel
 
-level = TempLevel("AnvilWorld")
+level = bench_temp_level("AnvilWorld")
 schem = None
 
 def timeExport():

@@ -4,8 +4,10 @@
 from __future__ import absolute_import, division, print_function
 import logging
 import timeit
-from mceditlib.test import templevel
 import gc
+
+from benchmarks import bench_temp_level
+
 log = logging.getLogger(__name__)
 
 def loadall():
@@ -31,7 +33,7 @@ if len(sys.argv) > 1:
 else:
     filename = "AnvilWorld_1.8"
 
-editor = templevel.TempLevel(filename)
+editor = bench_temp_level(filename)
 dim = editor.getDimension()
 
 

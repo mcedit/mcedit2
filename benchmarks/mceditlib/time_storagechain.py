@@ -3,13 +3,14 @@
 """
 import logging
 from timeit import timeit
+
+from benchmarks import bench_temp_file
 from mceditlib import nbt
 from mceditlib.revisionhistory import RevisionHistory
-from mceditlib.test.templevel import TempFile
 
 log = logging.getLogger(__name__)
 
-chain = RevisionHistory(TempFile("AnvilWorld"))
+chain = RevisionHistory(bench_temp_file("AnvilWorld"))
 
 chunkPositions = list(chain.getHead().chunkPositions(""))
 

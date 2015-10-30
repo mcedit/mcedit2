@@ -1,10 +1,8 @@
 import itertools
 import os
-import unittest
 import pytest
 from mceditlib.worldeditor import WorldEditor
-from templevel import TempLevel, mktemp
-from mceditlib.schematic import SchematicFileAdapter, createSchematic
+from mceditlib.schematic import createSchematic
 from mceditlib.selection import BoundingBox
 
 __author__ = 'Rio'

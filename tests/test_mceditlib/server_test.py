@@ -1,6 +1,5 @@
 import pytest
 from mceditlib.minecraft_server import MCServerChunkGenerator
-from templevel import TempLevel
 from mceditlib.selection import BoundingBox
 
 __author__ = 'Rio'

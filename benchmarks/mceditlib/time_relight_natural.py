@@ -2,13 +2,13 @@ import numpy
 import sys
 import time
 
-from mceditlib.test import templevel
+from benchmarks import bench_temp_level
 from mceditlib import relight
 
 # run me with the source checkout as the working dir so I can find the test_files folder.
 
 def natural_relight():
-    world = templevel.TempLevel("AnvilWorld")
+    world = bench_temp_level("AnvilWorld")
     dim = world.getDimension()
     positions = []
     for cx, cz in dim.chunkPositions():
