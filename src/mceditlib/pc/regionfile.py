@@ -16,7 +16,16 @@ import numpy
 from mceditlib import nbt
 from mceditlib.exceptions import ChunkNotPresent, RegionFormatError
 
+REGION_DEBUG = 5
+logging.addLevelName("REGION_DEBUG", REGION_DEBUG)
+
 log = logging.getLogger(__name__)
+
+# Disable region debugging today.
+log.setLevel(logging.DEBUG)
+
+def region_debug(msg, *args, **kwargs):
+    return log.log(REGION_DEBUG, msg, *args, **kwargs)
 
 __author__ = 'Rio'
 
@@ -91,10 +100,10 @@ class RegionFile(object):
                 if needsRepair:
                     self.repair()
 
-                log.debug("Found region file %s with %d/%d sectors used and %d chunks present",
+                region_debug("Found region file %s with %d/%d sectors used and %d chunks present",
                           os.path.basename(path), self.usedSectors, self.sectorCount, self.chunkCount)
             else:
-                log.debug("Created new region file %s", os.path.basename(path))
+                region_debug("Created new region file %s", os.path.basename(path))
 
     def __repr__(self):
         return "%s(\"%s\")" % (self.__class__.__name__, self.path)
@@ -201,7 +210,7 @@ class RegionFile(object):
         if len(data) < 5:
             raise RegionFormatError("Chunk %s data is only %d bytes long (expected 5)" % ((cx, cz), len(data)))
 
-        # log.debug("REGION LOAD {0},{1} sector {2}".format(cx, cz, sectorStart))
+        # region_debug("REGION LOAD {0},{1} sector {2}".format(cx, cz, sectorStart))
 
         length = struct.unpack_from(">I", data)[0]
         fmt = struct.unpack_from("B", data, 4)[0]
@@ -245,7 +254,7 @@ class RegionFile(object):
             err.chunkPosition = cx, cz
 
         if sectorNumber != 0 and sectorsAllocated >= sectorsNeeded:
-            log.debug("REGION SAVE {0},{1} rewriting {2}b".format(cx, cz, len(data)))
+            region_debug("REGION SAVE {0},{1} rewriting {2}b".format(cx, cz, len(data)))
             self.writeSector(sectorNumber, data, format)
         else:
             # we need to allocate new sectors
@@ -276,7 +285,7 @@ class RegionFile(object):
 
             # we found a free space large enough
             if runLength >= sectorsNeeded:
-                log.debug("REGION SAVE {0},{1}, reusing {2}b".format(cx, cz, len(data)))
+                region_debug("REGION SAVE {0},{1}, reusing {2}b".format(cx, cz, len(data)))
                 sectorNumber = runStart
                 self._setOffset(cx, cz, sectorNumber << 8 | sectorsNeeded)
                 self.writeSector(sectorNumber, data, format)
@@ -286,7 +295,7 @@ class RegionFile(object):
                 # no free space large enough found -- we need to grow the
                 # file
 
-                log.debug("REGION SAVE {0},{1}, growing by {2}b".format(cx, cz, len(data)))
+                region_debug("REGION SAVE {0},{1}, growing by {2}b".format(cx, cz, len(data)))
 
                 with file(self.path, "rb+") as f:
                     f.seek(0, 2)
@@ -308,7 +317,7 @@ class RegionFile(object):
 
     def writeSector(self, sectorNumber, data, format):
         with file(self.path, "rb+") as f:
-            log.debug("REGION: Writing sector {0}".format(sectorNumber))
+            region_debug("REGION: Writing sector {0}".format(sectorNumber))
 
             f.seek(sectorNumber * self.SECTOR_BYTES)
             f.write(struct.pack(">I", len(data) + 1))  # // chunk length
