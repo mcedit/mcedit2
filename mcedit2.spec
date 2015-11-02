@@ -7,7 +7,7 @@ import os
 import itertools
 
 try:
-    from PyInstaller.utils.hooks.hookutils import collect_data_files
+    from PyInstaller.utils.hooks import collect_data_files
 except ImportError:
     from PyInstaller.hooks.hookutils import collect_data_files
 
@@ -98,10 +98,11 @@ a.datas = [(filename, path, filetype)
            if ipy_filter(filename)]
 
 if onefile:
-    a.scripts += a.binaries + a.zipfiles + a.datas
+    a.scripts += a.binaries + a.zipfiles + a.datas + a.zipped_data
 
 exe = EXE(pyz,
-          a.scripts + [('i', '', 'OPTION')],
+          a.scripts,
+          [('i', '', 'OPTION')],
           exclude_binaries=not onefile,
           name='mcedit2.exe',
           debug=True,
