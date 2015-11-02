@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 # from IPython.kernel.zmq.kernelapp import IPKernelApp
 # from IPython.lib.kernel import find_connection_file
 # from IPython.qt.inprocess import QtInProcessKernelManager
-# from IPython.qt.console.rich_ipython_widget import RichIPythonWidget
+# from IPython.qt.console.rich_ipython_widget import RichJupyterWidget
 # from IPython.utils.traitlets import TraitError
 # from PySide import QtGui, QtCore
 #
@@ -35,9 +35,9 @@ log = logging.getLogger(__name__)
 #
 # def console_widget(manager):
 #     try: # Ipython v0.13
-#         widget = RichIPythonWidget(gui_completion='droplist')
+#         widget = RichJupyterWidget(gui_completion='droplist')
 #     except TraitError:  # IPython v0.12
-#         widget = RichIPythonWidget(gui_completion=True)
+#         widget = RichJupyterWidget(gui_completion=True)
 #     widget.kernel_manager = manager
 #     return widget
 #
@@ -63,8 +63,8 @@ log = logging.getLogger(__name__)
 
 import os
 
-from IPython.qt.console.rich_ipython_widget import RichIPythonWidget
-from IPython.qt.inprocess import QtInProcessKernelManager
+from qtconsole.rich_jupyter_widget import RichJupyterWidget
+from qtconsole.inprocess import QtInProcessKernelManager
 from IPython.lib import guisupport
 
 
@@ -86,7 +86,7 @@ def terminal_widget(**kwargs):
     kernel_client = kernel_manager.client()
     kernel_client.start_channels()
 
-    control = RichIPythonWidget()
+    control = RichJupyterWidget()
     control.kernel_manager = kernel_manager
     control.kernel_client = kernel_client
     return control

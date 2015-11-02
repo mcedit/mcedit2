@@ -51,9 +51,10 @@ else:
     print("GL Errors enabled!")
 
 import os
+
 # ugly ugly hack. has_binding uses imp.find_module to find QtGui, but imp.find_module doesn't work for pyinstaller
 # packed apps since pyi renames all the modules - QtGui becomes "PySide.QtGui.pyd" without any directory structure.
-from IPython.external import qt_loaders
+from qtconsole import qt_loaders
 qt_loaders.has_binding = lambda p: p == "pyside"
 
 from PySide import QtGui, QtCore
