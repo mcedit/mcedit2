@@ -394,9 +394,9 @@ def updateLightsByCoord(dim, x, y, z):
     if not dim.hasLights:
         return
 
-    x = np.asarray(x, 'i32').ravel()
-    y = np.asarray(y, 'i32').ravel()
-    z = np.asarray(z, 'i32').ravel()
+    x = np.asarray(x, 'i4').ravel()
+    y = np.asarray(y, 'i4').ravel()
+    z = np.asarray(z, 'i4').ravel()
     cdef cnp.ndarray[ndim=1, dtype=int] ax = x
     cdef cnp.ndarray[ndim=1, dtype=int] ay = y
     cdef cnp.ndarray[ndim=1, dtype=int] az = z
