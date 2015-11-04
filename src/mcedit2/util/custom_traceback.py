@@ -4,11 +4,23 @@
 from __future__ import absolute_import, division, print_function
 import logging
 import sys
+from collections import namedtuple
 
 log = logging.getLogger(__name__)
 
 
 import traceback
+
+_MCETraceFrame = namedtuple('_MCETraceFrame', 'filename lineno name line')
+
+
+class MCETraceFrame(_MCETraceFrame):
+    def __new__(cls, *args):
+        return _MCETraceFrame.__new__(cls, *args[:-1])
+
+    def __init__(self, *args):
+        _MCETraceFrame.__init__(self, *args[:-1])
+        self.selfstr = args[-1]
 
 
 def extract_tb(tb, limit=None):
@@ -47,7 +59,7 @@ def extract_tb(tb, limit=None):
             line = line.strip()
         else:
             line = None
-        list.append((filename, lineno, name, line, selfstr))
+        list.append(MCETraceFrame(filename, lineno, name, line, selfstr))
         tb = tb.tb_next
         n = n + 1
     return list
@@ -67,7 +79,10 @@ def format_list(extracted_list):
     the name of the class of the 'self' parameter.
     """
     list = []
-    for filename, lineno, name, line, selfstr in extracted_list:
+    for frame in extracted_list:
+        filename, lineno, name, line = frame
+        selfstr = getattr(frame, 'selfstr', None)
+
         item = '  File "%s", line %d, in %s %s\n' % (filename, lineno, name, selfstr[:60])
         if line:
             item = item + '    %s\n' % line.strip()
@@ -85,11 +100,9 @@ def print_list(extracted_list, file=None):
     if file is None:
         file = sys.stderr
     for entry in extracted_list:
-        if len(entry) > 4:
-            filename, lineno, name, line, selfstr = entry
-        else:
-            filename, lineno, name, line = entry
-            selfstr = ""
+        filename, lineno, name, line = entry
+        selfstr = getattr(entry, 'selfstr', None)
+
         print('  File "%s", line %d, in %s %s' % (filename, lineno, name, selfstr),
               file=file)
         if line:
