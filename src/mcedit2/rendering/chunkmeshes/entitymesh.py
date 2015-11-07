@@ -235,6 +235,9 @@ class TileEntityLocationMesh(EntityMeshBase):
                 continue
             tilePositions.append(ref.Position)
 
+        if not len(tilePositions):
+            return
+
         tiles = self._computeVertices(tilePositions, defaultColor, chunkPosition=chunk.chunkPosition)
 
         vertexNode = VertexNode([tiles])
@@ -278,6 +281,9 @@ class CommandBlockLocationMesh(EntityMeshBase):
                     tileColors.append(defaultColor)
             else:
                 continue
+
+        if not len(tileColors):
+            return
 
         tiles = self._computeVertices(tilePositions, tileColors, chunkPosition=chunk.chunkPosition)
 
@@ -353,6 +359,9 @@ class ItemFrameMesh(EntityMeshBase):
 
             # xxxx assumes 1.8 TilePos - fix this in ref??
             mapTiles.append((mapTex, ref.TilePos, ref.Facing))
+
+        if not len(mapTiles):
+            return
 
         nodes = []
 
@@ -439,6 +448,9 @@ class MonsterModelRenderer(ChunkMeshBase):
                 sceneNode.addChild(node)
 
             yield
+
+        if not sceneNode.childCount():
+            return
 
         self.sceneNode = sceneNode
 
@@ -553,6 +565,9 @@ class MonsterLocationRenderer(EntityMeshBase):
             if limitBox and pos not in limitBox:
                 continue
             monsterPositions.append(pos)
+
+        if not len(monsterPositions):
+            return
 
         monsters = self._computeVertices(monsterPositions,
                                          (0xff, 0x22, 0x22, 0x44),
