@@ -206,19 +206,17 @@ class WorldScene(scenenode.Node):
         self.depthOffset = DepthOffset(DepthOffsets.Renderer)
         self.addState(self.depthOffset)
 
-        self.textureAtlasNode = Node()
         self.textureAtlasState = TextureAtlasState(textureAtlas)
-        self.textureAtlasNode.addState(self.textureAtlasState)
-        self.addChild(self.textureAtlasNode)
+        self.addState(self.textureAtlasState)
 
         self.renderstateNodes = {}
         for rsClass in renderstates.allRenderstates:
-            rsNode = Node()
-            rsNode.addState(rsClass())
-            self.textureAtlasNode.addChild(rsNode)
-            self.renderstateNodes[rsClass] = rsNode
+            groupNode = ChunkGroupNode()
+            groupNode.name = rsClass.__name__
+            groupNode.addState(rsClass())
+            self.addChild(groupNode)
+            self.renderstateNodes[rsClass] = groupNode
 
-        self.groupNodes = {}  # by renderstate
         self.chunkRenderInfo = {}
         self.visibleLayers = set(Layer.DefaultVisibleLayers)
 
@@ -244,11 +242,7 @@ class WorldScene(scenenode.Node):
         return self.chunkRenderInfo.iterkeys()
 
     def getRenderstateGroup(self, rsClass):
-        groupNode = self.groupNodes.get(rsClass)
-        if groupNode is None:
-            groupNode = ChunkGroupNode()
-            self.groupNodes[rsClass] = groupNode
-            self.renderstateNodes[rsClass].addChild(groupNode)
+        groupNode = self.renderstateNodes.get(rsClass)
 
         return groupNode
 
@@ -256,7 +250,7 @@ class WorldScene(scenenode.Node):
         """
         Discard the chunk at the given position from the scene
         """
-        for groupNode in self.groupNodes.itervalues():
+        for groupNode in self.renderstateNodes.itervalues():
             groupNode.discardChunkNode(cx, cz)
         self.chunkRenderInfo.pop((cx, cz), None)
 
@@ -265,7 +259,7 @@ class WorldScene(scenenode.Node):
             self.discardChunk(cx, cz)
 
     def discardAllChunks(self):
-        for groupNode in self.groupNodes.itervalues():
+        for groupNode in self.renderstateNodes.itervalues():
             groupNode.clear()
         self.chunkRenderInfo.clear()
 
@@ -343,7 +337,7 @@ class WorldScene(scenenode.Node):
         else:
             self.visibleLayers.discard(layerName)
 
-        for groupNode in self.groupNodes.itervalues():
+        for groupNode in self.renderstateNodes.itervalues():
             groupNode.setLayerVisible(layerName, visible)
 
     def setVisibleLayers(self, layerNames):
