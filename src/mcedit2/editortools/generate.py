@@ -208,9 +208,9 @@ class GenerateTool(EditorTool):
 
         self.toolWidget.setLayout(Column(*column))
 
-        self.overlayNode = scenenode.Node()
+        self.overlayNode = scenenode.Node("generateOverlay")
 
-        self.sceneHolderNode = Node()
+        self.sceneHolderNode = Node("sceneHolder")
         self.sceneTranslate = Translate()
         self.sceneHolderNode.addState(self.sceneTranslate)
 
@@ -373,7 +373,7 @@ class GenerateTool(EditorTool):
 
                     if isinstance(node, list):
                         nodes = node
-                        node = scenenode.Node()
+                        node = scenenode.Node("generatePreviewHolder")
                         for c in nodes:
                             node.addChild(c)
 

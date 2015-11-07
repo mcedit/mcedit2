@@ -60,7 +60,7 @@ class InspectorWidget(QtGui.QWidget):
 
         self.currentChunk = None
 
-        self.overlayNode = scenenode.Node()
+        self.overlayNode = scenenode.Node("inspectorOverlay")
         self.selectionNode = SelectionBoxNode()
         self.selectionNode.depth = depths.DepthOffsets.SelectionCursor
         self.selectionNode.filled = False

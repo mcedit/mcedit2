@@ -24,7 +24,9 @@ class Node(object):
         self.descendentNeedsUpdate = False
 
     def __repr__(self):
-        return "%s(%r, visible=%s, children=%d)" % (self.name, self.__class__.__name__, self.visible, len(self._children))
+        return "%s(%r, visible=%s, children=%d, states=%s)" % (
+            self.__class__.__name__, self.name, self.visible, len(self._children), self.states
+        )
 
     def addState(self, obj):
         self.states.append(obj)

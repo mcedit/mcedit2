@@ -581,4 +581,5 @@ class BlockModelMesh(object):
             vabuffer = vertexArray.buffer
             memcpy(vabuffer.data, vertexBuffer, buffer_ptr * sizeof(float) * quadFloats)
             self.sceneNode = VertexNode(vertexArray)
+            self.sceneNode.name = "cy=%d" % self.sectionUpdate.cy
         free(vertexBuffer)

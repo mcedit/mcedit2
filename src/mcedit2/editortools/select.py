@@ -183,7 +183,7 @@ class SelectionTool(EditorTool):
                                          None))
 
         self.cursorNode = SelectionCursor()
-        self.overlayNode = scenenode.Node()
+        self.overlayNode = scenenode.Node("selectOverlay")
         self.faceHoverNode = SelectionFaceNode()
         self.selectionNode = SelectionScene()
         self.overlayNode.addChild(self.selectionNode)

@@ -124,7 +124,7 @@ class PendingImportNode(Node, QtCore.QObject):
         # object, including its world scene. This preview will be rotated model-wise
         # while the user is dragging the rotate controls.
 
-        self.plainSceneNode = Node()
+        self.plainSceneNode = Node("plainScene")
         self.positionTranslate = Translate()
         self.plainSceneNode.addState(self.positionTranslate)
         self.plainSceneNode.addChild(self.rotateNode)
@@ -135,7 +135,7 @@ class PendingImportNode(Node, QtCore.QObject):
         # object, including a world scene that displays the object wrapped by a
         # DimensionTransform.
 
-        self.transformedSceneNode = Node()
+        self.transformedSceneNode = Node("transformedScene")
         self.transformedSceneTranslate = Translate()
         self.transformedSceneNode.addState(self.transformedSceneTranslate)
 

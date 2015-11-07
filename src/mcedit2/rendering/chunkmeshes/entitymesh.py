@@ -245,7 +245,7 @@ class TileEntityLocationMesh(EntityMeshBase):
         depthFunc = DepthFunc(GL.GL_ALWAYS)
         vertexNode.addState(depthFunc)
 
-        self.sceneNode = Node()
+        self.sceneNode = Node("tileEntityLocations")
         self.sceneNode.addChild(vertexNode)
 
         vertexNode = VertexNode([tiles])
@@ -286,7 +286,7 @@ class CommandBlockLocationMesh(EntityMeshBase):
         vertexNode.addState(LineWidth(2.0))
         vertexNode.addState(DepthFunc(GL.GL_ALWAYS))
 
-        self.sceneNode = Node()
+        self.sceneNode = Node("commandBlockLocations")
         self.sceneNode.addChild(vertexNode)
 
 
@@ -375,7 +375,7 @@ class ItemFrameMesh(EntityMeshBase):
                 vertexNode.addState(bindTexture)
             nodes.append(vertexNode)
 
-        self.sceneNode = scenenode.Node()
+        self.sceneNode = scenenode.Node("itemFrames")
         for node in nodes:
             self.sceneNode.addChild(node)
 
@@ -414,7 +414,7 @@ def entityModelNode(ref, model, modelTex, chunk):
 
 class MonsterModelRenderer(ChunkMeshBase):
     def makeChunkVertices(self, chunk, limitBox):
-        sceneNode = scenenode.Node()
+        sceneNode = scenenode.Node("monsters")
         for i, ref in enumerate(chunk.Entities):
             ID = ref.id
             if ID not in models.cookedModels:
@@ -493,7 +493,7 @@ class TileEntityModelRenderer(ChunkMeshBase):
     layer = Layer.TileEntities
 
     def makeChunkVertices(self, chunk, limitBox):
-        sceneNode = scenenode.Node()
+        sceneNode = scenenode.Node("tileEntityModels")
         chests = {}
         for i, ref in enumerate(chunk.TileEntities):
             ID = ref.id
@@ -565,7 +565,7 @@ class MonsterLocationRenderer(EntityMeshBase):
         vertexNode.addState(LineWidth(2.0))
         vertexNode.addState(DepthFunc(GL.GL_ALWAYS))
 
-        self.sceneNode = Node()
+        self.sceneNode = Node("monsterLocations")
         self.sceneNode.addChild(vertexNode)
 
         vertexNode = VertexNode(monsters)

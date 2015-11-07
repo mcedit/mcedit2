@@ -101,7 +101,7 @@ class MoveTool(EditorTool):
 
     def __init__(self, editorSession, *args, **kwargs):
         super(MoveTool, self).__init__(editorSession, *args, **kwargs)
-        self.overlayNode = scenenode.Node()
+        self.overlayNode = scenenode.Node("moveOverlay")
         self._currentImport = None
         self._currentImportNode = None
 

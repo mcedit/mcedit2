@@ -65,14 +65,14 @@ def LineArcNode(p1, p2, color):
         z += dz
         points.append((x, y, z))
 
-    arcNode = Node()
+    arcNode = Node("lineArc")
 
     lineNode = LineStripNode(points, rgba)
     arcNode.addChild(lineNode)
 
     arcNode.addState(LineWidth(3.0))
 
-    backLineNode = Node()
+    backLineNode = Node("lineArcBack")
     backLineNode.addChild(lineNode)
     arcNode.addChild(backLineNode)
 
@@ -86,7 +86,7 @@ def CommandVisuals(pos, commandObj):
     visualCls = _visualClasses.get(commandObj.name)
     if visualCls is None:
         log.warn("No command found for %s", commandObj.name)
-        return Node()
+        return Node("nullCommandVisuals")
     else:
         return visualCls(pos, commandObj)
 

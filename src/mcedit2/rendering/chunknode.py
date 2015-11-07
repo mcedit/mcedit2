@@ -26,6 +26,7 @@ class ChunkNode(scenenode.Node):
         self.translate = Translate()
         self.translate.translateOffset = (cx << 4, 0, cz << 4)
         self.addState(self.translate)
+        self.name = str(chunkPosition)
 
 
 class ChunkGroupNode(NamedChildrenNode):
@@ -42,6 +43,7 @@ class ChunkGroupNode(NamedChildrenNode):
         area = self.getChild((ax, az))
         if area is None and create:
             area = NamedChildrenNode()
+            area.name = "(ax=%s,az=%s)" % (ax, az)
             self.addChild((ax, az), area)
         return area
 

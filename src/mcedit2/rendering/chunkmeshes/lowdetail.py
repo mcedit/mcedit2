@@ -139,7 +139,7 @@ class LowDetailBlockMesh(ChunkMeshBase):
 
         nodes = [VertexNode(v) for v in (va1, va2, va0)]
 
-        self.sceneNode = scenenode.Node()
+        self.sceneNode = scenenode.Node("lowDetail")
         for node in nodes:
             self.sceneNode.addChild(node)
 

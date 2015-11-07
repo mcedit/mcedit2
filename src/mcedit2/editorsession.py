@@ -361,7 +361,7 @@ class EditorSession(QtCore.QObject):
         progress("Loading textures and models...")
         self.setConfiguredBlocks(configuredBlocks)  # Must be called after resourceLoader is in place
 
-        self.editorOverlay = scenenode.Node()
+        self.editorOverlay = scenenode.Node("editorOverlay")
 
         self.biomeTypes = BiomeTypes()
 

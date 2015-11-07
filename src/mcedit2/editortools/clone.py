@@ -122,8 +122,7 @@ class CloneTool(EditorTool):
         self.pendingCloneNodes = []
         self.mainCloneNode = None
 
-        self.overlayNode = scenenode.Node()
-        self.overlayNode.name = "Clone Overlay"
+        self.overlayNode = scenenode.Node("cloneOverlay")
 
         self.toolWidget = QtGui.QWidget()
         self.pointInput = CoordinateWidget()

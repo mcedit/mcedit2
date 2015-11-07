@@ -109,7 +109,7 @@ class BrushTool(EditorTool):
         BrushModeSetting.connectAndCall(self.modeSettingChanged)
 
         self.cursorWorldScene = None
-        self.cursorNode = Node()
+        self.cursorNode = Node("brushCursor")
         self.cursorTranslate = Translate()
         self.cursorNode.addState(self.cursorTranslate)
 
