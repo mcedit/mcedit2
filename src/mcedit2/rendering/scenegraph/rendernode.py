@@ -232,6 +232,26 @@ def updateChildren(renderNode):
             sceneChild.dirty = False
 
 
+def printStats(renderNode):
+    listCount = 0
+    singleChildNodes = set()
+    stack = [renderNode]
+    seen = set()
+    while len(stack):
+        node = stack.pop()
+        if node in seen:
+            continue
+        seen.add(node)
+
+        listCount += 1
+        if len(node.children) == 1:
+            singleChildNodes.add(node)
+        stack.extend(node.children)
+
+    print("List count:", listCount)
+    print("Nodes with single children: ")
+    from pprint import pprint
+    pprint(sorted(singleChildNodes))
 
 def renderScene(renderNode):
     with profiler.context("updateRenderNode"):
