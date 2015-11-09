@@ -111,8 +111,7 @@ allDisplayLists = []
 
 class DisplayList(object):
 
-    def __init__(self, drawFunc=None):
-        self.drawFunc = drawFunc
+    def __init__(self):
         self._list = None
         self.dirty = True
 
@@ -146,15 +145,7 @@ class DisplayList(object):
         self._compile(drawFunc)
 
     def _compile(self, drawFunc):
-        drawFunc = (drawFunc or self.drawFunc)
-        if drawFunc is None:
-            return
-
-        if self._list is None:
-            l = gl.glGenLists(1)
-            self._list = numpy.array([l], 'uintc')
-
-        l = self._list[0]
+        l = self.getList()[0]
         GL.glNewList(l, GL.GL_COMPILE)
         drawFunc()
         #try:
@@ -164,22 +155,15 @@ class DisplayList(object):
         #    self.drawFunc()
         self.dirty = False
 
-
-
-    def getList(self, drawFunc=None):
-        self.compile(drawFunc)
+    def getList(self):
+        if self._list is None:
+            l = gl.glGenLists(1)
+            self._list = numpy.array([l], 'uintc')
         return self._list
 
-    if "-debuglists" in sys.argv:
-        def call(self, drawFunc=None):
-            drawFunc = (drawFunc or self.drawFunc)
-            if drawFunc is None:
-                return
-            drawFunc()
-    else:
-        def call(self, drawFunc=None):
-            self.compile(drawFunc)
-            GL.glCallLists(self._list)
+    def call(self):
+        assert self._list
+        GL.glCallLists(self._list)
 
 
 class Texture(object):
