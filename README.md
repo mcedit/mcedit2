@@ -4,7 +4,7 @@ MCEdit 2.0 is the next version of MCEdit, the World Editor for Minecraft. MCEdit
 a Minecraft world, and to import and export .schematic files created by many programs including WorldEdit and the
 original MCEdit 1.x. It is free to use and licensed under the BSD license.
 
-MCEdit 2.0's development is still in a pre-alpha stage and is not usable. To download MCEdit 2.0 anyway, head over to 
+MCEdit 2.0's development is in the alpha stage. Many features may be buggy or missing. To download MCEdit 2.0 anyway, head over to
 http://www.mcedit.net/
 
 The rest of this file is of interest to programmers only.
