@@ -86,8 +86,7 @@ class RenderNode(object):
     def compile(self):
         if self.childNeedsRecompile:
             for node in self.children:
-                if node.sceneNode.visible:
-                    node.compile()
+                node.compile()
             self.childNeedsRecompile = False
 
         for state in self.sceneNode.states:
