@@ -9,12 +9,19 @@ import time
 import datetime
 import functools
 
+import sys
+
 from mceditlib.util.lazyprop import lazyprop
 
 
 log = logging.getLogger(__name__)
 
 ENABLE_PROFILER = True
+
+if sys.platform == "win32":
+    clock = time.clock
+else:
+    clock = time.time
 
 class Profiler(object):
     sampleLimit = 100000
@@ -99,7 +106,7 @@ class Profiler(object):
         return _decorate
 
     def recordSample(self, entry=False):
-        self.samples.append(('/'.join(self.nameStack), time.time(), entry))
+        self.samples.append(('/'.join(self.nameStack), clock(), entry))
         if self.sampleTimeLimit is not None:
             while len(self.samples) and self.samples[-1][1] - self.samples[0][1] > self.sampleTimeLimit:
                 self.samples.popleft()
@@ -166,8 +173,6 @@ class ProfileAnalysis(AnalysisNode):
 
             leaf.samples.append(seconds)
             leaf.ncalls += counts[path]
-
-
 
 _commonProfiler = None
 
