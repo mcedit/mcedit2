@@ -7,7 +7,7 @@ import math
 from PySide import QtGui
 from PySide.QtCore import Qt
 from mcedit2.widgets.layout import Row, Column
-from mcedit2.worldview.worldview import WorldView, iterateChunks
+from mcedit2.worldview.worldview import WorldView, iterateChunks, anglesToVector
 from mcedit2.worldview.viewaction import ViewAction, MoveViewMouseAction, ZoomWheelAction
 from mceditlib.geometry import Ray
 
@@ -75,7 +75,7 @@ class IsoWorldView(WorldView):
         ))
 
     def cameraVector(self):
-        return self._anglesToVector(self.yrot, self.xrot)
+        return anglesToVector(self.yrot, self.xrot)
 
     def centerOnPoint(self, pos, distance=None):
         #self.rotateView(45., math.degrees(math.atan(1/math.sqrt(2))))

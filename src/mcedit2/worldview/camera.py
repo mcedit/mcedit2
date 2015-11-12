@@ -21,7 +21,7 @@ from mceditlib import faces
 from mceditlib.geometry import Vector
 from mceditlib.util.lazyprop import lazyprop
 from mcedit2.worldview.viewcontrols import ViewControls
-from mcedit2.worldview.worldview import WorldView, iterateChunks
+from mcedit2.worldview.worldview import WorldView, iterateChunks, anglesToVector
 from mcedit2.worldview.viewaction import ViewAction
 
 
@@ -371,7 +371,7 @@ class CameraWorldView(WorldView):
 
     @lazyprop
     def cameraVector(self):
-        return self._anglesToVector(*self.yawPitch)
+        return anglesToVector(*self.yawPitch)
 
     def makeChunkIter(self):
         radius = self.viewDistance

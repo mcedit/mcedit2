@@ -37,6 +37,7 @@ from mceditlib.geometry import Vector, Ray
 from mceditlib.exceptions import LevelFormatError, ChunkNotPresent
 from mceditlib.util import displayName
 
+log = logging.getLogger(__name__)
 
 def worldMeshVertexSize(worldMesh):
     """
@@ -56,7 +57,18 @@ def worldMeshVertexSize(worldMesh):
 
     return sum(bufferSizes())
 
-log = logging.getLogger(__name__)
+
+def anglesToVector(yaw, pitch):
+    def nanzero(x):
+        if math.isnan(x):
+            return 0
+        else:
+            return x
+
+    dx = -math.sin(math.radians(yaw)) * math.cos(math.radians(pitch))
+    dy = -math.sin(math.radians(pitch))
+    dz = math.cos(math.radians(yaw)) * math.cos(math.radians(pitch))
+    return Vector(*map(nanzero, [dx, dy, dz]))
 
 
 class BufferSwapper(QtCore.QObject):
@@ -176,31 +188,23 @@ class WorldView(QGLWidget):
 
         self.setDimension(dimension)
 
-    acceptableMimeTypes = [
-        MimeFormats.MapItem,
-    ]
+    def destroy(self):
+        self.makeCurrent()
+        self.renderGraph.destroy()
+        self.bufferSwapThread.quit()
+        super(WorldView, self).destroy()
 
-    def dragEnterEvent(self, event):
-        # xxx show drop preview as scene node
-        print("DRAG ENTER. FORMATS:\n%s" % event.mimeData().formats())
-        for mimeType in self.acceptableMimeTypes:
-            if event.mimeData().hasFormat(mimeType):
-                event.acceptProposedAction()
-                return
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
+    def __str__(self):
+        try:
+            if self.dimension:
+                dimName = displayName(self.dimension.worldEditor.filename) + ": " + self.dimension.dimName
+            else:
+                dimName = "None"
+        except Exception as e:
+            return "%s trying to get node name" % e
+        return "%s(%r)" % (self.__class__.__name__, dimName)
 
-    def dropEvent(self, event):
-        mimeData = event.mimeData()
-        x = event.pos().x()
-        y = event.pos().y()
-        ray = self.rayAtPosition(x, y)
-        dropPosition, face = self.rayCastInView(ray)
-
-        if mimeData.hasFormat(MimeFormats.MapItem):
-            self.mapItemDropped.emit(mimeData, dropPosition, face)
-        elif mimeData.hasUrls:
-            self.urlsDropped.emit(mimeData, dropPosition, face)
+    # --- Displayed world ---
 
     def setDimension(self, dimension):
         """
@@ -230,21 +234,7 @@ class WorldView(QGLWidget):
             textureAtlas.load()
             self.resetLoadOrder()
 
-    def destroy(self):
-        self.makeCurrent()
-        self.renderGraph.destroy()
-        self.bufferSwapThread.quit()
-        super(WorldView, self).destroy()
-
-    def __str__(self):
-        try:
-            if self.dimension:
-                dimName = displayName(self.dimension.worldEditor.filename) + ": " + self.dimension.dimName
-            else:
-                dimName = "None"
-        except Exception as e:
-            return "%s trying to get node name" % e
-        return "%s(%r)" % (self.__class__.__name__, dimName)
+    # --- Graph construction ---
 
     def createCompass(self):
         return compass.CompassNode()
@@ -279,11 +269,7 @@ class WorldView(QGLWidget):
 
         return sceneGraph
 
-    def initializeGL(self, *args, **kwargs):
-        GL.glEnableClientState(GL.GL_VERTEX_ARRAY)
-        GL.glAlphaFunc(GL.GL_NOTEQUAL, 0)
-        GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
-        GL.glEnable(GL.GL_DEPTH_TEST)
+    # --- Tool support ---
 
     def setToolCursor(self, cursorNode):
         if self.cursorNode:
@@ -296,6 +282,16 @@ class WorldView(QGLWidget):
         self.overlayNode.clear()
         for node in overlayNodes:
             self.overlayNode.addChild(node)
+
+    # --- View settings ---
+
+    def setLayerVisible(self, layerName, visible):
+        self.worldScene.setLayerVisible(layerName, visible)
+        self.resetLoadOrder()
+
+    def setDayTime(self, value):
+        if self.skyNode:
+            self.skyNode.setDayTime(value)
 
     def _updateMatrices(self):
         self.updateMatrices()
@@ -331,7 +327,9 @@ class WorldView(QGLWidget):
         :return:
         :rtype: list[QVector4D]
         """
-        corners = [QtGui.QVector4D(x, y, z, 1.) for x, y, z in itertools.product((-1., 1.), (-1., 1.), (0., 1. ))]
+        corners = [QtGui.QVector4D(x, y, z, 1.)
+                   for x, y, z in itertools.product((-1., 1.), (-1., 1.), (0., 1.))]
+
         matrix = self.matrixState.projection * self.matrixState.modelview
         matrix, inverted = matrix.inverted()
         worldCorners = [matrix.map(corner) for corner in corners]
@@ -359,17 +357,22 @@ class WorldView(QGLWidget):
 
         return sum(pointPairs, ())
 
-    def resizeGL(self, width, height):
-        GL.glViewport(0, 0, width, height)
+    scaleChanged = QtCore.Signal(float)
 
+    _scale = 1. / 16
+
+    @property
+    def scale(self):
+        return self._scale
+
+    @scale.setter
+    def scale(self, value):
+        self._scale = value
         self._updateMatrices()
-
-    def resizeEvent(self, event):
-        center = self.viewCenter()
-        self.compassOrtho.size = (1, float(self.height()) / self.width())
-        super(WorldView, self).resizeEvent(event)
-        # log.info("WorldView: resized. moving to %s", center)
-        # self.centerOnPoint(center)
+        log.debug("update(): scale %s %s", self, value)
+        self.update()
+        self.scaleChanged.emit(value)
+        self.viewportMoved.emit(self)
 
     _centerPoint = Vector(0, 0, 0)
 
@@ -387,23 +390,6 @@ class WorldView(QGLWidget):
             self.update()
             self.resetLoadOrder()
             self.viewportMoved.emit(self)
-
-    scaleChanged = QtCore.Signal(float)
-
-    _scale = 1. / 16
-
-    @property
-    def scale(self):
-        return self._scale
-
-    @scale.setter
-    def scale(self, value):
-        self._scale = value
-        self._updateMatrices()
-        log.debug("update(): scale %s %s", self, value)
-        self.update()
-        self.scaleChanged.emit(value)
-        self.viewportMoved.emit(self)
 
     def centerOnPoint(self, pos, distance=None):
         """Center the view on the given position"""
@@ -423,19 +409,40 @@ class WorldView(QGLWidget):
         # return point or ray.point
         return self.centerPoint
 
-    def _anglesToVector(self, yaw, pitch):
-        def nanzero(x):
-            if math.isnan(x):
-                return 0
-            else:
-                return x
+    # --- Events ---
 
-        dx = -math.sin(math.radians(yaw)) * math.cos(math.radians(pitch))
-        dy = -math.sin(math.radians(pitch))
-        dz = math.cos(math.radians(yaw)) * math.cos(math.radians(pitch))
-        return Vector(*map(nanzero, [dx, dy, dz]))
+    def resizeEvent(self, event):
+        center = self.viewCenter()
+        self.compassOrtho.size = (1, float(self.height()) / self.width())
+        super(WorldView, self).resizeEvent(event)
+        # log.info("WorldView: resized. moving to %s", center)
+        # self.centerOnPoint(center)
 
-    dragStart = None
+    acceptableMimeTypes = [
+        MimeFormats.MapItem,
+    ]
+
+    def dragEnterEvent(self, event):
+        # xxx show drop preview as scene node
+        print("DRAG ENTER. FORMATS:\n%s" % event.mimeData().formats())
+        for mimeType in self.acceptableMimeTypes:
+            if event.mimeData().hasFormat(mimeType):
+                event.acceptProposedAction()
+                return
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        mimeData = event.mimeData()
+        x = event.pos().x()
+        y = event.pos().y()
+        ray = self.rayAtPosition(x, y)
+        dropPosition, face = self.rayCastInView(ray)
+
+        if mimeData.hasFormat(MimeFormats.MapItem):
+            self.mapItemDropped.emit(mimeData, dropPosition, face)
+        elif mimeData.hasUrls:
+            self.urlsDropped.emit(mimeData, dropPosition, face)
 
     def keyPressEvent(self, event):
         self.augmentKeyEvent(event)
@@ -504,7 +511,6 @@ class WorldView(QGLWidget):
                     for i in range(abs(clicks)):
                         action.keyPressEvent(event)
 
-
     def augmentMouseEvent(self, event):
         x, y = event.x(), event.y()
         return self.augmentEvent(x, y, event)
@@ -534,24 +540,18 @@ class WorldView(QGLWidget):
         self.mouseBlockFace = event.blockFace = face
         self.mouseRay = ray
 
-    def rayCastInView(self, ray):
-        try:
-            result = raycast.rayCastInBounds(ray, self.dimension, maxDistance=200)
-            position, face = result
+    # --- OpenGL support ---
 
-        except (raycast.MaxDistanceError, ValueError):
-            # GL.glReadBuffer(GL.GL_BACK)
-            # pixel = GL.glReadPixels(x, self.height() - y, 1, 1, GL.GL_DEPTH_COMPONENT, GL.GL_FLOAT)
-            # depth = -1 + 2 * pixel[0, 0]
-            # p = self.pointsAtPositions((x, y, depth))[0]
-            #
-            # face = faces.FaceYIncreasing
-            # position = p.intfloor()
-            defaultDistance = 200
-            position = (ray.point + ray.vector * defaultDistance).intfloor()
-            face = faces.FaceUp
+    def initializeGL(self, *args, **kwargs):
+        GL.glEnableClientState(GL.GL_VERTEX_ARRAY)
+        GL.glAlphaFunc(GL.GL_NOTEQUAL, 0)
+        GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+        GL.glEnable(GL.GL_DEPTH_TEST)
 
-        return position, face
+    def resizeGL(self, width, height):
+        GL.glViewport(0, 0, width, height)
+
+        self._updateMatrices()
 
     maxFPS = 45
 
@@ -587,6 +587,27 @@ class WorldView(QGLWidget):
             return 0.0
 
         return (samples - 1) / (self.frameSamples[-1] - self.frameSamples[-samples])
+
+    # --- Screen<->world space conversion ---
+
+    def rayCastInView(self, ray):
+        try:
+            result = raycast.rayCastInBounds(ray, self.dimension, maxDistance=200)
+            position, face = result
+
+        except (raycast.MaxDistanceError, ValueError):
+            # GL.glReadBuffer(GL.GL_BACK)
+            # pixel = GL.glReadPixels(x, self.height() - y, 1, 1, GL.GL_DEPTH_COMPONENT, GL.GL_FLOAT)
+            # depth = -1 + 2 * pixel[0, 0]
+            # p = self.pointsAtPositions((x, y, depth))[0]
+            #
+            # face = faces.FaceYIncreasing
+            # position = p.intfloor()
+            defaultDistance = 200
+            position = (ray.point + ray.vector * defaultDistance).intfloor()
+            face = faces.FaceUp
+
+        return position, face
 
     def rayAtPosition(self, x, y):
         """
@@ -636,6 +657,8 @@ class WorldView(QGLWidget):
         """
         ray = self.rayAtPosition(x, y)
         return ray.atHeight(h)
+
+    # --- Chunk loading ---
 
     _chunkIter = None
 
@@ -700,14 +723,6 @@ class WorldView(QGLWidget):
             self.loadableChunksNode.dirty = True
             
         self.resetLoadOrder()
-
-    def setLayerVisible(self, layerName, visible):
-        self.worldScene.setLayerVisible(layerName, visible)
-        self.resetLoadOrder()
-
-    def setDayTime(self, value):
-        if self.skyNode:
-            self.skyNode.setDayTime(value)
 
 def iterateChunks(x, z, radius):
     """
