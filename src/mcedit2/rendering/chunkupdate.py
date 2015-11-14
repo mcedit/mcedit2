@@ -14,6 +14,7 @@ from mcedit2.rendering.chunkmeshes.entitymesh import TileEntityLocationMesh, Mon
     TileEntityModelRenderer
 from mcedit2.rendering.chunkmeshes.heightlevel import HeightLevelBlockMesh
 from mcedit2.rendering.chunkmeshes.lowdetail import LowDetailBlockMesh, OverheadBlockMesh
+from mcedit2.rendering.chunkmeshes.mobspawns import MobSpawnsBlockMesh
 from mcedit2.rendering.chunkmeshes.terrainpop import TerrainPopulatedRenderer
 from mcedit2.rendering.chunkmeshes.tileticks import TileTicksRenderer
 from mcedit2.util import profiler
@@ -138,6 +139,7 @@ class ChunkUpdate(object):
         LowDetailBlockMesh,
         OverheadBlockMesh,
         HeightLevelBlockMesh,
+        MobSpawnsBlockMesh,
     ]
 
     @profiler.iterator("ChunkUpdate")

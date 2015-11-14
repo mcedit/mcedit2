@@ -19,9 +19,11 @@ class Layer:
     TileTicks = "TileTicks"
     TerrainPopulated = "TerrainPopulated"
     HeightMap = "HeightMap"
+    MobSpawns = "Places Where Creepers Can Spawn"
     ChunkSections = "ChunkSections"
     AllLayers = (Blocks, MonsterLocations, Items,
                  TileEntities, TileEntityLocations,
                  CommandBlockColors, CommandBlockLocations,
-                 ItemFrames, TileTicks, ChunkSections, HeightMap)
+                 ItemFrames, TileTicks, ChunkSections, HeightMap,
+                 MobSpawns)
     DefaultVisibleLayers = (Blocks, Items, TileEntities, CommandBlockColors, ItemFrames)
