@@ -191,6 +191,7 @@ class InspectorWidget(QtGui.QWidget):
         if dim.containsChunk(cx, cz):
             chunk = dim.getChunk(cx, cz)
             self.setSelectedChunk(chunk)
+            self.stackedWidget.setCurrentWidget(self.pageInspectChunk)
 
     def setSelectedChunk(self, chunk):
         self.selectionNode.selectionBox = chunk.bounds
