@@ -47,7 +47,7 @@ def ToolClasses():
             select_entity.SelectEntityTool,
             select_block.SelectBlockTool,
 
-    )
+    ) + tuple(_registered_tools)
 
 
 class EditorTool(QtCore.QObject):
