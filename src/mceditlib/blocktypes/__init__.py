@@ -91,25 +91,34 @@ class BlockTypeSet(object):
             'color': 0xffffff,
             'biomeTintType': None,  # "grass", "leaves", or None
             'useNeighborBrightness': False,
+            'normalCube': True,
+            'materialLiquid': False,
         }
 
         self.aka = defaultdict(lambda: "")
-
 
         self.useNeighborBrightness = numpy.zeros(id_limit, dtype='uint8')
         self.useNeighborBrightness[:] = self.defaults['useNeighborBrightness']
 
         self.brightness = numpy.zeros(id_limit, dtype='uint8')
         self.brightness[:] = self.defaults['brightness']
+
         self.opacity = numpy.zeros(id_limit, dtype='uint8')
         self.opacity[:] = self.defaults['opacity']
+
         self.renderColor = numpy.zeros((id_limit, 16, 3), dtype='uint8')
         self.renderColor[:] = 0xFF
+
         self.mapColor = numpy.zeros((id_limit, 16, 3), dtype='uint8')
         self.mapColor[:] = 0xFF
 
         self.opaqueCube = numpy.ones((id_limit, ), dtype='uint8')
         self.opaqueCube[0] = 0
+
+        self.normalCube = numpy.ones((id_limit, ), dtype='uint8')
+        self.normalCube[0] = 0
+
+        self.materialLiquid = numpy.zeros((id_limit, ), dtype='uint8')
 
         self.name = "Unnamed Set"
         self.namePrefix = "minecraft:"
@@ -316,6 +325,8 @@ class BlockTypeSet(object):
             'brightness',
             'opacity',
             'useNeighborBrightness',
+            'normalCube',
+            'materialLiquid',
         ]:  # does not have data axis
             if key in blockJson:
                 array = getattr(self, key)
