@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 class SelectEntityCommand(QtGui.QUndoCommand):
     def __init__(self, tool, ray, *args, **kwargs):
         QtGui.QUndoCommand.__init__(self, *args, **kwargs)
-        self.setText("Select Entity")
+        self.setText("Inspect Entity")
         self.ray = ray
         self.tool = tool
 
@@ -30,7 +30,7 @@ class SelectEntityCommand(QtGui.QUndoCommand):
 
 
 class SelectEntityTool(EditorTool):
-    name = "Select Entity"
+    name = "Inspect Entity"
     iconName = "edit_entity"
     selectionRay = None
     currentEntity = None

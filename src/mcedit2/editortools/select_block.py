@@ -13,7 +13,7 @@ from mcedit2.util.load_ui import load_ui
 log = logging.getLogger(__name__)
 
 class SelectBlockTool(EditorTool):
-    name = "Select Block"
+    name = "Inspect Block"
     iconName = "edit_block"
     selectionRay = None
     currentEntity = None
