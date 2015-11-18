@@ -1,46 +1,46 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
-import argparse
-import collections
-import os
-import logging
 
+import collections
+import gc
+import logging
+import os
+import sys
+
+import argparse
+import numpy
 from PySide import QtGui, QtCore, QtNetwork
 from PySide.QtCore import Qt
-import gc
-import imp
-import numpy
-import sys
+
 from mcedit2 import plugins
 from mcedit2.appsettings import RecentFilesSetting, EnableLightingSetting, DevModeSetting
+from mcedit2.dialogs import configure_blocks
 from mcedit2.dialogs.error_dialog import showErrorDialog
 from mcedit2.dialogs.plugins_dialog import PluginsDialog
+from mcedit2.editorsession import EditorSession
 from mcedit2.library import LibraryWidget
-
+from mcedit2.rendering.chunkloader import ChunkLoaderInfo
 from mcedit2.util import minecraftinstall
+from mcedit2.util import profiler
 from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.directories import getUserFilesDirectory, getUserPluginsDirectory
+from mcedit2.util.ipython_widget import terminal_widget
 from mcedit2.util.load_ui import load_ui
 from mcedit2.util.objgraphwidget import ObjGraphWidget
+from mcedit2.util.profilerui import ProfilerWidget
 from mcedit2.util.qglcontext import setDefaultFormat
 from mcedit2.util.resources import resourcePath
+from mcedit2.util.settings import Settings
 from mcedit2.util.showprogress import MCEProgressDialog
 from mcedit2.util.worldloader import LoaderTimer
-from mcedit2.widgets import prefsdialog, configureblocksdialog
+from mcedit2.widgets import prefsdialog
 from mcedit2.widgets.blocktype_list import BlockListWidget
-from mcedit2.editorsession import EditorSession
 from mcedit2.widgets.layout import setWidgetError, Column, Row
-from mcedit2.rendering.chunkloader import ChunkLoaderInfo
-from mcedit2.util import profiler
-from mcedit2.util.ipython_widget import terminal_widget
 from mcedit2.widgets.mcedockwidget import MCEDockWidget
 from mcedit2.widgets.objectinspector import ObjectInspector
-from mcedit2.util.profilerui import ProfilerWidget
-from mcedit2.util.settings import Settings
 from mcedit2.worldlist import WorldListWidget
 from mcedit2.worldview.worldview import WorldCursorInfo, WorldViewInfo
 from mceditlib import util
 from mceditlib.anvil.adapter import SessionLockLost
-
 
 log = logging.getLogger(__name__)
 
@@ -316,7 +316,7 @@ class MCEditApp(QtGui.QApplication):
         self.prefsDialog.setParent(mainWindow)
         self.prefsDialog.setWindowFlags(Qt.Dialog)
 
-        self.configureBlocksDialog = configureblocksdialog.ConfigureBlocksDialog(None)
+        self.configureBlocksDialog = configure_blocks.ConfigureBlocksDialog(None)
         self.configureBlocksDialog.finished.connect(self.configureBlocksFinished)
         self.configureBlocksDialog.setParent(mainWindow)
         self.configureBlocksDialog.setWindowFlags(Qt.Dialog)
