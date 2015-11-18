@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 class CoordinateWidget(QtGui.QWidget):
     def __init__(self, *args, **kwargs):
         super(CoordinateWidget, self).__init__(*args, **kwargs)
-        load_ui("coord_widget.ui", baseinstance=self)
+        load_ui("widgets/coord_widget.ui", baseinstance=self)
 
         self.xInput.valueChanged.connect(self.setX)
         self.yInput.valueChanged.connect(self.setY)

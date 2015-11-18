@@ -417,9 +417,9 @@ class BlockTypePicker(QtGui.QDialog):
 
         self.multipleSelect = multipleSelect
         if self.multipleSelect:
-            load_ui("block_picker_multiple.ui", baseinstance=self)
+            load_ui("widgets/block_picker_multiple.ui", baseinstance=self)
         else:
-            load_ui("block_picker.ui", baseinstance=self)
+            load_ui("widgets/block_picker.ui", baseinstance=self)
 
         self.selectButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)

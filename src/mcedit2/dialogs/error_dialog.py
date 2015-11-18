@@ -33,7 +33,7 @@ class ErrorDialog(QtGui.QDialog):
         super(ErrorDialog, self).__init__()
         self.setModal(True)
 
-        load_ui("error_dialog.ui", baseinstance=self)
+        load_ui("dialogs/error_dialog.ui", baseinstance=self)
 
         exc_type, exc_value, exc_tb = exc_info
 

@@ -257,7 +257,7 @@ class ConfigureBlocksItemModel(QtCore.QAbstractItemModel):
 class ConfigureBlocksDialog(QtGui.QDialog):
     def __init__(self, parent):
         super(ConfigureBlocksDialog, self).__init__(parent)
-        load_ui("configure_blocks_dialog.ui", baseinstance=self)
+        load_ui("dialogs/configure_blocks.ui", baseinstance=self)
         self.okButton.clicked.connect(self.accept)
 
         self.texListNameProxyModel = None

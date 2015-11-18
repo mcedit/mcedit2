@@ -99,7 +99,7 @@ class PluginsTableModel(QtCore.QAbstractTableModel):
 class PluginsDialog(QtGui.QDialog):
     def __init__(self, *args, **kwargs):
         super(PluginsDialog, self).__init__(*args, **kwargs)
-        load_ui("plugins.ui", baseinstance=self)
+        load_ui("dialogs/plugins.ui", baseinstance=self)
 
     def exec_(self):
         self.model = PluginsTableModel()
