@@ -3,6 +3,7 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+import os
 import zipfile
 import re
 
@@ -15,6 +16,7 @@ class ResourceLoader(object):
     def __init__(self):
         super(ResourceLoader, self).__init__()
         self.zipFiles = []
+        self.modsDirs = []
 
     def addZipFile(self, zipPath):
         try:
@@ -22,6 +24,25 @@ class ResourceLoader(object):
         except zipfile.BadZipfile as e:
             raise IOError("Could not read %s as a zip file." % zipPath)
         self.zipFiles.append(zf)
+
+    def addModsFolder(self, modsDir):
+        modsDir = os.path.normpath(modsDir)
+        if modsDir in self.modsDirs:
+            return
+        self.modsDirs.append(modsDir)
+
+        for modName in os.listdir(modsDir):
+            mod = os.path.join(modsDir, modName)
+            if not os.path.isfile(mod):
+                continue
+            if not zipfile.is_zipfile(mod):
+                continue
+
+            try:
+                self.addZipFile(mod)
+            except EnvironmentError as e:
+                log.exception("Failed to add mod %s to resource loader.", modName)
+                continue
 
     def openStream(self, path):
         for zipFile in self.zipFiles:

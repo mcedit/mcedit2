@@ -32,6 +32,7 @@ def getResourceLoaderForFilename(filename):
     # Is this world inside a MultiMC instance?
     filename = os.path.normpath(filename)
     installs = GetInstalls()
+
     for instance in installs.instances:
         savesFolder = os.path.normpath(instance.saveFileDir)
         if filename.startswith(savesFolder):
@@ -39,7 +40,19 @@ def getResourceLoaderForFilename(filename):
 
     # Nope. Use the version and respack chosen in the world list.
     # ... should search for installs matching this one, but vanilla installs are still multi-version...
-    return getSelectedResourceLoader()
+    loader = getSelectedResourceLoader()
+    if not os.path.isdir(filename):
+        worldFolder = os.path.dirname(filename)
+    else:
+        worldFolder = filename
+    savesFolder = os.path.dirname(worldFolder)
+    mcFolder = os.path.dirname(savesFolder)
+    modsFolder = os.path.join(mcFolder, "mods")
+    if os.path.isdir(modsFolder):
+        log.info("Loading mods from %s", modsFolder)
+        loader.addModsFolder(modsFolder)
+
+    return loader
 
 def getSelectedResourceLoader():
     i = currentInstallOption.value()
@@ -184,7 +197,6 @@ class MCInstallGroup(object):
             for instance in mmcInstall.instances:
                 yield instance
 
-
     def findVersion1_8(self):
         def matchVersion(version):
             major, minor, rev = splitVersion(version)
@@ -324,14 +336,7 @@ class MMCInstance(object):
             v1_8 = self.install.installGroup.findVersion1_8()
             loader.addZipFile(v1_8)
 
-        for mod in os.listdir(self.modsDir):
-            if not os.path.isfile(mod):
-                continue
-            try:
-                loader.addZipFile(os.path.join(self.modsDir, mod))
-            except EnvironmentError as e:
-                log.exception("Failed to add mod %s to resource loader.", mod)
-                continue
+        loader.addModsFolder(self.modsDir)
 
         info = ["%s (%s)" % (z.filename, md5hash(z.filename)) for z in loader.zipFiles]
         log.info("Created ResourceLoader with search path:\n%s", ",\n".join(info))
@@ -564,7 +569,7 @@ class MinecraftInstallsDialog(QtGui.QDialog):
     def addMMCInstall(self):
         result = QtGui.QFileDialog.getOpenFileName(self,
                                                    "Choose a MultiMC configuration file (multimc.cfg)",
-                                                       filter="MultiMC configuration files (multimc.cfg)")
+                                                   filter="MultiMC configuration files (multimc.cfg)")
         installs = GetInstalls()
         if not result:
             return
