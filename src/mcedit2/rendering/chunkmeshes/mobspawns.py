@@ -38,8 +38,17 @@ class MobSpawnsBlockMesh(ChunkMeshBase):
             blockLight = section.BlockLight
             skyLight = section.SkyLight
             blocks = section.Blocks
-            normalCube = blocktypes.normalCube[blocks]
-            materialLiquid = blocktypes.materialLiquid[blocks]
+
+            # This `!= 0` is weird. blocktypes.normalCube has dtype 'uint8'; numpy 1.10
+            # refuses to perform an `&` between a 'uint8' and a 'bool'; so we use `!= 0`
+            # to coerce the 'uint8' to a 'bool'
+            #
+            # If blocktypes.normalCube and other arrays on blocktypes were changed to
+            # 'bool', Cython will refuse to coerce the arrays to typed memoryviews,
+            # claiming the array format string '?' is not understood.
+
+            normalCube = blocktypes.normalCube[blocks] != 0
+            materialLiquid = blocktypes.materialLiquid[blocks] != 0
 
             # A block can spawn monsters if:
             #   the block is not a normal cube
@@ -69,12 +78,12 @@ class MobSpawnsBlockMesh(ChunkMeshBase):
             validBlocks = normalCube == 0                  # block is not normal
             validBlocks &= materialLiquid == 0             # block is not liquid
             validBlocks[:-1] &= normalCube[1:] == 0        # block above is not normal
-            validBlocks[1:] &= validBelowBlocks[:-1]   # block below has solid top surface
+            validBlocks[1:] &= validBelowBlocks[:-1]       # block below has solid top surface
 
             belowSection = chunk.getSection(cy-1)
             if belowSection:
                 belowSectionBlocks = belowSection.Blocks[-1:]
-                validBlocks[:1] &= blocktypes.normalCube[belowSectionBlocks]
+                validBlocks[:1] &= blocktypes.normalCube[belowSectionBlocks] != 0
             else:
                 validBlocks[:1] = 0
 
