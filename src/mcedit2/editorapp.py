@@ -638,12 +638,12 @@ class MCEditApp(QtGui.QApplication):
             if session.closeTab():
                 log.info("Closed session %s", str(session))
                 self.tabWidget.removeTab(index)
-
                 # IMPORTANT: Even after removeTab is called, the tab widget must be unparented
                 tab.setParent(None)
                 self.removeSessionDockWidgets()
                 self.undoGroup.removeStack(session.undoStack)
                 self.sessions.remove(session)
+                session.destroy()
                 gc.collect()
         else:
             self.tabWidget.removeTab(index)

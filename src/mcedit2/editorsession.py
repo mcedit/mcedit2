@@ -488,6 +488,13 @@ class EditorSession(QtCore.QObject):
         if hasattr(progress, 'progressCount') and progress.progressCount != progressMax:
             log.info("Update progressMax to %d, please.", progress.progressCount)
 
+    def destroy(self):
+        self.worldEditor.close()
+        self.worldEditor = None
+        self.editorTab.destroy()
+
+        # Break all reference cycles just to be absolutely sure.
+        self.__dict__.clear()
 
     def _updateVersionsAndResourcePacks(self):
         self.mcVersionMapper = QtCore.QSignalMapper()
@@ -1165,13 +1172,8 @@ class EditorSession(QtCore.QObject):
         self.panels = None
 
         self.editorTab.saveState()
-        self.worldEditor.close()
-        self.worldEditor = None
-        # Break all reference cycles just to be absolutely sure.
-        d = {'menus': self.menus, 'undoStack': self.undoStack}
-        self.__dict__.clear()
-        self.__dict__.update(d)
         return True
+
 
     # --- Inspector ---
 
@@ -1314,12 +1316,12 @@ class EditorTab(QtGui.QWidget):
         spacer.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
         self.viewButtonToolbar.addWidget(spacer)
 
-    def destroy(self):
+    def destroy(self, *a, **kw):
         self.editorSession = None
         for view in self.views:
             view.destroy()
 
-        super(EditorTab, self).destroy()
+        super(EditorTab, self).destroy(*a, **kw)
 
     def setDayTime(self, value):
         if self.editorSession.textureAtlas:

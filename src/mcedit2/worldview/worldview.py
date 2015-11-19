@@ -188,11 +188,11 @@ class WorldView(QGLWidget):
 
         self.setDimension(dimension)
 
-    def destroy(self):
+    def destroy(self, *a, **kw):
         self.makeCurrent()
         self.renderGraph.destroy()
         self.bufferSwapThread.quit()
-        super(WorldView, self).destroy()
+        super(WorldView, self).destroy(*a, **kw)
 
     def __str__(self):
         try:
