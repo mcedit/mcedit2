@@ -519,14 +519,14 @@ class FindReplaceNBT(QtCore.QObject):
                     if tileEntity:
                         tag = tileEntity.raw_tag()
                         _replaceInTag(result, tag)
-                        tileEntity.dirty()
+                        tileEntity.dirty = True
 
                 if result.resultType == result.EntityResult:
                     entity = result.getEntity(self.editorSession.currentDimension)  # xxx put dimension in result!!!!
                     if entity:
                         tag = entity.raw_tag()
                         _replaceInTag(result, tag)
-                        entity.dirty()
+                        entity.dirty = True
 
                 # if result.resultType == result.ItemResult:  # xxx
                 yield

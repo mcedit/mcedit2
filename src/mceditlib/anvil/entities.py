@@ -215,8 +215,13 @@ class PCEntityRefBase(object):
 
         return self.__class__(tag)
 
+    @property
     def dirty(self):
-        self.chunk.dirty = True
+        return self.chunk.dirty
+
+    @dirty.setter
+    def dirty(self, value):
+        self.chunk.dirty = value
 
     @property
     def blockTypes(self):
@@ -305,8 +310,13 @@ class PCTileEntityRefBase(object):
 
         return self.__class__(tag)
 
+    @property
     def dirty(self):
-        self.chunk.dirty = True
+        return self.chunk.dirty
+
+    @dirty.setter
+    def dirty(self, value):
+        self.chunk.dirty = value
 
     @property
     def blockTypes(self):
