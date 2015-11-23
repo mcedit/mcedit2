@@ -586,6 +586,11 @@ class AnvilWorldAdapter(object):
                             vanillaNameAndState = blocktypes.statesByID.get((ID, vanillaMeta))
                             blocktypes.blockJsons.pop(vanillaNameAndState, None)
 
+                            # Also remove Vanilla name<->state mapping
+                            blocktypes.IDsByState.pop(vanillaNameAndState, None)
+                            vanillaName = blocktypes.namesByID.get(ID)
+                            blocktypes.IDsByName.pop(vanillaName, None)
+                            blocktypes.defaultBlockstates.pop(vanillaName, None)
 
                         blocktypes.IDsByState[nameAndState] = ID, 0
                         blocktypes.statesByID[ID, 0] = nameAndState
