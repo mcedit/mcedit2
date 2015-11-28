@@ -13,7 +13,7 @@ from mcedit2.editortools.brush.shapes import ChunkShape
 from mcedit2.handles.boxhandle import BoxHandle
 from mcedit2.rendering import cubes
 from mcedit2.rendering.selection import SelectionScene, SelectionFaceNode
-from mcedit2.util.load_ui import load_ui
+from mcedit2.ui.selection_coord_widget import Ui_selectionCoordWidget
 from mcedit2.util.glutils import gl
 from mcedit2.rendering.depths import DepthOffsets
 from mcedit2.rendering.scenegraph import scenenode, rendernode
@@ -26,10 +26,10 @@ from mceditlib.selection import BoundingBox
 log = logging.getLogger(__name__)
 
 
-class SelectionCoordinateWidget(QtGui.QWidget):
+class SelectionCoordinateWidget(QtGui.QWidget, Ui_selectionCoordWidget):
     def __init__(self, *args, **kwargs):
         super(SelectionCoordinateWidget, self).__init__(*args, **kwargs)
-        load_ui("selection_coord_widget.ui", baseinstance=self)
+        self.setupUi(self)
 
         self.xMinInput.valueChanged.connect(self.setMinX)
         self.yMinInput.valueChanged.connect(self.setMinY)

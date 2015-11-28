@@ -7,11 +7,13 @@ import logging
 import os
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
+
+from mcedit2.ui.dialogs.configure_blocks import Ui_configureBlocks
 from mcedit2.util.directories import getUserFilesDirectory
-from mcedit2.util.load_ui import load_ui
 from mcedit2.widgets.blocktype_list import TexturePixmap
 
 log = logging.getLogger(__name__)
+
 
 class BlockDefinition(object):
     def __init__(self, internalName=None, defJson=None):
@@ -254,10 +256,10 @@ class ConfigureBlocksItemModel(QtCore.QAbstractItemModel):
         blockDef.modelPath = modelPath
 
 
-class ConfigureBlocksDialog(QtGui.QDialog):
+class ConfigureBlocksDialog(QtGui.QDialog, Ui_configureBlocks):
     def __init__(self, parent):
         super(ConfigureBlocksDialog, self).__init__(parent)
-        load_ui("dialogs/configure_blocks.ui", baseinstance=self)
+        self.setupUi(self)
         self.okButton.clicked.connect(self.accept)
 
         self.texListNameProxyModel = None

@@ -7,7 +7,7 @@ from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
 from mcedit2 import plugins
 from mcedit2.dialogs.error_dialog import showErrorDialog
-from mcedit2.util.load_ui import load_ui
+from mcedit2.ui.dialogs.plugins import Ui_pluginsDialog
 from mcedit2.util.resources import resourcePath
 
 log = logging.getLogger(__name__)
@@ -96,10 +96,10 @@ class PluginsTableModel(QtCore.QAbstractTableModel):
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
 
-class PluginsDialog(QtGui.QDialog):
+class PluginsDialog(QtGui.QDialog, Ui_pluginsDialog):
     def __init__(self, *args, **kwargs):
         super(PluginsDialog, self).__init__(*args, **kwargs)
-        load_ui("dialogs/plugins.ui", baseinstance=self)
+        self.setupUi(self)
 
     def exec_(self):
         self.model = PluginsTableModel()

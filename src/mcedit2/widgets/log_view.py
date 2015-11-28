@@ -5,7 +5,7 @@ import time
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
 
-from mcedit2.util.load_ui import load_ui
+from mcedit2.ui.log_view import Ui_logView
 from mcedit2.util.settings import Settings
 
 
@@ -128,7 +128,11 @@ class LogViewProxyModel(QtGui.QSortFilterProxyModel):
 
 
 def LogViewFrame(parent):
-    logWidget = load_ui("log_view.ui")
+    class _LogViewFrame(QtGui.QWidget, Ui_logView):
+        pass
+
+    logWidget = _LogViewFrame()
+    logWidget.setupUi(logWidget)
 
     moduleNames = set()
 

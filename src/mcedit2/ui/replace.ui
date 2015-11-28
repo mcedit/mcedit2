@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>replaceBlocksDialog</class>
+ <widget class="QDialog" name="replaceBlocksDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -78,7 +78,7 @@
   <connection>
    <sender>pushButton</sender>
    <signal>clicked()</signal>
-   <receiver>Dialog</receiver>
+   <receiver>replaceBlocksDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -94,7 +94,7 @@
   <connection>
    <sender>pushButton_2</sender>
    <signal>clicked()</signal>
-   <receiver>Dialog</receiver>
+   <receiver>replaceBlocksDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

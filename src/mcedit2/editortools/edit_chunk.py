@@ -3,14 +3,20 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+from PySide import QtGui
 
 from mcedit2.editortools import EditorTool
-from mcedit2.rendering.selection import SelectionBoxNode
-from mcedit2.rendering.scenegraph import scenenode
-from mcedit2.util.load_ui import load_ui
+from mcedit2.ui.editortools.select_chunk import Ui_selectChunkWidget
 
 
 log = logging.getLogger(__name__)
+
+
+class ChunkToolWidget(QtGui.QWidget, Ui_selectChunkWidget):
+    def __init__(self, *args, **kwargs):
+        super(ChunkToolWidget, self).__init__(*args, **kwargs)
+        self.setupUi(self)
+
 
 class ChunkTool(EditorTool):
     name = "Inspect Chunk"
@@ -22,7 +28,7 @@ class ChunkTool(EditorTool):
         """
         super(ChunkTool, self).__init__(editorSession, *args, **kwargs)
         self.mousePos = None
-        self.toolWidget = load_ui("editortools/select_chunk.ui")
+        self.toolWidget = ChunkToolWidget()
 
     def mousePress(self, event):
         self.setMousePos(event.blockPosition)

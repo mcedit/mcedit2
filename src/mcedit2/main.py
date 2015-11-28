@@ -157,6 +157,7 @@ editorApp = None
 
 @profiler.function("startup")
 def startup():
+
     # Must call this before QApplication is created
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_X11InitThreads, True)
     global editorApp

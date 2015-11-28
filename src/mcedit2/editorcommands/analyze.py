@@ -6,22 +6,22 @@ from PySide import QtGui, QtCore
 import logging
 import operator
 import arrow
-from mcedit2.util.load_ui import load_ui
+
+from mcedit2.ui.analyze import Ui_analyzeDialog
 from mcedit2.util.directories import getUserFilesDirectory
 
 log = logging.getLogger(__name__)
 
 
-class AnalyzeOutputDialog(QtGui.QDialog):
+class AnalyzeOutputDialog(QtGui.QDialog, Ui_analyzeDialog):
     def __init__(self, editorSession, blockCount, entityCount, tileEntityCount, worldName, parent=None, *args,
                  **kwargs):
         super(AnalyzeOutputDialog, self).__init__(parent, *args, **kwargs)
+        self.setupUi(self)
 
         self.editorSession = editorSession
         self.blocktypes = editorSession.worldEditor.blocktypes
         self.worldName = worldName
-
-        load_ui("analyze.ui", baseinstance=self)
 
         self.setupTables(blockCount, entityCount, tileEntityCount)
         self.txtButton.clicked.connect(self.export_txt)

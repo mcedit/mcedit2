@@ -4,17 +4,18 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 from PySide import QtGui, QtCore
-from mcedit2.util.load_ui import load_ui
+
+from mcedit2.ui.widgets.coord_widget import Ui_coordWidget
 from mceditlib.geometry import Vector
 from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
 
 
-class CoordinateWidget(QtGui.QWidget):
+class CoordinateWidget(QtGui.QWidget, Ui_coordWidget):
     def __init__(self, *args, **kwargs):
         super(CoordinateWidget, self).__init__(*args, **kwargs)
-        load_ui("widgets/coord_widget.ui", baseinstance=self)
+        self.setupUi(self)
 
         self.xInput.valueChanged.connect(self.setX)
         self.yInput.valueChanged.connect(self.setY)

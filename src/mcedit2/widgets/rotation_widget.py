@@ -6,16 +6,16 @@ import logging
 
 from PySide import QtGui, QtCore
 
-from mcedit2.util.load_ui import load_ui
+from mcedit2.ui.rotation_widget import Ui_rotationWidget
 from mcedit2.util.resources import resourcePath
 
 log = logging.getLogger(__name__)
 
 
-class RotationWidget(QtGui.QWidget):
+class RotationWidget(QtGui.QWidget, Ui_rotationWidget):
     def __init__(self):
         super(RotationWidget, self).__init__()
-        load_ui("rotation_widget.ui", baseinstance=self)
+        self.setupUi(self)
 
         self.xRotSlider.valueChanged.connect(self.setXRot)
         self.yRotSlider.valueChanged.connect(self.setYRot)

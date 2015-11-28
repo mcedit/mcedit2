@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>LogViewFrame</class>
- <widget class="QWidget" name="LogViewFrame">
+ <class>logView</class>
+ <widget class="QWidget" name="logView">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>596</width>
+    <width>639</width>
     <height>468</height>
    </rect>
   </property>
@@ -81,7 +81,7 @@
         <string>Warnings</string>
        </property>
        <property name="icon">
-        <iconset resource="resources.qrc">
+        <iconset>
          <normaloff>:/mcedit/icons/dialog-warning-4.png</normaloff>:/mcedit/icons/dialog-warning-4.png</iconset>
        </property>
        <property name="iconSize">
@@ -110,7 +110,7 @@
         <string>Info</string>
        </property>
        <property name="icon">
-        <iconset resource="resources.qrc">
+        <iconset>
          <normaloff>:/mcedit/icons/dialog-information-3.png</normaloff>:/mcedit/icons/dialog-information-3.png</iconset>
        </property>
        <property name="iconSize">
@@ -139,7 +139,7 @@
         <string>Debug</string>
        </property>
        <property name="icon">
-        <iconset resource="resources.qrc">
+        <iconset>
          <normaloff>:/mcedit/icons/dialog-warning-2.png</normaloff>:/mcedit/icons/dialog-warning-2.png</iconset>
        </property>
        <property name="iconSize">
@@ -178,7 +178,7 @@
   </action>
  </widget>
  <resources>
-  <include location="resources.qrc"/>
+  <include location="mcedit2.qrc"/>
  </resources>
  <connections/>
 </ui>

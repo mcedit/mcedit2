@@ -7,10 +7,17 @@ import logging
 from PySide import QtGui
 
 from mcedit2.editortools import EditorTool
-from mcedit2.util.load_ui import load_ui
+from mcedit2.ui.editortools.select_block import Ui_selectBlockWidget
 
 
 log = logging.getLogger(__name__)
+
+
+class SelectBlockToolWidget(QtGui.QWidget, Ui_selectBlockWidget):
+    def __init__(self, *args, **kwargs):
+        super(SelectBlockToolWidget, self).__init__(*args, **kwargs)
+        self.setupUi(self)
+
 
 class SelectBlockTool(EditorTool):
     name = "Inspect Block"
@@ -24,7 +31,7 @@ class SelectBlockTool(EditorTool):
         """
         super(SelectBlockTool, self).__init__(editorSession, *args, **kwargs)
         self.mousePos = None
-        self.toolWidget = load_ui("editortools/select_block.ui")
+        self.toolWidget = SelectBlockToolWidget()
 
     def mousePress(self, event):
         self.setMousePos(event.blockPosition)

@@ -10,11 +10,11 @@ from PySide.QtCore import Qt
 import itertools
 
 from mcedit2.command import SimpleRevisionCommand
+from mcedit2.ui.panels.player import Ui_playerWidget
 from mceditlib.util.lazyprop import weakrefprop
 from mcedit2.util.screen import centerWidgetInScreen
 from mcedit2.widgets.inventory import InventoryEditor
 from mcedit2.widgets.layout import Row
-from mcedit2.util.load_ui import load_ui
 from mcedit2.util.resources import resourcePath
 from mcedit2.widgets.propertylist import PropertyListModel
 from mceditlib.exceptions import PlayerNotFound
@@ -30,10 +30,12 @@ def playerSlotLayout():
 
 PLAYER_SLOT_LAYOUT = playerSlotLayout()
 
+
 class PlayerPropertyChangeCommand(SimpleRevisionCommand):
     pass
 
-class PlayerPanel(QtGui.QWidget):
+
+class PlayerPanel(QtGui.QWidget, Ui_playerWidget):
     def __init__(self, editorSession):
         """
 
@@ -41,11 +43,11 @@ class PlayerPanel(QtGui.QWidget):
         :rtype: PlayerPanel
         """
         super(PlayerPanel, self).__init__(QtGui.qApp.mainWindow, f=Qt.Tool)
+        self.setupUi(self)
 
         self.editorSession = editorSession
         self.selectedUUID = None
 
-        load_ui("panels/player.ui", baseinstance=self)
 
         self.inventoryEditor = InventoryEditor(PLAYER_SLOT_LAYOUT)
         self.inventoryGroupBox.setLayout(Row(self.inventoryEditor))

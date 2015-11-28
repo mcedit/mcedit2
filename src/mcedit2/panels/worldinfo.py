@@ -7,21 +7,23 @@ from contextlib import contextmanager
 
 from PySide import QtGui
 from PySide.QtCore import Qt
-from mcedit2.command import SimpleRevisionCommand
 
+from mcedit2.command import SimpleRevisionCommand
+from mcedit2.ui.panels.worldinfo import Ui_worldInfoWidget
 from mcedit2.util.resources import resourcePath
-from mcedit2.util.load_ui import load_ui
 from mcedit2.util.screen import centerWidgetInScreen
 
 log = logging.getLogger(__name__)
 
 
-class WorldInfoPanel(QtGui.QWidget):
+class WorldInfoPanel(QtGui.QWidget, Ui_worldInfoWidget):
 
     editsDisabled = False
 
     def __init__(self, editorSession):
         super(WorldInfoPanel, self).__init__(QtGui.qApp.mainWindow, f=Qt.Tool)
+        self.setupUi(self)
+
         self.editorSession = editorSession
         self.worldMeta = self.editorSession.worldEditor.adapter.metadata
 
@@ -30,8 +32,6 @@ class WorldInfoPanel(QtGui.QWidget):
         callButton.setCheckable(True)
         callButton.triggered.connect(self.toggleView)
         self._toggleViewAction = callButton
-
-        load_ui('panels/worldinfo.ui', baseinstance=self)
 
         self.worldNBTEditor.editorSession = self.editorSession
         self.editorSession.revisionChanged.connect(self.revisionDidChange)

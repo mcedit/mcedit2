@@ -19,12 +19,12 @@ from mcedit2.dialogs.plugins_dialog import PluginsDialog
 from mcedit2.editorsession import EditorSession
 from mcedit2.library import LibraryWidget
 from mcedit2.rendering.chunkloader import ChunkLoaderInfo
+from mcedit2.ui.main_window import Ui_mainWindow
 from mcedit2.util import minecraftinstall
 from mcedit2.util import profiler
 from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.directories import getUserFilesDirectory, getUserPluginsDirectory
 from mcedit2.util.ipython_widget import terminal_widget
-from mcedit2.util.load_ui import load_ui
 from mcedit2.util.objgraphwidget import ObjGraphWidget
 from mcedit2.util.profilerui import ProfilerWidget
 from mcedit2.util.qglcontext import setDefaultFormat
@@ -45,11 +45,10 @@ from mceditlib.anvil.adapter import SessionLockLost
 log = logging.getLogger(__name__)
 
 
-
-class MCEditMainWindow(QtGui.QMainWindow):
+class MCEditMainWindow(QtGui.QMainWindow, Ui_mainWindow):
     def __init__(self, *args, **kwargs):
         super(MCEditMainWindow, self).__init__(*args, **kwargs)
-        load_ui("main_window.ui", baseinstance=self)
+        self.setupUi(self)
         from mcedit2 import __version__ as v
         self.setWindowTitle(self.tr("MCEdit %(version)s") % {"version": v})
 

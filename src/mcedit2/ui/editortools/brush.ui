@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Form</class>
- <widget class="QWidget" name="Form">
+ <class>brushWidget</class>
+ <widget class="QWidget" name="brushWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -141,24 +141,22 @@
   <customwidget>
    <class>BrushModeWidget</class>
    <extends>QWidget</extends>
-   <header>brushmodewidget.h</header>
+   <header>mcedit2/widgets/brushmode.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>ShapeWidget</class>
    <extends>QWidget</extends>
-   <header>shapewidget.h</header>
+   <header>mcedit2/widgets/shapewidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>SpinSlider</class>
    <extends>QWidget</extends>
-   <header>spinslider.h</header>
+   <header>mcedit2/widgets/spinslider.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="../mcedit2.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

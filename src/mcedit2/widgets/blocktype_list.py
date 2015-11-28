@@ -5,11 +5,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from PySide import QtGui, QtCore
 import logging
 from mcedit2.resourceloader import ResourceNotFound
-from mcedit2.util.load_ui import load_ui
+from mcedit2.ui.blocktype_list import Ui_blocktypeList
 
 log = logging.getLogger(__name__)
 
-class BlockListWidget(QtGui.QWidget):
+class BlockListWidget(QtGui.QWidget, Ui_blocktypeList):
     def __init__(self, blocktypes, textureAtlas, blocksToShow=None):
         """
 
@@ -23,8 +23,8 @@ class BlockListWidget(QtGui.QWidget):
         :rtype: BlockListWidget
         """
         super(BlockListWidget, self).__init__()
+        self.setupUi(self)
 
-        load_ui("blocktype_list.ui", baseinstance=self)
         table = self.tableWidget
         columns = ("Block", "Name", "ID", "blockData", "unlocalizedName")
 

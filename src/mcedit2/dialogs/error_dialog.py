@@ -8,9 +8,9 @@ import sys
 import platform
 
 from PySide import QtGui, QtCore
-from mcedit2.util import qglcontext
 
-from mcedit2.util.load_ui import load_ui
+from mcedit2.ui.dialogs.error_dialog import Ui_errorDialog
+from mcedit2.util import qglcontext
 from mcedit2.util.screen import centerWidgetInScreen
 from mcedit2.util.showprogress import MCEProgressDialog
 
@@ -22,7 +22,7 @@ def showErrorDialog(text, tb, fatal):
     dialog.exec_()
 
 
-class ErrorDialog(QtGui.QDialog):
+class ErrorDialog(QtGui.QDialog, Ui_errorDialog):
     """
     A dialog for displaying an error traceback when something goes wrong.
 
@@ -31,9 +31,8 @@ class ErrorDialog(QtGui.QDialog):
     """
     def __init__(self, text, exc_info, fatal):
         super(ErrorDialog, self).__init__()
+        self.setupUi(self)
         self.setModal(True)
-
-        load_ui("dialogs/error_dialog.ui", baseinstance=self)
 
         exc_type, exc_value, exc_tb = exc_info
 

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Form</class>
- <widget class="QWidget" name="Form">
+ <class>selectionCoordWidget</class>
+ <widget class="QWidget" name="selectionCoordWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>217</width>
+    <width>228</width>
     <height>115</height>
    </rect>
   </property>
@@ -137,24 +137,6 @@
     </layout>
    </item>
   </layout>
-  <zorder>xMinInput</zorder>
-  <zorder>xMaxInput</zorder>
-  <zorder>label</zorder>
-  <zorder>label_2</zorder>
-  <zorder>yMinInput</zorder>
-  <zorder>yMaxInput</zorder>
-  <zorder>zMaxInput</zorder>
-  <zorder>zMinInput</zorder>
-  <zorder>label_3</zorder>
-  <zorder>stackedWidget</zorder>
-  <zorder></zorder>
-  <zorder>editSizeInput</zorder>
-  <zorder>zMaxInput</zorder>
-  <zorder>yMaxInput</zorder>
-  <zorder>xMaxInput</zorder>
-  <zorder>widthLabel</zorder>
-  <zorder>heightLabel</zorder>
-  <zorder>lengthLabel</zorder>
  </widget>
  <resources/>
  <connections/>

@@ -11,9 +11,9 @@ from mcedit2.rendering import depths
 from mcedit2.rendering.command_visuals import CommandVisuals
 from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.selection import SelectionBoxNode
+from mcedit2.ui.inspector import Ui_inspectorWidget
 from mcedit2.util.commandblock import ParseCommand
 from mcedit2.widgets.inspector.tileentities.chest import ChestEditorWidget, DispenserEditorWidget, HopperEditorWidget
-from mcedit2.util.load_ui import load_ui
 from mcedit2.widgets.inspector.tileentities.command import CommandBlockEditorWidget
 from mceditlib.selection import BoundingBox
 
@@ -36,7 +36,8 @@ registerBlockInspectorWidget(DispenserEditorWidget)
 registerBlockInspectorWidget(HopperEditorWidget)
 registerBlockInspectorWidget(CommandBlockEditorWidget)
 
-class InspectorWidget(QtGui.QWidget):
+
+class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
     def __init__(self, editorSession):
         """
 
@@ -46,7 +47,8 @@ class InspectorWidget(QtGui.QWidget):
         :rtype:
         """
         super(InspectorWidget, self).__init__()
-        load_ui("inspector.ui", baseinstance=self)
+        self.setupUi(self)
+
         self.editorSession = editorSession
 
         self.blockNBTEditor.editorSession = self.editorSession

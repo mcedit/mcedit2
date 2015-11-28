@@ -7,10 +7,9 @@ import os
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
 from mcedit2.panels.map import MapListModel
+from mcedit2.ui.library import Ui_library
 from mcedit2.util.directories import getUserSchematicsDirectory
-from mcedit2.util.load_ui import load_ui
 from mcedit2.util.mimeformats import MimeFormats
-from mcedit2.widgets.layout import Column
 from mceditlib.util.lazyprop import weakrefprop
 
 log = logging.getLogger(__name__)
@@ -39,12 +38,12 @@ class LibrarySchematicsTreeModel(QtGui.QFileSystemModel):
     def mimeTypes(self):
         return ["text/uri-list"]
 
-class LibraryWidget(QtGui.QWidget):
+class LibraryWidget(QtGui.QWidget, Ui_library):
     editorSession = weakrefprop()
 
     def __init__(self):
         super(LibraryWidget, self).__init__()
-        load_ui("library.ui", baseinstance=self)
+        self.setupUi(self)
 
         self.folderPath = getUserSchematicsDirectory()
         if not os.path.exists(self.folderPath):

@@ -6,12 +6,9 @@ from PySide.QtCore import Qt
 from arrow import arrow
 from PySide import QtGui, QtCore
 from mcedit2.appsettings import RecentFilesSetting
-from mcedit2.rendering import blockmeshes
-from mcedit2.rendering.blockmodels import BlockModels
 from mcedit2.rendering.chunkloader import ChunkLoader
-from mcedit2.rendering.textureatlas import TextureAtlas
+from mcedit2.ui.world_list import Ui_worldList
 from mcedit2.util import profiler, minecraftinstall
-from mcedit2.util.load_ui import load_ui
 from mcedit2.util.minecraftinstall import MinecraftInstallsDialog
 from mcedit2.util.screen import centerWidgetInScreen
 from mcedit2.util.worldloader import LoaderTimer
@@ -19,14 +16,12 @@ from mcedit2.util.worldloader import LoaderTimer
 from mcedit2.widgets.layout import Column, Row, setWidgetError
 from mcedit2.worldview.minimap import MinimapWorldView
 from mceditlib.anvil.adapter import AnvilWorldAdapter
-from mceditlib.blocktypes import VERSION_1_7, VERSION_1_8
 from mceditlib.geometry import Vector
 from mceditlib.exceptions import LevelFormatError, PlayerNotFound
 from mceditlib import worldeditor
 
 import logging
-from mceditlib.findadapter import isLevel, findAdapter
-from mceditlib.util import displayName
+from mceditlib.findadapter import isLevel
 from mceditlib.worldeditor import WorldEditor
 
 log = logging.getLogger(__name__)
@@ -160,12 +155,13 @@ class WorldListModel(QtCore.QAbstractListModel):
             return 0
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
-class WorldListWidget(QtGui.QDialog):
+
+class WorldListWidget(QtGui.QDialog, Ui_worldList):
     def __init__(self, parent=None):
         super(WorldListWidget, self).__init__(parent, f=Qt.Tool)
         self.setWindowTitle("World List")
         self.setWindowModality(Qt.NonModal)
-        load_ui('world_list.ui', baseinstance=self)
+        self.setupUi(self)
 
         self.worldView = None
         self.chunkLoader = None
@@ -297,8 +293,6 @@ class WorldListWidget(QtGui.QDialog):
             self.worldListModel = WorldListModel(worldFiles)
             self.worldListView.setModel(self.worldListModel)
 
-
-
             if len(self.worldListModel.worlds):
                 self.worldListView.setFocus()
                 self.worldListView.setCurrentIndex(self.worldListModel.createIndex(0, 0))
@@ -328,7 +322,6 @@ class WorldListWidget(QtGui.QDialog):
 
         try:
             worldEditor = worldeditor.WorldEditor(filename, readonly=True)
-            resLoader = minecraftinstall.getResourceLoaderForFilename(filename)
 
         except (EnvironmentError, LevelFormatError, zipfile.BadZipfile) as e:
             self.errorWidget = QtGui.QWidget()

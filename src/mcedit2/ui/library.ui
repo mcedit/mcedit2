@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>library</class>
+ <widget class="QDialog" name="library">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -71,7 +71,7 @@
           <bool>true</bool>
          </property>
          <property name="dragDropMode">
-          <enum>QAbstractItemView::DragOnly</enum>
+          <enum>QAbstractItemView::DragDrop</enum>
          </property>
          <property name="movement">
           <enum>QListView::Snap</enum>

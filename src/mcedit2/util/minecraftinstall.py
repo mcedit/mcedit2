@@ -10,9 +10,8 @@ import logging
 import os
 from PySide.QtCore import Qt
 from mcedit2.resourceloader import ResourceLoader
-
+from mcedit2.ui.minecraft_installs import Ui_installsWidget
 from mcedit2.util import settings
-from mcedit2.util.load_ui import load_ui
 from mceditlib import directories
 
 log = logging.getLogger(__name__)
@@ -466,10 +465,10 @@ class PathItem(QtGui.QTableWidgetItem):
             super(PathItem, self).setData(data, role)
 
 
-class MinecraftInstallsDialog(QtGui.QDialog):
+class MinecraftInstallsDialog(QtGui.QDialog, Ui_installsWidget):
     def __init__(self, *args, **kwargs):
         super(MinecraftInstallsDialog, self).__init__(*args, **kwargs)
-        load_ui("minecraft_installs.ui", baseinstance=self)
+        self.setupUi(self)
         # populate list view
         for install in GetInstalls().installs:
             self._addInstall(install)

@@ -7,7 +7,8 @@ from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
 import numpy
 from mcedit2.command import SimpleRevisionCommand
-from mcedit2.util.load_ui import load_ui
+from mcedit2.ui.import_map import Ui_importMapDialog
+from mcedit2.ui.panels.map import Ui_mapWidget
 from mcedit2.util.resources import resourcePath
 from mcedit2.util.screen import centerWidgetInScreen
 from mceditlib.anvil.adapter import AnvilMapData
@@ -60,7 +61,7 @@ def rgbaToBgra(colors):
 
 bgraToRgba = rgbaToBgra
 
-class MapPanel(QtGui.QWidget):
+class MapPanel(QtGui.QWidget, Ui_mapWidget):
     def __init__(self, editorSession):
         """
 
@@ -73,7 +74,7 @@ class MapPanel(QtGui.QWidget):
         self.pixmapItem = None
         self.mapListModel = None
 
-        load_ui("panels/map.ui", baseinstance=self)
+        self.setupUi(self)
 
         icon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/edit_map.png"))
         action = QtGui.QAction(icon, "Edit Maps", self)
@@ -192,11 +193,11 @@ class MapPanel(QtGui.QWidget):
 class MapImportCommand(SimpleRevisionCommand):
     pass
 
-class ImportMapDialog(QtGui.QDialog):
 
+class ImportMapDialog(QtGui.QDialog, Ui_importMapDialog):
     def __init__(self, imageFilename, colorTable):
         super(ImportMapDialog, self).__init__()
-        load_ui("import_map.ui", baseinstance=self)
+        self.setupUi(self)
 
         self.filename = imageFilename
 
@@ -209,7 +210,7 @@ class ImportMapDialog(QtGui.QDialog):
         self.previewGroupItems = []
         self.convertedImages = []
 
-        self.colorTable = [(255)] * 256
+        self.colorTable = [255] * 256
         colorTable = numpy.array(colorTable)
         colorTableBGRA = numpy.ascontiguousarray(numpy.roll(colorTable, 1, -1)[..., ::-1])
         colorTableBGRA.shape = colorTableBGRA.size

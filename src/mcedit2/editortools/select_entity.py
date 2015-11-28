@@ -7,8 +7,8 @@ import logging
 from PySide import QtGui
 
 from mcedit2.editortools import EditorTool
+from mcedit2.ui.editortools.select_entity import Ui_selectEntityWidget
 from mcedit2.util.bresenham import bresenham
-from mcedit2.util.load_ui import load_ui
 
 
 log = logging.getLogger(__name__)
@@ -29,6 +29,12 @@ class SelectEntityCommand(QtGui.QUndoCommand):
         self.tool.setSelectionRay(self.ray)
 
 
+class SelectEntityToolWidget(QtGui.QWidget, Ui_selectEntityWidget):
+    def __init__(self, *args, **kwargs):
+        super(SelectEntityToolWidget, self).__init__(*args, **kwargs)
+        self.setupUi(self)
+
+
 class SelectEntityTool(EditorTool):
     name = "Inspect Entity"
     iconName = "edit_entity"
@@ -40,7 +46,7 @@ class SelectEntityTool(EditorTool):
         """
         super(SelectEntityTool, self).__init__(editorSession, *args, **kwargs)
 
-        self.toolWidget = load_ui("editortools/select_entity.ui")
+        self.toolWidget = SelectEntityToolWidget()
         self.toolWidget.tableWidget.cellClicked.connect(self.cellWasClicked)
         self.toolWidget.tableWidget.setColumnCount(2)
         self.toolWidget.tableWidget.setHorizontalHeaderLabels(["ID", "Position"])

@@ -2,12 +2,13 @@
     ${NAME}
 """
 from __future__ import absolute_import, division, print_function
+
 import logging
 import os
+
 from PySide import QtGui, QtCore
-from mcedit2.editortools.brush import BrushShapeSetting
-from mcedit2.editortools.brush.shapes import getShapes
-from mcedit2.util.load_ui import registerCustomWidget
+
+from mcedit2.editortools.tool_settings import BrushShapeSetting
 from mcedit2.util.resources import resourcePath
 from mcedit2.widgets import flowlayout
 from mcedit2.widgets.layout import Column
@@ -15,7 +16,6 @@ from mcedit2.widgets.layout import Column
 log = logging.getLogger(__name__)
 
 
-@registerCustomWidget
 class ShapeWidget(QtGui.QWidget):
     def __init__(self, *args, **kwargs):
         addShapes = kwargs.pop('addShapes', None)
@@ -28,7 +28,10 @@ class ShapeWidget(QtGui.QWidget):
         actionGroup.setExclusive(True)
         iconBase = resourcePath("mcedit2/assets/mcedit2/icons")
         actions = {}
+
+        from mcedit2.editortools.brush.shapes import getShapes  # xxx circular import
         shapes = list(getShapes())
+
         if addShapes:
             shapes.extend(addShapes)
 

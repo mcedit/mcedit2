@@ -2,32 +2,29 @@
     brush
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
+
 import logging
 
 from PySide import QtGui
 
-from mcedit2.editortools import EditorTool
 from mcedit2.command import SimplePerformCommand
+from mcedit2.editortools import EditorTool
 from mcedit2.editortools.brush.masklevel import FakeBrushSection
 from mcedit2.editortools.brush.modes import BrushModeClasses
+from mcedit2.editortools.tool_settings import BrushModeSetting, BrushSizeSetting
 from mcedit2.rendering import worldscene
 from mcedit2.rendering.depths import DepthOffsets
 from mcedit2.rendering.scenegraph.matrix import Translate
 from mcedit2.rendering.scenegraph.scenenode import Node
 from mcedit2.rendering.selection import SelectionBoxNode
-from mcedit2.util.load_ui import load_ui, registerCustomWidget
-from mcedit2.util.settings import Settings
+from mcedit2.ui.editortools.brush import Ui_brushWidget
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
 from mceditlib.geometry import Vector
 from mceditlib.util import exhaust
 
-
 log = logging.getLogger(__name__)
 
-BrushModeSetting = Settings().getOption("editortools/brush/mode", default="fill")
-BrushShapeSetting = Settings().getOption("editortools/brush/shape")
-BrushSizeSetting = Settings().getOption("editortools/brush/size")
 
 class BrushCommand(SimplePerformCommand):
     def __init__(self, editorSession, points, options):
@@ -90,6 +87,11 @@ class BrushCommand(SimplePerformCommand):
         self.performed = True
 
 
+class BrushToolWidget(QtGui.QWidget, Ui_brushWidget):
+    def __init__(self, *args, **kwargs):
+        super(BrushToolWidget, self).__init__(*args, **kwargs)
+        self.setupUi(self)
+
 
 class BrushTool(EditorTool):
     name = "Brush"
@@ -98,7 +100,7 @@ class BrushTool(EditorTool):
 
     def __init__(self, editorSession, *args, **kwargs):
         super(BrushTool, self).__init__(editorSession, *args, **kwargs)
-        self.toolWidget = load_ui("editortools/brush.ui")
+        self.toolWidget = BrushToolWidget()
         self.brushMode = None
         self.brushLoader = None
 
@@ -225,31 +227,3 @@ class BrushTool(EditorTool):
         self.brushLoader = WorldLoader(self.cursorWorldScene)
         self.brushLoader.startLoader()
 
-
-# xxx button palette?
-@registerCustomWidget
-class BrushModeWidget(QtGui.QComboBox):
-    def __init__(self, *args, **kwargs):
-        super(BrushModeWidget, self).__init__(*args, **kwargs)
-        self.currentIndexChanged.connect(self.indexDidChange)
-        self.adding = False
-    def setModes(self, modes):
-        self.adding = True
-        try:
-            for mode in modes:
-                self.addItem(mode.displayName, mode.name)
-
-            currentID = BrushModeSetting.value()
-            currentIndex = self.findData(currentID)
-            if currentIndex == -1:
-                log.info("Search failed!")
-                currentIndex = 0
-            log.info("Loading BrushModeWidget setting: found %s at %s", currentID, currentIndex)
-            self.setCurrentIndex(currentIndex)
-        finally:
-            self.adding = False
-
-    def indexDidChange(self):
-        if self.adding:
-            return
-        BrushModeSetting.setValue(self.itemData(self.currentIndex()))

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Form</class>
- <widget class="QWidget" name="Form">
+ <class>blockPickerMultiple</class>
+ <widget class="QWidget" name="blockPickerMultiple">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -187,12 +187,12 @@
   <customwidget>
    <class>BlockTypeListWidget</class>
    <extends>QListWidget</extends>
-   <header>blocktypelistwidget.h</header>
+   <header>mcedit2/widgets/blockpicker_util.h</header>
   </customwidget>
   <customwidget>
    <class>BlockTypesItemWidget</class>
    <extends>QWidget</extends>
-   <header>blocktypesitemwidget.h</header>
+   <header>mcedit2/widgets/blockpicker_util.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -7,7 +7,6 @@ import logging
 import itertools
 import os
 import imp
-import traceback
 from mcedit2 import editortools
 from mcedit2.editortools import generate
 from mcedit2.util import load_ui

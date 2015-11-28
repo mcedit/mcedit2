@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>fillDialog</class>
+ <widget class="QDialog" name="fillDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -78,7 +78,7 @@
   <customwidget>
    <class>BlockTypeButton</class>
    <extends>QWidget</extends>
-   <header>blocktypebutton.h</header>
+   <header>mcedit2/widgets/blockpicker.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
@@ -87,7 +87,7 @@
   <connection>
    <sender>pushButton</sender>
    <signal>clicked()</signal>
-   <receiver>Dialog</receiver>
+   <receiver>fillDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -103,7 +103,7 @@
   <connection>
    <sender>pushButton_2</sender>
    <signal>clicked()</signal>
-   <receiver>Dialog</receiver>
+   <receiver>fillDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
