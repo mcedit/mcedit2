@@ -142,10 +142,12 @@ class FillBlocksOperation(Operation):
 
                 mceditlib.relight.updateLightsByCoord(self.dimension, x, y, z)
 
-        def include(ref):
-            return ref.Position not in self.selection
-
-        chunk.TileEntities[:] = filter(include, chunk.TileEntities)
+        # xxx need finer control over removing tile entities - for replacing with
+        # blocks with the same entity ID
+        # def include(ref):
+        #     return ref.Position not in self.selection
+        #
+        # chunk.TileEntities[:] = filter(include, chunk.TileEntities)
         chunk.dirty = True
 
 
