@@ -47,7 +47,7 @@ class PlayerPanel(QtGui.QWidget, Ui_playerWidget):
 
         self.editorSession = editorSession
         self.selectedUUID = None
-
+        self.nbtEditor.editorSession = self.editorSession
 
         self.inventoryEditor = InventoryEditor(PLAYER_SLOT_LAYOUT)
         self.inventoryGroupBox.setLayout(Row(self.inventoryEditor))
@@ -98,7 +98,6 @@ class PlayerPanel(QtGui.QWidget, Ui_playerWidget):
         self.editorSession.revisionChanged.connect(self.revisionDidChange)
         self.initPropertiesWidget()
 
-        self.nbtEditor.editorSession = self.editorSession
 
         centerWidgetInScreen(self)
 

@@ -20,6 +20,7 @@ log = logging.getLogger(__name__)
 
 longlongPattern = re.compile("^-?\d+$")  # only digits with optional leading minus sign
 
+
 class LongLongValidator(QtGui.QValidator):
     def validate(self, input, pos):
         matches = longlongPattern.match(input)
@@ -28,6 +29,7 @@ class LongLongValidator(QtGui.QValidator):
             if (-1<<63) < value < (1<<63) - 1:
                 return QtGui.QValidator.Acceptable
         return QtGui.QValidator.Invalid
+
 
 class LongLongLineEdit(QtGui.QLineEdit):
     def __init__(self, *a, **kw):
@@ -41,6 +43,7 @@ class LongLongLineEdit(QtGui.QLineEdit):
         self.setText(val)
 
     value = QtCore.Property(long, getValue, setValue, user=True)
+
 
 class NBTEditorItemDelegate(QtGui.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
@@ -61,11 +64,22 @@ class NBTEditorItemDelegate(QtGui.QStyledItemDelegate):
         else:
             super(NBTEditorItemDelegate, self).setModelData(editor, model, index)
 
+
 class NBTDataChangeCommand(SimpleRevisionCommand):
     pass
 
+
 @registerCustomWidget
 class NBTEditorWidget(QtGui.QWidget):
+    """
+    NBT Editor widget. Suitable for use as a custom QTreeView class in QDesigner.
+
+    Attributes:
+    -----------
+
+    editorSession: EditorSession
+
+    """
     undoCommandPrefixText = ""
     editorSession = weakrefprop()
     proxyModel = None
@@ -74,6 +88,8 @@ class NBTEditorWidget(QtGui.QWidget):
     def __init__(self, *args, **kwargs):
         super(NBTEditorWidget, self).__init__(*args, **kwargs)
         self.model = None
+        """:type : EditorSession"""
+        self.editorSession = None
         self.treeView = QtGui.QTreeView()
         self.treeView.setAlternatingRowColors(True)
         self.treeView.clicked.connect(self.itemClicked)
@@ -107,7 +123,7 @@ class NBTEditorWidget(QtGui.QWidget):
             self.model = None
             return
 
-        self.model = NBTTreeModel(rootTagRef.rootTag)
+        self.model = NBTTreeModel(rootTagRef.rootTag, self.editorSession.worldEditor.blocktypes)
         expanded = []
         current = None
         if keepExpanded and self.proxyModel:
@@ -168,8 +184,8 @@ class NBTEditorWidget(QtGui.QWidget):
                 row = item.childCount()
                 self.model.insertRow(row, index)
                 newItemIndex = self.model.index(row, 1, index)
-                #self.treeView.setCurrentIndex(self.proxyModel.mapFromSource(newItemIndex))
-                #self.treeView.edit(self.proxyModel.mapFromSource(newItemIndex))
+                # self.treeView.setCurrentIndex(self.proxyModel.mapFromSource(newItemIndex))
+                # self.treeView.edit(self.proxyModel.mapFromSource(newItemIndex))
 
             if item.isCompound or (item.isList and not item.tag.list_type):
                 self.indexAddingTo = index
@@ -187,8 +203,8 @@ class NBTEditorWidget(QtGui.QWidget):
         row = item.childCount()
         self.model.insertRow(row, self.indexAddingTo, tagID)
         newItemIndex = self.model.index(row, 0 if item.isCompound else 1, self.indexAddingTo)
-        #self.treeView.setCurrentIndex(self.proxyModel.mapFromSource(newItemIndex))
-        #self.treeView.edit(self.proxyModel.mapFromSource(newItemIndex))
+        # self.treeView.setCurrentIndex(self.proxyModel.mapFromSource(newItemIndex))
+        # self.treeView.edit(self.proxyModel.mapFromSource(newItemIndex))
         self.indexAddingTo = None
 
     def addByte(self):

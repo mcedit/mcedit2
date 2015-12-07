@@ -89,14 +89,16 @@ class NBTTreeCompound(object):
         tag = self.tag
         summary = ""
 
-        if "id" in tag:
-            summary += str(tag["id"].value)
-            if "Pos" in tag:
-                x, y, z = tag["Pos"]
-                summary += " at %0.3f, %0.3f, %0.3f" % (x.value, y.value, z.value)
+        # Entity?
+        if "Pos" in tag:
+            x, y, z = tag["Pos"]
+            summary = "%0.3f, %0.3f, %0.3f" % (x.value, y.value, z.value)
+            if "id" in tag:
+                summary = str(tag["id"].value) + " at " + summary
 
         if not summary:
             return "%s items" % len(tag)
+
         return summary
 
     def insertChildren(self, position, count, tagID):
@@ -221,6 +223,7 @@ class NBTTreeList(object):
 
         return path
 
+
 class NBTTreeItem(object):
     isCompound = False
     isList = False
@@ -282,14 +285,22 @@ class NBTTreeItem(object):
             return []
         return self.parentItem.nbtPath(self)
 
-class NBTTreeModel(QtCore.QAbstractItemModel):
 
+class NBTTreeModel(QtCore.QAbstractItemModel):
     NBTPathRole = QtCore.Qt.UserRole + 1
     NBTTagTypeRole = NBTPathRole + 1
 
-    def __init__(self, rootTag, parent=None):
-        super(NBTTreeModel, self).__init__(parent)
+    def __init__(self, rootTag, blocktypes):
+        """
 
+        Parameters
+        ----------
+        rootTag : mceditlib.nbt.TAG_Compound
+        blocktypes : mceditlib.blocktypes.BlockTypeSet
+
+        """
+        super(NBTTreeModel, self).__init__()
+        self.blocktypes = blocktypes
         self.rootItem = MakeNBTTreeItem(rootTag, None)
         self.rootTag = rootTag
         self.allowNameChanges = True
@@ -332,6 +343,18 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
                 return self.removeIcon if item is not self.rootItem else None
 
         if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
+            if column == 0:
+                if item.tag.tagID == nbt.ID_COMPOUND:
+                    nameTag = item.tag.get("id")
+                    if nameTag and nameTag.tagID == nbt.ID_SHORT:
+                        # Item ID?
+                        itemTypes = self.blocktypes.itemTypes
+                        try:
+                            itemType = itemTypes[nameTag.value]
+                            return itemType.internalName
+                        except KeyError:
+                            pass
+
             return item.data(column)
 
         if role == self.NBTPathRole:
