@@ -183,8 +183,10 @@ class ReplaceValueTagType(object):
 class NBTReplaceCommand(SimpleRevisionCommand):
     pass
 
+
 class FindReplaceNBTResults(QtGui.QWidget, Ui_findNBTResults):
     pass
+
 
 class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
     def __init__(self, editorSession, dialog):
@@ -197,7 +199,7 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
         self.resultsWidget.setupUi(self.resultsWidget)
 
         self.resultsDockWidget = MCEDockWidget("NBT Search", objectName="nbtSearch")
-        self.resultsDockWidget.setWidget(self)
+        self.resultsDockWidget.setWidget(self.resultsWidget)
         self.resultsDockWidget.hide()
 
         self.resultsModel = NBTResultsModel()
@@ -389,7 +391,7 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
                     # Finding entities only
                     self.resultsModel.addEntry(tagName="id",
                                                value=entity.id,
-                                               id=entity.id,
+                                               ID=entity.id,
                                                path=[],
                                                position=entity.Position,
                                                uuid=uuid,
@@ -405,7 +407,7 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
 
                         self.resultsModel.addEntry(tagName=name,
                                                    value=value,
-                                                   id=entity.id,
+                                                   ID=entity.id,
                                                    path=path,
                                                    position=entity.Position,
                                                    uuid=uuid,
@@ -422,7 +424,7 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
                     # Finding tile entities only
                     self.resultsModel.addEntry(tagName="id",
                                                value=tileEntity.id,
-                                               id=tileEntity.id,
+                                               ID=tileEntity.id,
                                                path=[],
                                                position=tileEntity.Position,
                                                uuid=None,
@@ -437,7 +439,7 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
 
                         self.resultsModel.addEntry(tagName=name,
                                                    value=value,
-                                                   id=tileEntity.id,
+                                                   ID=tileEntity.id,
                                                    path=path,
                                                    position=tileEntity.Position,
                                                    uuid=None,
