@@ -15,6 +15,7 @@ from mcedit2.ui.inspector import Ui_inspectorWidget
 from mcedit2.util.commandblock import ParseCommand
 from mcedit2.widgets.inspector.tileentities.chest import ChestEditorWidget, DispenserEditorWidget, HopperEditorWidget
 from mcedit2.widgets.inspector.tileentities.command import CommandBlockEditorWidget
+from mceditlib.geometry import Vector
 from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
@@ -59,6 +60,7 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
 
         self.tileEntity = None
         self.entity = None
+        self.blockPos = None
 
         self.currentChunk = None
 
@@ -78,7 +80,31 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
         self.lightPopulatedInput.toggled.connect(self.lightPopulatedDidChange)
         self.inhabitedTimeInput.valueChanged.connect(self.inhabitedTimeDidChange)
         self.updateTimeInput.valueChanged.connect(self.updateTimeDidChange)
-    
+
+        self.blockXSpinBox.valueChanged.connect(self.blockXChanged)
+        self.blockYSpinBox.valueChanged.connect(self.blockYChanged)
+        self.blockZSpinBox.valueChanged.connect(self.blockZChanged)
+
+    def _changed(self, value, idx):
+        if self.blockPos is None:
+            return
+
+        if self.blockPos[0] == value:
+            return
+
+        pos = list(self.blockPos)
+        pos[idx] = value
+        self.inspectBlock(Vector(*pos))
+
+    def blockXChanged(self, value):
+        self._changed(value, 0)
+
+    def blockYChanged(self, value):
+        self._changed(value, 1)
+
+    def blockZChanged(self, value):
+        self._changed(value, 2)
+
     def hide(self, *args, **kwargs):
         super(InspectorWidget, self).hide(*args, **kwargs)
         self.overlayNode.visible = False
@@ -94,13 +120,14 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
 
     def inspectBlock(self, pos):
         self.clearVisuals()
+        self.blockPos = pos
         self.entity = None
 
         self.stackedWidget.setCurrentWidget(self.pageInspectBlock)
         x, y, z = pos
-        self.blockXLabel.setText(str(x))
-        self.blockYLabel.setText(str(y))
-        self.blockZLabel.setText(str(z))
+        self.blockXSpinBox.setValue(x)
+        self.blockYSpinBox.setValue(y)
+        self.blockZSpinBox.setValue(z)
 
         blockID = self.editorSession.currentDimension.getBlockID(x, y, z)
         blockData = self.editorSession.currentDimension.getBlockData(x, y, z)
@@ -123,6 +150,7 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
             self.blockEditorWidget = None
 
         self.tileEntity = self.editorSession.currentDimension.getTileEntity(pos)
+        log.info("Inspecting TileEntity %s at %s", self.tileEntity, pos)
 
         if self.tileEntity is not None:
             editorClass = tileEntityEditorClasses.get(self.tileEntity.id)
@@ -157,6 +185,7 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
                     visuals = CommandVisuals((x, y, z), commandObj)
                     self.commandBlockVisualsNode = visuals
                     self.overlayNode.addChild(visuals)
+                    self.editorSession.updateView()
                 except Exception as e:
                     log.warn("Failed to parse command.", exc_info=1)
 
