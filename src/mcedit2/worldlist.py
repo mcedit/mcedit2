@@ -11,6 +11,7 @@ from mcedit2.ui.world_list import Ui_worldList
 from mcedit2.util import profiler, minecraftinstall
 from mcedit2.util.minecraftinstall import MinecraftInstallsDialog
 from mcedit2.util.screen import centerWidgetInScreen
+from mcedit2.util.settings import Settings
 from mcedit2.util.worldloader import LoaderTimer
 
 from mcedit2.widgets.layout import Column, Row, setWidgetError
@@ -185,6 +186,8 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
         self.backupButton.setEnabled(False)
         self.configureButton.clicked.connect(self.configureClicked)
 
+        self.chooseSavesFolderButton.clicked.connect(self.chooseSavesFolder)
+
         centerWidgetInScreen(self, 0.75)
 
         delegate = WorldListItemDelegate()
@@ -242,6 +245,20 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
 
         for index, instance in enumerate(minecraftinstall.GetInstalls().instances):  # xxx instanceID?
             self.savesFolderComboBox.addItem(instance.name, (instance.saveFileDir, index))
+
+    def chooseSavesFolder(self):
+        startingDir = Settings().value("open_world_dialog/starting_saves_folder_dir", os.path.expanduser(b"~"))
+        result = QtGui.QFileDialog.getExistingDirectory(
+            self, self.tr("Choose Saves Folder"), startingDir
+        )
+
+        if result:
+            filename = result[0]
+            if filename:
+                dirname, basename = os.path.split(filename)
+                Settings().setValue("open_world_dialog/starting_saves_folder_dir", dirname)
+                self.savesFolderComboBox.addItem(os.sep.join(dirname.split(os.sep)[-3:]),
+                                                 (filename, None))
 
     def reloadRecentWorlds(self):
         recentWorlds = RecentFilesSetting.value()
