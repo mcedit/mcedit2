@@ -176,7 +176,6 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
         self.showListAgainInput.setEnabled(False)
 
         self.viewButton.clicked.connect(self.viewClicked)
-        self.viewButton.setEnabled(False)
 
         self.openWorldButton.clicked.connect(self.openWorldClicked)
 
