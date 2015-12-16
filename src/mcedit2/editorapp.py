@@ -363,7 +363,7 @@ class MCEditApp(QtGui.QApplication):
 
         if len(self.commandLineWorlds):
             for filename in self.commandLineWorlds:
-                self.loadFile(filename)
+                self.loadFile(filename, self.args.view)
         else:
             self.showWorldList()
 
@@ -439,10 +439,12 @@ class MCEditApp(QtGui.QApplication):
         parser = argparse.ArgumentParser()
         parser.add_argument("filename", nargs="*",
                             help="A list of filenames to open")
-        parser.add_argument("-resetPrefs", type=bool,
+        parser.add_argument("-resetPrefs", action='store_true',
                             help="Reset MCEdit preferences")
         parser.add_argument("-eval", type=str,
                             help="Code to evaluate in context of current session")
+        parser.add_argument("-view", action='store_true',
+                            help="Open the given filenames read-only")
 
         self.args = parser.parse_args(argv[1:])
 
