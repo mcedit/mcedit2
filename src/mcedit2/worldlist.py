@@ -248,17 +248,16 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
 
     def chooseSavesFolder(self):
         startingDir = Settings().value("open_world_dialog/starting_saves_folder_dir", os.path.expanduser(b"~"))
-        result = QtGui.QFileDialog.getExistingDirectory(
+        filename = QtGui.QFileDialog.getExistingDirectory(
             self, self.tr("Choose Saves Folder"), startingDir
         )
 
-        if result:
-            filename = result[0]
-            if filename:
-                dirname, basename = os.path.split(filename)
-                Settings().setValue("open_world_dialog/starting_saves_folder_dir", dirname)
-                self.savesFolderComboBox.addItem(os.sep.join(dirname.split(os.sep)[-3:]),
-                                                 (filename, None))
+        if filename:
+            dirname, basename = os.path.split(filename)
+            displayName = os.sep.join(dirname.split(os.sep)[-3:])
+            log.info("Adding saves folder %s (%s)", filename, displayName)
+            Settings().setValue("open_world_dialog/starting_saves_folder_dir", dirname)
+            self.savesFolderComboBox.addItem(displayName, (filename, None))
 
     def reloadRecentWorlds(self):
         recentWorlds = RecentFilesSetting.value()
