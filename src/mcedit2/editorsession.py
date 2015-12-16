@@ -121,6 +121,7 @@ class EditorSession(QtCore.QObject):
             progress.progressCount = 0
 
         QtCore.QObject.__init__(self)
+        self.readonly = readonly
         self.undoStack = MCEUndoStack()
         self.lastSaveIndex = 0
 
@@ -169,7 +170,8 @@ class EditorSession(QtCore.QObject):
                 NotImplementedYet()
                 raise IOError("Uh-oh")
 
-        self.worldEditor.requireRevisions()
+        if not readonly:
+            self.worldEditor.requireRevisions()
 
         progress("Creating menus...")
 
@@ -1144,7 +1146,7 @@ class EditorSession(QtCore.QObject):
     # --- EditorTab handling ---
 
     def tabCaption(self):
-        return util.displayName(self.filename)
+        return util.displayName(self.filename) + self.tr(" (read-only)") if self.readonly else u""
 
     def closeTab(self):
         if self.worldEditor is None:
