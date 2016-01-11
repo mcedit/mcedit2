@@ -16,6 +16,7 @@ from mcedit2.util.glutils import DisplayList
 
 log = logging.getLogger(__name__)
 
+DEBUG_NO_DISPLAYLISTS = False
 
 class RenderNode(object):
 
@@ -80,8 +81,14 @@ class RenderNode(object):
     def getList(self):
         return self.displayList.getList()
 
-    def callList(self):
-        self.displayList.call()
+    if DEBUG_NO_DISPLAYLISTS:
+        def callList(self):
+            with self.enterStates():
+                self.drawSelf()
+                self.debugDrawChildren()
+    else:
+        def callList(self):
+            self.displayList.call()
 
     def compile(self):
         if self.childNeedsRecompile:
@@ -91,7 +98,9 @@ class RenderNode(object):
 
         for state in self.sceneNode.states:
             state.compile()
-        self.displayList.compile(self.draw)
+
+        if not DEBUG_NO_DISPLAYLISTS:
+            self.displayList.compile(self.draw)
 
     @contextmanager
     def enterStates(self):
@@ -104,11 +113,13 @@ class RenderNode(object):
                 state.exit()
 
     def draw(self):
+        log.debug("Compiling renderNode for %s", self.sceneNode)
+
         with self.enterStates():
             self.drawSelf()
-            self.drawChildren()
+            self.callChildren()
 
-    def drawChildren(self):
+    def callChildren(self):
         if len(self.children):
             lists = [node.getList()
                      for node in self.children
@@ -120,6 +131,12 @@ class RenderNode(object):
                 except GL.error as e:
                     log.exception("Error calling child lists: %s", e)
                     raise
+
+    def debugDrawChildren(self):
+        if len(self.children):
+            for node in self.children:
+                node.callList()
+
 
     def drawSelf(self):
         pass
