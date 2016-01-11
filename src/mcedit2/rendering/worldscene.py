@@ -41,8 +41,6 @@ def layerProperty(layer, default=True):
 
     return property(_get, _set)
 
-DEBUG_WORLDMESH_LISTS = "-debuglists" in sys.argv
-
 
 class SceneUpdateTask(object):
     showRedraw = True
