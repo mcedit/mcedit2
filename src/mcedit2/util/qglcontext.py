@@ -43,6 +43,7 @@ def validateWidgetQGLContext(widget):
     detailedText += "Hardware Accelerated: %s\n" % (actualFormat.directRendering(), )
     detailedText += "Depth buffer: %s, %s\n" % (actualFormat.depth(), actualFormat.depthBufferSize())
     detailedText += "Double buffer: %s\n" % (actualFormat.doubleBuffer(), )
+    detailedText += "Rendering profile: %s\n" % (actualFormat.profile(), )
     detailedText += "\n"
     detailedText += "Driver info:\n"
     detailedText += "GL_VERSION: %s (%s, %s)\n" % (version, major, minor)
