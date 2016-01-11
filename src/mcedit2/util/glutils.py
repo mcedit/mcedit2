@@ -162,7 +162,7 @@ class DisplayList(object):
         return self._list
 
     def call(self):
-        assert self._list
+        assert self._list is not None
         GL.glCallLists(self._list)
 
 
