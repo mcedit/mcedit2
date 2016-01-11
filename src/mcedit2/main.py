@@ -46,6 +46,8 @@ if "-log" in sys.argv:
 if "-debug" not in sys.argv:
     OpenGL.ERROR_CHECKING = False
 else:
+    OpenGL.ERROR_LOGGING = True
+    OpenGL.CONTEXT_CHECKING = True
     while "-debug" in sys.argv:
         sys.argv.remove('-debug')
     print("GL Errors enabled!")
