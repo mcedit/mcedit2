@@ -198,6 +198,8 @@ def excepthook(exc_type, exc_value, exc_tb):
     #     msg.setText(text)
     #     msg.exec_()
     # sys.exit(-1)
+    if isinstance(exc_value, KeyboardInterrupt):
+        sys.exit(-1)
 
     from mcedit2.dialogs.error_dialog import showErrorDialog
     showErrorDialog("Unhandled Exception", (exc_type, exc_value, exc_tb), fatal=True)
