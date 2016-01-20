@@ -13,7 +13,7 @@ import os
 
 
 class AnvilWorldFolder(object):
-    def __init__(self, filename, create=False):
+    def __init__(self, filename, create=False, readonly=False):
         '''
 
         :type filename: str or unicode
@@ -29,6 +29,7 @@ class AnvilWorldFolder(object):
             raise IOError("AnvilWorldFolder: Not a folder: %s" % filename)
 
         self.filename = filename
+        self.readonly = readonly
         self.regionFiles = {}
         self._dimensionNames = set(self._findDimensions())
         self._regionPositionsByDim = defaultdict(set)
@@ -158,7 +159,7 @@ class AnvilWorldFolder(object):
         if not os.path.exists(path):
             self._dimensionNames.add(dimName)
             self._regionPositionsByDim[dimName].add((rx, rz))
-        regionFile = RegionFile(path)
+        regionFile = RegionFile(path, self.readonly)
         self.regionFiles[rx, rz, dimName] = regionFile
         return regionFile
 

@@ -43,15 +43,18 @@ class RegionFile(object):
     VERSION_GZIP = 1
     VERSION_DEFLATE = 2
 
-    def __init__(self, path):
+    def __init__(self, path, readonly=False):
         self.path = path
         newFile = False
         if not os.path.exists(path):
+            if readonly:
+                raise IOError("Region file not found: %r" % path)
             file(path, "w").close()
             newFile = True
 
         filesize = os.path.getsize(path)
-        with file(self.path, "rb+") as f:
+        mode = "rb" if readonly else "rb+"
+        with file(self.path, mode) as f:
 
             if newFile:
                 filesize = self.SECTOR_BYTES * 2

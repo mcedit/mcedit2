@@ -444,7 +444,7 @@ class AnvilWorldAdapter(object):
             raise IOError('File is not a Minecraft Anvil world')
 
         if readonly:
-            self.revisionHistory = AnvilWorldFolder(filename)
+            self.revisionHistory = AnvilWorldFolder(filename, readonly=True)
             self.selectedRevision = self.revisionHistory
         else:
             self.revisionHistory = RevisionHistory(filename, resume)
