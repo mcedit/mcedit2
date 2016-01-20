@@ -564,18 +564,25 @@ class WorldView(QGLWidget):
             return
         super(WorldView, self).glDraw(*args, **kwargs)
 
+    shouldRender = True
     def paintGL(self):
-        with profiler.context("paintGL: %s" % self):
-            self.frameSamples.append(time.time())
-            if self.textureAtlas:
-                self.textureAtlas.update()
+        if not self.shouldRender:
+            return
+        try:
+            with profiler.context("paintGL: %s" % self):
+                self.frameSamples.append(time.time())
+                if self.textureAtlas:
+                    self.textureAtlas.update()
 
-            with profiler.context("renderScene"):
-                rendernode.renderScene(self.renderGraph)
+                with profiler.context("renderScene"):
+                    rendernode.renderScene(self.renderGraph)
 
-        self.doneCurrent()
-        self.bufferSwapDone = False
-        self.doSwapBuffers.emit()
+            self.doneCurrent()
+            self.bufferSwapDone = False
+            self.doSwapBuffers.emit()
+        except:
+            self.shouldRender = False
+            raise
 
     def swapDone(self):
         self.bufferSwapDone = True
