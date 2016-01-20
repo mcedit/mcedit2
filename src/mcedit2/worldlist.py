@@ -201,7 +201,7 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
 
         self._updateInstalls()
 
-        self.savesFolderComboBox.currentIndexChanged.connect(self.reloadList)
+        self.savesFolderComboBox.currentIndexChanged.connect(self.savesFolderChanged)
         self.minecraftInstallBox.currentIndexChanged.connect(minecraftinstall.currentInstallOption.setValue)
         self.minecraftVersionBox.currentIndexChanged[str].connect(minecraftinstall.currentVersionOption.setValue)
         self.resourcePackBox.currentIndexChanged.connect(self.resourcePackChanged)
@@ -287,6 +287,15 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
 
         self.recentWorldsButton.setMenu(self.recentWorldsMenu)
 
+    def savesFolderChanged(self):
+        self.reloadList()
+        if len(self.worldListModel.worlds):
+            self.worldListView.setFocus()
+            self.worldListView.setCurrentIndex(self.worldListModel.createIndex(0, 0))
+            self.showWorld(self.worldListModel.worlds[0][0])
+        else:
+            self.removeWorldView()
+
     def reloadList(self):
         try:
             itemData = self.savesFolderComboBox.itemData(self.savesFolderComboBox.currentIndex())
@@ -308,11 +317,6 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
             self.worldListModel = WorldListModel(worldFiles)
             self.worldListView.setModel(self.worldListModel)
 
-            if len(self.worldListModel.worlds):
-                self.worldListView.setFocus()
-                self.worldListView.setCurrentIndex(self.worldListModel.createIndex(0, 0))
-                self.showWorld(self.worldListModel.worlds[0][0])
-
         except EnvironmentError as e:
             setWidgetError(self, e)
 
@@ -323,9 +327,7 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
 
     def worldListItemClicked(self, index):
         filename = index.data()
-        if filename != self._currentFilename:
-            self._currentFilename = filename
-            self.showWorld(filename)
+        self.showWorld(filename)
 
     def worldListItemDoubleClicked(self, index):
         row = index.row()
@@ -333,6 +335,10 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
         self.editWorldClicked.emit(self.worldListModel.worlds[row][0])
 
     def showWorld(self, filename):
+        if filename == self._currentFilename:
+            return
+        self._currentFilename = filename
+
         self.removeWorldView()
 
         try:
