@@ -201,6 +201,10 @@ class UnionBox(CombinationBox):
         right = self.right.box_mask(box)
         if left is None and right is None:
             return None
+        if left is None:
+            return right
+        if right is None:
+            return left
 
         return left | right
 
