@@ -36,7 +36,7 @@ log = logging.getLogger(__name__)
 class gl(object):
     @classmethod
     def ResetGL(cls):
-        DisplayList.destroyAllLists()
+        DisplayList.deallocAllLists()
 
     @classmethod
     @contextmanager
@@ -120,12 +120,12 @@ class DisplayList(object):
         allDisplayLists.append(weakref.ref(self, _delete))
 
     @classmethod
-    def destroyAllLists(self):
+    def deallocAllLists(self):
         allLists = []
         for listref in allDisplayLists:
             list = listref()
             if list:
-                list.destroy()
+                list.dealloc()
                 allLists.append(listref)
 
         allDisplayLists[:] = allLists
@@ -133,7 +133,7 @@ class DisplayList(object):
     def invalidate(self):
         self.dirty = True
 
-    def destroy(self):
+    def dealloc(self):
         if self._list is not None:
             GL.glDeleteLists(self._list, 1)
             self._list = None

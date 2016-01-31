@@ -394,7 +394,7 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
         QtGui.qApp.processEvents()  # force repaint of stackedWidget to hide old error widget
         if self.worldView:
             log.info("Removing view from WorldListWidget")
-            self.worldView.destroy()
+            self.worldView.dealloc()
             self.stackedWidget.removeWidget(self.worldView)
             self.worldView.setParent(None)
             self.worldView = None

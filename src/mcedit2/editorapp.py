@@ -644,7 +644,7 @@ class MCEditApp(QtGui.QApplication):
                 self.removeSessionDockWidgets()
                 self.undoGroup.removeStack(session.undoStack)
                 self.sessions.remove(session)
-                session.destroy()
+                session.dealloc()
                 gc.collect()
         else:
             self.tabWidget.removeTab(index)

@@ -141,10 +141,10 @@ class RenderNode(object):
     def drawSelf(self):
         pass
 
-    def destroy(self):
+    def dealloc(self):
         for child in self.children:
-            child.destroy()
-        self.displayList.destroy()
+            child.dealloc()
+        self.displayList.dealloc()
 
 """
 UNUSED??
@@ -238,7 +238,7 @@ def updateChildren(renderNode):
 
     for node in orphans:
         renderNode.removeChild(node)
-        node.destroy()
+        node.dealloc()
 
     # Find sceneNode children who do not have a renderNode as a child of this renderNode
     for index, sceneChild in enumerate(sceneNode.children):

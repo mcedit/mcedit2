@@ -490,10 +490,10 @@ class EditorSession(QtCore.QObject):
         if hasattr(progress, 'progressCount') and progress.progressCount != progressMax:
             log.info("Update progressMax to %d, please.", progress.progressCount)
 
-    def destroy(self):
+    def dealloc(self):
         self.worldEditor.close()
         self.worldEditor = None
-        self.editorTab.destroy()
+        self.editorTab.dealloc()
 
         # Break all reference cycles just to be absolutely sure.
         self.__dict__.clear()
@@ -1318,12 +1318,12 @@ class EditorTab(QtGui.QWidget):
         spacer.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
         self.viewButtonToolbar.addWidget(spacer)
 
-    def destroy(self, *a, **kw):
+    def dealloc(self, *a, **kw):
         self.editorSession = None
         for view in self.views:
-            view.destroy()
+            view.dealloc()
 
-        super(EditorTab, self).destroy(*a, **kw)
+        super(EditorTab, self).dealloc(*a, **kw)
 
     def setDayTime(self, value):
         if self.editorSession.textureAtlas:

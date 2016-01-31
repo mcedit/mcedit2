@@ -188,11 +188,11 @@ class WorldView(QGLWidget):
 
         self.setDimension(dimension)
 
-    def destroy(self, *a, **kw):
-        self.makeCurrent()
-        self.renderGraph.destroy()
+    def dealloc(self):
+        log.info("Deallocating GL resources for worldview %s", self)
         self.bufferSwapThread.quit()
-        super(WorldView, self).destroy(*a, **kw)
+        self.makeCurrent()
+        self.renderGraph.dealloc()
 
     def __str__(self):
         try:
@@ -218,7 +218,7 @@ class WorldView(QGLWidget):
         self.dimension = dimension
         self.makeCurrent()
         if self.renderGraph:
-            self.renderGraph.destroy()
+            self.renderGraph.dealloc()
         self.sceneGraph = self.createSceneGraph()
         self.renderGraph = rendernode.createRenderNode(self.sceneGraph)
         self.resetLoadOrder()
