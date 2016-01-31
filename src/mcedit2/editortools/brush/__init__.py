@@ -133,6 +133,9 @@ class BrushTool(EditorTool):
         self.toolWidget.xSpinSlider.setValue(self.brushSize[0])
         self.toolWidget.ySpinSlider.setValue(self.brushSize[1])
         self.toolWidget.zSpinSlider.setValue(self.brushSize[2])
+        self.toolWidget.hoverSpinSlider.setValue(1)
+
+        self.dragPoints = []
 
     @property
     def hoverDistance(self):
@@ -173,16 +176,24 @@ class BrushTool(EditorTool):
         self.updateCursor()
 
     def mousePress(self, event):
-        pos = event.blockPosition
-        vector = (event.blockFace.vector * self.hoverDistance)
-        command = BrushCommand(self.editorSession, [pos + vector], self.options)
-        self.editorSession.pushCommand(command)
+        self.dragPoints[:] = []
 
     def mouseMove(self, event):
         if event.blockPosition:
             vector = (event.blockFace.vector * self.hoverDistance)
             assert isinstance(vector, Vector), "vector isa %s" % type(vector)
             self.cursorTranslate.translateOffset = event.blockPosition + vector
+
+    def mouseDrag(self, event):
+        pos = event.blockPosition
+        vector = (event.blockFace.vector * self.hoverDistance)
+        self.dragPoints.append(pos + vector)
+
+    def mouseRelease(self, event):
+        dragPoints = sorted(set(self.dragPoints))
+        self.dragPoints[:] = []
+        command = BrushCommand(self.editorSession, dragPoints, self.options)
+        self.editorSession.pushCommand(command)
 
     @property
     def options(self):
