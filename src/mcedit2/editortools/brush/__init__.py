@@ -70,11 +70,11 @@ class BrushCommand(SimplePerformCommand):
     def _perform(self):
         yield 0, len(self.points), "Applying {0} brush...".format(self.brushMode.name)
         try:
-            #xxx combine selections
             selections = [self.brushShape.createShapedSelection(self.brushMode.brushBoxForPoint(point, self.options),
                                                                 self.editorSession.currentDimension)
                           for point in self.points]
-            self.brushMode.applyToSelections(self, selections)
+            selection = reduce(lambda a, b: a | b, selections)
+            self.brushMode.applyToSelection(self, selection)
         except NotImplementedError:
             for i, point in enumerate(self.points):
                 f = self.brushMode.applyToPoint(self, point)
