@@ -51,6 +51,8 @@ def extract_tb(tb, limit=None):
         self = f.f_locals.get('self')
         try:
             selfstr = self and "(self is a {0})".format(self.__class__.__name__) or " "
+            if hasattr(self, 'name'):
+                selfstr += "(named %s)" % self.name
         except:
             selfstr = " "
         traceback.linecache.checkcache(filename)
