@@ -62,52 +62,60 @@ class EditorTool(QtCore.QObject):
         """
         Initialize toolWidget here.
 
-        :type editorSession: EditorSession
+        Parameters
+        ----------
+
+        editorSession: EditorSession
         """
         super(EditorTool, self).__init__(*args, **kwargs)
         self.editorSession = editorSession
 
     def mousePress(self, event):
         """
-        :type event: QMouseEvent
-        event has been augmented with these attributes:
+        Parameters
+        ----------
 
+        event: QMouseEvent
+            event has been augmented with these attributes:
             point, ray, blockPosition, blockFace
         """
 
     def mouseMove(self, event):
         """
-        :type event: QMouseEvent
 
-        event has been augmented
+        Parameters
+        ----------
+
+        event: QMouseEvent
+            event has been augmented
         """
 
     def mouseDrag(self, event):
         """
-        :type event: QMouseEvent
+        Parameters
+        ----------
 
-        event has been augmented
+        event: QMouseEvent
+            event has been augmented
         """
 
     def mouseRelease(self, event):
         """
-        :type event: QMouseEvent
+        Parameters
+        ----------
 
-        event has been augmented
+        event: QMouseEvent
+            event has been augmented
         """
 
     def toolActive(self):
         """
         Called when this tool is selected.
-        :return:
-        :rtype:
         """
 
     def toolInactive(self):
         """
         Called when a different tool is selected.
-        :return:
-        :rtype:
         """
 
     toolPicked = QtCore.Signal(object)
