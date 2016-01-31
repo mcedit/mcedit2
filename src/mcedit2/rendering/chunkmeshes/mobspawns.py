@@ -69,7 +69,8 @@ class MobSpawnsBlockMesh(ChunkMeshBase):
 
             # fuck it
             validBelowBlocks = normalCube & (blocks != blocktypes['minecraft:bedrock'].ID)
-            validBelowBlocks &= (blocks != blocktypes['minecraft:barrier'].ID)
+            if 'minecraft:barrier' in blocktypes:
+                validBelowBlocks &= (blocks != blocktypes['minecraft:barrier'].ID)
 
             lowBlockLight = blockLight < 8
             lowNightLight = lowBlockLight & (skyLight < 8)
