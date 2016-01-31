@@ -113,8 +113,6 @@ class RenderNode(object):
                 state.exit()
 
     def draw(self):
-        log.debug("Compiling renderNode for %s", self.sceneNode)
-
         with self.enterStates():
             self.drawSelf()
             self.callChildren()
