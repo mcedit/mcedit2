@@ -16,10 +16,15 @@ from mcedit2.util.showprogress import MCEProgressDialog
 
 log = logging.getLogger(__name__)
 
+_errorShown = False
+
 
 def showErrorDialog(text, tb, fatal):
+    global _errorShown
+    _errorShown = True
     dialog = ErrorDialog(text, tb, fatal)
     dialog.exec_()
+    _errorShown = False
 
 
 class ErrorDialog(QtGui.QDialog, Ui_errorDialog):
