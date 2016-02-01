@@ -224,7 +224,7 @@ class UnionBox(CombinationBox):
 
     def contains_coords(self, x, y, z):
         contains = [s.contains_coords(x, y, z) for s in self.selections]
-        return reduce(self.oper, contains, False)
+        return reduce(self.oper, contains)
 
     def box_mask(self, box):
         masks = [s.box_mask(box) for s in self.selections]
@@ -246,27 +246,31 @@ class IntersectionBox(CombinationBox):
     boundsmaxoper = min
 
     def contains_coords(self, x, y, z):
-        left = self.left.contains_coords(x, y, z)
-        if not left:
-            return False
-
-        right = self.right.contains_coords(x, y, z)
-        return self.oper(left, right)
+        contains = [s.contains_coords(x, y, z) for s in self.selections]
+        return reduce(self.oper, contains)
 
     def box_mask(self, box):
-        left = self.left.box_mask(box)
-        if left is None:
+        masks = [s.box_mask(box) for s in self.selections]
+        if None in masks:
             return None
-        right = self.right.box_mask(box)
-        if right is None:
-            return None
-        return self.oper(left, right)
+
+        m = masks.pop()
+
+        while len(masks):
+            numpy.logical_and(m, masks.pop(), m)
+
+        return m
 
 
 class DifferenceBox(CombinationBox):
-    oper = lambda a, b: a & (~b)
-    boundsminoper = lambda a, b: a
-    boundsmaxoper = lambda a, b: a
+    def oper(self, a, b):
+        return a & (~b)
+
+    def boundsmaxoper(self, a, b):
+        return a
+
+    def boundsmaxoper(self, a, b):
+        return a
 
     def contains_coords(self, x, y, z):
         left = self.left.contains_coords(x, y, z)
