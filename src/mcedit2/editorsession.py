@@ -1323,8 +1323,6 @@ class EditorTab(QtGui.QWidget):
         for view in self.views:
             view.dealloc()
 
-        super(EditorTab, self).dealloc(*a, **kw)
-
     def setDayTime(self, value):
         if self.editorSession.textureAtlas:
             self.editorSession.textureAtlas.dayTime = value
