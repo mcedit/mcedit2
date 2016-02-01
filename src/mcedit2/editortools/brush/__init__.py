@@ -179,7 +179,10 @@ class BrushTool(EditorTool):
 
     def mousePress(self, event):
         self.dragPoints[:] = []
-
+        if event.blockPosition:
+            vector = (event.blockFace.vector * self.hoverDistance)
+            self.dragPoints.append(event.blockPosition + vector)
+            
     def mouseMove(self, event):
         if event.blockPosition:
             vector = (event.blockFace.vector * self.hoverDistance)
