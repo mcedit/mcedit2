@@ -331,6 +331,9 @@ def getGLMaximumTextureSize():
     return _maxSize
 
 def _getMaxSize():
+    if QtOpenGL.QGLContext.currentContext() is None:
+        pbuf = QtOpenGL.QGLPixelBuffer(100, 100)
+        pbuf.makeCurrent()
     size = 16384
     while size > 0:
         size /= 2
