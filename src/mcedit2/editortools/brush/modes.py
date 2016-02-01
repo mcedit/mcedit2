@@ -42,6 +42,16 @@ class BrushMode(QtCore.QObject):
         combining multiple selections.
 
         Return a progress iterator.
+
+        Parameters
+        ----------
+
+        command: BrushCommand
+        selection: SelectionBox
+
+        Returns
+        -------
+        progress: Iterable
         """
         raise NotImplementedError
 
@@ -141,15 +151,40 @@ class Biome(BrushMode):
         return self.optionsWidget
 
     def applyToSelection(self, command, selection):
-        """
-
-        :type command: BrushCommand
-        """
         # TODO: progress bar, biome fill
         biomeID = command.options['biomeID']
-        for x, _, z in selection.positions:
-            yield 0, 0, "Applying biome brush"
-            command.editorSession.currentDimension.setBiomeID(x, z, biomeID)
+        dim = command.editorSession.currentDimension
+        count = selection.chunkCount
+        for i, (cx, cz) in enumerate(selection.chunkPositions()):
+            yield i, count, "Applying biome brush"
+
+            if not dim.containsChunk(cx, cz):
+                continue
+
+            chunk = dim.getChunk(cx, cz)
+            touched = False
+            mask = None
+            for cy in selection.sectionPositions(cx, cz):
+                section = chunk.getSection(cy)
+                if section is None:
+                    continue
+
+                touched = True
+                sectionMask = selection.section_mask(cx, cy, cz)
+
+                # collapse by column
+                sectionMask = sectionMask.any(0)
+
+                if mask is None:
+                    mask = sectionMask
+                else:
+                    mask |= sectionMask
+
+            if touched:
+                z, x = mask.nonzero()
+                chunk.Biomes[z, x] = biomeID
+
+                chunk.dirty = touched
 
     def brushBoxForPoint(self, point, options):
         x, y, z = options['brushSize']
