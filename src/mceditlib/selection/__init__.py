@@ -606,20 +606,19 @@ class ShapeFuncSelection(BoundingBox):
         origin, shape = self.origin, self.size
 
         # we are returning indices for a Blocks array, so swap axes to YZX
-        outputShape = box.size
-        outputShape = (outputShape[1], outputShape[2], outputShape[0])
+        sx, sy, sz = box.size
 
         shape = shape[1], shape[2], shape[0]
 
         # find requested box's coordinates relative to selection
-        offset = numpy.array(box.origin) - numpy.array(origin)
-        offset = offset[[1, 2, 0]]
+        ox, oy, oz = box.origin
+        dx, dy, dz = origin
+        ox -= dx
+        oy -= dy
+        oz -= dz
 
-        # create coordinate array
-        blockPositions = numpy.indices(outputShape, dtype=numpy.float32)
-
-        # offset by requested box's origin
-        blockPositions += offset[:, None, None, None]
+        # create coordinate array, offset by requested box's origin
+        blockPositions = numpy.mgrid[float(oy):oy+sy, oz:oz+sz, ox:ox+sx]
 
         shape = numpy.array(shape, dtype='float32')
 
