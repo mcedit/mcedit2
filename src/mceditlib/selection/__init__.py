@@ -163,26 +163,28 @@ class CombinationBox(SelectionBox):
     oper = NotImplemented
     boundsminoper = NotImplemented
     boundsmaxoper = NotImplemented
+    box_mask = NotImplemented
 
-    def __init__(self, left, right):
-        self.left = left
-        self.right = right
-        self.mincx = self.boundsminoper(left.mincx, right.mincx)
-        self.mincy = self.boundsminoper(left.mincy, right.mincy)
-        self.mincz = self.boundsminoper(left.mincz, right.mincz)
-        self.maxcx = self.boundsmaxoper(left.maxcx, right.maxcx)
-        self.maxcy = self.boundsmaxoper(left.maxcy, right.maxcy)
-        self.maxcz = self.boundsmaxoper(left.maxcz, right.maxcz)
+    def __init__(self, *selections):
+        self.selections = selections
+        self.mincx = self.boundsminoper(s.mincx for s in selections)
+        self.mincy = self.boundsminoper(s.mincy for s in selections)
+        self.mincz = self.boundsminoper(s.mincz for s in selections)
+        self.maxcx = self.boundsmaxoper(s.maxcx for s in selections)
+        self.maxcy = self.boundsmaxoper(s.maxcy for s in selections)
+        self.maxcz = self.boundsmaxoper(s.maxcz for s in selections)
 
     def __contains__(self, item):
-        return self.oper(item in self.left, item in self.right)
+        return self.oper(item in s for s in self.selections)
 
     def sectionPositions(self, cx, cz):
-        left = self.left.sectionPositions(cx, cz)
-        right = self.right.sectionPositions(cx, cz)
-        left = set(left)
-        right = set(right)
-        return self.oper(left, right)
+        positionLists = [set(s.sectionPositions(cx, cz)) for s in self.selections]
+        if len(positionLists) == 0:
+            return []
+        if len(positionLists) == 1:
+            return positionLists[0]
+
+        return reduce(self.oper, positionLists)
 
 class UnionBox(CombinationBox):
     oper = operator.or_
@@ -197,16 +199,17 @@ class UnionBox(CombinationBox):
         return self.oper(left, right)
 
     def box_mask(self, box):
-        left = self.left.box_mask(box)
-        right = self.right.box_mask(box)
-        if left is None and right is None:
+        masks = [s.box_mask(box) for s in self.selections]
+        masks = [m for m in masks if m is not None]
+        if not len(masks):
             return None
-        if left is None:
-            return right
-        if right is None:
-            return left
 
-        return left | right
+        m = masks.pop()
+
+        while len(masks):
+            numpy.logical_or(m, masks.pop(), m)
+
+        return m
 
 class IntersectionBox(CombinationBox):
     oper = operator.and_
