@@ -18,6 +18,7 @@ from mcedit2.rendering.scenegraph.matrix import Translate
 from mcedit2.rendering.scenegraph.scenenode import Node
 from mcedit2.rendering.selection import SelectionBoxNode
 from mcedit2.ui.editortools.brush import Ui_brushWidget
+from mcedit2.util import bresenham
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
 from mceditlib.geometry import Vector
@@ -188,7 +189,13 @@ class BrushTool(EditorTool):
     def mouseDrag(self, event):
         pos = event.blockPosition
         vector = (event.blockFace.vector * self.hoverDistance)
-        self.dragPoints.append(pos + vector)
+        p2 = pos + vector
+        if len(self.dragPoints):
+            p1 = self.dragPoints.pop(-1)
+            points = list(bresenham.bresenham(p1, p2))
+            self.dragPoints.extend(points)
+        else:
+            self.dragPoints.append(p2)
 
     def mouseRelease(self, event):
         dragPoints = sorted(set(self.dragPoints))
