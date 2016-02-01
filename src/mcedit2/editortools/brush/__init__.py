@@ -74,7 +74,8 @@ class BrushCommand(SimplePerformCommand):
                                                                 self.editorSession.currentDimension)
                           for point in self.points]
             selection = reduce(lambda a, b: a | b, selections)
-            self.brushMode.applyToSelection(self, selection)
+            for i in self.brushMode.applyToSelection(self, selection):
+                yield i
         except NotImplementedError:
             for i, point in enumerate(self.points):
                 f = self.brushMode.applyToPoint(self, point)
