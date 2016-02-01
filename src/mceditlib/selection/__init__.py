@@ -170,8 +170,8 @@ class SelectionBox(object):
     def chunkCount(self):
         return (self.maxcx - self.mincx) * (self.maxcz - self.mincz)
 
-class InvertedBox(SelectionBox):
 
+class InvertedBox(SelectionBox):
     def __init__(self, base):
         super(InvertedBox, self).__init__()
         self.base = base
@@ -216,17 +216,15 @@ class CombinationBox(SelectionBox):
 
         return reduce(self.oper, positionLists)
 
+
 class UnionBox(CombinationBox):
     oper = operator.or_
     boundsminoper = min
     boundsmaxoper = max
 
     def contains_coords(self, x, y, z):
-        left = self.left.contains_coords(x, y, z)
-        if left:
-            return True
-        right = self.right.contains_coords(x, y, z)
-        return self.oper(left, right)
+        contains = [s.contains_coords(x, y, z) for s in self.selections]
+        return reduce(self.oper, contains, False)
 
     def box_mask(self, box):
         masks = [s.box_mask(box) for s in self.selections]
@@ -240,6 +238,7 @@ class UnionBox(CombinationBox):
             numpy.logical_or(m, masks.pop(), m)
 
         return m
+
 
 class IntersectionBox(CombinationBox):
     oper = operator.and_
@@ -262,6 +261,7 @@ class IntersectionBox(CombinationBox):
         if right is None:
             return None
         return self.oper(left, right)
+
 
 class DifferenceBox(CombinationBox):
     oper = lambda a, b: a & (~b)
