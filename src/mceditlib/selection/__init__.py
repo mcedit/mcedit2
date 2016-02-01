@@ -130,6 +130,18 @@ class SelectionBox(object):
         """
         raise NotImplementedError
 
+    @property
+    def positions(self):
+        for cx, cz in self.chunkPositions():
+            for cy in self.sectionPositions(cx, cz):
+                mask = self.section_mask(cx, cy, cz)
+                y, z, x = mask.nonzero()
+                x = x + (cx << 4)
+                y = y + (cy << 4)
+                z = z + (cz << 4)
+                for i in range(len(x)):
+                    yield x[i], y[i], z[i]
+
     mincx = NotImplemented
     mincy = NotImplemented
     mincz = NotImplemented
