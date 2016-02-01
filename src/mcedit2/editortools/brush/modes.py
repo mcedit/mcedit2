@@ -151,7 +151,6 @@ class Biome(BrushMode):
         return self.optionsWidget
 
     def applyToSelection(self, command, selection):
-        # TODO: progress bar, biome fill
         biomeID = command.options['biomeID']
         dim = command.editorSession.currentDimension
         count = selection.chunkCount

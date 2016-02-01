@@ -4,6 +4,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 import itertools
+from PySide import QtOpenGL
 
 from OpenGL import GL
 import numpy
@@ -110,8 +111,15 @@ class TextureAtlas(object):
         log.info("Preloaded %d textures for world %s (%i kB)",
                  len(self._rawTextures), util.displayName(self._filename), rawSize/1024)
 
-    def load(self):
-        if self._terrainTexture:
+        self.textureData = None
+        self.texCoordsByName = {}
+        self.width = 0
+        self.height = 0
+
+        self.createAtlasImage()
+
+    def createAtlasImage(self):
+        if self.textureData is not None:
             return
 
         if self.overrideMaxSize is None:
@@ -157,9 +165,11 @@ class TextureAtlas(object):
 
                 log.debug("Slotting %s into a newly created slot", path)
 
+        self.width = atlasWidth
+        self.height = atlasHeight
+
         self.textureData = texData = numpy.zeros((atlasHeight, atlasWidth, 4), dtype='uint8')
         self.textureData[:] = [0xff, 0x0, 0xff, 0xff]
-        self.texCoordsByName = {}
         b = borderSize
         for slot in slots:
             for name, left, top, width, height, data in slot.textures:
@@ -178,6 +188,18 @@ class TextureAtlas(object):
                     texDataView[:] = data
                 self.texCoordsByName[name] = left + b, top + b, width - 2 * b, height - 2 * b
 
+        totalSize = self.width * self.height * 4
+        usedSize = sum(sum(width * height for _, _, _, width, height, _ in slot.textures) for slot in slots) * 4
+        log.info("Terrain atlas created for world %s (%d/%d kB)", util.displayName(self._filename), usedSize / 1024,
+                 totalSize / 1024)
+
+        self.blockModels.cookQuads(self)
+
+    def load(self):
+        if self._terrainTexture is not None:
+            return
+        maxLOD = min(4, self._maxLOD)
+
         if self.overrideMaxSize is None:
             if maxLOD:
                 minFilter = GL.GL_NEAREST_MIPMAP_LINEAR
@@ -185,7 +207,7 @@ class TextureAtlas(object):
                 minFilter = None
             self._terrainTexture = glutils.Texture(name="TextureAtlas",
                                                    image=self.textureData.ravel(),
-                                                   width=atlasWidth, height=atlasHeight,
+                                                   width=self.width, height=self.height,
                                                    minFilter=minFilter, maxLOD=maxLOD)
             self._terrainTexture.load()
         else:
@@ -195,15 +217,7 @@ class TextureAtlas(object):
             self._lightTexture = LightTexture(self.dayTime, self.minBrightness)
             self._lightTexture.load()
 
-        self.width = atlasWidth
-        self.height = atlasHeight
-
-        totalSize = atlasWidth * atlasHeight * 4
-        usedSize = sum(sum(width * height for _, _, _, width, height, _ in slot.textures) for slot in slots) * 4
-        log.info("Terrain atlas created for world %s (%d/%d kB)", util.displayName(self._filename), usedSize / 1024,
-                 totalSize / 1024)
-        self.blockModels.cookQuads(self)
-
+        log.info("GL resources loaded for TextureAtlas for %s", util.displayName(self._filename))
         #file("terrain-%sw-%sh.raw" % (atlasWidth, atlasHeight), "wb").write(texData.tostring())
         #raise SystemExit
 
