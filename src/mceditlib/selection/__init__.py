@@ -99,16 +99,34 @@ class SelectionBox(object):
         return InvertedBox(self)
 
     def section_mask(self, cx, cy, cz):
+        """
+
+        Parameters
+        ----------
+        cx : int
+        cy : int
+        cz : int
+
+        Returns
+        -------
+        mask : ndarray | None
+
+        """
         return self.box_mask(SectionBox(cx, cy, cz))
 
     def box_mask(self, box):
         """
-        Return a boolean mask array for the given bounding box. Array indices are ordered YZX.
+        Return a boolean mask array for the given bounding box.
 
-        :param box:
-        :type box:
-        :return:
-        :rtype: ndarray | None
+        Array indices are ordered YZX.
+
+        Parameters
+        ----------
+        box : BoundingBox
+
+        Returns
+        -------
+        mask : ndarray | None
         """
         raise NotImplementedError
 
