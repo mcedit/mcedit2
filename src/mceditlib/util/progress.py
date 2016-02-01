@@ -29,7 +29,12 @@ def rescaleProgress(iterable, start, end):
             if len(progress) > 2:
                 status = progress[2]
 
-            yield start + current * d / maximum, end, status
+            if maximum:
+                offset = current * d / maximum
+            else:
+                offset = 0
+
+            yield start + offset, end, status
         else:
             yield progress
 
