@@ -22,6 +22,7 @@ from mcedit2.util import bresenham
 from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
 from mceditlib.geometry import Vector
+from mceditlib.selection import UnionBox
 from mceditlib.util import exhaust
 
 log = logging.getLogger(__name__)
@@ -69,12 +70,11 @@ class BrushCommand(SimplePerformCommand):
             exhaust(self._perform())
 
     def _perform(self):
-        yield 0, len(self.points), "Applying {0} brush...".format(self.brushMode.name)
         try:
             selections = [self.brushShape.createShapedSelection(self.brushMode.brushBoxForPoint(point, self.options),
                                                                 self.editorSession.currentDimension)
                           for point in self.points]
-            selection = reduce(lambda a, b: a | b, selections)
+            selection = UnionBox(*selections)
             for i in self.brushMode.applyToSelection(self, selection):
                 yield i
         except NotImplementedError:
