@@ -28,7 +28,7 @@ atexit.register(remove_temp)
 def bench_temp_file(filename):
     global tmpdir
     if tmpdir is None:
-        tmpdir = py.path.local.mkdtemp("mcedit_bench")
+        tmpdir = py.path.local.mkdtemp()
 
     return copy_temp_file(tmpdir, filename)
 
