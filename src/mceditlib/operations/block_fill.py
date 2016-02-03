@@ -108,12 +108,10 @@ class FillBlocksOperation(Operation):
 
         for cy in chunk.bounds.sectionPositions(cx, cz):
             if cy not in secPos:
-                self.skipped += 1
                 continue
 
             section = chunk.getSection(cy, create=self.createSections)
             if section is None:
-                self.skipped += 1
                 continue
             self.sections += 1
 
