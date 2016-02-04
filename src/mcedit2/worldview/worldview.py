@@ -188,9 +188,15 @@ class WorldView(QGLWidget):
 
         self.setDimension(dimension)
 
+    def waitForSwapThread(self):
+        while not self.shouldRender:
+            QtGui.QApplication.processEvents(QtCore.QEventLoop.ExcludeUserInputEvents)
+
+
     def dealloc(self):
         log.info("Deallocating GL resources for worldview %s", self)
         self.bufferSwapThread.quit()
+        self.waitForSwapThread()
         self.makeCurrent()
         self.renderGraph.dealloc()
 
@@ -216,6 +222,7 @@ class WorldView(QGLWidget):
         """
         log.info("Changing %s to dimension %s", self, dimension)
         self.dimension = dimension
+        self.waitForSwapThread()
         self.makeCurrent()
         if self.renderGraph:
             self.renderGraph.dealloc()
@@ -230,6 +237,7 @@ class WorldView(QGLWidget):
             self.worldScene.setTextureAtlas(textureAtlas)
 
         if textureAtlas is not None:
+            self.waitForSwapThread()
             self.makeCurrent()
             textureAtlas.load()
             self.resetLoadOrder()
