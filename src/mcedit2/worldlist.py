@@ -27,6 +27,10 @@ from mceditlib.worldeditor import WorldEditor
 
 log = logging.getLogger(__name__)
 
+WorldListSettings = Settings().getNamespace('world_list')
+WorldListSettings.allSavesFolders = WorldListSettings.getOption('saves_folders', 'json', [])
+WorldListSettings.currentSavesFolder = WorldListSettings.getOption('current_saves_folder', unicode, '')
+WorldListSettings.lastChosenSavesFolder = WorldListSettings.getOption('last_chosen_saves_folder', unicode, '')
 
 class WorldListItemWidget(QtGui.QWidget):
     doubleClicked = QtCore.Signal()
@@ -201,6 +205,23 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
 
         self._updateInstalls()
 
+        try:
+            savesFolders = WorldListSettings.allSavesFolders.value()
+            for filename in savesFolders:
+                if not os.path.isdir(filename):
+                    continue
+                dirname, basename = os.path.split(filename)
+                displayName = os.sep.join(dirname.split(os.sep)[-2:] + [basename])
+                self.savesFolderComboBox.addItem(displayName, filename)
+        except (ValueError, KeyError) as e:
+            log.warn("Failed to load saves folder list.")
+
+        currentFolder = WorldListSettings.currentSavesFolder.value()
+        if os.path.isdir(currentFolder):
+            index = self.savesFolderComboBox.findData(currentFolder)
+            if index != -1:
+                self.savesFolderComboBox.setCurrentIndex(index)
+
         self.savesFolderComboBox.currentIndexChanged.connect(self.savesFolderChanged)
         self.minecraftInstallBox.currentIndexChanged.connect(minecraftinstall.currentInstallOption.setValue)
         self.minecraftVersionBox.currentIndexChanged[str].connect(minecraftinstall.currentVersionOption.setValue)
@@ -218,6 +239,12 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
     def _updateInstalls(self):
         for install in minecraftinstall.GetInstalls().installs:
             self.minecraftInstallBox.addItem(install.name)
+            for saveDir in install.getSaveDirs():
+                self.savesFolderComboBox.addItem(install.name + os.sep + os.path.basename(saveDir), saveDir)
+
+        for index, instance in enumerate(minecraftinstall.GetInstalls().instances):  # xxx instanceID?
+            saveDir = instance.saveFileDir
+            self.savesFolderComboBox.addItem(instance.name + os.sep + os.path.basename(saveDir), saveDir)
 
         self.minecraftInstallBox.setCurrentIndex(minecraftinstall.GetInstalls().selectedInstallIndex())
 
@@ -228,8 +255,6 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
         self.resourcePackBox.clear()
         self.resourcePackBox.addItem(self.tr("(No resource pack)"))
 
-        self.savesFolderComboBox.clear()
-
         if self.minecraftInstallBox.count():
             install = minecraftinstall.GetInstalls().getInstall(self.minecraftInstallBox.currentIndex())
 
@@ -239,24 +264,27 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
             for resourcePack in sorted(install.resourcePacks):
                 self.resourcePackBox.addItem(resourcePack)
 
-            for filename in install.getSaveDirs():
-                self.savesFolderComboBox.addItem(os.path.basename(os.path.dirname(filename)), (filename, None))
-
-        for index, instance in enumerate(minecraftinstall.GetInstalls().instances):  # xxx instanceID?
-            self.savesFolderComboBox.addItem(instance.name, (instance.saveFileDir, index))
-
     def chooseSavesFolder(self):
-        startingDir = Settings().value("open_world_dialog/starting_saves_folder_dir", os.path.expanduser(b"~"))
+        startingDir = WorldListSettings.lastChosenSavesFolder.value()
+        if startingDir == '' or not os.path.isdir(startingDir):
+            startingDir = os.path.expanduser(b"~")
+
         filename = QtGui.QFileDialog.getExistingDirectory(
             self, self.tr("Choose Saves Folder"), startingDir
         )
 
         if filename:
+            log.info("Adding saves folder %s", filename)
+
+            savesFolders = WorldListSettings.allSavesFolders.value()
+            savesFolders.append(filename)
+            WorldListSettings.allSavesFolders.setValue(savesFolders)
+
             dirname, basename = os.path.split(filename)
-            displayName = os.sep.join(dirname.split(os.sep)[-3:])
-            log.info("Adding saves folder %s (%s)", filename, displayName)
-            Settings().setValue("open_world_dialog/starting_saves_folder_dir", dirname)
-            self.savesFolderComboBox.addItem(displayName, (filename, None))
+            displayName = os.sep.join(dirname.split(os.sep)[-2:] + [basename])
+            WorldListSettings.lastChosenSavesFolder.setValue(filename)
+            self.savesFolderComboBox.addItem(displayName, filename)
+            self.savesFolderComboBox.setCurrentIndex(self.savesFolderComboBox.count()-1)
 
     def reloadRecentWorlds(self):
         recentWorlds = RecentFilesSetting.value()
@@ -288,6 +316,9 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
         self.recentWorldsButton.setMenu(self.recentWorldsMenu)
 
     def savesFolderChanged(self):
+        currentFolder = self.savesFolderComboBox.itemData(self.savesFolderComboBox.currentIndex())
+        WorldListSettings.currentSavesFolder.setValue(currentFolder)
+        
         self.reloadList()
         if len(self.worldListModel.worlds):
             self.worldListView.setFocus()
@@ -298,14 +329,10 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
 
     def reloadList(self):
         try:
-            itemData = self.savesFolderComboBox.itemData(self.savesFolderComboBox.currentIndex())
-            if itemData is None:
+            saveFileDir = self.savesFolderComboBox.itemData(self.savesFolderComboBox.currentIndex())
+            if saveFileDir is None:
                 log.error("No item selected in savesFolderComboBox!!(?)")
                 return
-            saveFileDir, instanceIndex = itemData
-            if instanceIndex is not None:
-                # disable version selector, update resource packs(?)
-                pass
             if not os.path.isdir(saveFileDir):
                 raise IOError(u"Could not find the Minecraft saves directory!\n\n({0} was not found or is not a directory)".format(saveFileDir))
 
@@ -477,4 +504,4 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
     def configureClicked(self):
         installsWidget = MinecraftInstallsDialog()
         installsWidget.exec_()
-        self._updateVersionsAndResourcePacks()
+        self._updateInstalls()
