@@ -474,12 +474,13 @@ class EditorSession(QtCore.QObject):
             self.dockWidgets.append((Qt.BottomDockWidgetArea, resultsWidget))
 
         self.inspectorWidget = InspectorWidget(self)
-        self.inspectorDockWidget = MCEDockWidget(self.tr("Inspector"), objectName="inspector")
+        self.inspectorDockWidget = MCEDockWidget(self.tr("Inspector"), QtGui.qApp.mainWindow, objectName="inspector")
         self.inspectorDockWidget.setWidget(self.inspectorWidget)
         self.inspectorDockWidget.setUnfocusedOpacity(0.8)
 
-        self.inspectorDockWidget.hide()
-        self.dockWidgets.append((Qt.RightDockWidgetArea, self.inspectorDockWidget))
+        self.inspectorDockWidget.setFloating(True)
+
+        self.dockWidgets.append((Qt.NoDockWidgetArea, self.inspectorDockWidget))
 
         self.editorOverlay.addChild(self.inspectorWidget.overlayNode)
 
@@ -1250,21 +1251,21 @@ class EditorTab(QtGui.QWidget):
         self.viewStack = QtGui.QStackedWidget()
 
         self.miniMap = MinimapWorldView(editorSession.currentDimension, editorSession.textureAtlas, editorSession.geometryCache)
-        self.miniMapDockWidget = MCEDockWidget("Minimap", objectName="MinimapWidget", floating=True)
+        self.miniMapDockWidget = MCEDockWidget("Minimap", QtGui.qApp.mainWindow, objectName="MinimapWidget")
         self.miniMapDockWidget.setWidget(self.miniMap)
         self.miniMapDockWidget.setFixedSize(256, 256)
         self.miniMapDockWidget.setUnfocusedOpacity(0.9)
+        editorSession.dockWidgets.append((Qt.LeftDockWidgetArea, self.miniMapDockWidget))
 
         self.views.append(self.miniMap)
 
         self.toolOptionsArea = QtGui.QScrollArea()
         self.toolOptionsArea.setWidgetResizable(True)
 
-        self.toolOptionsDockWidget = MCEDockWidget("Tool Options", objectName="ToolOptionsWidget", floating=True)
+        self.toolOptionsDockWidget = MCEDockWidget("Tool Options", QtGui.qApp.mainWindow, objectName="ToolOptionsWidget")
         self.toolOptionsDockWidget.setWidget(self.toolOptionsArea)
         self.toolOptionsDockWidget.setUnfocusedOpacity(0.8)
 
-        editorSession.dockWidgets.append((Qt.LeftDockWidgetArea, self.miniMapDockWidget))
         editorSession.dockWidgets.append((Qt.LeftDockWidgetArea, self.toolOptionsDockWidget))
 
         editorSession.loader.addClient(self.miniMap)
