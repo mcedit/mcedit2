@@ -76,6 +76,9 @@ class EntityListProxy(collections.MutableSequence):
     def insert(self, index, value):
         getattr(self.chunk.chunkData, self.attrName).insert(index, value.rootTag)
 
+    def remove(self, value):
+        getattr(self.chunk.chunkData, self.attrName).remove(value.rootTag)
+
 class WorldEditorChunk(object):
     """
     This is a 16x16xH chunk in a format-independent world.
