@@ -189,7 +189,7 @@ class WorldView(QGLWidget):
         self.setDimension(dimension)
 
     def waitForSwapThread(self):
-        while not self.shouldRender:
+        while not self.bufferSwapDone:
             QtGui.QApplication.processEvents(QtCore.QEventLoop.ExcludeUserInputEvents)
 
 
