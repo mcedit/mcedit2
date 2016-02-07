@@ -85,6 +85,8 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
         self.blockYSpinBox.valueChanged.connect(self.blockYChanged)
         self.blockZSpinBox.valueChanged.connect(self.blockZChanged)
 
+        self.removeEntityButton.clicked.connect(self.removeEntity)
+
     def _changed(self, value, idx):
         if self.blockPos is None:
             return
@@ -214,6 +216,14 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
         entityBox = BoundingBox((x-.5, y, z-.5), (1, 2, 1))
 
         self.selectionNode.selectionBox = entityBox
+
+    def removeEntity(self):
+        if self.entity is None:
+            return
+
+        command = SimpleRevisionCommand(self.editorSession, "Remove Entity")
+        with command.begin():
+            self.entity.chunk.Entities.remove(self.entity)
 
     def inspectChunk(self, cx, cz):
         self.clearVisuals()

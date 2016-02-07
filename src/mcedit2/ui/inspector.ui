@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>368</width>
+    <width>440</width>
     <height>678</height>
    </rect>
   </property>
@@ -20,7 +20,7 @@
    <item>
     <widget class="QStackedWidget" name="stackedWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="pageInspectBlock">
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -382,6 +382,13 @@
             </size>
            </property>
           </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="removeEntityButton">
+           <property name="text">
+            <string>Remove Entity</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
