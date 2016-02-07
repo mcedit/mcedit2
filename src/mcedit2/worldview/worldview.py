@@ -195,8 +195,8 @@ class WorldView(QGLWidget):
 
     def dealloc(self):
         log.info("Deallocating GL resources for worldview %s", self)
-        self.bufferSwapThread.quit()
         self.waitForSwapThread()
+        self.bufferSwapThread.quit()
         self.makeCurrent()
         self.renderGraph.dealloc()
 
