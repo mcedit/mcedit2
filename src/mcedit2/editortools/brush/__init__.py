@@ -177,34 +177,43 @@ class BrushTool(EditorTool):
         self.fillBlock = types[0]
         self.updateCursor()
 
+    def hoverPosition(self, event):
+        if event.blockPosition:
+            vector = (event.blockFace.vector * self.hoverDistance)
+            pos = event.blockPosition + vector
+            return pos
+
     def mousePress(self, event):
         self.dragPoints[:] = []
-        if event.blockPosition:
-            vector = (event.blockFace.vector * self.hoverDistance)
-            self.dragPoints.append(event.blockPosition + vector)
+        pos = self.hoverPosition(event)
+        if pos:
+            self.dragPoints.append(pos)
             
     def mouseMove(self, event):
-        if event.blockPosition:
-            vector = (event.blockFace.vector * self.hoverDistance)
-            assert isinstance(vector, Vector), "vector isa %s" % type(vector)
-            self.cursorTranslate.translateOffset = event.blockPosition + vector
+        pos = self.hoverPosition(event)
+        if pos:
+            self.cursorTranslate.translateOffset = pos
 
     def mouseDrag(self, event):
-        pos = event.blockPosition
-        vector = (event.blockFace.vector * self.hoverDistance)
-        p2 = pos + vector
-        if len(self.dragPoints):
-            p1 = self.dragPoints.pop(-1)
-            points = list(bresenham.bresenham(p1, p2))
-            self.dragPoints.extend(points)
-        else:
-            self.dragPoints.append(p2)
+        p2 = self.hoverPosition(event)
+        if p2:
+            if len(self.dragPoints):
+                p1 = self.dragPoints.pop(-1)
+                points = list(bresenham.bresenham(p1, p2))
+                self.dragPoints.extend(points)
+            else:
+                self.dragPoints.append(p2)
 
     def mouseRelease(self, event):
-        dragPoints = sorted(set(self.dragPoints))
-        self.dragPoints[:] = []
-        command = BrushCommand(self.editorSession, dragPoints, self.options)
-        self.editorSession.pushCommand(command)
+        if not len(self.dragPoints):
+            pos = self.hoverPosition(event)
+            if pos:
+                self.dragPoints.append(pos)
+        if len(self.dragPoints):
+            dragPoints = sorted(set(self.dragPoints))
+            self.dragPoints[:] = []
+            command = BrushCommand(self.editorSession, dragPoints, self.options)
+            self.editorSession.pushCommand(command)
 
     @property
     def options(self):
