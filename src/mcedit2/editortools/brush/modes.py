@@ -15,17 +15,24 @@ from mceditlib.selection import BoundingBox
 log = logging.getLogger(__name__)
 
 
-
 class BrushMode(QtCore.QObject):
     optionsWidget = None
 
-    def brushBoundingBox(self, center, options={}):
+    def __init__(self, brushTool):
+        super(BrushMode, self).__init__()
+        self.brushTool = brushTool
+
+    def brushBoundingBox(self, center, options=None):
         # Return a box of size options['brushSize'] centered around point.
         # also used to position the preview cursor
+        options = options or {}
         size = options['brushSize']
         x, y, z = size
         origin = Vector(*center) - (Vector(x, y, z) / 2) + Vector((x % 2) * 0.5, (y % 2) * 0.5, (z % 2) * 0.5)
         return BoundingBox(origin, size)
+
+    def brushBoxForPoint(self, point, options):
+        return self.brushBoundingBox(point, options)
 
     def applyToPoint(self, command, point):
         """
@@ -55,18 +62,6 @@ class BrushMode(QtCore.QObject):
         """
         raise NotImplementedError
 
-    def createOptionsWidget(self, brushTool):
-        """
-        Called by BrushTool to create a widget to display for this mode in the brush options panel.
-
-        Shouldn't the widget be created in __init__? When are BrushModes created? On module load,
-        I think.
-
-        :param brushTool:
-        :return:
-        """
-        return None
-
     def createCursorLevel(self, brushTool):
         """
         Called by BrushTool to create a MaskLevel (or WorldEditorDimension?) to use for the cursor.
@@ -82,13 +77,9 @@ class BrushMode(QtCore.QObject):
 class Fill(BrushMode):
     name = "fill"
 
-    def __init__(self):
-        super(Fill, self).__init__()
+    def __init__(self, brushTool):
+        super(Fill, self).__init__(brushTool)
         self.displayName = self.tr("Fill")
-
-    def createOptionsWidget(self, brushTool):
-        if self.optionsWidget:
-            return self.optionsWidget
 
         self.optionsWidget = QtGui.QWidget()
         label = QtGui.QLabel(self.tr("Fill Block:"))
@@ -100,7 +91,6 @@ class Fill(BrushMode):
         self.optionsWidget.setLayout(Column(
             Row(label, self.blockTypeButton, margin=0),
             None, margin=0))
-        return self.optionsWidget
 
     def getOptions(self):
         return {'blockInfo': self.blockTypeButton.block}
@@ -112,9 +102,6 @@ class Fill(BrushMode):
         """
         return command.editorSession.currentDimension.fillBlocksIter(selection, command.options['blockInfo'])
 
-    def brushBoxForPoint(self, point, options):
-        return self.brushBoundingBox(point, options)
-
     def createCursorLevel(self, brushTool):
         box = self.brushBoxForPoint((0, 0, 0), brushTool.options)
         selection = brushTool.brushShape.createShapedSelection(box,
@@ -125,19 +112,23 @@ class Fill(BrushMode):
         return cursorLevel
 
 
+class Replace(BrushMode):
+    name = 'replace'
+
+    def __init__(self, brushTool):
+        super(Replace, self).__init__(brushTool)
+        self.displayName = self.tr("Replace")
+
+    def applyToSelection(self, command, selection):
+        pass
+
+
 class Biome(BrushMode):
     name = "biome"
 
-    def __init__(self, *args, **kwargs):
-        super(Biome, self).__init__(*args, **kwargs)
+    def __init__(self, brushTool):
+        super(Biome, self).__init__(brushTool)
         self.displayName = self.tr("Biome")
-
-    def getOptions(self):
-        return {'biomeID': self.biomeTypeBox.itemData(self.biomeTypeBox.currentIndex())}
-
-    def createOptionsWidget(self, brushTool):
-        if self.optionsWidget:
-            return self.optionsWidget
 
         self.optionsWidget = QtGui.QWidget()
         label = QtGui.QLabel(self.tr("Fill Biome:"))
@@ -148,7 +139,9 @@ class Biome(BrushMode):
 
         self.biomeTypeBox.activated.connect(brushTool.updateCursor)
         self.optionsWidget.setLayout(Column(Row(label, self.biomeTypeBox, margin=0), None, margin=0))
-        return self.optionsWidget
+
+    def getOptions(self):
+        return {'biomeID': self.biomeTypeBox.itemData(self.biomeTypeBox.currentIndex())}
 
     def applyToSelection(self, command, selection):
         biomeID = command.options['biomeID']
@@ -202,4 +195,4 @@ class Biome(BrushMode):
         return cursorLevel
 
 
-BrushModeClasses = [Fill, Biome]
+BrushModeClasses = [Fill, Replace, Biome]

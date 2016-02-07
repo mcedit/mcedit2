@@ -106,10 +106,9 @@ class BrushTool(EditorTool):
         self.brushMode = None
         self.brushLoader = None
 
-        self.brushModesByName = {cls.name:cls() for cls in BrushModeClasses}
-        modes = self.brushModesByName.values()
-        modes.sort(key=lambda m: m.name)
-        self.toolWidget.brushModeInput.setModes(modes)
+        self.brushModesByName = {cls.name:cls(self) for cls in BrushModeClasses}
+        brushModes = self.brushModesByName.values()
+        self.toolWidget.brushModeInput.setModes(brushModes)
         BrushModeSetting.connectAndCall(self.modeSettingChanged)
 
         self.cursorWorldScene = None
@@ -228,9 +227,8 @@ class BrushTool(EditorTool):
         stack = self.toolWidget.modeOptionsStack
         while stack.count():
             stack.removeWidget(stack.widget(0))
-        widget = self.brushMode.createOptionsWidget(self)
-        if widget:
-            stack.addWidget(widget)
+        if self.brushMode.optionsWidget:
+            stack.addWidget(self.brushMode.optionsWidget)
 
     @property
     def brushShape(self):
