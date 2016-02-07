@@ -42,7 +42,7 @@ class BlockReplacementList(QtGui.QWidget, Ui_BlockReplacements):
         return self.editorSession.worldEditor.blocktypes if self.editorSession else None
 
     def addNewRow(self):
-        self.addRow([self.blocktypes["air"]], self.blocktypes["air"])
+        self.addRow([], self.blocktypes["air"])
 
     def addRow(self, oldBlocks, newBlock):
         assert self.editorSession is not None, "Must set BlockReplacementList.editorSession before using"
