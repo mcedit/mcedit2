@@ -70,6 +70,7 @@ def anglesToVector(yaw, pitch):
     dz = math.cos(math.radians(yaw)) * math.cos(math.radians(pitch))
     return Vector(*map(nanzero, [dx, dy, dz]))
 
+THREADED_BUFFER_SWAP = True
 
 class BufferSwapper(QtCore.QObject):
     def __init__(self, view):
@@ -136,14 +137,16 @@ class WorldView(QGLWidget):
 
         validateWidgetQGLContext(self)
 
-        self.setAutoBufferSwap(False)
 
         self.bufferSwapDone = True
-        self.bufferSwapThread = QtCore.QThread()
-        self.bufferSwapper = BufferSwapper(self)
-        self.bufferSwapper.moveToThread(self.bufferSwapThread)
-        self.doSwapBuffers.connect(self.bufferSwapper.swap)
-        self.bufferSwapThread.start()
+
+        if THREADED_BUFFER_SWAP:
+            self.setAutoBufferSwap(False)
+            self.bufferSwapThread = QtCore.QThread()
+            self.bufferSwapper = BufferSwapper(self)
+            self.bufferSwapper.moveToThread(self.bufferSwapThread)
+            self.doSwapBuffers.connect(self.bufferSwapper.swap)
+            self.bufferSwapThread.start()
 
         self.setAcceptDrops(True)
         self.setSizePolicy(QtGui.QSizePolicy.Policy.Expanding, QtGui.QSizePolicy.Policy.Expanding)
@@ -195,8 +198,9 @@ class WorldView(QGLWidget):
 
     def dealloc(self):
         log.info("Deallocating GL resources for worldview %s", self)
-        self.waitForSwapThread()
-        self.bufferSwapThread.quit()
+        if THREADED_BUFFER_SWAP:
+            self.waitForSwapThread()
+            self.bufferSwapThread.quit()
         self.makeCurrent()
         self.renderGraph.dealloc()
 
@@ -573,6 +577,7 @@ class WorldView(QGLWidget):
         super(WorldView, self).glDraw(*args, **kwargs)
 
     shouldRender = True
+
     def paintGL(self):
         if not self.shouldRender:
             return
@@ -585,9 +590,10 @@ class WorldView(QGLWidget):
                 with profiler.context("renderScene"):
                     rendernode.renderScene(self.renderGraph)
 
-            self.doneCurrent()
-            self.bufferSwapDone = False
-            self.doSwapBuffers.emit()
+            if THREADED_BUFFER_SWAP:
+                self.doneCurrent()
+                self.bufferSwapDone = False
+                self.doSwapBuffers.emit()
         except:
             self.shouldRender = False
             raise
