@@ -1147,7 +1147,7 @@ class EditorSession(QtCore.QObject):
     # --- EditorTab handling ---
 
     def tabCaption(self):
-        return util.displayName(self.filename) + self.tr(" (read-only)") if self.readonly else u""
+        return util.displayName(self.filename) + (self.tr(" (read-only)") if self.readonly else u"")
 
     def closeTab(self):
         if self.worldEditor is None:
