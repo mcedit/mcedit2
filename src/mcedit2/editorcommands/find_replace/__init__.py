@@ -25,6 +25,7 @@ class FindReplaceDialog(QtGui.QDialog, Ui_findReplaceDialog):
         self.setupUi(self)
 
         self.findReplaceBlocks = FindReplaceBlocks(editorSession, self)
+        self.replaceBlocksTab.setLayout(Column(self.findReplaceBlocks.widget, margin=0))
 
         self.findReplaceCommandText = FindReplaceCommandText(editorSession, self)
         self.commandBlocksTab.setLayout(Column(self.findReplaceCommandText.widget, margin=0))

@@ -9,6 +9,7 @@ from mcedit2.ui.find_replace_commands import Ui_findCommandsWidget
 
 log = logging.getLogger(__name__)
 
+
 class FindReplaceCommandWidget(QtGui.QWidget, Ui_findCommandsWidget):
     def __init__(self):
         super(FindReplaceCommandWidget, self).__init__()
