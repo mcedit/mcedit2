@@ -431,6 +431,10 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
 
         self.chunkLoader = None
 
+        # ensure WorldView gets freed now and not later
+        # if it is freed later, it will call makeCurrent and ruin another view's render
+        import gc; gc.collect()
+
     def hide(self):
         self.removeWorldView()
         super(WorldListWidget, self).hide()
