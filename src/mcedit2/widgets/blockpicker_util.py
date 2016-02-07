@@ -52,7 +52,9 @@ class BlockTypesItemWidget(QtGui.QWidget):
         self.setLayout(self.mainLayout)
 
         # Empty layout
-        self.emptyWidget = QtGui.QFrame()
+        self.emptyWidget = QtGui.QLabel(self.tr("No blocks selected"))
+        self.emptyWidget.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        self.emptyWidget.setMinimumHeight(60)
 
         # Single-block layout
         self.singleBlockIcon = BlockTypeIcon(textureAtlas=textureAtlas)
@@ -98,10 +100,6 @@ class BlockTypesItemWidget(QtGui.QWidget):
         self.multiBlockWidget = QtGui.QFrame()
         self.multiBlockWidget.setLayout(self.multiBlockLayout)
 
-        #self.mainLayout.addWidget(self.emptyWidget)
-        #self.mainLayout.addWidget(self.singleBlockWidget)
-        #self.mainLayout.addWidget(self.multiBlockWidget)
-
         self.updateContents()
 
     def setBlocks(self, blocks):
@@ -114,7 +112,7 @@ class BlockTypesItemWidget(QtGui.QWidget):
             self.textureAtlas = textureAtlas
             for icon in self.multiBlockSubIcons:
                 icon.setTextureAtlas(textureAtlas)
-                
+
             self.updateContents()
 
     def updateContents(self):

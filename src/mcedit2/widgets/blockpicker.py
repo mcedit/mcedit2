@@ -274,7 +274,7 @@ class BlockTypeButton(QtGui.QPushButton):
         self.updateView()
 
     def updateView(self):
-        if self.editorSession and self.blocks:
+        if self.editorSession:
             log.info("Updating button with %s", self.blocks)
 
             layout = self.layout()
