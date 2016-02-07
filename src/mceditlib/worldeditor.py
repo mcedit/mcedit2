@@ -66,18 +66,22 @@ class EntityListProxy(collections.MutableSequence):
             tagList[key] = [v.rootTag for v in value]
         else:
             tagList[key] = value.rootTag
+        self.chunk.dirty = True
 
     def __delitem__(self, key):
         del getattr(self.chunk.chunkData, self.attrName)[key]
+        self.chunk.dirty = True
 
     def __len__(self):
         return len(getattr(self.chunk.chunkData, self.attrName))
 
     def insert(self, index, value):
         getattr(self.chunk.chunkData, self.attrName).insert(index, value.rootTag)
+        self.chunk.dirty = True
 
     def remove(self, value):
         getattr(self.chunk.chunkData, self.attrName).remove(value.rootTag)
+        self.chunk.dirty = True
 
 class WorldEditorChunk(object):
     """
