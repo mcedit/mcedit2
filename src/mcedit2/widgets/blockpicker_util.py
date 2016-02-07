@@ -26,6 +26,7 @@ class BlockTypeIcon(QtGui.QLabel):
 
     def setBlock(self, block):
         self._block = block
+        self.setLineWidth(1 if block is not None else 0)
         self.updatePixmap()
 
     def setTextureAtlas(self, textureAtlas):
@@ -85,8 +86,7 @@ class BlockTypesItemWidget(QtGui.QWidget):
             # icon.setMinimumSize(32, 32)
             icon.setParent(multiBlockIcon)
             icon.setGeometry(x, y, 32, 32)
-            icon.setFrameStyle(icon.Box)
-            icon.setLineWidth(1)
+            icon.setFrameStyle(QtGui.QLabel.Box)
             x += 18
             if i % 2:
                 x -= 32
@@ -112,6 +112,9 @@ class BlockTypesItemWidget(QtGui.QWidget):
     def setTextureAtlas(self, textureAtlas):
         if textureAtlas != self.textureAtlas:
             self.textureAtlas = textureAtlas
+            for icon in self.multiBlockSubIcons:
+                icon.setTextureAtlas(textureAtlas)
+                
             self.updateContents()
 
     def updateContents(self):
@@ -119,8 +122,9 @@ class BlockTypesItemWidget(QtGui.QWidget):
             return
 
         blocks = self.blocks
-        if self.mainLayout.count():
+        while self.mainLayout.count():
             self.mainLayout.takeAt(0)
+
         if len(blocks) == 0:
             self.mainLayout.addWidget(self.emptyWidget)
             return
@@ -154,8 +158,10 @@ class BlockTypesItemWidget(QtGui.QWidget):
                 icon = self.multiBlockSubIcons[i]
                 if i < len(blocks):
                     icon.setBlock(blocks[i])
+                    icon.setLineWidth(1)
                 else:
                     icon.setBlock(None)
+                    icon.setLineWidth(0)
 
             nameLimit = 6
             remaining = len(blocks) - nameLimit
