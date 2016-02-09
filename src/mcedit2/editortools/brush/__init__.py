@@ -242,17 +242,20 @@ class BrushTool(EditorTool):
             self.cursorNode.removeChild(self.cursorBoxNode)
 
         cursorLevel = self.brushMode.createCursorLevel(self)
+        if cursorLevel is not None:
+            self.cursorWorldScene = worldscene.WorldScene(cursorLevel, self.editorSession.textureAtlas)
+            self.cursorWorldScene.depthOffset.depthOffset = DepthOffsets.PreviewRenderer
+            self.cursorNode.addChild(self.cursorWorldScene)
+
+            self.brushLoader = WorldLoader(self.cursorWorldScene)
+            self.brushLoader.startLoader()
+
         cursorBox = self.brushMode.brushBoxForPoint((0, 0, 0), self.options)
+        if cursorBox is not None:
+            self.cursorBoxNode = SelectionBoxNode()
+            self.cursorBoxNode.selectionBox = cursorBox
+            self.cursorBoxNode.filled = False
 
-        self.cursorBoxNode = SelectionBoxNode()
-        self.cursorBoxNode.selectionBox = cursorBox
-        self.cursorBoxNode.filled = False
+            self.cursorNode.addChild(self.cursorBoxNode)
 
-        self.cursorWorldScene = worldscene.WorldScene(cursorLevel, self.editorSession.textureAtlas)
-        self.cursorWorldScene.depthOffset.depthOffset = DepthOffsets.PreviewRenderer
-        self.cursorNode.addChild(self.cursorWorldScene)
-        self.cursorNode.addChild(self.cursorBoxNode)
-
-        self.brushLoader = WorldLoader(self.cursorWorldScene)
-        self.brushLoader.startLoader()
 
