@@ -34,7 +34,7 @@ class BlockTypeIcon(QtGui.QLabel):
         self.updatePixmap()
 
     def updatePixmap(self):
-        log.info("Updating BlockTypeIcon with %s\t%s", self._block, self._textureAtlas)
+        log.debug("Updating BlockTypeIcon with %s\t%s", self._block, self._textureAtlas)
         if self._textureAtlas is not None and self._block is not None:
             pixmap = BlockTypePixmap(self._block, self._textureAtlas)
             self.setPixmap(pixmap)
