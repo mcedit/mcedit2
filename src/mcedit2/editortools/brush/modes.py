@@ -88,9 +88,7 @@ class Fill(BrushMode):
         self.blockTypeButton.block = brushTool.editorSession.worldEditor.blocktypes['minecraft:stone']
         self.blockTypeButton.blocksChanged.connect(brushTool.updateCursor)
 
-        self.optionsWidget.setLayout(Column(
-            Row(label, self.blockTypeButton, margin=0),
-            None, margin=0))
+        self.optionsWidget.setLayout(Row(label, self.blockTypeButton, margin=0))
 
     def getOptions(self):
         return {'blockInfo': self.blockTypeButton.block}
@@ -138,7 +136,7 @@ class Biome(BrushMode):
             self.biomeTypeBox.addItem(biome.name, biome.ID)
 
         self.biomeTypeBox.activated.connect(brushTool.updateCursor)
-        self.optionsWidget.setLayout(Column(Row(label, self.biomeTypeBox, margin=0), None, margin=0))
+        self.optionsWidget.setLayout(Row(label, self.biomeTypeBox, margin=0))
 
     def getOptions(self):
         return {'biomeID': self.biomeTypeBox.itemData(self.biomeTypeBox.currentIndex())}
