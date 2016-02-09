@@ -610,10 +610,9 @@ class AnvilWorldAdapter(object):
                         itemTypes.addFMLIDMapping(name, ID)
 
             replacedIDsSet = set(replacedIDs)
-            blocktypes.allBlocks[:] = [b for b in blocktypes if b.ID not in replacedIDsSet]
-            blocktypes.allBlocks.extend(BlockType(newID, 0, blocktypes) for newID in replacedIDs)
+            blocktypes.discardIDs(replacedIDsSet)
+            blocktypes.addBlocktypes(BlockType(newID, 0, blocktypes) for newID in replacedIDs)
 
-            blocktypes.allBlocks.sort()
             log.info("Added %d blocks.", count)
 
 

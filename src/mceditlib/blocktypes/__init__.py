@@ -5,7 +5,8 @@
 from __future__ import absolute_import
 from logging import getLogger
 import traceback
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, MutableSet
+import bisect
 
 import numpy
 from mceditlib.blocktypes import itemtypes
@@ -56,19 +57,47 @@ class BlockType(namedtuple("_BlockType", "ID meta blocktypeSet")):
 
 id_limit = 4096
 
+
+class SortedSet(MutableSet):
+
+    def __iter__(self):
+        return iter(self._sorted)
+
+    def discard(self, value):
+        self._set.discard(value)
+        self._sorted.remove(value)
+
+    def add(self, value):
+        if value in self._set:
+            return
+        self._set.add(value)
+        bisect.insort(self._sorted, value)
+
+    def __contains__(self, x):
+        return x in self._set
+
+    def __len__(self):
+        return len(self._set)
+
+    def __init__(self):
+        self._sorted = []
+        self._set = set()
+
+
+
 class BlockTypeSet(object):
     defaultColor = (0xc9, 0x77, 0xf0, 0xff)
 
     def __init__(self, defaultName="Unused Block", idMapping=None):
         object.__init__(self)
-        self.allBlocks = []
+        self.allBlocks = SortedSet()
+
         self.blockJsons = {}
         self.IDsByState = {}  # internalName[blockstates] -> (id, meta)
         self.statesByID = {}  # (id, meta) -> internalName[blockstates]
 
         self.IDsByName = {}  # internalName -> id
         self.namesByID = {}  # id -> internalName
-
 
         self.defaultBlockstates = {}  # internalName -> [blockstates]
 
@@ -237,6 +266,25 @@ class BlockTypeSet(object):
         return BlockType(ID, meta, self)
 
 
+    def discardIDs(self, blockIDs):
+        blockIDs = set(blockIDs)
+        blocktypes = [b for b in self.allBlocks if b.ID in blockIDs]
+        for b in blocktypes:
+            self.allBlocks.discard(b)
+
+    def discardInternalNameMetas(self, nameMetas):
+        nameMetas = set(nameMetas)
+
+        blocktypes = [bt for bt in self.allBlocks
+                      if (bt.internalName, bt.meta) in nameMetas]
+
+        for b in blocktypes:
+            self.allBlocks.discard(b)
+
+    def addBlocktypes(self, blocktypes):
+        for b in blocktypes:
+            self.allBlocks.add(b)
+
     def blocksMatching(self, name):
         name = name.lower()
         return [v for v in self.allBlocks if name in v.displayName.lower() or name in v.aka.lower()]
@@ -306,7 +354,7 @@ class BlockTypeSet(object):
             log.info("No ID mapping for %s, skipping...", internalName)
             return
         ID, meta = IDmeta
-        self.allBlocks.append(BlockType(ID, meta, self))
+        self.allBlocks.add(BlockType(ID, meta, self))
 
         oldJson = self.blockJsons.get(internalName + blockState)
         if oldJson is None:

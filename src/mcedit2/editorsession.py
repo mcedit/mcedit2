@@ -621,10 +621,7 @@ class EditorSession(QtCore.QObject):
                     deadJsons.append(json)
 
             deadIDs = set((j['internalName'], j['meta']) for j in deadJsons)
-            blocktypes.allBlocks[:] = [
-                bt for bt in blocktypes.allBlocks
-                if (bt.internalName, bt.meta) not in deadIDs
-            ]
+            blocktypes.discardInternalNameMeta(deadIDs)
 
             for json in deadJsons:
                 internalName = json['internalName']
@@ -657,7 +654,7 @@ class EditorSession(QtCore.QObject):
                     'meta': blockDef.meta,
                 }
                 blockType = BlockType(ID, blockDef.meta, blocktypes)
-                blocktypes.allBlocks.append(blockType)
+                blocktypes.allBlocks.add(blockType)
                 blocktypes.IDsByState[nameAndState] = ID, blockDef.meta
                 blocktypes.statesByID[ID, blockDef.meta] = nameAndState
 
