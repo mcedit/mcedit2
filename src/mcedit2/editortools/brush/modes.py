@@ -73,6 +73,18 @@ class BrushMode(QtCore.QObject):
         """
         return None
 
+    def getOptions(self):
+        """
+        Called by BrushTool to get additional option values for rendering the brush cursor.
+        Oddly, these options are just combined with the common options of size, shape,
+        and mode ID and then passed to `brushBoxForPoint`. This seems like it should be
+        on the Mode object instead of BrushTool
+
+        Returns
+        -------
+        options: dict
+        """
+        return {}
 
 class Fill(BrushMode):
     name = "fill"
