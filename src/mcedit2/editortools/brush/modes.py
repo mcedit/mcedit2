@@ -6,6 +6,7 @@ import logging
 from PySide import QtGui, QtCore
 from mcedit2.editortools.brush.masklevel import MaskLevel
 from mcedit2.util.showprogress import showProgress
+from mcedit2.widgets.block_replacement_list import BlockReplacementButton
 from mcedit2.widgets.blockpicker import BlockTypeButton
 from mcedit2.widgets.layout import Column, Row
 from mceditlib.anvil.biome_types import BiomeTypes
@@ -128,9 +129,36 @@ class Replace(BrushMode):
     def __init__(self, brushTool):
         super(Replace, self).__init__(brushTool)
         self.displayName = self.tr("Replace")
+        self.optionsWidget = QtGui.QWidget()
+        self.replacementsButton = BlockReplacementButton()
+        self.replacementsButton.replacementsChanged.connect(brushTool.updateCursor)
+        self.replacementsButton.editorSession = brushTool.editorSession
+
+        self.optionsWidget.setLayout(Column(self.replacementsButton))
+
+    def getOptions(self):
+        return {'replacements': self.replacementsButton.getReplacements()}
 
     def applyToSelection(self, command, selection):
-        pass
+        replacements = command.options['replacements']
+        if not len(replacements):
+            return []
+        return command.editorSession.currentDimension.fillBlocksIter(selection, replacements)
+
+    def createCursorLevel(self, brushTool):
+        options = brushTool.options
+        replacements = options['replacements']
+        if not len(replacements):
+            return None
+
+        blockType = replacements[0][1]
+
+        box = self.brushBoxForPoint((0, 0, 0), options)
+        selection = brushTool.brushShape.createShapedSelection(box,
+                                                               brushTool.editorSession.currentDimension)
+        cursorLevel = MaskLevel(selection, blockType,
+                                brushTool.editorSession.worldEditor.blocktypes)
+        return cursorLevel
 
 
 class Biome(BrushMode):
