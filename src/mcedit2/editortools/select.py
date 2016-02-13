@@ -90,6 +90,8 @@ class SelectionCoordinateWidget(QtGui.QWidget, Ui_selectionCoordWidget):
 
     def setMinX(self, value):
         origin, size = self.boundingBox
+        dx = value - origin[0]
+        size = size[0] - dx, size[1], size[2]
         origin = value, origin[1], origin[2]
         box = BoundingBox(origin, size)
         self.boundingBox = box
@@ -97,6 +99,8 @@ class SelectionCoordinateWidget(QtGui.QWidget, Ui_selectionCoordWidget):
 
     def setMinY(self, value):
         origin, size = self.boundingBox
+        dy = value - origin[1]
+        size = size[0], size[1] - dy, size[2]
         origin = origin[0], value, origin[2]
         box = BoundingBox(origin, size)
         self.boundingBox = box
@@ -104,6 +108,8 @@ class SelectionCoordinateWidget(QtGui.QWidget, Ui_selectionCoordWidget):
 
     def setMinZ(self, value):
         origin, size = self.boundingBox
+        dz = value - origin[2]
+        size = size[0], size[1], size[2] - dz
         origin = origin[0], origin[1], value
         box = BoundingBox(origin, size)
         self.boundingBox = box
