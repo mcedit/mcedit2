@@ -7,6 +7,7 @@ from PySide import QtGui, QtCore
 import numpy
 from mcedit2.widgets.layout import Column
 from mceditlib import selection
+from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
 
@@ -142,8 +143,7 @@ class Square(BrushShape):
         self.optionsChanged.emit()
 
     def createShapedSelection(self, box, dimension):
-        # BoundingBox is already a SelectionBox, so just return it
-        return box
+        return BoundingBox(box.origin, box.size)
 
     def getOptionsWidget(self):
         return self.optionsWidget
