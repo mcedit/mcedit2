@@ -525,6 +525,8 @@ class BoundingBox(SelectionBox):
         return True
 
     def __cmp__(self, b):
+        if self.__class__ != b.__class__:
+            return cmp(self.__class__, b.__class__)
         return cmp((self.origin, self.size), None if b is None else (b.origin, b.size))
 
     #
