@@ -149,7 +149,7 @@ class ButtonModifierInput(QtGui.QPushButton):
 
 
 class ViewControls(QtGui.QFrame):
-    def __init__(self, worldView, *args, **kwargs):
+    def __init__(self, worldView, auxWidget=None, *args, **kwargs):
         """
         Popup window for quickly reviewing and assigning movement controls for a world view.
 
@@ -178,7 +178,11 @@ class ViewControls(QtGui.QFrame):
         self.controlsButton.setDefaultAction(action)
 
         self.unlockButton = QtGui.QPushButton(self.tr("Edit Controls"), clicked=self.toggleUnlockControls)
-        self.setLayout(Column(layout, self.unlockButton))
+        col = [layout, self.unlockButton]
+        if auxWidget is not None:
+            col.append(auxWidget)
+
+        self.setLayout(Column(*col))
         self.unlocked = False
 
     def toggleUnlockControls(self):

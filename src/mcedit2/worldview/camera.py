@@ -30,6 +30,8 @@ log = logging.getLogger(__name__)
 settings = Settings().getNamespace("worldview/camera")
 ViewDistanceSetting = settings.getOption("view_distance", int, 12)
 PerspectiveSetting = settings.getOption("perspective", bool, True)
+StickyMouselookSetting = settings.getOption("sticky_mouselook", bool, True)
+
 
 class CameraWorldViewFrame(QtGui.QWidget):
     def __init__(self, dimension, textureAtlas, geometryCache, shareGLWidget, *args, **kwargs):
@@ -37,7 +39,17 @@ class CameraWorldViewFrame(QtGui.QWidget):
 
         self.worldView = view = CameraWorldView(dimension, textureAtlas, geometryCache, shareGLWidget)
 
-        self.viewControls = ViewControls(view)
+        auxControlWidget = QtGui.QWidget()
+        
+        StickyMouselookSetting.connectAndCall(view.setStickyMouselook)
+        
+        stickyCheckbox = QtGui.QCheckBox(self.tr("Sticky Mouselook"))
+        stickyCheckbox.setChecked(StickyMouselookSetting.value())
+        stickyCheckbox.toggled.connect(StickyMouselookSetting.setValue)
+
+        auxControlWidget.setLayout(Column(stickyCheckbox))
+
+        self.viewControls = ViewControls(view, auxControlWidget)
 
         ViewDistanceSetting.connectAndCall(view.setViewDistance)
 
@@ -256,14 +268,20 @@ class CameraWorldView(WorldView):
         self.fov = 70.0  # needed by updateMatrices called from WorldView.__init__
         self._yawPitch = -45., 25.
         self.viewDistance = 32
+        
+        self.stickyMouselook = False
 
         self.workplaneNode = WorkplaneNode()
         self.workplaneNode.visible = False
 
         WorldView.__init__(self, *a, **kw)
         self.compassNode.yawPitch = self._yawPitch
+
+        stickyPanAction = CameraStickyPanMouseAction()
+        panAction = CameraPanMouseAction(stickyPanAction)
+
         self.viewActions = [CameraMoveMouseAction(),
-                            CameraPanMouseAction()]
+                            panAction, stickyPanAction]
 
         self.cameraControls = CameraKeyControls(self)
         self.viewActions.extend(self.cameraControls.viewActions)
@@ -276,6 +294,8 @@ class CameraWorldView(WorldView):
         self.workplaneLevel = 0
         self.workplaneEnabled = False
         self.viewportMoved.connect(self.updateWorkplane)
+
+        self.forceMouseCenter = False
 
     def updateWorkplane(self):
         distance = 40
@@ -299,6 +319,10 @@ class CameraWorldView(WorldView):
         return scenegraph
 
     def augmentEvent(self, x, y, event):
+        if self.forceMouseCenter:
+            x = self.width() / 2
+            y = self.height() / 2
+
         super(CameraWorldView, self).augmentEvent(x, y, event)
         if not self.workplaneEnabled:
             return
@@ -320,6 +344,9 @@ class CameraWorldView(WorldView):
         self._chunkIter = None
         self.discardChunksOutsideViewDistance()
         self.update()
+        
+    def setStickyMouselook(self, val):
+        self.stickyMouselook = val
 
     def centerOnPoint(self, pos, distance=20):
         awayVector = self.cameraVector * -distance
@@ -448,17 +475,120 @@ class CameraWorldView(WorldView):
             return iter([])
         return super(CameraWorldView, self).recieveChunk(chunk)
 
+
+class CameraStickyPanMouseAction(ViewAction):
+    button = Qt.NoButton
+    modifiers = Qt.NoModifier
+    labelText = "Sticky Pan (Don't Edit)"
+    hidden = True
+    settingsKey = None
+
+    _sticking = False
+    mouseDragStart = None
+
+    def toggleSticky(self, event):
+        view = event.view
+        if not self._sticking:
+            self._sticking = True
+            cursor = view.cursor()
+            self._oldPos = cursor.pos()
+            self._oldShape = cursor.shape()
+            cursor.setShape(Qt.BlankCursor)
+            view.setCursor(cursor)
+            view.grabMouse()
+            view.forceMouseCenter = True
+
+            self.mouseDragStart = event.x(), event.y()
+
+        else:
+            self._sticking = False
+            cursor = view.cursor()
+            cursor.setPos(self._oldPos)
+            cursor.setShape(self._oldShape)
+            view.setCursor(cursor)
+            view.releaseMouse()
+            view.forceMouseCenter = False
+
+            self.mouseDragStart = None
+
+    sensitivity = .15
+
+    _last_dx = _last_dy = 0
+
+    def mouseMoveEvent(self, event):
+        if not self._sticking:
+            return
+
+        x = event.x()
+        y = event.y()
+        if self.mouseDragStart:
+            oldx, oldy = self.mouseDragStart
+            yaw, pitch = event.view.yawPitch
+            dx = (oldx - x)
+            dy = (oldy - y)
+
+            yaw -= dx * self.sensitivity
+            pitch -= dy * self.sensitivity
+
+            event.view.yawPitch = yaw, pitch
+
+            self.mouseDragStart = (x, y)
+
+            # If the (invisible) cursor goes out of the widget's bounds,
+            # move it back to the center so it doesn't stop at the screen's edge
+            margin = 10
+
+            w = event.view.width()
+            h = event.view.height()
+            if (x < margin
+                or y < margin
+                or x >= w - margin
+                or y >= h - margin):
+
+                # Disable camera movement while the cursor is repositioned
+                # since QCursor.setPos emits a mouseMoved event
+
+                self._sticking = False
+
+                self.mouseDragStart = (w / 2, h / 2)
+
+                pos = QtCore.QPoint(*self.mouseDragStart)
+                pos = event.view.mapToGlobal(pos)
+                QtGui.QCursor.setPos(pos)
+
+                def resumeSticking():
+                    self._sticking = True
+
+                QtCore.QTimer.singleShot(0, resumeSticking)
+
+
 class CameraPanMouseAction(ViewAction):
     button = Qt.RightButton
-    mouseDragStart = None
     modifiers = Qt.NoModifier
     labelText = "Turn Camera"
     settingsKey = "worldview/camera/holdToTurn"
 
+    _stickyAction = None
+    mouseDragStart = None
+
+    _stickyThreshold = 0.25
+
+    def __init__(self, stickyAction):
+        super(CameraPanMouseAction, self).__init__()
+        self._stickyAction = stickyAction
+
     def buttonPressEvent(self, event):
+        self.downTime = time.time()
+
         x = event.x()
         y = event.y()
         self.mouseDragStart = x, y
+
+    def buttonReleaseEvent(self, event):
+        if event.view.stickyMouselook and time.time() - self.downTime < self._stickyThreshold:
+            self._stickyAction.toggleSticky(event)
+
+        self.mouseDragStart = None
 
     sensitivity = .15
 
@@ -475,10 +605,6 @@ class CameraPanMouseAction(ViewAction):
             event.view.yawPitch = yaw, pitch
 
             self.mouseDragStart = (x, y)
-
-
-    def buttonReleaseEvent(self, event):
-        self.mouseDragStart = None
 
 
 class CameraMoveMouseAction(ViewAction):
@@ -511,7 +637,6 @@ class CameraMoveMouseAction(ViewAction):
             event.view.centerPoint += (dx / 4, 0, dz / 4)
 
             self.mouseDragStart = (x, y)
-
 
     def buttonReleaseEvent(self, event):
         self.mouseDragStart = None

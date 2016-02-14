@@ -51,9 +51,11 @@ class CompassRenderNode(rendernode.RenderNode):
                     with gl.glEnable(GL.GL_BLEND, GL.GL_TEXTURE_2D):
                         GL.glDrawArrays(GL.GL_QUADS, 0, 4)
 
+
 class CompassNode(scenenode.Node):
     _yawPitch = (0., 0.)
     RenderNodeClass = CompassRenderNode
+
     def __init__(self, small=False):
         super(CompassNode, self).__init__()
         self.small = small
