@@ -207,8 +207,12 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
     # --- Create ---
 
     def beginCreate(self, event):
+        # If the distance to the block is too far, face selection becomes inconsistent
+        # and aggravating. Use YIncreasing if it is more than 50 blocks away.
+        distance = (event.blockPosition - event.ray.point).length()
+
         self.dragStartPoint = event.blockPosition
-        self.dragStartFace = faces.FaceYIncreasing  # event.blockFace
+        self.dragStartFace = faces.FaceYIncreasing if distance > 50 else event.blockFace
         self.isCreating = True
 
     def continueCreate(self, event):
