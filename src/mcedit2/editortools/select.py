@@ -307,8 +307,8 @@ class SelectionCursorRenderNode(rendernode.RenderNode):
         point = self.sceneNode.point
         if point is None:
             return
-        selectionColor = map(lambda a: a * a * a * a, self.sceneNode.color)
-        r, g, b = selectionColor
+        #selectionColor = map(lambda a: a * a * a * a, self.sceneNode.color)
+        r, g, b = self.sceneNode.color
         alpha = 0.3
         box = BoundingBox(point, (1, 1, 1))
 
@@ -317,15 +317,25 @@ class SelectionCursorRenderNode(rendernode.RenderNode):
             GL.glEnable(GL.GL_BLEND)
             GL.glPolygonOffset(DepthOffsets.SelectionCursor, DepthOffsets.SelectionCursor)
 
+            # Highlighted face
+
+            GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
+
+            GL.glColor(r, g, b, alpha)
+            cubes.drawFace(box, self.sceneNode.face)
+
             # Wire box
-            GL.glColor(1., 1., 1., alpha)
             GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
+
+            GL.glLineWidth(3.0)
+            GL.glColor(1., 1., 1., alpha)
 
             cubes.drawBox(box)
 
-            # Highlighted face
-            GL.glColor(r, g, b, alpha)
-            cubes.drawFace(box, self.sceneNode.face)
+            GL.glLineWidth(1.0)
+            GL.glColor(0.2, 0.2, 0.2, alpha)
+
+            cubes.drawBox(box)
 
 
 class SelectionCursor(scenenode.Node):

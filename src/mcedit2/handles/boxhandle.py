@@ -279,8 +279,10 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
             self.faceDragNode.visible = False
         if self.moveModifierDown(event):
             self.faceDragNode.color = self._moveFaceColor
+            self.faceDragNode.wireColor = self._moveFaceColor
         else:
             self.faceDragNode.color = self._resizeFaceColor
+            self.faceDragNode.wireColor = self._resizeFaceColor
 
     _moveFaceColor = (0.3, 0.9, 0.3)
     _resizeFaceColor = (0.3, 0.6, 0.9)

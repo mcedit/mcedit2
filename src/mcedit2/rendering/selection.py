@@ -326,7 +326,7 @@ class SelectionBoxNode(scenenode.Node):
         self._color = value
         self.dirty = True
 
-    _wireColor = (1, 1, 1, .6)
+    _wireColor = (.8, .8, .8, .6)
     @property
     def wireColor(self):
         return self._wireColor
@@ -344,16 +344,18 @@ class SelectionFaceRenderNode(rendernode.RenderNode):
             return
 
         alpha = 0.16
-        r, g, b = self.sceneNode.color
         with gl.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT | GL.GL_ENABLE_BIT | GL.GL_LINE_BIT):
             GL.glDisable(GL.GL_DEPTH_TEST)
             GL.glDepthMask(False)
             GL.glEnable(GL.GL_BLEND)
             GL.glPolygonOffset(self.sceneNode.depth, self.sceneNode.depth)
 
-            GL.glColor(1.0, 1.0, 1.0, 1.0)
-            GL.glLineWidth(2.0)
+            r, g, b = self.sceneNode.wireColor
+            GL.glColor(r, g, b, .8)
+            GL.glLineWidth(3.0)
             cubes.drawFace(box, self.sceneNode.face, GL.GL_LINE_STRIP)
+
+            r, g, b = self.sceneNode.color
             GL.glColor(r, g, b, alpha)
             GL.glEnable(GL.GL_DEPTH_TEST)
             cubes.drawFace(box, self.sceneNode.face)
@@ -394,6 +396,15 @@ class SelectionFaceNode(scenenode.Node):
         self._color = value
         self.dirty = True
 
+    _wireColor = (.8, .8, .8, .6)
+    @property
+    def wireColor(self):
+        return self._wireColor
+
+    @wireColor.setter
+    def wireColor(self, value):
+        self._wireColor = value
+        self.dirty = True
 
 def boxFaceUnderCursor(box, mouseRay):
     """
