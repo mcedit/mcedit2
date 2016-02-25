@@ -1,0 +1,69 @@
+# Notes:
+#   - Minimal appveyor.yml file is an empty file. All sections are optional.
+#   - Indent each level of configuration with 2 spaces. Do not use tabs!
+#   - All section names are case-sensitive.
+#   - Section names should be unique on each level.
+
+#---------------------------------#
+#      general configuration      #
+#---------------------------------#
+
+# version format
+version: 2.0.0-appveyor-testing-{build}
+
+# branches to build
+branches:
+  # whitelist
+  only:
+    - appveyor-testing
+
+cache:
+  # Cache downloaded pip packages.
+  - "C:\\Users\\appveyor\\AppData\\Local\\pip"
+
+
+#---------------------------------#
+#    environment configuration    #
+#---------------------------------#
+
+# Operating system (build VM template)
+os: Windows Server 2012
+
+environment:
+  matrix:
+    - PYTHON: "c:\\python27"
+      PYTHON_ARCH_PLAT: 'win32'
+
+    - PYTHON: "c:\\python27-x64"
+      PYTHON_ARCH_PLAT: 'win64'
+
+  global:
+    MCEDIT_BUILD_VERSION: $(appveyor_build_version)
+
+
+# scripts that run after cloning repository
+install:
+  # by default, all script lines are interpreted as batch
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - pip install -r requirements.txt
+  - pip install git+http://github.com/pyinstaller/pyinstaller
+
+build_script:
+  - pyinstaller mcedit2.spec
+
+artifacts:
+  - path: dist/mcedit2-$(PYTHON_ARCH_PLAT)-$(MCEDIT_BUILD_VERSION).exe
+
+deploy:
+  # release: MCEdit-{MCEDIT_BUILD_VERSION}
+  release: MCEdit-2.0.0-appveyor-testing
+  description: 'MCEdit 2 beta release $(MCEDIT_BUILD_VERSION)'
+  provider: GitHub
+  auth_token: "$(GITHUB_AUTH_TOKEN)"
+  artifact: dist/mcedit2-$(PYTHON_ARCH_PLAT)-$(MCEDIT_BUILD_VERSION).exe
+  draft: true
+  prerelease: false
+  force_update: true
+  on:
+    branch: appveyor-testing
+    # appveyor_repo_tag: true        # deploy on tag push only
