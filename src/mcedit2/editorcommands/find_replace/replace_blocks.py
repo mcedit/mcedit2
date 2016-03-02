@@ -41,6 +41,6 @@ class FindReplaceBlocks(QtCore.QObject):
         else:
             selection = self.editorSession.currentDimension.bounds
         with command.begin():
-            task = self.editorSession.currentDimension.fillBlocksIter(selection, replacements, updateLights=False)
+            task = self.editorSession.currentDimension.fillBlocksIter(selection, replacements)
             showProgress("Replacing...", task)
         self.editorSession.pushCommand(command)
