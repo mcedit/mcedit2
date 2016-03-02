@@ -377,6 +377,20 @@ cdef updateSkyLight(RelightCtx ctx,
             # Update chunk height map
             ctx.setHeightMap(x, z, h)
 
+    # Find all blocks below the changed column heights that have themselves changed, and
+    # draw light from adjacent chunks.
+
+    for i in range(n):
+        x = ax[i]
+        y = ay[i]
+        z = az[i]
+        k = chunk_key(x, z)
+        h = newHeights[k]
+        if y < h:  # and (x & 0xF == 0)?
+            drawLight(ctx, x, y, z)
+            spreadLight(ctx, x, y, z)
+
+
     #print("Dimming %d, brightening %d" % (dimCoords.size(), litCoords.size()))
     for c in dimCoords:
         oldLight = ctx.getBlockLight(c.x, c.y, c.z)
