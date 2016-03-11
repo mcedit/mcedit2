@@ -7,6 +7,7 @@ from PySide import QtCore, QtGui
 import logging
 from PySide.QtCore import Qt
 from mcedit2.util.mimeformats import MimeFormats
+from mcedit2.util.resources import resourcePath
 from mcedit2.widgets.blocktype_list import BlockTypePixmap
 
 log = logging.getLogger(__name__)
@@ -63,6 +64,7 @@ class ItemTypeListModel(QtCore.QAbstractListModel):
 
         return mimeData
 
+
 def ItemTypeIcon(itemType, editorSession, itemStack=None):
     textureName = itemType.texture
     if textureName is None:
@@ -87,4 +89,19 @@ def ItemTypeIcon(itemType, editorSession, itemStack=None):
         return QtGui.QIcon(QtGui.QPixmap.fromImage(image))
     except Exception as e:
         log.exception("Failed to load texture %s: %s", textureName, e)
-        return None
+        return getDefaultIcon()
+
+_defaultIcon = None
+
+
+def getDefaultIcon():
+    global _defaultIcon
+    if _defaultIcon is None:
+        texturePath = resourcePath("mcedit2/assets/mcedit2/block_unknown.png")
+        with open(texturePath, "rb") as f:
+            data = f.read()
+
+        image = QtGui.QImage.fromData(data).scaled(ICON_SIZE, ICON_SIZE)
+        _defaultIcon = QtGui.QIcon(QtGui.QPixmap.fromImage(image))
+
+    return _defaultIcon

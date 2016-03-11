@@ -11,7 +11,8 @@ from mcedit2.util.mimeformats import MimeFormats
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
 
-from mcedit2.widgets.itemtype_list import ItemTypeListModel, ItemTypeIcon, ICON_SIZE
+from mcedit2.widgets.itemtype_list import ItemTypeListModel, ItemTypeIcon, ICON_SIZE, \
+    getDefaultIcon
 from mcedit2.widgets.layout import Row, Column
 from mcedit2.widgets.nbttree.nbteditor import NBTEditorWidget
 from mceditlib.blocktypes import VERSION_1_7
@@ -58,15 +59,17 @@ class InventoryItemModel(QtCore.QAbstractListModel):
             try:
                 itemType = itemStack.itemType
             except ValueError as e:  # itemType not mapped
-                return None
+                itemType = None
             except KeyError as e:  # missing NBT tag?
                 log.exception("Error while reading item data: %r", e)
-                return None
+                itemType = None
             if role == self.ItemIconRole:
+                if itemType is None:
+                    return getDefaultIcon()
                 return ItemTypeIcon(itemType, self.editorSession, itemStack)
 
             if role == self.ItemDisplayNameRole:
-                return itemType.displayName
+                return itemType.displayName if itemType else itemStack.raw_id
 
         if role == self.ItemIDRole:
             return itemStack.id
