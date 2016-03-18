@@ -23,7 +23,8 @@ def showErrorDialog(text, tb, fatal):
     global _errorShown
     _errorShown = True
     grabber = QtGui.QWidget.mouseGrabber()
-    grabber.releaseMouse()
+    if grabber:
+        grabber.releaseMouse()
 
     dialog = ErrorDialog(text, tb, fatal)
     dialog.exec_()
