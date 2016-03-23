@@ -40,7 +40,7 @@ class ResourceLoader(object):
 
             try:
                 self.addZipFile(mod)
-            except EnvironmentError as e:
+            except Exception as e:
                 log.exception("Failed to add mod %s to resource loader.", modName)
                 continue
 
