@@ -17,6 +17,7 @@ from mcedit2.ui.selection_coord_widget import Ui_selectionCoordWidget
 from mcedit2.util.glutils import gl
 from mcedit2.rendering.depths import DepthOffsets
 from mcedit2.rendering.scenegraph import scenenode, rendernode
+from mcedit2.util.settings import Settings
 from mcedit2.widgets.layout import Column
 from mcedit2.widgets.shapewidget import ShapeWidget
 from mceditlib import faces
@@ -24,6 +25,10 @@ from mceditlib.geometry import Vector
 from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
+
+SelectionOptions = Settings().getNamespace("select_tool")
+ClassicSelectionOption = SelectionOptions.getOption("classic_selection", bool, False)
+StickySelectionOption = SelectionOptions.getOption("sticky_selection", bool, False)
 
 
 class SelectionCoordinateWidget(QtGui.QWidget, Ui_selectionCoordWidget):
@@ -178,13 +183,22 @@ class SelectionTool(EditorTool):
 
         self.toolWidget = toolWidget
 
+        self.optionsButton = QtGui.QPushButton(self.tr("Options"))
+
+        self.optionsMenu = QtGui.QMenu()
+        self.optionsButton.setMenu(self.optionsMenu)
+        
+        classicSelectionAction = self.optionsMenu.addAction(self.tr("Classic Selection"))
+        stickySelectionAction = self.optionsMenu.addAction(self.tr("Sticky Selection"))
+
         self.coordInput = SelectionCoordinateWidget()
         self.coordInput.boxChanged.connect(self.coordInputChanged)
         self.shapeInput = ShapeWidget(addShapes=[ChunkShape()])
         self.shapeInput.shapeChanged.connect(self.shapeDidChange)
         self.shapeInput.shapeOptionsChanged.connect(self.shapeDidChange)
 
-        self.toolWidget.setLayout(Column(self.coordInput,
+        self.toolWidget.setLayout(Column(self.optionsButton,
+                                         self.coordInput,
                                          self.shapeInput,
                                          None))
 
@@ -201,6 +215,16 @@ class SelectionTool(EditorTool):
         self.overlayNode.addChild(self.boxHandleNode)
 
         self.newSelectionNode = None
+
+        classicSelectionAction.setCheckable(True)
+        classicSelectionAction.toggled.connect(ClassicSelectionOption.setValue)
+        classicSelectionAction.setChecked(ClassicSelectionOption.value())
+        ClassicSelectionOption.connectAndCall(self.setClassicSelection)
+
+        stickySelectionAction.setCheckable(True)
+        stickySelectionAction.toggled.connect(StickySelectionOption.setValue)
+        stickySelectionAction.setChecked(StickySelectionOption.value())
+        StickySelectionOption.connectAndCall(self.setStickySelection)
 
         editorSession.dimensionChanged.connect(self.dimensionDidChange)
         editorSession.revisionChanged.connect(self.revisionDidChange)
@@ -300,6 +324,12 @@ class SelectionTool(EditorTool):
 
     def createShapedSelection(self, box):
         return self.shapeInput.currentShape.createShapedSelection(box, self.editorSession.currentDimension)
+
+    def setClassicSelection(self, enabled):
+        self.boxHandleNode.classicSelection = enabled
+
+    def setStickySelection(self, enabled):
+        self.boxHandleNode.stickySelection = enabled
 
 
 class SelectionCursorRenderNode(rendernode.RenderNode):

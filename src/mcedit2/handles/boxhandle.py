@@ -40,6 +40,11 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
     isCreating = False
     isResizing = False
 
+    classicSelection = False
+    stickySelection = False
+
+    isSticking = False
+
     def __init__(self):
         """
         A drawable, resizable box that can respond to mouse events. Emits boundsChanged
@@ -132,27 +137,39 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
 
         return thisSide.union(otherSide)
 
-    def boxFromDragSelect(self, ray):
+    def boxFromDragSelect(self, event):
         """
         Create a flat selection from dragging the mouse outside the selection.
 
-        :type ray: mcedit2.util.geometry.Ray
-        :rtype: BoundingBox
+        Parameters
+        ----------
+
+        ray: mcedit2.util.geometry.Ray
+
+        Returns
+        -------
+
+        box: BoundingBox
         """
         point = self.dragStartPoint
         face = self.dragStartFace
         size = [1, 1, 1]
 
-        dim = face >> 1
-        size[dim] = 0
-        s = [0,0,0]
+        if self.classicSelection:
+            endPoint = event.blockPosition
+        else:
+            ray = event.ray
+            dim = face >> 1
+            size[dim] = 0
+            s = [0,0,0]
 
-        if face & 1 == 0:
-            s[dim] = 1
-            point = point + s
+            if face & 1 == 0:
+                s[dim] = 1
+                point = point + s
+
+            endPoint = ray.intersectPlane(dim, point[dim])
 
         startBox = BoundingBox(point, size)
-        endPoint = ray.intersectPlane(dim, point[dim])
         endBox = BoundingBox(endPoint.intfloor(), size)
 
         return startBox.union(endBox)
@@ -217,11 +234,11 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
 
     def continueCreate(self, event):
         # Show new box being dragged out
-        newBox = self.boxFromDragSelect(event.ray)
+        newBox = self.boxFromDragSelect(event)
         self.bounds = newBox
 
     def endCreate(self, event):
-        newBox = self.boxFromDragSelect(event.ray)
+        newBox = self.boxFromDragSelect(event)
         self.isCreating = False
         self.dragStartPoint = None
         self.dragResizeFace = None
@@ -297,14 +314,23 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
         if self.moveModifierDown(event) or not self.resizable:
             self.beginMove(event)
         elif self.resizable:
-            # Find side of existing selection to drag
-            # xxxx can't do this with disjoint selections?
-            if self.bounds is not None:
-                self.beginResize(event)
 
             # Get ready to start new selection
             if self.bounds is None:
-                self.beginCreate(event)
+                if self.stickySelection:
+                    if not self.isSticking:
+                        self.isSticking = True
+                        self.beginCreate(event)
+                else:
+                    self.beginCreate(event)
+
+            else:
+                if self.isSticking:
+                    self.isSticking = False
+                    self.endCreate(event)
+                    self.ignoreNextRelease = True
+                else:
+                    self.beginResize(event)
 
     def mouseMove(self, event):
         # Called whether or not the mouse button is held.
@@ -320,13 +346,21 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
         if self.hiliteFace:
             self.updateMouseHover(event)
 
+    ignoreNextRelease = False
+
     def mouseRelease(self, event):
+        if self.ignoreNextRelease:
+            self.ignoreNextRelease = False
+            return
+
         if self.isMoving:
             self.endMove(event)
         elif self.resizable:
             if self.isCreating:
-                self.endCreate(event)
+                if not self.stickySelection:
+                    self.endCreate(event)
 
             elif self.isResizing:
                 self.endResize(event)
+
 
