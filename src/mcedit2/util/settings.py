@@ -79,6 +79,18 @@ class MCESettingsNamespace(object):
         self.prefix = prefix
 
     def getOption(self, key, type=None, default=None):
+        """
+        Parameters
+        ----------
+        key: str
+        type: bool | int | float | str
+        default: Any
+
+        Returns
+        -------
+
+        option: MCESettingsOption
+        """
         return self.rootSettings.getOption(self.prefix + key, type, default)
 
 

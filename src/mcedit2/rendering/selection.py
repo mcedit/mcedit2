@@ -343,20 +343,19 @@ class SelectionFaceRenderNode(rendernode.RenderNode):
         if box is None:
             return
 
-        alpha = 0.16
         with gl.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT | GL.GL_ENABLE_BIT | GL.GL_LINE_BIT):
             GL.glDisable(GL.GL_DEPTH_TEST)
             GL.glDepthMask(False)
             GL.glEnable(GL.GL_BLEND)
             GL.glPolygonOffset(self.sceneNode.depth, self.sceneNode.depth)
 
-            r, g, b = self.sceneNode.wireColor
-            GL.glColor(r, g, b, .8)
+            r, g, b, a = self.sceneNode.wireColor
+            GL.glColor(r, g, b, a)
             GL.glLineWidth(3.0)
             cubes.drawFace(box, self.sceneNode.face, GL.GL_LINE_STRIP)
 
-            r, g, b = self.sceneNode.color
-            GL.glColor(r, g, b, alpha)
+            r, g, b, a = self.sceneNode.color
+            GL.glColor(r, g, b, a)
             GL.glEnable(GL.GL_DEPTH_TEST)
             cubes.drawFace(box, self.sceneNode.face)
 
@@ -386,13 +385,14 @@ class SelectionFaceNode(scenenode.Node):
         self._face = value
         self.dirty = True
 
-    _color = (.3, .3, 1)
+    _color = (.3, .3, 1, .15)
     @property
     def color(self):
         return self._color
 
     @color.setter
     def color(self, value):
+        assert len(value) == 4
         self._color = value
         self.dirty = True
 
@@ -403,6 +403,7 @@ class SelectionFaceNode(scenenode.Node):
 
     @wireColor.setter
     def wireColor(self, value):
+        assert len(value) == 4
         self._wireColor = value
         self.dirty = True
 

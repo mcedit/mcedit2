@@ -300,13 +300,15 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
             self.faceDragNode.visible = False
         if self.moveModifierDown(event):
             self.faceDragNode.color = self._moveFaceColor
-            self.faceDragNode.wireColor = self._moveFaceColor
+            self.faceDragNode.wireColor = self._moveFaceWireColor
         else:
             self.faceDragNode.color = self._resizeFaceColor
-            self.faceDragNode.wireColor = self._resizeFaceColor
+            self.faceDragNode.wireColor = self._resizeFaceWireColor
 
-    _moveFaceColor = (0.3, 0.9, 0.3)
-    _resizeFaceColor = (0.3, 0.6, 0.9)
+    _moveFaceColor = (0.3, 0.9, 0.3, 0.3)
+    _moveFaceWireColor = (0.3, 0.9, 0.3, 0.8)
+    _resizeFaceColor = (0.3, 0.6, 0.9, 0.3)
+    _resizeFaceWireColor = (0.3, 0.6, 0.9, 0.8)
 
     # --- Mouse events ---
 

@@ -168,6 +168,7 @@ class SelectCommand(QtGui.QUndoCommand):
         self.previousBox = self.editorSession.currentSelection
         self.editorSession.currentSelection = self.box
 
+
 class SelectionTool(EditorTool):
     name = "Select"
     iconName = "select_blocks"
@@ -337,9 +338,8 @@ class SelectionCursorRenderNode(rendernode.RenderNode):
         point = self.sceneNode.point
         if point is None:
             return
-        #selectionColor = map(lambda a: a * a * a * a, self.sceneNode.color)
-        r, g, b = self.sceneNode.color
-        alpha = 0.3
+
+        r, g, b, a = self.sceneNode.color
         box = BoundingBox(point, (1, 1, 1))
 
         with gl.glPushAttrib(GL.GL_DEPTH_BUFFER_BIT | GL.GL_ENABLE_BIT | GL.GL_POLYGON_BIT):
@@ -351,19 +351,19 @@ class SelectionCursorRenderNode(rendernode.RenderNode):
 
             GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
 
-            GL.glColor(r, g, b, alpha)
+            GL.glColor(r, g, b, a)
             cubes.drawFace(box, self.sceneNode.face)
 
             # Wire box
             GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_LINE)
 
             GL.glLineWidth(3.0)
-            GL.glColor(1., 1., 1., alpha)
+            GL.glColor(1., 1., 1., a)
 
             cubes.drawBox(box)
 
             GL.glLineWidth(1.0)
-            GL.glColor(0.2, 0.2, 0.2, alpha)
+            GL.glColor(0.2, 0.2, 0.2, a)
 
             cubes.drawBox(box)
 
@@ -371,7 +371,7 @@ class SelectionCursorRenderNode(rendernode.RenderNode):
 class SelectionCursor(scenenode.Node):
     RenderNodeClass = SelectionCursorRenderNode
 
-    def __init__(self, point=Vector(0, 0, 0), face=faces.FaceXDecreasing, color=(.3, .3, 1)):
+    def __init__(self, point=Vector(0, 0, 0), face=faces.FaceXDecreasing, color=(.3, .3, 1, .8)):
         super(SelectionCursor, self).__init__()
         self._point = point
         self._face = face
