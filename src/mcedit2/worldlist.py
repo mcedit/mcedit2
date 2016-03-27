@@ -353,8 +353,8 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
             self.worldListModel = WorldListModel(worldFiles)
             self.worldListView.setModel(self.worldListModel)
 
-        except EnvironmentError as e:
-            setWidgetError(self, e)
+        except Exception as e:
+            setWidgetError(self, e, "An error occurred while scanning the saves folder.")
 
     def openWorldClicked(self):
         QtGui.qApp.chooseOpenWorld()
@@ -382,7 +382,7 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
 
         except (EnvironmentError, LevelFormatError, zipfile.BadZipfile) as e:
             self.errorWidget = QtGui.QWidget()
-            setWidgetError(self.errorWidget, e)
+            setWidgetError(self.errorWidget, e, "An error occurred while reading the world %s." % filename)
             self.stackedWidget.addWidget(self.errorWidget)
             self.stackedWidget.setCurrentWidget(self.errorWidget)
 

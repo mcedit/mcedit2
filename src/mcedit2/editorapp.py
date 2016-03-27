@@ -709,7 +709,7 @@ class MCEditApp(QtGui.QApplication):
         except Exception as e:
             log.exception("EditorSession failed to open %s: %r", filename, e)
             errorTab = QtGui.QWidget()
-            setWidgetError(errorTab, e)
+            setWidgetError(errorTab, e, "An error occurred while opening %s" % filename)
             self.tabWidget.addTab(errorTab, "Failed to open %s" % filename)
 
         fileLoadingDialog.reset()

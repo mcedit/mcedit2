@@ -1,4 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
+
+import traceback
+
 from PySide import QtGui
 from PySide.QtCore import Qt
 
@@ -45,7 +48,7 @@ def Column(*a, **kw):
         box.setContentsMargins(margin, margin, margin, margin)
     return box
 
-def setWidgetError(widget, exc):
+def setWidgetError(widget, exc, msg = "An error has occurred."):
     """
     Add a subwidget to `widget` that displays the error message for the exception `exc`
     :param widget:
@@ -53,6 +56,11 @@ def setWidgetError(widget, exc):
     :return:
     """
     layout = QtGui.QVBoxLayout()
-    layout.addWidget(QtGui.QLabel(exc.message))
-    layout.addStretch()
+    textArea = QtGui.QTextEdit()
+    textArea.setReadOnly(True)
+    message = msg + "\n"
+    message += str(exc) + "\n\n"
+    message += traceback.format_exc()
+    textArea.setText(message)
+    layout.addWidget(textArea)
     widget.setLayout(layout)
