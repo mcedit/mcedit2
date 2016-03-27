@@ -309,7 +309,12 @@ class MCInstall(object):
                 loader.addZipFile(self.getResourcePackPath(resourcePack))
             except Exception as e:
                 log.warn("Failed to load resource pack: %r\nPack: %s", e, resourcePack)
-        loader.addZipFile(self.getVersionJarPath(version))
+        path = self.getVersionJarPath(version)
+        if not os.path.exists(path):
+            if len(self.versions):
+                log.warn("Version %s not found, falling back to first version found", version)
+                path = self.getVersionJarPath(self.versions[0])
+        loader.addZipFile(path)
         major, minor, rev = splitVersion(version)
 
         # Need v1.8 for block models
