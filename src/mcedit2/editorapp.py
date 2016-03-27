@@ -706,7 +706,7 @@ class MCEditApp(QtGui.QApplication):
 
             session.loadDone()
 
-        except EnvironmentError as e:
+        except Exception as e:
             log.exception("EditorSession failed to open %s: %r", filename, e)
             errorTab = QtGui.QWidget()
             setWidgetError(errorTab, e)
