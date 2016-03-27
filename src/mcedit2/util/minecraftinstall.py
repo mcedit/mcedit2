@@ -21,7 +21,7 @@ multiMCInstallsOption = settings.Settings().getOption("minecraft_installs/multim
 currentInstallOption = settings.Settings().getOption("minecraft_installs/current_install_path", unicode, "")
 currentVersionOption = settings.Settings().getOption("minecraft_installs/current_version", unicode, "")
 currentResourcePackOption = settings.Settings().getOption("minecraft_installs/current_resource_pack", unicode, "")
-allowSnapshotsOption = settings.Settings().getOption("minecraft_installs/allow_snapshots", int, 0)
+allowSnapshotsOption = settings.Settings().getOption("minecraft_installs/allow_snapshots_", bool, False)
 
 _installs = None
 
@@ -492,6 +492,8 @@ class MinecraftInstallsDialog(QtGui.QDialog, Ui_installsWidget):
     def __init__(self, *args, **kwargs):
         super(MinecraftInstallsDialog, self).__init__(*args, **kwargs)
         self.setupUi(self)
+
+
         # populate list view
         path = currentInstallOption.value()
         for i, install in enumerate(GetInstalls().installs):
@@ -508,6 +510,10 @@ class MinecraftInstallsDialog(QtGui.QDialog, Ui_installsWidget):
         self.selectButton.clicked.connect(self.selectInstall)
         self.okButton.clicked.connect(self.ok)
 
+        self.snapshotsCheckBox.setChecked(allowSnapshotsOption.value())
+        self.snapshotsCheckBox.toggled.connect(allowSnapshotsOption.setValue)
+        allowSnapshotsOption.valueChanged.connect(self.allowSnapshotsChanged)
+
         self.addMMCButton.clicked.connect(self.addMMCInstall)
         self.removeMMCButton.clicked.connect(self.removeMMCInstall)
 
@@ -518,6 +524,14 @@ class MinecraftInstallsDialog(QtGui.QDialog, Ui_installsWidget):
             install.name = text
         if column == 2:
             install.path = text  # xxxx validate me!
+
+    def allowSnapshotsChanged(self):
+        installs = GetInstalls().installs
+        for row in range(self.minecraftInstallsTable.rowCount()):
+            install = installs[row]
+            versionsString = ", ".join(sorted(install.versions, reverse=True))
+            versionsItem = self.minecraftInstallsTable.item(row, 1)
+            versionsItem.setText(versionsString)
 
     def _addInstall(self, install):
         minecraftInstallsTable = self.minecraftInstallsTable
@@ -531,7 +545,7 @@ class MinecraftInstallsDialog(QtGui.QDialog, Ui_installsWidget):
         versionsString = ", ".join(sorted(install.versions, reverse=True))
         versionsItem = QtGui.QTableWidgetItem(versionsString)
         versionsItem.setFlags(versionsItem.flags() & ~Qt.ItemIsEditable)
-        minecraftInstallsTable.setItem(row, 1, versionsItem)
+        self.minecraftInstallsTable.setItem(row, 1, versionsItem)
 
         pathItem = PathItem(install.path)
         if install.name == "(Default)":
