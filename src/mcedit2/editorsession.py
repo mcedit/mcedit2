@@ -514,15 +514,17 @@ class EditorSession(QtCore.QObject):
 
         install = minecraftinstall.GetInstalls().getCurrentInstall()
 
-        for version in sorted(install.versions, reverse=True):
-            versionAction = self.mcVersionMenu.addAction(version)
-            self.mcVersionMapper.setMapping(versionAction, version)
-            versionAction.triggered.connect(self.mcVersionMapper.map)
+        if install is not None:
 
-        for resourcePack in sorted(install.resourcePacks):
-            resourcePackAction = self.resourcePackMenu.addAction(resourcePack)
-            self.resourcePackMapper.setMapping(resourcePackAction, resourcePack)
-            resourcePackAction.triggered.connect(self.resourcePackMapper.map)
+            for version in sorted(install.versions, reverse=True):
+                versionAction = self.mcVersionMenu.addAction(version)
+                self.mcVersionMapper.setMapping(versionAction, version)
+                versionAction.triggered.connect(self.mcVersionMapper.map)
+
+            for resourcePack in sorted(install.resourcePacks):
+                resourcePackAction = self.resourcePackMenu.addAction(resourcePack)
+                self.resourcePackMapper.setMapping(resourcePackAction, resourcePack)
+                resourcePackAction.triggered.connect(self.resourcePackMapper.map)
 
     def toolbarTextChanged(self, enable):
         if enable:

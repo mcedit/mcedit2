@@ -223,12 +223,16 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
                 self.savesFolderComboBox.setCurrentIndex(index)
 
         self.savesFolderComboBox.currentIndexChanged.connect(self.savesFolderChanged)
-        self.minecraftInstallBox.currentIndexChanged.connect(minecraftinstall.currentInstallOption.setValue)
+        self.minecraftInstallBox.currentIndexChanged.connect(self.currentInstallChanged)
         self.minecraftVersionBox.currentIndexChanged[str].connect(minecraftinstall.currentVersionOption.setValue)
         self.resourcePackBox.currentIndexChanged.connect(self.resourcePackChanged)
         self.worldListModel = None
         self.reloadList()
         self.reloadRecentWorlds()
+
+    def currentInstallChanged(self, index):
+        path = self.minecraftInstallBox.itemData(index)
+        minecraftinstall.currentInstallOption.setValue(path)
 
     def resourcePackChanged(self, index):
         if index == 0:
@@ -237,16 +241,20 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
             minecraftinstall.currentResourcePackOption.setValue(self.resourcePackBox.currentText())
 
     def _updateInstalls(self):
+        self.minecraftInstallBox.clear()
+
         for install in minecraftinstall.GetInstalls().installs:
-            self.minecraftInstallBox.addItem(install.name)
+            self.minecraftInstallBox.addItem(install.name, install.path)
             for saveDir in install.getSaveDirs():
                 self.savesFolderComboBox.addItem(install.name + os.sep + os.path.basename(saveDir), saveDir)
 
-        for index, instance in enumerate(minecraftinstall.GetInstalls().instances):  # xxx instanceID?
+        for instance in minecraftinstall.GetInstalls().instances:
             saveDir = instance.saveFileDir
             self.savesFolderComboBox.addItem(instance.name + os.sep + os.path.basename(saveDir), saveDir)
 
-        self.minecraftInstallBox.setCurrentIndex(minecraftinstall.GetInstalls().selectedInstallIndex())
+        path = minecraftinstall.GetInstalls().selectedInstallPath()
+        index = self.minecraftInstallBox.findData(path)
+        self.minecraftInstallBox.setCurrentIndex(index)
 
         self._updateVersionsAndResourcePacks()
 
@@ -255,9 +263,10 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
         self.resourcePackBox.clear()
         self.resourcePackBox.addItem(self.tr("(No resource pack)"))
 
-        if self.minecraftInstallBox.count():
-            install = minecraftinstall.GetInstalls().getInstall(self.minecraftInstallBox.currentIndex())
+        path = minecraftinstall.currentInstallOption.value()
+        install = minecraftinstall.GetInstalls().getInstall(path)
 
+        if install:
             for version in sorted(install.versions, reverse=True):
                 self.minecraftVersionBox.addItem(version)
 

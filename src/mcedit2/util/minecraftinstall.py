@@ -18,10 +18,9 @@ log = logging.getLogger(__name__)
 
 installationsOption = settings.Settings().getOption("minecraft_installs/installations", "json", [])
 multiMCInstallsOption = settings.Settings().getOption("minecraft_installs/multimc_installs", "json", [])
-currentInstallOption = settings.Settings().getOption("minecraft_installs/current_install", int, 0)
+currentInstallOption = settings.Settings().getOption("minecraft_installs/current_install_path", unicode, "")
 currentVersionOption = settings.Settings().getOption("minecraft_installs/current_version", unicode, "")
 currentResourcePackOption = settings.Settings().getOption("minecraft_installs/current_resource_pack", unicode, "")
-currentMMCInstanceOption = settings.Settings().getOption("minecraft_installs/current_mmc_instance", int)
 allowSnapshotsOption = settings.Settings().getOption("minecraft_installs/allow_snapshots", int, 0)
 
 _installs = None
@@ -53,12 +52,12 @@ def getResourceLoaderForFilename(filename):
 
     return loader
 
+
 def getSelectedResourceLoader():
-    i = currentInstallOption.value()
-    if i == -1:
+    install = GetInstalls().getCurrentInstall()
+    if install is None:
         return GetInstalls().getDefaultResourceLoader()
 
-    install = GetInstalls().getInstall(i)
     v = currentVersionOption.value()
     if not v:
         v = list(install.versions)[0]
@@ -72,11 +71,13 @@ def GetInstalls():
         _installs = MCInstallGroup()
     return _installs
 
+
 def md5hash(filename):
     md5 = hashlib.md5()
     with file(filename, "rb") as f:
         md5.update(f.read())
         return md5.hexdigest()
+
 
 class MCInstallGroup(object):
     def __init__(self):
@@ -91,6 +92,15 @@ class MCInstallGroup(object):
         """
         self._installations = list(self._loadInstalls())
         self._mmcInstalls = list(self._loadMMCInstalls())
+        path = currentInstallOption.value()
+        install = self.getInstall(path)
+        if install is None:
+            if len(self._installations):
+                path = self._installations[0].path
+                currentInstallOption.setValue(path)
+            else:
+                currentInstallOption.setValue("")
+
         self.getDefaultInstall()
 
     def _loadMMCInstalls(self):
@@ -137,27 +147,40 @@ class MCInstallGroup(object):
             if value not in installationsOption.value():
                 self._installations.append(defaultInstall)
                 self._saveInstalls()
+            if currentInstallOption.value() == "":
+                currentInstallOption.setValue(defaultInstall.path)
             return defaultInstall
 
-    def selectedInstallIndex(self):
-        return currentInstallOption.value(0)
+    def selectedInstallPath(self):
+        path = currentInstallOption.value()
+        for install in self._installations:
+            if install.path == path:
+                return path
+
+        if len(self._installations):
+            install = self._installations[0]
+            currentInstallOption.setValue(install.path)
+            return install.path
 
     @property
     def installs(self):
         return list(self._installations)
 
-    def getInstall(self, index):
-        return self._installations[index]
+    def getInstall(self, path):
+        for install in self._installations:
+            if install.path == path:
+                return install
+        return None
 
     def getCurrentInstall(self):
-        return self.getInstall(self.selectedInstallIndex())
+        return self.getInstall(self.selectedInstallPath())
 
     def addInstall(self, install):
         self._installations.append(install)
         self._saveInstalls()
 
-    def removeInstall(self, index):
-        del self._installations[index]
+    def removeInstall(self, path):
+        self._installations = [i for i in self._installations if i.path != path]
         self._saveInstalls()
 
     def addMMCInstall(self, install):
@@ -470,12 +493,14 @@ class MinecraftInstallsDialog(QtGui.QDialog, Ui_installsWidget):
         super(MinecraftInstallsDialog, self).__init__(*args, **kwargs)
         self.setupUi(self)
         # populate list view
-        for install in GetInstalls().installs:
+        path = currentInstallOption.value()
+        for i, install in enumerate(GetInstalls().installs):
             self._addInstall(install)
+            if path == install.path:
+                self._hiliteRow(i)
+
         for path in GetInstalls().mmcInstalls:
             self._addMMCInstall(path)
-
-        self._hiliteRow(currentInstallOption.value(0))
 
         self.minecraftInstallsTable.cellChanged.connect(self.itemChanged)
         self.addButton.clicked.connect(self.addInstall)
@@ -485,7 +510,6 @@ class MinecraftInstallsDialog(QtGui.QDialog, Ui_installsWidget):
 
         self.addMMCButton.clicked.connect(self.addMMCInstall)
         self.removeMMCButton.clicked.connect(self.removeMMCInstall)
-
 
     def itemChanged(self, row, column):
         install = GetInstalls().installs[row]
@@ -514,12 +538,12 @@ class MinecraftInstallsDialog(QtGui.QDialog, Ui_installsWidget):
             pathItem.setFlags(pathItem.flags() & ~Qt.ItemIsEditable)
         minecraftInstallsTable.setItem(row, 2, pathItem)
         self._hiliteRow(row)
-        currentInstallOption.setValue(row)
+        currentInstallOption.setValue(install.path)
 
     def _addMMCInstall(self, install):
         mmcTable = self.multiMCTable
         row = mmcTable.rowCount()
-        mmcTable.setRowCount(row+1)
+        mmcTable.setRowCount(row + 1)
         nameItem = NameItem(install.name)
         nameItem.setFlags(nameItem.flags() & ~Qt.ItemIsEditable)
         mmcTable.setItem(row, 0, nameItem)
@@ -557,12 +581,14 @@ class MinecraftInstallsDialog(QtGui.QDialog, Ui_installsWidget):
 
     def removeInstall(self):
         row = self.minecraftInstallsTable.currentRow()
-        GetInstalls().removeInstall(row)
+        path = self.minecraftInstallsTable.item(row, 2).data()
+        GetInstalls().removeInstall(path)
         self.minecraftInstallsTable.removeRow(row)
 
     def selectInstall(self):
         row = self.minecraftInstallsTable.currentRow()
-        currentInstallOption.setValue(row)
+        path = self.minecraftInstallsTable.item(row, 2).data()
+        currentInstallOption.setValue(path)
         self._hiliteRow(row)
 
     def addMMCInstall(self):
