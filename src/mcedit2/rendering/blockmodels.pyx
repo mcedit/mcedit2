@@ -318,11 +318,12 @@ cdef class BlockModels(object):
                 break
             try:
                 modelDict = self._getBlockModel(parentName)
-            except ValueError as e:
+            except Exception as e:
                 log.exception("Error parsing json for block/%s: %s", parentName, e)
-                raise
+                return
         else:
-            raise ValueError("Parent loop detected in block model for %s" % block.nameAndState)
+            log.error("Parent loop detected in block model for %s" % block.nameAndState)
+            return
 
         if block.forcedModelTextures:  # user-configured model textures
             for var, tex in block.forcedModelTextures.iteritems():
@@ -362,9 +363,7 @@ cdef class BlockModels(object):
         except Exception as e:
             log.error("Failed to parse variant of block %s\nelements:\n%s\ntextures:\n%s",
                       block.nameAndState, allElements, textureVars)
-            raise
-
-
+            return
 
     def loadResourceVariant(self, resourcePath, resourceVariant):
         # variants is a dict with each key a resourceVariant value (from the block's ModelResourceLocation)
@@ -399,7 +398,7 @@ cdef class BlockModels(object):
         except ResourceNotFound as e:
             # if block.internalName.startswith("minecraft:"):
             #     log.warn("Could not get blockstates resource for %s, skipping... (%r)", block, e)
-            log.info("Could not get blockstates resource for %s#%s, skipping... (%r)", resourcePath, resourceVariant, e)
+            log.warn("Could not get blockstates resource for %s#%s, skipping... (%r)", resourcePath, resourceVariant, e)
             return None
 
         if 'variants' not in statesJson:
