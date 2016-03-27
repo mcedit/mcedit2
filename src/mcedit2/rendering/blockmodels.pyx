@@ -407,10 +407,20 @@ cdef class BlockModels(object):
             return None
 
         variants = statesJson['variants']
-        variantDict = variants[resourceVariant]
+        variantDict = variants.get(resourceVariant)
+        if variantDict is None:
+            log.warn("variant %s not found in 'variants' key of states file %s, skipping...", resourceVariant, resourcePath)
+            return None
+
         if isinstance(variantDict, list):
             variantDict = variantDict[0]  # do the random pick thing later, if at all
-        modelName = variantDict['model']
+
+        modelName = variantDict.get('model')
+
+        if modelName is None:
+            log.warn("No 'model' key found for variant %s in 'variants' key of states file %s, skipping...", resourceVariant, resourcePath)
+            return None
+
         try:
             modelDict = self._getBlockModel("block/" + modelName)
         except ResourceNotFound as e:
