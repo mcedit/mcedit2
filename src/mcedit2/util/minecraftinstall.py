@@ -280,7 +280,7 @@ class MCInstall(object):
         versions = os.listdir(self.versionsDir)
         return [v for v in versions
                 if os.path.exists(self.getVersionJarPath(v))
-                and usableVersion(v) or allowSnapshotsOption.value()]
+                and (usableVersion(v) or allowSnapshotsOption.value())]
 
     def getVersionJarPath(self, version):
         return os.path.join(self.versionsDir, version, "%s.jar" % version)
