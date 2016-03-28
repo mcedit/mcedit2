@@ -28,6 +28,7 @@ from libc.string cimport memset
 
 log = logging.getLogger(__name__)
 
+DEF MAX_TEXTURE_RECURSIONS = 200
 
 cdef struct ModelQuad:
     float[32] xyzuvstc
@@ -122,7 +123,7 @@ cdef class BlockModels(object):
             self.modelBlockJsons[modelPath] = model
         return model
 
-    def _getBlockState(self, stateName):
+    def _getBlockState(self, stateName, fallback=False):
         if stateName == u"MCEDIT_UNKNOWN":
             return {
                 u"variants": {
@@ -131,10 +132,10 @@ cdef class BlockModels(object):
                     }
                 }
             }
-        state = self.modelStateJsons.get(stateName)
+        state = self.modelStateJsons.get((stateName, fallback))
         if state is None:
-            state = json.load(self.resourceLoader.openStream("assets/minecraft/blockstates/%s.json" % stateName))
-            self.modelStateJsons[stateName] = state
+            state = json.load(self.resourceLoader.openStream("assets/minecraft/blockstates/%s.json" % stateName, fallback))
+            self.modelStateJsons[stateName, fallback] = state
         return state
 
     def __init__(self, blocktypes, resourceLoader):
@@ -303,13 +304,13 @@ cdef class BlockModels(object):
 
         # grab textures and elements from this model, then get parent and merge its textures and elements
         # continue until no parent is found
-        textureVars = {}
+        rawTextureVars = {}
         allElements = []
 
-        for i in range(30):
+        for i in range(MAX_TEXTURE_RECURSIONS):
             textures = modelDict.get("textures")
             if textures is not None:
-                textureVars.update(textures)
+                rawTextureVars.update(textures)
             elements = modelDict.get("elements")
             if elements is not None:
                 allElements.extend(elements)
@@ -327,7 +328,17 @@ cdef class BlockModels(object):
 
         if block.forcedModelTextures:  # user-configured model textures
             for var, tex in block.forcedModelTextures.iteritems():
-                textureVars[var[1:]] = tex
+                rawTextureVars[var[1:]] = tex
+
+        # pre-resolve texture vars
+
+        textureVars = {}
+        for k, v in rawTextureVars.iteritems():
+            while v.startswith("#"):
+                v = rawTextureVars.get(v[1:])
+            if v:
+                textureVars[k] = v
+
 
         if block.biomeTintType == "grass":
             biomeTintType = BIOME_GRASS
@@ -356,13 +367,14 @@ cdef class BlockModels(object):
                 quads = self.buildBoxQuads(element, block.nameAndState, textureVars,
                                            variantXrot, variantYrot,
                                            variantMatrix, blockColor, biomeTintType)
-                allQuads.extend(quads)
+                if quads:
+                    allQuads.extend(quads)
 
             self.quadsByResourcePathVariant[resourcePath, resourceVariant] = allQuads
 
         except Exception as e:
             log.error("Failed to parse variant of block %s\nelements:\n%s\ntextures:\n%s",
-                      block.nameAndState, allElements, textureVars)
+                      block.nameAndState, allElements, rawTextureVars)
             return
 
     def loadResourceVariant(self, resourcePath, resourceVariant):
@@ -402,14 +414,40 @@ cdef class BlockModels(object):
             return None
 
         if 'variants' not in statesJson:
+            log.warn("'variants' key not found in states file %s, trying 1.8...", resourcePath)
+            try:
+                statesJson = self._getBlockState(resourcePath, True)
+            except ResourceNotFound as e:
+                # if block.internalName.startswith("minecraft:"):
+                #     log.warn("Could not get blockstates resource for %s, skipping... (%r)", block, e)
+                log.warn("Could not get blockstates resource for %s#%s, skipping... (%r)", resourcePath, resourceVariant, e)
+                return None
+
+        if 'variants' not in statesJson:
             log.warn("'variants' key not found in states file %s, skipping...", resourcePath)
-            return None
+            return
 
         variants = statesJson['variants']
         variantDict = variants.get(resourceVariant)
         if variantDict is None:
-            log.warn("variant %s not found in 'variants' key of states file %s, skipping...", resourceVariant, resourcePath)
-            return None
+            log.warn("variant %s not found in 'variants' key of states file %s, trying 1.8...", resourceVariant, resourcePath)
+            try:
+                statesJson = self._getBlockState(resourcePath, True)
+            except ResourceNotFound as e:
+                # if block.internalName.startswith("minecraft:"):
+                #     log.warn("Could not get blockstates resource for %s, skipping... (%r)", block, e)
+                log.warn("Could not get blockstates resource for %s#%s, skipping... (%r)", resourcePath, resourceVariant, e)
+                return None
+
+            if 'variants' not in statesJson:
+                log.warn("'variants' key not found in states file %s, skipping...", resourcePath)
+                return
+
+            variants = statesJson['variants']
+            variantDict = variants.get(resourceVariant)
+            if variantDict is None:
+                log.warn("variant %s not found in 'variants' key of states file %s, skipping...", resourceVariant, resourcePath)
+                return None
 
         if isinstance(variantDict, list):
             variantDict = variantDict[0]  # do the random pick thing later, if at all
@@ -479,16 +517,18 @@ cdef class BlockModels(object):
                 tintcolor = None
 
             # resolve texture variables
-            for i in range(30):
+            for i in range(MAX_TEXTURE_RECURSIONS):
                 if texture is None:
-                    raise ValueError("Texture variable %s is not assigned." % lasttexvar)
+                    log.error("Texture variable %s is not assigned." % lasttexvar)
+                    return None
                 elif texture[0] == u"#":
                     lasttexvar = texture
                     texture = textureVars.get(texture[1:], u"MCEDIT_UNKNOWN")
                 else:
                     break
             else:
-                raise ValueError("Texture variable loop detected!")
+                log.error("Texture variable loop detected!")
+                return None
 
             if texture != u"MCEDIT_UNKNOWN" and not texture.endswith(".png"):
                 texture = "assets/minecraft/textures/" + texture + ".png"

@@ -249,8 +249,9 @@ class MCInstallGroup(object):
                         return jarPath
 
     def getDefaultResourceLoader(self):
-        loader = ResourceLoader()
-        loader.addZipFile(self.findVersion1_8())
+        v18 = self.findVersion1_8()
+        loader = ResourceLoader(v18)
+        loader.addZipFile(v18)
         return loader
 
 class MCInstall(object):
@@ -303,7 +304,8 @@ class MCInstall(object):
                 "path": self.path}
 
     def getResourceLoader(self, version, resourcePack):
-        loader = ResourceLoader()
+        v1_8 = self.installGroup.findVersion1_8()
+        loader = ResourceLoader(v1_8)
         if resourcePack:
             try:
                 loader.addZipFile(self.getResourcePackPath(resourcePack))
@@ -318,8 +320,7 @@ class MCInstall(object):
         major, minor, rev = splitVersion(version)
 
         # Need v1.8 for block models
-        if (major, minor) < (1, 8):
-            v1_8 = self.installGroup.findVersion1_8()
+        if (major, minor) != (1, 8):
             loader.addZipFile(v1_8)
 
         info = ["%s (%s)" % (z.filename, md5hash(z.filename)) for z in loader.zipFiles]
@@ -352,15 +353,15 @@ class MMCInstance(object):
         return self.install.getVersionJarPath(self.version)
 
     def getResourceLoader(self, resourcePack=None):
-        loader = ResourceLoader()
+        v1_8 = self.install.installGroup.findVersion1_8()
+        loader = ResourceLoader(v1_8)
         if resourcePack:
             loader.addZipFile(resourcePack)
         loader.addZipFile(self.getVersionJarPath())
         major, minor, rev = splitVersion(self.version)
 
         # Need v1.8 for block models
-        if (major, minor) < (1, 8):
-            v1_8 = self.install.installGroup.findVersion1_8()
+        if (major, minor) != (1, 8):
             loader.addZipFile(v1_8)
 
         loader.addModsFolder(self.modsDir)

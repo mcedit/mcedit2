@@ -13,10 +13,11 @@ class ResourceNotFound(KeyError):
     pass
 
 class ResourceLoader(object):
-    def __init__(self):
+    def __init__(self, fallbackZipFile):
         super(ResourceLoader, self).__init__()
         self.zipFiles = []
         self.modsDirs = []
+        self.fallbackZipFile = zipfile.ZipFile(fallbackZipFile)
 
     def addZipFile(self, zipPath):
         try:
@@ -44,7 +45,14 @@ class ResourceLoader(object):
                 log.exception("Failed to add mod %s to resource loader.", modName)
                 continue
 
-    def openStream(self, path):
+    def openStream(self, path, fallback=False):
+        if fallback:
+            try:
+                stream = self.fallbackZipFile.open(path)
+            except KeyError:  # Not found in zip file
+                raise ResourceNotFound("Resource %s not found in search path" % path)
+            return stream
+
         for zipFile in self.zipFiles:
             try:
                 stream = zipFile.open(path)
