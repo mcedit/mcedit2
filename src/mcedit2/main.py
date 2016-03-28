@@ -19,6 +19,8 @@ import codecs
 # Since the Windows console uses an encoding that can't represent all unicode
 # characters, we set the error mode of the standard IO streams to "replace"
 # so as not to get encoding errors when printing filenames.
+from mcedit2.util.gen_ui import compile_ui
+
 
 def writer(stream):
     oldwrite = stream.write
@@ -164,6 +166,7 @@ def startup():
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_X11InitThreads, True)
     global editorApp
     setup_logging()
+    compile_ui()
     sys.excepthook = excepthook
 
     from mcedit2 import __version__

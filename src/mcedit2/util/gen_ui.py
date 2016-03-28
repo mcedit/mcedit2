@@ -18,7 +18,9 @@ def compile_ui():
 
     from pysideuic import compileUiDir
 
+    log.info("Compiling .ui files...")
     compileUiDir(uiDir, recurse=True)
+    log.info("Done.")
 
 if __name__ == '__main__':
     compile_ui()
