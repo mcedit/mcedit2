@@ -42,10 +42,7 @@ def getSrcFolder():
               (mod, sys.getfilesystemencoding()))
         raise
 
-    # Assert the source checkout is not in a non-representable path...
-    assert os.path.exists(mod), ("Source checkout path cannot be represented as unicode. "
-                                 "Put the source checkout somewhere else.")
-    return os.path.dirname((os.path.dirname(mod)))
+    return os.path.dirname(os.path.dirname(mod))
 
 def resourcePath(filename):
     """
