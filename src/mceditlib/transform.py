@@ -211,13 +211,24 @@ class DimensionTransformBase(object):
 class SelectionTransform(DimensionTransformBase):
     def __init__(self, dimension, selection):
         """
+        SelectionTransform is a simple wrapper around a dimension that restricts
+        the blocks and chunks in the dimension to those selected by the given
+        selection. It can be used anywhere a WorldEditorDimension is usable.
 
-        :param dimension:
-        :type dimension:
-        :param selection:
-        :type selection: SelectionBox
-        :return:
-        :rtype:
+        Parameters
+        ----------
+
+        dimension: WorldEditorDimension
+            The dimension to restrict
+
+        selection: ISelection
+            The selection to apply
+
+        Returns
+        -------
+
+        transformedDimension: SelectionTransform
+            A wrapper around the dimension, displaying only the selected blocks.
         """
         super(SelectionTransform, self).__init__(dimension)
         self._transformedBounds = selection
@@ -238,7 +249,33 @@ class SelectionTransform(DimensionTransformBase):
                 section.Data[sectionMask] = baseSection.Data[sectionMask]
 
 class DimensionTransform(DimensionTransformBase):
-    def __init__(self, dimension, anchor, rotX, rotY, rotZ):
+    """
+    A wrapper around a WorldEditorDimension that applies a three-dimensional rotation
+    around a given anchor point. The wrapped dimension's bounds will be different from the
+    original dimension.
+
+    Parameters
+    ----------
+
+    dimension: WorldEditorDimension
+        The dimension to wrap and apply rotations to
+
+    anchor: Vector
+        The point to rotate the dimension around
+
+    rotX: float
+    rotY: float
+    rotZ: float
+        The angles to rotate the dimension around, along each axis respectively.
+        The angles are given in radians.
+
+    Returns
+    -------
+
+    transformedDimension: DimensionTransform
+        A dimension that acts as a rotated version of the given dimension.
+    """
+    def __init__(self, dimension, anchor, rotX=0, rotY=0, rotZ=0):
         super(DimensionTransform, self).__init__(dimension)
         self.rotX = rotX
         self.rotY = rotY
