@@ -475,8 +475,7 @@ class WorldView(QGLWidget):
         for action in self.viewActions:
             if action.button & event.button():
                 if action.matchModifiers(event):
-                    if not action.key or action.key in self.pressedKeys:
-                        action.mousePressEvent(event)
+                    action.mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
         self.augmentMouseEvent(event)
@@ -490,12 +489,13 @@ class WorldView(QGLWidget):
         self.update()
 
     def mouseReleaseEvent(self, event):
+        # Ignore modifiers on mouse release event and send mouse release to any
+        # actions that are set to the given button. This handles this series of inputs,
+        # for example:  Control Key down, Mouse1 down, Control Key up, Mouse1 up
         self.augmentMouseEvent(event)
         for action in self.viewActions:
             if action.button & event.button():
-                if action.matchModifiers(event):
-                    if not action.key or action.key in self.pressedKeys:
-                        action.mouseReleaseEvent(event)
+                action.mouseReleaseEvent(event)
 
     wheelPos = 0
 

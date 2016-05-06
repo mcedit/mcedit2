@@ -13,6 +13,7 @@ from mcedit2.util.settings import Settings
 
 log = logging.getLogger(__name__)
 
+
 class ViewAction(QtCore.QObject):
     button = Qt.NoButton
     modifiers = Qt.NoModifier
@@ -29,7 +30,8 @@ class ViewAction(QtCore.QObject):
 
     def __init__(self):
         """
-        An action that can be bound to a keypress or mouse button click, drag, or movement with the bound key or button held.
+        An action that can be bound to a keypress or mouse button click, drag, or
+        movement with the bound key or button held.
 
         """
         super(ViewAction, self).__init__()
@@ -68,12 +70,17 @@ class ViewAction(QtCore.QObject):
         if key in (Qt.Key_Shift, Qt.Key_Control, Qt.Key_Alt, Qt.Key_Meta):
             modifiers = self.modifiers  # pressing modifier key by itself has modifiers set, but releasing modifiers does not
 
-        return self.key == key and (self.modifiers & modifiers or self.modifiers == modifiers)
+        matched = self.key == key
+
+        if event.type == QtCore.QEvent.KeyPress:
+            # Only match modifiers on key press, ignore modifiers on release to handle
+            # input sequences like: S down, Shift down, S up, Shift up
+            matched &= (self.modifiers == modifiers)
+        return matched
     
     def matchModifiers(self, event):
         return (self.modifiers is None or
-                (self.modifiers & event.modifiers() or
-                 self.modifiers == event.modifiers()))
+                self.modifiers == event.modifiers())
         
     def mouseMoveEvent(self, event):
         """
@@ -134,7 +141,6 @@ class ViewAction(QtCore.QObject):
         :type event: QtGui.QEvent
         """
 
-
     def buttonName(self, buttons):
         if ViewAction._buttonNames is None:
             ViewAction._buttonNames = [
@@ -170,6 +176,7 @@ class ViewAction(QtCore.QObject):
                 s += "+"
             s += self.buttonName(self.button)
         return s
+
 
 class UseToolMouseAction(ViewAction):
     button = Qt.LeftButton

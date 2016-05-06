@@ -573,6 +573,8 @@ class CameraPanMouseAction(ViewAction):
 
     _stickyThreshold = 0.25
 
+    downTime = None
+
     def __init__(self, stickyAction):
         super(CameraPanMouseAction, self).__init__()
         self._stickyAction = stickyAction
@@ -585,10 +587,14 @@ class CameraPanMouseAction(ViewAction):
         self.mouseDragStart = x, y
 
     def buttonReleaseEvent(self, event):
+        if self.downTime is None:
+            return
+
         if event.view.stickyMouselook and time.time() - self.downTime < self._stickyThreshold:
             self._stickyAction.toggleSticky(event)
 
         self.mouseDragStart = None
+        self.downTime = None
 
     sensitivity = .15
 
