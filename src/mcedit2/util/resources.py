@@ -64,6 +64,11 @@ def resourcePath(filename):
     if basedir is None:
         # should work across platforms
         basedir = getSrcFolder()
+    elif sys.platform == 'win32':
+        basedir = basedir.decode('mbcs')
+    else:
+        basedir = basedir.decode(sys.getfilesystemencoding())
+
     path = os.path.join(basedir, filename)
     if not os.path.exists(path):
         raise RuntimeError("Could not get resource path for %s\n(Tried %s which does not exist)" % (filename, path))
