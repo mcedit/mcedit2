@@ -149,11 +149,14 @@ class SelectionScene(scenenode.Node):
         self.visible = value
 
     def updateSelection(self):
-        if self.dimension is None or self.selection is None:
+        if self.dimension is None:
             return
 
         selection = self.selection
-        self.renderSelection = selection & NonAirMaskSelection(self.dimension, selection)
+        if self.selection is None:
+            self.renderSelection = None
+        else:
+            self.renderSelection = selection & NonAirMaskSelection(self.dimension, selection)
         self.groupNode.clear()
         self._loader = None
 

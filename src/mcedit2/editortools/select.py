@@ -282,6 +282,7 @@ class SelectionTool(EditorTool):
             self.boxHandleNode.bounds = None
             self.selectionNode.visible = False
             self.faceHoverNode.visible = False
+            self.selectionNode.selection = None
 
     lastResizeTime = time.time()
 
@@ -291,6 +292,8 @@ class SelectionTool(EditorTool):
             if time.time() - self.lastResizeTime > 0.025:
                 self.selectionNode.loadImmediateChunks(0.025)
             self.lastResizeTime = time.time()
+        else:
+            self.selectionNode.selection = None
 
     def boxHandleResizedDone(self, box, oldBox):
         if box is not None:
@@ -301,6 +304,8 @@ class SelectionTool(EditorTool):
             self.editorSession.undoStack.push(command)
             self.updateNodes()
             self.selectionNode.loadImmediateChunks()
+        else:
+            self.selectionNode.selection = None
 
     def mousePress(self, event):
         self.boxHandleNode.mousePress(event)
