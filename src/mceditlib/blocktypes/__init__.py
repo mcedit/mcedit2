@@ -24,11 +24,36 @@ MCXDecreasing = 4 #west
 MCXIncreasing = 5 #east
 
 
+
+def parseBlockstate(state):
+    assert state[0] == '[' and state[-1] == ']'
+    state = state[1:-1]
+    return dict(pair.split('=') for pair in state.split(','))
+
+
+def joinBlockstate(stateDict):
+    return '[' + ','.join(k + '=' + v for k, v in stateDict.items()) + ']'
+
+
+def splitInternalName(nameAndState):
+    if '[' in nameAndState:
+        idx = nameAndState.index('[')
+        internalName, blockState = nameAndState[:idx], nameAndState[idx:]
+    else:
+        internalName = nameAndState
+        blockState = ""
+    return internalName, blockState
+
+
 class BlockType(namedtuple("_BlockType", "ID meta blocktypeSet")):
     """
     Value object representing an (id, data, blocktypeSet) tuple.
     Accessing its attributes will return the corresponding elements
     of its parent set's json arrays.
+
+    A blocktype set is initialized with one BlockType for each known
+    ID/meta combination. BlockTypes are also created as needed when the
+    set is asked for an unknown combination.
 
     """
 
@@ -52,6 +77,18 @@ class BlockType(namedtuple("_BlockType", "ID meta blocktypeSet")):
         return cmp(key(self), key(other))
 
     def __getattr__(self, attr):
+
+        if attr == "stateDict":
+            if attr in self.__dict__:
+                return self.__dict__[attr]
+            blockState = self.blockState
+            if not len(blockState):
+                self.__dict__[attr] = {}
+            else:
+                self.__dict__[attr] = parseBlockstate(blockState)
+
+            return self.__dict__[attr]
+
         return self.blocktypeSet.getBlockTypeAttr(self, attr)
 
 
@@ -93,13 +130,13 @@ class BlockTypeSet(object):
         self.allBlocks = SortedSet()
 
         self.blockJsons = {}
-        self.IDsByState = {}  # internalName[blockstates] -> (id, meta)
-        self.statesByID = {}  # (id, meta) -> internalName[blockstates]
+        self.IDsByState = {}  # "internalName[blockstates]" -> (id, meta)
+        self.statesByID = {}  # (id, meta) -> "internalName[blockstates]"
 
         self.IDsByName = {}  # internalName -> id
         self.namesByID = {}  # id -> internalName
 
-        self.defaultBlockstates = {}  # internalName -> [blockstates]
+        self.defaultBlockstates = {}  # internalName -> "[blockstates]"
 
         self.defaults = {
             'displayName': defaultName,
@@ -172,11 +209,7 @@ class BlockTypeSet(object):
 
         if attr == "nameAndState":
             return nameAndState
-        if attr == "internalName":
-            return self._splitInternalName(nameAndState)[0]
 
-        if attr == "blockState":
-            return self._splitInternalName(nameAndState)[1]
         try:
             blockJson = self.blockJsons[nameAndState]
         except KeyError:
@@ -205,15 +238,6 @@ class BlockTypeSet(object):
 
     def __iter__(self):
         return iter(self.allBlocks)
-
-    def _splitInternalName(self, nameAndState):
-        if '[' in nameAndState:
-            idx = nameAndState.index('[')
-            internalName, blockState = nameAndState[:idx], nameAndState[idx:]
-        else:
-            internalName = nameAndState
-            blockState = ""
-        return internalName, blockState
 
     def __getitem__(self, nameAndState):
         """
@@ -265,6 +289,34 @@ class BlockTypeSet(object):
 
         return BlockType(ID, meta, self)
 
+    def matchingState(self, internalName, stateDict):
+        """
+        Find the first block with the given name whose state matches all of the keys 
+        and values in stateDict.
+        
+        Parameters
+        ----------
+        internalName : unicode 
+            block's internal name
+        stateDict : dict 
+            the keys and values that the returned state must match
+
+        Returns
+        -------
+        
+        block: BlockType
+
+        """
+        for block in self:
+            if block.internalName == internalName:
+                bsd = block.stateDict
+                for k, v in stateDict.iteritems():
+                    if bsd.get(k) != v:
+                        break
+                else:
+                    return block
+
+        return None
 
     def discardIDs(self, blockIDs):
         blockIDs = set(blockIDs)
@@ -291,7 +343,7 @@ class BlockTypeSet(object):
 
     def addIDMappingFromJSON(self, entries):
         for ID, meta, nameAndState in entries:
-            internalName, blockState = self._splitInternalName(nameAndState)
+            internalName, blockState = splitInternalName(nameAndState)
             self.IDsByState[nameAndState] = ID, meta
             self.IDsByName[internalName] = ID
         self.statesByID = {v: k for (k, v) in self.IDsByState.iteritems()}
@@ -346,8 +398,12 @@ class BlockTypeSet(object):
 
 
         #log.debug("Adding block: \n%s", json.dumps(blockJson, indent=2))
-        nameAndState = blockJson.get("blockState", internalName)
-        internalName, blockState = self._splitInternalName(nameAndState)
+        blockState = blockJson.get("blockState", internalName)
+        _, blockState = splitInternalName(blockState)
+
+        # XXX raw jsons are created with 'blockState': <nameAndState>
+        blockJson['blockState'] = blockState
+        nameAndState = internalName + blockState
 
         IDmeta = self.IDsByState.get(nameAndState)
         if IDmeta is None:
@@ -356,9 +412,9 @@ class BlockTypeSet(object):
         ID, meta = IDmeta
         self.allBlocks.add(BlockType(ID, meta, self))
 
-        oldJson = self.blockJsons.get(internalName + blockState)
+        oldJson = self.blockJsons.get(nameAndState)
         if oldJson is None:
-            oldJson = self.blockJsons[internalName + blockState] = blockJson
+            oldJson = self.blockJsons[nameAndState] = blockJson
         else:
             oldJson.update(blockJson)
 

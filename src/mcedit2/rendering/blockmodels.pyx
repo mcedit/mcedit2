@@ -22,6 +22,7 @@ from mceditlib.blocktypes import BlockType
 from mceditlib.cachefunc import lru_cache
 from mceditlib.geometry import Vector
 from mceditlib.selection import FloatBox
+from mceditlib.blocktypes import splitInternalName
 
 from libc.stdlib cimport malloc, free
 from libc.string cimport memset
@@ -247,7 +248,7 @@ cdef class BlockModels(object):
                 log.debug("Model for state %s previously loaded", nameAndState)
                 continue
 
-            internalName, blockState = blocktypes._splitInternalName(nameAndState)
+            internalName, blockState = splitInternalName(nameAndState)
             block = blocktypes.get(internalName, None)
             if block is None:
                 log.debug("No block found for block %s", internalName)

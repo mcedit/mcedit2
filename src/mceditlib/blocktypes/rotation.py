@@ -6,17 +6,17 @@ import logging
 
 import numpy
 
+from mceditlib.blocktypes import parseBlockstate, joinBlockstate, PCBlockTypeSet
+
 log = logging.getLogger(__name__)
 
 
-def parseBlockstate(state):
-    assert state[0] == '[' and state[-1] == ']'
-    state = state[1:-1]
-    return dict(pair.split('=') for pair in state.split(','))
+def blankRotationTable():
+    table = numpy.indices((32768, 16))
 
-
-def joinBlockstate(stateDict):
-    return '[' + ','.join(k + '=' + v for k, v in stateDict.items()) + ']'
+    # Roll array so table[x, y] returns [x, y]
+    table = numpy.rollaxis(numpy.rollaxis(table, 1), 2, 1)
+    return table
 
 
 def yAxisTable(blocktypes):
@@ -39,10 +39,7 @@ def yAxisTable(blocktypes):
         'north_west': 'north_east',
 
     }
-    table = numpy.indices((32768, 16))
-
-    # Roll array so table[x, y] returns [x, y]
-    table = numpy.rollaxis(numpy.rollaxis(table, 1), 2, 1)
+    table = blankRotationTable()
 
     for block in blocktypes:
         stateString = block.blockState
@@ -91,7 +88,7 @@ def yAxisTable(blocktypes):
             # y-axis only
             if axis == 'x':
                 axis = 'z'
-            if axis == 'z':
+            elif axis == 'z':
                 axis = 'x'
 
             state['axis'] = axis
@@ -106,38 +103,50 @@ def yAxisTable(blocktypes):
             if newShape:
                 state['shape'] = newShape
 
-        newStateString = joinBlockstate(state)
 
-        print("Changed %s \nto %s" % (stateString, newStateString))
+        #print("Changed %s \nto %s" % (stateString, newStateString))
 
-        try:
-            newBlock = blocktypes[block.internalName, newStateString]
-        except KeyError:
-            print("no mapping for %s%s" % (block.internalName, newStateString))
-
-        table[block.ID, block.meta] = [newBlock.ID, newBlock.meta]
+        newBlock = blocktypes.matchingState(block.internalName, state)
+        if newBlock is block:
+            pass
+        elif newBlock is None:
+            newStateString = joinBlockstate(state)
+            # print("no mapping for %s%s" % (block.internalName, newStateString))
+        else:
+            # print("Changed %s \nto %s" % (block, newBlock))
+            table[block.ID, block.meta] = [newBlock.ID, newBlock.meta]
 
     return table
 
-def test_yAxisTable():
+def xxxtest_yAxisTable():
     from . import PCBlockTypeSet
     blocktypes = PCBlockTypeSet()
     table = yAxisTable(blocktypes)
+
+    assert (table != blankRotationTable()).any(), "Table is blank"
 
     changed = False
     changedNames = set()
     for i in range(32768):
         for j in range(16):
             e = table[i,j]
-            if e[0] != i and e[1] != j:
+            if e[0] != i or e[1] != j:
                 changed = True
                 name = blocktypes[i, j].internalName
                 if name not in changedNames:
-                    print("%s is changed" % name)
+                    # print("%s is changed" % name)
                     changedNames.add(name)
 
     assert changed, "Table is unchanged"
 
+def main():
+    from timeit import timeit
+    blocktypes = PCBlockTypeSet()
 
+    secs = timeit(lambda: yAxisTable(blocktypes), number=1)
+    print("Time: %0.3f" % secs)
 
+    assert secs < 0.1
 
+if __name__ == '__main__':
+    main()
