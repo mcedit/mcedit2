@@ -190,7 +190,7 @@ class InvertedBox(SelectionBox):
 
 
 class CombinationBox(SelectionBox):
-    oper = NotImplemented
+    oper = setoper = NotImplemented
     boundsminoper = NotImplemented
     boundsmaxoper = NotImplemented
     box_mask = NotImplemented
@@ -214,11 +214,11 @@ class CombinationBox(SelectionBox):
         if len(positionLists) == 1:
             return positionLists[0]
 
-        return reduce(self.oper, positionLists)
+        return reduce(self.setoper, positionLists)
 
 
 class UnionBox(CombinationBox):
-    oper = operator.or_
+    oper = setoper = operator.or_
     boundsminoper = min
     boundsmaxoper = max
 
@@ -241,7 +241,7 @@ class UnionBox(CombinationBox):
 
 
 class IntersectionBox(CombinationBox):
-    oper = operator.and_
+    oper = setoper = operator.and_
     boundsminoper = max
     boundsmaxoper = min
 
@@ -266,25 +266,33 @@ class DifferenceBox(CombinationBox):
     def oper(self, a, b):
         return a & (~b)
 
-    def boundsmaxoper(self, a, b):
-        return a
+    def setoper(self, a, b):
+        return a - b
 
-    def boundsmaxoper(self, a, b):
-        return a
+    def boundsminoper(self, a):
+        return iter(a).next()
+
+    def boundsmaxoper(self, a):
+        return iter(a).next()
 
     def contains_coords(self, x, y, z):
-        left = self.left.contains_coords(x, y, z)
-        if not left:
+        source = self.selections[0].contains_coords(x, y, z)
+        if not source:
             return False
-        right = self.right.contains_coords(x, y, z)
-        return self.oper(left, right)
+        rest = [s.contains_coords(x, y, z) for s in self.selections[1:]]
+        rest.insert(0, source)
+        return reduce(self.oper, rest)
 
     def box_mask(self, box):
-        left = self.left.box_mask(box)
-        right = self.right.box_mask(box)
-        if left is None:
+        source = self.selections[0].box_mask(box)
+        if source is None:
             return None
-        return self.oper(left, right)
+        for s in self.selections[1:]:
+            mask = s.box_mask(box)
+            if mask is None:
+                continue
+            source &= (~mask)
+        return source
 
 
 def SectionBox(cx, cy, cz):
