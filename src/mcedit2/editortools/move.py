@@ -231,19 +231,31 @@ class MoveTool(EditorTool):
             log.info("Move: starting")
             sourceDim, selection = self.currentImport.getSourceForDim(destDim)
 
-            # Copy to destination
-            log.info("Move: copying")
-            task = destDim.copyBlocksIter(sourceDim, selection,
-                                          self.currentImport.importPos,
-                                          biomes=True, create=True,
-                                          copyAir=self.copyAirCheckbox.isChecked())
+            def _copy():
+                # Copy to destination
+                log.info("Move: copying")
+                task = destDim.copyBlocksIter(sourceDim, selection,
+                                              self.currentImport.importPos,
+                                              biomes=True, create=True,
+                                              copyAir=self.copyAirCheckbox.isChecked())
 
-            showProgress(self.tr("Pasting..."), task)
+                showProgress(self.tr("Pasting..."), task)
 
-            log.info("Move: clearing")
-            # Clear source
-            if self.currentImport.isMove:
-                fill = destDim.fillBlocksIter(self.currentImport.selection, "air")
-                showProgress(self.tr("Clearing..."), fill)
+            def _clear():
+                log.info("Move: clearing")
+                # Clear source
+                if self.currentImport.isMove:
+                    fill = destDim.fillBlocksIter(self.currentImport.selection, "air")
+                    showProgress(self.tr("Clearing..."), fill)
+
+            # XXX PendingImport knows about this, defer copy/clear to it?
+            if sourceDim is self.currentImport.importDim:
+                # copying from original source, copy before clear
+                _copy()
+                _clear()
+            else:
+                # temp schematic used, source and dest overlap, clear before copy
+                _clear()
+                _copy()
 
         self.editorSession.pushCommand(command)
