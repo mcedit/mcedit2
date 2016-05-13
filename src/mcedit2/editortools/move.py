@@ -156,6 +156,10 @@ class MoveTool(EditorTool):
     def currentImport(self, pendingImport):
         self._currentImport = pendingImport
         self.pointInput.setEnabled(pendingImport is not None)
+        if pendingImport is not None:
+            pendingImport.rotationChanged.connect(self.setRotationInput)
+            pendingImport.positionChanged.connect(self.setPositionInput)
+
         # Set current import to different color?
         # for node in self.pendingImportNodes.itervalues():
         #     node.outlineNode.wireColor = (.2, 1., .2, .5) if node.pendingImport is value else (1, 1, 1, .3)
@@ -175,6 +179,12 @@ class MoveTool(EditorTool):
     @property
     def currentImportNode(self):
         return self._currentImportNode
+
+    def setRotationInput(self, rots):
+        self.rotationInput.rotation = rots
+
+    def setPositionInput(self, pos):
+        self.pointInput.point = pos
 
     # --- Mouse events ---
 
