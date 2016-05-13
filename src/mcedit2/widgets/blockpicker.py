@@ -237,6 +237,10 @@ class BlockTypePicker(QtGui.QDialog, Ui_blockPickerMultiple):
         self.listWidget.blockSelectionChanged.connect(self.selectionDidChange)
         self.selectedBlocks = selectedBlocks
 
+        if not self.multipleSelect:
+            if self.filterModel.rowCount() > 0:
+                ID, meta = self.filterModel.data(self.filterModel.index(0, 0), Qt.UserRole)
+                self.listWidget.setSelectedBlocks([self.blocktypes[ID, meta]])
 
 class BlockTypeButton(QtGui.QPushButton):
     def __init__(self, *args, **kwargs):
