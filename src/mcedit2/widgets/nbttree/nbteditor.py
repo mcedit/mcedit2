@@ -247,10 +247,13 @@ class NBTEditorWidget(QtGui.QWidget):
         parent = self.model.parent(index)
         item = self.model.getItem(index)
         parentItem = self.model.getItem(parent)
-        if parentItem is not None and parentItem.isList:
-            name = "%s #%d" % (self.tagNameForUndo(parent), parentItem.tag.index(item.tag))
-        else:
-            name = item.tag.name
+        name = "(root)"
+        if parentItem is not None:
+            if parentItem.isList:
+                name = "%s #%d" % (self.tagNameForUndo(parent), parentItem.tag.index(item.tag))
+            elif parentItem.isCompound:
+                name = item.tag.name
+                
         return name
 
     def dataDidChange(self, index):
