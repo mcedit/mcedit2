@@ -16,6 +16,7 @@ from mcedit2.imports import PendingImport
 from mcedit2.panels.player import PlayerPanel
 from mcedit2.panels.map import MapPanel
 from mcedit2.panels.worldinfo import WorldInfoPanel
+from mcedit2.plugins.command import PluginsMenu
 from mcedit2.util import minecraftinstall
 from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.directories import getUserSchematicsDirectory
@@ -355,6 +356,12 @@ class EditorSession(QtCore.QObject):
         self.menuChunk.addAction(self.actionCreateChunks)
         self.menuChunk.addAction(self.actionRepopChunks)
         self.menus.append(self.menuChunk)
+
+        # - Plugins -
+
+        self.menuPlugins = PluginsMenu(self)
+        self.menuPlugins.loadPlugins()
+        self.menus.append(self.menuPlugins)
 
         # --- Resources ---
 

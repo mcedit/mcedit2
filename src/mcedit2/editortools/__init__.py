@@ -46,7 +46,6 @@ def ToolClasses():
             edit_chunk.ChunkTool,
             select_entity.SelectEntityTool,
             select_block.SelectBlockTool,
-
     )
 
 
