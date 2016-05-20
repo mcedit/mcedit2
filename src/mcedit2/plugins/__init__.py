@@ -9,6 +9,7 @@ import os
 import imp
 from mcedit2 import editortools
 from mcedit2.editortools import generate
+from mcedit2.plugins import command
 from mcedit2.util import load_ui
 from mcedit2.util.settings import Settings
 from mcedit2.widgets import inspector
@@ -141,7 +142,7 @@ class PluginRef(object):
                     sys.modules.pop(k)
                     break
         except Exception as e:
-            self.loadError = sys.exc_info()
+            self.unloadError = sys.exc_info()
             log.exception("Error while unloading plugin from %s: %r", self.filename, e)
             return False
         else:
@@ -267,6 +268,27 @@ def _unregisterClass(cls):
 
 # --- Registration functions ---
 
+def registerPluginCommand(cls):
+    """
+    Register a command that can be invoked from the Plugins menu.
+
+    >>> from mcedit2.plugins.command import PluginCommand
+    >>> @registerPluginCommand
+    >>> class MyCommand(PluginCommand)
+    >>>     pass
+
+    Parameters
+    ----------
+    cls : Class
+
+    Returns
+    -------
+    cls : Class
+    """
+    _registerClass(cls)
+    return command.registerPluginCommand(cls)
+
+
 def registerCustomWidget(cls):
     """
     Register a custom QWidget class with the .ui file loader. This allows custom QWidget
@@ -277,10 +299,13 @@ def registerCustomWidget(cls):
     >>> class MyWidget(QtGui.QWidget):
     >>>     pass
 
-    :param cls:
-    :type cls: class
-    :return:
-    :rtype: class
+    Parameters
+    ----------
+    cls : Class
+
+    Returns
+    -------
+    cls : Class
     """
     _registerClass(cls)
     return load_ui.registerCustomWidget(cls)
@@ -294,10 +319,14 @@ def registerToolClass(cls):
     >>> class MyTool(EditorTool):
     >>>     pass
 
-    :param cls:
-    :type cls: class
-    :return:
-    :rtype: class
+
+    Parameters
+    ----------
+    cls : Class
+
+    Returns
+    -------
+    cls : Class
     """
     _registerClass(cls)
     return editortools.registerToolClass(cls)
@@ -311,10 +340,14 @@ def registerGeneratePlugin(cls):
     >>> class MyGeneratePlugin(GeneratePlugin):
     >>>     pass
 
-    :param cls:
-    :type cls:
-    :return:
-    :rtype:
+
+    Parameters
+    ----------
+    cls : Class
+
+    Returns
+    -------
+    cls : Class
     """
     _registerClass(cls)
     return generate.registerGeneratePlugin(cls)
@@ -331,10 +364,14 @@ def registerBlockInspectorWidget(cls):
     >>>
     >>> registerBlockInspectorWidget(MyBarrelInspector)
 
-    :param cls:
-    :type cls:
-    :return:
-    :rtype:
+
+    Parameters
+    ----------
+    cls : Class
+
+    Returns
+    -------
+    cls : Class
     """
     _registerClass(cls)
     return inspector.registerBlockInspectorWidget(cls)
@@ -351,10 +388,14 @@ def registerTileEntityRefClass(ID, cls):
     >>>     pass
     >>> registerTileEntityRefClass("MyBarrel", MyBarrelRef)
 
-    :param cls:
-    :type cls:
-    :return:
-    :rtype:
+
+    Parameters
+    ----------
+    cls : Class
+
+    Returns
+    -------
+    cls : Class
     """
     # xxx this is anvil.entities - delegate to correct world format
     _registerClass(cls)
