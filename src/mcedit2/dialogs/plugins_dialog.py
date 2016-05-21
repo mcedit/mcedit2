@@ -70,7 +70,7 @@ class PluginsTableModel(QtCore.QAbstractTableModel):
 
         row = index.row()
         if row >= len(self.pluginRefs):
-            return None
+            return False
 
         value = value == Qt.Checked
 
@@ -85,8 +85,8 @@ class PluginsTableModel(QtCore.QAbstractTableModel):
             if not pluginRef.unload():
                 showErrorDialog("%s while unloading plugin \"%s\"" % (pluginRef.unloadError[0].__name__, pluginRef.displayName), pluginRef.unloadError, False)
 
-
         self.dataChanged.emit(index, index)
+        return True
 
     def flags(self, index):
         column = index.column()
