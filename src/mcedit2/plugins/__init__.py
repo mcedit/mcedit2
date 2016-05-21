@@ -144,13 +144,9 @@ class PluginRef(object):
         if self.pluginModule is None:
             return
         module = self.pluginModule
-        self.pluginModule = None
+
         try:
             self.unregisterModule()
-            for k, v in sys.modules.iteritems():
-                if v is module:
-                    sys.modules.pop(k)
-                    log.info("Removed module %s from sys.modules", k)
 
         except Exception as e:
             self.unloadError = sys.exc_info()
@@ -158,6 +154,12 @@ class PluginRef(object):
             return False
         else:
             self.unloadError = None
+        finally:
+            self.pluginModule = None
+            for k, v in sys.modules.iteritems():
+                if v is module:
+                    sys.modules.pop(k)
+                    log.info("Removed module %s from sys.modules", k)
 
         return True
 
