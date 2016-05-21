@@ -56,6 +56,7 @@ class PluginRef(object):
     def __init__(self, filename, pluginsDir):
         self.filename = filename
         self.pluginsDir = pluginsDir
+        self.fullpath = None  # Set after findModule is called
         self.pluginModule = None  # None indicates the plugin is not loaded
 
         self.loadError = None
@@ -108,12 +109,13 @@ class PluginRef(object):
         io = None
         try:
             io, pathname, description = self.findModule()
+            self.fullpath = pathname
             log.info("Trying to load plugin from %s", self.filename)
             global _currentPluginPathname
             _currentPluginPathname = pathname
 
             self.pluginModule = imp.load_module(basename, io, pathname, description)
-            registerModule(self.fullpath, self.pluginModule)
+            registerModule(pathname, self.pluginModule)
             _currentPluginPathname = None
 
             if hasattr(self.pluginModule, 'displayName'):
@@ -135,12 +137,15 @@ class PluginRef(object):
     def unload(self):
         if self.pluginModule is None:
             return
+        module = self.pluginModule
+        self.pluginModule = None
         try:
-            unregisterModule(self.fullpath, self.pluginModule)
+            unregisterModule(self.fullpath, module)
             for k, v in sys.modules.iteritems():
-                if v == self.pluginModule:
+                if v is module:
                     sys.modules.pop(k)
-                    break
+                    log.info("Removed module %s from sys.modules", k)
+
         except Exception as e:
             self.unloadError = sys.exc_info()
             log.exception("Error while unloading plugin from %s: %r", self.filename, e)
@@ -148,7 +153,6 @@ class PluginRef(object):
         else:
             self.unloadError = None
 
-        self.pluginModule = None
         return True
 
     @property
@@ -164,10 +168,6 @@ class PluginRef(object):
 
     def exists(self):
         return os.path.exists(self.fullpath)
-
-    @property
-    def fullpath(self):
-        return os.path.join(self.pluginsDir, self.filename)
 
     @property
     def enabled(self):
