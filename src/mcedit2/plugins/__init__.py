@@ -115,7 +115,7 @@ class PluginRef(object):
             _currentPluginPathname = pathname
 
             self.pluginModule = imp.load_module(basename, io, pathname, description)
-            registerModule(pathname, self.pluginModule)
+            self.registerModule()
             _currentPluginPathname = None
 
             if hasattr(self.pluginModule, 'displayName'):
@@ -134,13 +134,19 @@ class PluginRef(object):
 
         return True
 
+    def registerModule(self):
+        module = self.pluginModule
+    
+        _loadedModules[self.fullpath] = module
+        module.__FOUND_FILENAME__ = self.fullpath
+
     def unload(self):
         if self.pluginModule is None:
             return
         module = self.pluginModule
         self.pluginModule = None
         try:
-            unregisterModule(self.fullpath, module)
+            self.unregisterModule()
             for k, v in sys.modules.iteritems():
                 if v is module:
                     sys.modules.pop(k)
@@ -154,6 +160,18 @@ class PluginRef(object):
             self.unloadError = None
 
         return True
+
+    def unregisterModule(self):
+        module = self.pluginModule
+        if hasattr(module, "unregister"):
+            module.unregister()
+
+        classes = _pluginClassesByPathname.pop(self.fullpath)
+        if classes:
+            for cls in classes:
+                _unregisterClass(cls)
+
+        _loadedModules.pop(module.__FOUND_FILENAME__)
 
     @property
     def isLoaded(self):
@@ -235,24 +253,6 @@ def detectPlugin(filename, pluginsDir):
 _loadedModules = {}
 _pluginClassesByPathname = defaultdict(list)
 _currentPluginPathname = None
-
-def registerModule(filename, pluginModule):
-    if hasattr(pluginModule, "register"):
-        pluginModule.register()
-
-    _loadedModules[filename] = pluginModule
-    pluginModule.__FOUND_FILENAME__ = filename
-
-def unregisterModule(filename, pluginModule):
-    if hasattr(pluginModule, "unregister"):
-        pluginModule.unregister()
-
-    classes = _pluginClassesByPathname.pop(filename)
-    if classes:
-        for cls in classes:
-            _unregisterClass(cls)
-
-    _loadedModules.pop(pluginModule.__FOUND_FILENAME__)
 
 
 def _registerClass(cls):
