@@ -66,7 +66,14 @@ def registerPluginCommand(cls):
         _registeredCommands.append(cls)
     else:
         raise ValueError("Class %s must inherit from PluginCommand" % cls)
+
+    _CommandPlugins.instance.pluginAdded.emit(cls)
     return cls
+
+
+def unregisterPluginCommand(cls):
+    if issubclass(cls, PluginCommand):
+        _CommandPlugins.instance.pluginRemoved.emit(cls)
 
 
 class PluginsMenu(QtGui.QMenu):

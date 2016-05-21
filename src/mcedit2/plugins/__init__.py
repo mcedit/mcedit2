@@ -257,6 +257,7 @@ _currentPluginPathname = None
 
 def _registerClass(cls):
     _pluginClassesByPathname[_currentPluginPathname].append(cls)
+    log.info("Registered class %s of plugin %s", cls, _currentPluginPathname)
 
 
 def _unregisterClass(cls):
@@ -265,6 +266,7 @@ def _unregisterClass(cls):
     generate.unregisterGeneratePlugin(cls)
     inspector.unregisterBlockInspectorWidget(cls)
     entities.unregisterTileEntityRefClass(cls)
+    command.unregisterPluginCommand(cls)
 
 # --- Registration functions ---
 
