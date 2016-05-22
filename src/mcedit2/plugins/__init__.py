@@ -158,12 +158,14 @@ class PluginRef(object):
         else:
             self.unloadError = None
         finally:
+            log.info("Unloading plugin %s", self.displayName)
             self.pluginModule = None
             deadKeys = []
             for k, v in sys.modules.iteritems():
                 if v is module:
                     deadKeys.append(k)
 
+            assert len(deadKeys), "Plugin %s not in sys.modules (uh-oh)" % (self.displayName,)
             for k in deadKeys:
                 sys.modules.pop(k)
                 log.info("Removed module %s from sys.modules", k)
@@ -171,6 +173,7 @@ class PluginRef(object):
             classes = _pluginClassesByPathname.pop(self.fullpath)
             if classes:
                 for cls in classes:
+                    log.info("Unregistered %s", cls)
                     _unregisterClass(cls)
 
             _loadedModules.pop(module.__FOUND_FILENAME__)
