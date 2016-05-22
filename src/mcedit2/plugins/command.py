@@ -7,6 +7,8 @@ from collections import defaultdict
 
 from PySide import QtCore, QtGui
 
+from mcedit2.plugins.registry import PluginClassRegistry
+
 log = logging.getLogger(__name__)
 
 
@@ -52,28 +54,10 @@ class PluginCommand(QtCore.QObject):
         self.editorSession.menuPlugins.addPluginMenuItem(self.__class__, text, func, submenu)
 
 
-class _CommandPlugins(QtCore.QObject):
-    pluginRemoved = QtCore.Signal(object)
-    pluginAdded = QtCore.Signal(object)
+class _CommandPlugins(PluginClassRegistry):
+    pluginClass = PluginCommand
 
-_CommandPlugins.instance = _CommandPlugins()
-
-_registeredCommands = []
-
-
-def registerPluginCommand(cls):
-    if issubclass(cls, PluginCommand):
-        _registeredCommands.append(cls)
-    else:
-        raise ValueError("Class %s must inherit from PluginCommand" % cls)
-
-    _CommandPlugins.instance.pluginAdded.emit(cls)
-    return cls
-
-
-def unregisterPluginCommand(cls):
-    if issubclass(cls, PluginCommand):
-        _CommandPlugins.instance.pluginRemoved.emit(cls)
+CommandPlugins = _CommandPlugins()
 
 
 class PluginsMenu(QtGui.QMenu):
@@ -82,14 +66,14 @@ class PluginsMenu(QtGui.QMenu):
         self.setTitle(self.tr("Plugins"))
         self.editorSession = editorSession
         self.submenus = {}
-        _CommandPlugins.instance.pluginRemoved.connect(self.pluginRemoved)
-        _CommandPlugins.instance.pluginAdded.connect(self.pluginAdded)
+        CommandPlugins.pluginRemoved.connect(self.pluginRemoved)
+        CommandPlugins.pluginAdded.connect(self.pluginAdded)
         self.plugins = []
 
         self.actionsByClass = defaultdict(list)
 
     def loadPlugins(self):
-        for cls in _registeredCommands:
+        for cls in CommandPlugins.registeredPlugins:
             instance = cls(self.editorSession)
             self.plugins.append(instance)
 
@@ -119,5 +103,5 @@ class PluginsMenu(QtGui.QMenu):
         action = menu.addAction(text, func)
 
         self.actionsByClass[cls].append(action)
-        log.info("Added action %s")
+        log.info("Added action %s", action)
         return action

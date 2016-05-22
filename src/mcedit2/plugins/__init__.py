@@ -2,11 +2,13 @@
     plugins
 """
 from __future__ import absolute_import, division, print_function
-from collections import defaultdict
-import logging
-import itertools
-import os
+
 import imp
+import itertools
+import logging
+import os
+from collections import defaultdict
+
 from mcedit2 import editortools
 from mcedit2.editortools import generate
 from mcedit2.plugins import command
@@ -115,8 +117,14 @@ class PluginRef(object):
             _currentPluginPathname = pathname
 
             self.pluginModule = imp.load_module(basename, io, pathname, description)
-            self.registerModule()
+            _loadedModules[self.fullpath] = self.pluginModule
+            self.pluginModule.__FOUND_FILENAME__ = self.fullpath
+
             _currentPluginPathname = None
+
+            # Plugin registration is deferred until the module is fully loaded.
+            for registry in _registries:
+                registry.commitRegistrations()
 
             if hasattr(self.pluginModule, 'displayName'):
                 self._displayName = self.pluginModule.displayName
@@ -134,19 +142,14 @@ class PluginRef(object):
 
         return True
 
-    def registerModule(self):
-        module = self.pluginModule
-    
-        _loadedModules[self.fullpath] = module
-        module.__FOUND_FILENAME__ = self.fullpath
-
     def unload(self):
         if self.pluginModule is None:
             return
         module = self.pluginModule
 
         try:
-            self.unregisterModule()
+            if hasattr(module, "unregister"):
+                module.unregister()
 
         except Exception as e:
             self.unloadError = sys.exc_info()
@@ -156,24 +159,24 @@ class PluginRef(object):
             self.unloadError = None
         finally:
             self.pluginModule = None
+            deadKeys = []
             for k, v in sys.modules.iteritems():
                 if v is module:
-                    sys.modules.pop(k)
-                    log.info("Removed module %s from sys.modules", k)
+                    deadKeys.append(k)
+
+            for k in deadKeys:
+                sys.modules.pop(k)
+                log.info("Removed module %s from sys.modules", k)
+
+            classes = _pluginClassesByPathname.pop(self.fullpath)
+            if classes:
+                for cls in classes:
+                    _unregisterClass(cls)
+
+            _loadedModules.pop(module.__FOUND_FILENAME__)
+            self.fullpath = None
 
         return True
-
-    def unregisterModule(self):
-        module = self.pluginModule
-        if hasattr(module, "unregister"):
-            module.unregister()
-
-        classes = _pluginClassesByPathname.pop(self.fullpath)
-        if classes:
-            for cls in classes:
-                _unregisterClass(cls)
-
-        _loadedModules.pop(module.__FOUND_FILENAME__)
 
     @property
     def isLoaded(self):
@@ -256,6 +259,10 @@ _loadedModules = {}
 _pluginClassesByPathname = defaultdict(list)
 _currentPluginPathname = None
 
+_registries = [
+    command.CommandPlugins,
+    generate.GeneratePlugins
+]
 
 def _registerClass(cls):
     _pluginClassesByPathname[_currentPluginPathname].append(cls)
@@ -265,10 +272,11 @@ def _registerClass(cls):
 def _unregisterClass(cls):
     load_ui.unregisterCustomWidget(cls)
     editortools.unregisterToolClass(cls)
-    generate.unregisterGeneratePlugin(cls)
     inspector.unregisterBlockInspectorWidget(cls)
     entities.unregisterTileEntityRefClass(cls)
-    command.unregisterPluginCommand(cls)
+
+    generate.GeneratePlugins.unregisterClass(cls)
+    command.CommandPlugins.unregisterClass(cls)
 
 # --- Registration functions ---
 
@@ -290,7 +298,7 @@ def registerPluginCommand(cls):
     cls : Class
     """
     _registerClass(cls)
-    return command.registerPluginCommand(cls)
+    return command.CommandPlugins.registerClass(cls)
 
 
 def registerCustomWidget(cls):
@@ -354,7 +362,7 @@ def registerGeneratePlugin(cls):
     cls : Class
     """
     _registerClass(cls)
-    return generate.registerGeneratePlugin(cls)
+    return generate.GeneratePlugins.registerClass(cls)
 
 def registerBlockInspectorWidget(cls):
     """

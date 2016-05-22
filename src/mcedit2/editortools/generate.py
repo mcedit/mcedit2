@@ -10,6 +10,7 @@ from PySide import QtCore, QtGui
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.editortools import EditorTool
 from mcedit2.handles.boxhandle import BoxHandle
+from mcedit2.plugins.registry import PluginClassRegistry
 from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering.scenegraph.matrix import Translate
 from mcedit2.rendering.scenegraph.scenenode import Node
@@ -134,24 +135,11 @@ class GeneratePlugin(QtCore.QObject):
     def editorSession(self):
         return self.generateTool.editorSession
 
-_pluginClasses = []
 
+class _GeneratePlugins(PluginClassRegistry):
+    pluginClass = GeneratePlugin
 
-def registerGeneratePlugin(cls):
-    _pluginClasses.append(cls)
-    _GeneratePlugins.instance.pluginAdded.emit(cls)
-    return cls
-
-
-def unregisterGeneratePlugin(cls):
-    _pluginClasses[:] = [c for c in _pluginClasses if c != cls]
-    _GeneratePlugins.instance.pluginRemoved.emit(cls)
-
-class _GeneratePlugins(QtCore.QObject):
-    pluginRemoved = QtCore.Signal(object)
-    pluginAdded = QtCore.Signal(object)
-
-_GeneratePlugins.instance = _GeneratePlugins()
+GeneratePlugins = _GeneratePlugins()
 
 
 class GenerateTool(EditorTool):
@@ -171,7 +159,7 @@ class GenerateTool(EditorTool):
         self.toolWidget = toolWidget
 
         column = []
-        self.generatorTypes = [pluginClass(self) for pluginClass in _pluginClasses]
+        self.generatorTypes = [pluginClass(self) for pluginClass in GeneratePlugins.registeredPlugins]
         self.currentGenerator = None
         if len(self.generatorTypes):
             self.currentGenerator = self.generatorTypes[0]
@@ -236,8 +224,8 @@ class GenerateTool(EditorTool):
         # so it can be reselected if it is immediately reloaded
         self._lastTypeName = None
 
-        _GeneratePlugins.instance.pluginAdded.connect(self.addPlugin)
-        _GeneratePlugins.instance.pluginRemoved.connect(self.removePlugin)
+        GeneratePlugins.pluginAdded.connect(self.addPlugin)
+        GeneratePlugins.pluginRemoved.connect(self.removePlugin)
 
     def removePlugin(self, cls):
         log.info("Removing plugin %s", cls.__name__)
