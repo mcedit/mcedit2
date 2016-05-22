@@ -105,7 +105,7 @@ class PluginRef(object):
 
     def load(self):
         if self.pluginModule:
-            return
+            return True
 
         basename, ext = os.path.splitext(self.filename)
         io = None
@@ -144,7 +144,7 @@ class PluginRef(object):
 
     def unload(self):
         if self.pluginModule is None:
-            return
+            return True
         module = self.pluginModule
 
         try:

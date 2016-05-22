@@ -972,5 +972,7 @@ class MCEditApp(QtGui.QApplication):
                 log.info("Plugin %s changed. Reloading plugin module...", pluginRef.displayName)
                 if not pluginRef.unload():
                     showErrorDialog("%s while unloading plugin \"%s\"" % (pluginRef.unloadError[0].__name__, pluginRef.displayName), pluginRef.unloadError, False)
-                    if not pluginRef.load():
-                        showErrorDialog("%s while loading plugin \"%s\"" % (pluginRef.loadError[0].__name__, pluginRef.displayName), pluginRef.loadError, False)
+                elif not pluginRef.load():
+                    showErrorDialog("%s while loading plugin \"%s\"" % (pluginRef.loadError[0].__name__, pluginRef.displayName), pluginRef.loadError, False)
+                else:
+                    log.info("Plugin %s reloaded.", pluginRef.displayName)
