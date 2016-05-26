@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
 import os
+from contextlib import contextmanager
 
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
@@ -991,6 +992,14 @@ class EditorSession(QtCore.QObject):
     def undoIndexChanged(self, index):
         self.updateView()
         self.actionSave.setEnabled(index != self.lastSaveIndex)
+
+    @contextmanager
+    def beginCommand(self, command):
+        try:
+            with command.begin():
+                yield
+        finally:
+            self.pushCommand(command)
 
     def pushCommand(self, command):
         log.info("Pushing command %s" % command.text())
