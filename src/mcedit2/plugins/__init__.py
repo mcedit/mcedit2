@@ -174,7 +174,7 @@ class PluginRef(object):
             if classes:
                 for cls in classes:
                     log.info("Unregistered %s", cls)
-                    _unregisterClass(cls)
+                    unregisterClass(cls)
 
             _loadedModules.pop(module.__FOUND_FILENAME__)
             self.fullpath = None
@@ -267,12 +267,12 @@ _registries = [
     generate.GeneratePlugins
 ]
 
-def _registerClass(cls):
+def registerClass(cls):
     _pluginClassesByPathname[_currentPluginPathname].append(cls)
     log.info("Registered class %s of plugin %s", cls, _currentPluginPathname)
 
 
-def _unregisterClass(cls):
+def unregisterClass(cls):
     load_ui.unregisterCustomWidget(cls)
     editortools.unregisterToolClass(cls)
     inspector.unregisterBlockInspectorWidget(cls)
@@ -300,7 +300,7 @@ def registerPluginCommand(cls):
     -------
     cls : Class
     """
-    _registerClass(cls)
+    registerClass(cls)
     return command.CommandPlugins.registerClass(cls)
 
 
@@ -322,7 +322,7 @@ def registerCustomWidget(cls):
     -------
     cls : Class
     """
-    _registerClass(cls)
+    registerClass(cls)
     return load_ui.registerCustomWidget(cls)
 
 def registerToolClass(cls):
@@ -343,7 +343,7 @@ def registerToolClass(cls):
     -------
     cls : Class
     """
-    _registerClass(cls)
+    registerClass(cls)
     return editortools.registerToolClass(cls)
 
 def registerGeneratePlugin(cls):
@@ -364,7 +364,7 @@ def registerGeneratePlugin(cls):
     -------
     cls : Class
     """
-    _registerClass(cls)
+    registerClass(cls)
     return generate.GeneratePlugins.registerClass(cls)
 
 def registerBlockInspectorWidget(cls):
@@ -388,7 +388,7 @@ def registerBlockInspectorWidget(cls):
     -------
     cls : Class
     """
-    _registerClass(cls)
+    registerClass(cls)
     return inspector.registerBlockInspectorWidget(cls)
 
 def registerTileEntityRefClass(ID, cls):
@@ -413,5 +413,9 @@ def registerTileEntityRefClass(ID, cls):
     cls : Class
     """
     # xxx this is anvil.entities - delegate to correct world format
-    _registerClass(cls)
+    registerClass(cls)
     return entities.registerTileEntityRefClass(ID, cls)
+
+# Convenience imports for plugin modules
+
+from .command import PluginCommand, SimplePluginCommand
