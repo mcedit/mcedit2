@@ -6,8 +6,7 @@ import logging
 
 from PySide import QtGui
 
-from mcedit2.plugins import registerPluginCommand
-from mcedit2.plugins.command import PluginCommand
+from mcedit2.plugins import registerPluginCommand, PluginCommand
 
 log = logging.getLogger(__name__)
 

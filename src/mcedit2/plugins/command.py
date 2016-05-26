@@ -7,7 +7,12 @@ from collections import defaultdict
 
 from PySide import QtCore, QtGui
 
+from mcedit2.command import SimpleRevisionCommand
 from mcedit2.plugins.registry import PluginClassRegistry
+from mcedit2.widgets.blockpicker import BlockTypeButton
+from mcedit2.widgets.layout import Column
+from mcedit2.widgets.spinslider import SpinSlider
+from mceditlib.blocktypes import BlockType
 
 log = logging.getLogger(__name__)
 
@@ -52,6 +57,212 @@ class PluginCommand(QtCore.QObject):
 
         """
         self.editorSession.menuPlugins.addPluginMenuItem(self.__class__, text, func, submenu)
+
+
+class SimplePluginCommand(PluginCommand):
+    """
+    A simple type of command that covers a common use case: Display a dialog with a list
+    of options and a pair of "Confirm" and "Cancel" buttons. When the "Confirm" button is
+    pressed, `self.perform()` is called.
+
+    This function is passed an object containing the option values selected by the user.
+
+    To define the list of options, set the `options` variable on the subclass of
+    SimplePluginCommand. The options variable should be a list of dictionaries.
+    """
+
+    options = []
+    displayName = NotImplemented
+    submenuName = None
+
+    def __init__(self, editorSession):
+        super(SimplePluginCommand, self).__init__(editorSession)
+        if self.displayName is NotImplemented:
+            raise ValueError("self.displayName must be set.")
+
+        self.addMenuItem(self.displayName, self.showDialog, self.submenuName)
+
+    def showDialog(self):
+        dialog = SimpleOptionsDialog(self.options, self.editorSession)
+        result = dialog.exec_()
+        if result == QtGui.QDialog.Accepted:
+            command = SimpleRevisionCommand(self.editorSession, self.displayName)
+            with self.editorSession.beginCommand(command):
+                self.perform(self.editorSession.worldEditor, dialog.getOptions())
+
+    def perform(self, world, options):
+        raise NotImplementedError
+
+
+class SimpleOptionsDialog(QtGui.QDialog):
+    def __init__(self, options, editorSession):
+        super(SimpleOptionsDialog, self).__init__()
+        self.editorSession = editorSession
+        self.optIdx = 0
+
+        self.optionsArea = QtGui.QScrollArea()
+        self.optionsArea.setMinimumSize(500, 750)
+        self.buttonBox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.setLayout(Column(self.optionsArea, self.buttonBox, margin=0))
+        self.containerWidget = QtGui.QWidget()
+
+        self.formLayout = QtGui.QFormLayout()
+        self.valueGetters = {}
+        self.widgets = []
+
+        for opt in options:
+            if isinstance(opt, tuple):
+                optDict = dictFromFilterTuple(opt)
+            elif isinstance(opt, dict):
+                optDict = opt
+            else:
+                raise TypeError("SimpleOption must be tuple or dict")
+
+            self.widgetFromOptDict(optDict)
+
+        self.containerWidget.setLayout(self.formLayout)
+        self.optionsArea.setWidget(self.containerWidget)
+
+
+    def getOptions(self):
+        values = {}
+        for k, v in self.valueGetters.iteritems():
+            values[k] = v()
+
+        return values
+
+    def widgetFromOptDict(self, optDict):
+        self.optIdx += 1
+
+        type = optDict.get('type')
+        if type is None or not isinstance(type, basestring):
+            raise ValueError("Option dict must have 'type' key")
+
+        if type in ('int', 'float'):
+            minimum = optDict.get('min', None)
+            maximum = optDict.get('max', None)
+            value = optDict.get('value', 0)
+            name = optDict.get('name', None)
+            if name is None:
+                raise ValueError("Option dict must have 'name' key")
+
+            text = optDict.get('text', "Option %d" % self.optIdx)
+            widget = SpinSlider(double=(type == 'float'), minimum=minimum, maximum=maximum, value=value)
+            self.widgets.append(widget)
+
+            self.formLayout.addRow(text, widget)
+            self.valueGetters[name] = widget.value
+
+        elif type == 'bool':
+            value = optDict.get('value', False)
+            name = optDict.get('name', None)
+            if name is None:
+                raise ValueError("Option dict must have 'name' key")
+
+            text = optDict.get('text', "Option %d" % self.optIdx)
+            widget = QtGui.QCheckBox()
+            widget.setChecked(value)
+            self.widgets.append(widget)
+
+            self.formLayout.addRow(text, widget)
+            self.valueGetters[name] = widget.isChecked
+
+        elif type == 'text':
+            value = optDict.get('value', '')
+            name = optDict.get('name', None)
+            placeholder = optDict.get('placeholder', None)
+
+            if name is None:
+                raise ValueError("Option dict must have 'name' key")
+
+            text = optDict.get('text', "Option %d" % self.optIdx)
+            widget = QtGui.QLineEdit()
+            self.widgets.append(widget)
+            if placeholder:
+                widget.setPlaceholderText(placeholder)
+            if value:
+                widget.setText(value)
+
+            self.formLayout.addRow(text, widget)
+            self.valueGetters[name] = widget.text
+
+        elif type == 'choice':
+            value = optDict.get('value', None)
+            name = optDict.get('name', None)
+            if name is None:
+                raise ValueError("Option dict must have 'name' key")
+
+            choices = optDict.get('choices', [])
+
+            text = optDict.get('text', "Option %d" % self.optIdx)
+            widget = QtGui.QComboBox()
+            self.widgets.append(widget)
+
+            for label, key in choices:
+                widget.addItem(label, key)
+                if key == value:
+                    widget.setCurrentIndex(widget.count() - 1)
+
+            def getChoiceKey():
+                return widget.itemData(widget.currentIndex())
+
+            self.formLayout.addRow(text, widget)
+            self.valueGetters[name] = getChoiceKey
+
+        elif type == 'blocktype':
+            value = optDict.get('value', None)
+            name = optDict.get('name', None)
+            if name is None:
+                raise ValueError("Option dict must have 'name' key")
+
+            text = optDict.get('text', "Option %d" % self.optIdx)
+            widget = BlockTypeButton()
+            widget.editorSession = self.editorSession
+            self.widgets.append(widget)
+
+            if value is not None:
+                if not isinstance(value, BlockType):
+                    value = self.editorSession.worldEditor.blocktypes[value]
+                widget.block = value
+
+            self.formLayout.addRow(text, widget)
+            self.valueGetters[name] = lambda: widget.block
+
+        elif type == 'label':
+            text = optDict.get('text', None)
+            if not text:
+                raise ValueError("Option dict for type 'label' must have 'text' key.")
+            widget = QtGui.QLabel(text)
+            self.widgets.append(widget)
+
+            self.formLayout.addRow("", widget)
+
+        elif type == 'nbt':
+            widget = QtGui.QLabel("Not Implemented")
+            self.widgets.append(widget)
+
+            self.formLayout.addRow("NBT Option: ", widget)
+        else:
+            raise ValueError("Unknown type %s for option dict" % type)
+        
+
+
+def dictFromFilterTuple(opt):
+    """
+    Convert a filter-style option tuple to a new simple option dict.
+
+    Parameters
+    ----------
+    opt : tuple
+
+    Returns
+    -------
+    optDict : dict
+    """
+
 
 
 class _CommandPlugins(PluginClassRegistry):
