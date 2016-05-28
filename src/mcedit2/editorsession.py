@@ -1001,6 +1001,16 @@ class EditorSession(QtCore.QObject):
         finally:
             self.pushCommand(command)
 
+    @contextmanager
+    def beginSimpleCommand(self, text):
+        command = SimpleRevisionCommand(self, text)
+        command.foo()
+        try:
+            with command.begin():
+                yield
+        finally:
+            self.pushCommand(command)
+
     def pushCommand(self, command):
         log.info("Pushing command %s" % command.text())
         self.undoStack.push(command)
