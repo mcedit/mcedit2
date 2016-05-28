@@ -17,10 +17,20 @@ class SimpleOptionsDemo(SimplePluginCommand):
 
     options = [
         {
+            'type': 'label',
+            'text': 'A label containing some descriptive text. This text is automatically word-wrapped.'
+        },
+        {
+            'type': 'label',
+            'text': '''A multi-line label
+            with several lines
+            of text.'''
+        },
+        {
             'type': 'int',
             'value': 50,
-            'minimum': 0,
-            'maximum': 100,
+            'min': 0,
+            'max': 75,
             'name': 'myIntOption',
             'text': 'Integer Option: ',
         },
@@ -33,8 +43,8 @@ class SimpleOptionsDemo(SimplePluginCommand):
         {
             'type': 'float',
             'value': 1.5,
-            'minimum': 0,
-            'maximum': 100,
+            'min': 0,
+            'max': 7.5,
             'name': 'myFloatOption',
             'text': 'Float Option: ',
         },
