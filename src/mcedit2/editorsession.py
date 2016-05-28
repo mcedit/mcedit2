@@ -1006,12 +1006,6 @@ class EditorSession(QtCore.QObject):
         self.undoStack.push(command)
         self.actionSave.setEnabled(True)
 
-    def setUndoBlock(self, callback):
-        self.undoStack.setUndoBlock(callback)
-
-    def removeUndoBlock(self, callback):
-        self.undoStack.removeUndoBlock(callback)
-
     def beginUndo(self):
         self.undoStack.clearUndoBlock()
         self.dirty = True
