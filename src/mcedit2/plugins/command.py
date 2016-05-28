@@ -63,7 +63,8 @@ class SimplePluginCommand(PluginCommand):
     """
     A simple type of command that covers a common use case: Display a dialog with a list
     of options and a pair of "Confirm" and "Cancel" buttons. When the "Confirm" button is
-    pressed, `self.perform()` is called.
+    pressed, `self.perform()` is called. The call to `perform` is automatically wrapped
+    in a newly created undo entry.
 
     This function is passed an object containing the option values selected by the user.
 
@@ -149,13 +150,26 @@ class SimpleOptionsDialog(QtGui.QDialog):
         if type in ('int', 'float'):
             minimum = optDict.get('min', None)
             maximum = optDict.get('max', None)
+
             value = optDict.get('value', 0)
             name = optDict.get('name', None)
             if name is None:
                 raise ValueError("Option dict must have 'name' key")
 
             text = optDict.get('text', "Option %d" % self.optIdx)
-            widget = SpinSlider(double=(type == 'float'), minimum=minimum, maximum=maximum, value=value)
+            if minimum is None or maximum is None:
+                if type == 'float':
+                    widget = QtGui.QDoubleSpinBox(value=value)
+                else:
+                    widget = QtGui.QSpinBox(value=value)
+                if minimum is not None:
+                    widget.setMinimum(minimum)
+                if maximum is not None:
+                    widget.setMaximum(maximum)
+
+            else:
+                widget = SpinSlider(double=(type == 'float'), minimum=minimum, maximum=maximum, value=value)
+
             self.widgets.append(widget)
 
             self.formLayout.addRow(text, widget)
@@ -240,7 +254,7 @@ class SimpleOptionsDialog(QtGui.QDialog):
             text = optDict.get('text', None)
             if not text:
                 raise ValueError("Option dict for type 'label' must have 'text' key.")
-            widget = QtGui.QLabel(text)
+            widget = QtGui.QLabel(text, wordWrap=True)
             self.widgets.append(widget)
 
             self.formLayout.addRow("", widget)
