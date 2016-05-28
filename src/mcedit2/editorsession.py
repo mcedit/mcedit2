@@ -834,12 +834,9 @@ class EditorSession(QtCore.QObject):
         if self.currentSelection is None:
             return
 
-        command = SimpleRevisionCommand(self, self.tr("Delete Chunks"))
-        with command.begin():
-            for cx in range(self.currentSelection.mincx, self.currentSelection.maxcx):
-                for cz in range(self.currentSelection.mincz, self.currentSelection.maxcz):
-                    self.currentDimension.deleteChunk(cx, cz)
-        self.pushCommand(command)
+        with self.beginSimpleCommand(self.tr("Delete Chunks")):
+            for cx, cz in self.currentSelection.chunkPositions():
+                self.currentDimension.deleteChunk(cx, cz)
 
     def createChunks(self):
         QtGui.QMessageBox.warning(QtGui.qApp.mainWindow, "Not implemented.", "Create chunks is not implemented yet!")
