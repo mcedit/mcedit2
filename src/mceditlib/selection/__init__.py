@@ -100,6 +100,9 @@ class SelectionBox(object):
 
     def section_mask(self, cx, cy, cz):
         """
+        Return a mask delimiting the block positions in the given selection. The mask
+        is a 3D boolean array with indices ordered YZX. If no blocks in the given section
+        are selected, returns None.
 
         Parameters
         ----------
@@ -109,7 +112,7 @@ class SelectionBox(object):
 
         Returns
         -------
-        mask : ndarray | None
+        mask : numpy.ndarray | None
 
         """
         return self.box_mask(SectionBox(cx, cy, cz))
@@ -132,6 +135,18 @@ class SelectionBox(object):
 
     @property
     def positions(self):
+        """
+        Return an iterator over the block positions in this section. Yields tuples of
+        ints (x, y, z).
+
+        Slow. Consider using section_mask with the chunk's sections to operate on blocks
+        in parallel.
+
+        Returns
+        -------
+
+        positions: Iterator[(int, int, int)]
+        """
         for cx, cz in self.chunkPositions():
             for cy in self.sectionPositions(cx, cz):
                 mask = self.section_mask(cx, cy, cz)
@@ -150,7 +165,9 @@ class SelectionBox(object):
     maxcz = NotImplemented
 
     def chunkBox(self, level):
-        """Returns this box extended to the chunk boundaries of the given level"""
+        """
+        Returns this box extended to the chunk boundaries of the given level
+        """
         box = self
         return BoundingBox((box.mincx << 4, level.bounds.miny, box.mincz << 4),
                            (box.maxcx - box.mincx << 4, level.bounds.height, box.maxcz - box.mincz << 4))

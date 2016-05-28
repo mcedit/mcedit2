@@ -670,6 +670,7 @@ class WorldEditor(object):
     def hasLights(self):
         return self.adapter.hasLights
 
+
 class WorldEditorDimension(object):
     def __init__(self, worldEditor, dimName):
         self.worldEditor = worldEditor
@@ -742,19 +743,36 @@ class WorldEditorDimension(object):
 
     def getChunk(self, cx, cz, create=False):
         """
+        Return the WorldEditorChunk at the given position. If create is True and the
+        chunk is not present, creates the chunk, otherwise raises ChunkNotPresent.
 
-        :type cx: int or dtype
-        :type cz: int or dtype
-        :type create: bool
-        :return:
-        :rtype: WorldEditorChunk
+        Parameters
+        ----------
+
+        cx :     int
+        cz :     int
+        create : bool
+
+        Returns
+        -------
+
+        chunk : WorldEditorChunk
         """
         return self.worldEditor.getChunk(cx, cz, self.dimName, create)
 
     def getChunks(self, chunkPositions=None, create=False):
         """
-        :type chunkPositions(): iterator
-        :rtype: iterator
+        Return an iterator over the chunks in the list of given positions.
+
+        Parameters
+        ----------
+
+        chunkPositions: list[(int, int)]
+
+        Returns
+        -------
+
+        chunks : Iterator[WorldEditorChunk]
         """
         if chunkPositions is None:
             chunkPositions = self.chunkPositions()

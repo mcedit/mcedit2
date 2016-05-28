@@ -129,6 +129,7 @@ class EditorSession(QtCore.QObject):
 
         self.resourceLoader = minecraftinstall.getResourceLoaderForFilename(filename)
         self.currentDimension = None
+        """:type: mceditlib.worldeditor.WorldEditorDimension"""
 
         self.loader = None
         self.blockModels = None
@@ -696,6 +697,15 @@ class EditorSession(QtCore.QObject):
 
     @property
     def currentSelection(self):
+        """
+        The area selected by the user, which delimits a possibly non-contiguous set
+        of block positions.
+
+        Returns
+        -------
+        selection: SelectionBox
+
+        """
         return self._currentSelection
 
     @currentSelection.setter
@@ -1001,7 +1011,6 @@ class EditorSession(QtCore.QObject):
     @contextmanager
     def beginSimpleCommand(self, text):
         command = SimpleRevisionCommand(self, text)
-        command.foo()
         try:
             with command.begin():
                 yield
