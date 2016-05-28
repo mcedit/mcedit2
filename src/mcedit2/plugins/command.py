@@ -83,7 +83,7 @@ class SimplePluginCommand(PluginCommand):
         self.addMenuItem(self.displayName, self.showDialog, self.submenuName)
 
     def showDialog(self):
-        dialog = SimpleOptionsDialog(self.options, self.editorSession)
+        dialog = SimpleOptionsDialog(self.displayName, self.options, self.editorSession)
         result = dialog.exec_()
         if result == QtGui.QDialog.Accepted:
             command = SimpleRevisionCommand(self.editorSession, self.displayName)
@@ -95,19 +95,24 @@ class SimplePluginCommand(PluginCommand):
 
 
 class SimpleOptionsDialog(QtGui.QDialog):
-    def __init__(self, options, editorSession):
+    def __init__(self, title, options, editorSession):
         super(SimpleOptionsDialog, self).__init__()
+        self.setWindowTitle(title)
+
         self.editorSession = editorSession
         self.optIdx = 0
 
         self.optionsArea = QtGui.QScrollArea()
-        self.optionsArea.setMinimumSize(500, 750)
+        self.optionsArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self.optionsArea.setMinimumHeight(600)
+        # self.optionsArea.setMinimumSize(500, 750)
         self.buttonBox = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
-        self.setLayout(Column(self.optionsArea, self.buttonBox, margin=0))
+        self.setLayout(Column(self.optionsArea, self.buttonBox))
         self.containerWidget = QtGui.QWidget()
+        self.containerWidget.setMinimumWidth(400)
 
         self.formLayout = QtGui.QFormLayout()
         self.valueGetters = {}
