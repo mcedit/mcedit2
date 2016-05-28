@@ -353,6 +353,8 @@ class EditorSession(QtCore.QObject):
         self.actionCreateChunks = QtGui.QAction(self.tr("Create Chunks"), self, triggered=self.createChunks)
         self.actionRepopChunks = QtGui.QAction(self.tr("Mark Chunks For Repopulation"),
                                                self, triggered=self.repopChunks)
+        self.actionRepopChunks = QtGui.QAction(self.tr("Unmark Chunks For Repopulation"),
+                                               self, triggered=self.unRepopChunks)
 
         self.menuChunk.addAction(self.actionDeleteChunks)
         self.menuChunk.addAction(self.actionCreateChunks)
@@ -852,7 +854,28 @@ class EditorSession(QtCore.QObject):
         QtGui.QMessageBox.warning(QtGui.qApp.mainWindow, "Not implemented.", "Create chunks is not implemented yet!")
 
     def repopChunks(self):
-        QtGui.QMessageBox.warning(QtGui.qApp.mainWindow, "Not implemented.", "Repop chunks is not implemented yet!")
+        if self.currentSelection is None:
+            return
+
+        with self.beginSimpleCommand(self.tr("Mark Chunks For Repop")):
+            for cx, cz in self.currentSelection.chunkPositions():
+                try:
+                    chunk = self.currentDimension.getChunk(cx, cz)
+                    chunk.TerrainPopulated = False
+                except ChunkNotPresent:
+                    pass
+
+    def unRepopChunks(self):
+        if self.currentSelection is None:
+            return
+
+        with self.beginSimpleCommand(self.tr("Unmark Chunks For Repop")):
+            for cx, cz in self.currentSelection.chunkPositions():
+                try:
+                    chunk = self.currentDimension.getChunk(cx, cz)
+                    chunk.TerrainPopulated = True
+                except ChunkNotPresent:
+                    pass
 
     # - Dimensions -
 
@@ -1018,6 +1041,16 @@ class EditorSession(QtCore.QObject):
             self.pushCommand(command)
 
     def pushCommand(self, command):
+        """
+
+        Parameters
+        ----------
+        command : QtGui.QUndoCommand
+
+        Returns
+        -------
+
+        """
         log.info("Pushing command %s" % command.text())
         self.undoStack.push(command)
         self.actionSave.setEnabled(True)
