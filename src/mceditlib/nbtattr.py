@@ -59,9 +59,19 @@ class NBTAttr(object):
     def __repr__(self):
         return "NBTAttr('%s', %s, %r)" % (self.name, self.tagType, self.default)
 
+    _tagTypes = {
+        'b': nbt.TAG_Byte,
+        's': nbt.TAG_Short,
+        'i': nbt.TAG_Int,
+        'l': nbt.TAG_Long,
+        'f': nbt.TAG_Float,
+        'd': nbt.TAG_Double,
+        't': nbt.TAG_String,
+    }
+
     def __init__(self, name, tagType, default=None, doc=""):
         self.name = name
-        self.tagType = tagType
+        self.tagType = self._tagTypes.get(tagType, tagType)
         self.default = default
         self.__doc__ = doc
 

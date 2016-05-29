@@ -26,8 +26,8 @@ class ItemRef(nbtattr.NBTCompoundRef):
 
         super(ItemRef, self).__init__(rootTag, parent)
 
-    Damage = nbtattr.NBTAttr("Damage", nbt.TAG_Short, 0)
-    Count = nbtattr.NBTAttr("Count", nbt.TAG_Byte, 1)
+    Damage = nbtattr.NBTAttr("Damage", 's', 0)
+    Count = nbtattr.NBTAttr("Count", 'b', 1)
     tag = nbtattr.NBTAttr("tag", nbt.TAG_Compound)
 
     @property
@@ -131,7 +131,7 @@ class ItemRef(nbtattr.NBTCompoundRef):
 
 
 class ItemStackRef(ItemRef):
-    Slot = nbtattr.NBTAttr("Slot", nbt.TAG_Byte)
+    Slot = nbtattr.NBTAttr("Slot", 'b')
 
 
 class SlotsListProxy(nbtattr.NBTListProxy):
@@ -201,19 +201,19 @@ class PCEntityRefBase(object):
         nbtattr.SetNBTDefaults(ref)
         return ref
 
-    id = nbtattr.NBTAttr("id", nbt.TAG_String)
-    Position = nbtattr.NBTVectorAttr("Pos", nbt.TAG_Double)
-    Motion = nbtattr.NBTVectorAttr("Motion", nbt.TAG_Double)
-    Rotation = nbtattr.NBTListAttr("Rotation", nbt.TAG_Float)
+    id = nbtattr.NBTAttr("id", 't')
+    Position = nbtattr.NBTVectorAttr("Pos", 'd')
+    Motion = nbtattr.NBTVectorAttr("Motion", 'd')
+    Rotation = nbtattr.NBTListAttr("Rotation", 'f')
 
-    FallDistance = nbtattr.NBTAttr("FallDistance", nbt.TAG_Float)
-    Fire = nbtattr.NBTAttr("Fire", nbt.TAG_Short)
-    Air = nbtattr.NBTAttr("Air", nbt.TAG_Short)
-    OnGround = nbtattr.NBTAttr("OnGround", nbt.TAG_Byte)
-    Dimension = nbtattr.NBTAttr("Dimension", nbt.TAG_Int)
-    Invulnerable = nbtattr.NBTAttr("Invulnerable", nbt.TAG_Byte)
-    PortalCooldown = nbtattr.NBTAttr("PortalCooldown", nbt.TAG_Int)
-    CustomName = nbtattr.NBTAttr("CustomName", nbt.TAG_String)
+    FallDistance = nbtattr.NBTAttr("FallDistance", 'f')
+    Fire = nbtattr.NBTAttr("Fire", 's')
+    Air = nbtattr.NBTAttr("Air", 's')
+    OnGround = nbtattr.NBTAttr("OnGround", 'b')
+    Dimension = nbtattr.NBTAttr("Dimension", 'i')
+    Invulnerable = nbtattr.NBTAttr("Invulnerable", 'b')
+    PortalCooldown = nbtattr.NBTAttr("PortalCooldown", 'i')
+    CustomName = nbtattr.NBTAttr("CustomName", 't')
 
     UUID = nbtattr.NBTUUIDAttr()
 
@@ -258,7 +258,7 @@ class PCPaintingEntityRefBase(PCEntityRefBase):
     # XXXXXXXXXXX
     # in 1.7 and before, this tag is called "Direction"
     # in some version before that, it is called "Dir" and its enums are different!
-    Facing = nbtattr.NBTAttr('Facing', nbt.TAG_Byte, 0)
+    Facing = nbtattr.NBTAttr('Facing', 'b', 0)
 
     SouthFacing = 0
     WestFacing = 1
@@ -278,7 +278,7 @@ class PCPaintingEntityRefBase(PCEntityRefBase):
 
 
 class PCPaintingEntityRef(PCPaintingEntityRefBase):
-    Motive = nbtattr.NBTAttr("Motive", nbt.TAG_String)
+    Motive = nbtattr.NBTAttr("Motive", 't')
 
 
 class PCItemFrameEntityRef(PCPaintingEntityRefBase):
@@ -286,16 +286,16 @@ class PCItemFrameEntityRef(PCPaintingEntityRefBase):
 
 
 class PCBatEntityRef(PCEntityRefBase):
-    BatFlags = nbtattr.NBTAttr("BatFlags", nbt.TAG_Byte, 0)
+    BatFlags = nbtattr.NBTAttr("BatFlags", 'b', 0)
 
 
 class PCChickenEntityRef(PCEntityRefBase):
-    IsChickenJockey = nbtattr.NBTAttr("IsChickenJockey", nbt.TAG_Byte, 0)
-    EggLayTime = nbtattr.NBTAttr("EggLayTime", nbt.TAG_Int, 0)
+    IsChickenJockey = nbtattr.NBTAttr("IsChickenJockey", 'b', 0)
+    EggLayTime = nbtattr.NBTAttr("EggLayTime", 'i', 0)
 
 
 class PCPigEntityRef(PCEntityRefBase):
-    Saddle = nbtattr.NBTAttr("Saddle", nbt.TAG_Byte, 0)
+    Saddle = nbtattr.NBTAttr("Saddle", 'b', 0)
 
 
 class PCRabbitEntityRef(PCEntityRefBase):
@@ -307,19 +307,19 @@ class PCRabbitEntityRef(PCEntityRefBase):
     # 4: Gold
     # 5: Salt&Pepper
     # 99: Killer
-    RabbitType = nbtattr.NBTAttr("RabbitType", nbt.TAG_Int, 0)
-    MoreCarrotTicks = nbtattr.NBTAttr("MoreCarrotTicks", nbt.TAG_Int, 0)
+    RabbitType = nbtattr.NBTAttr("RabbitType", 'i', 0)
+    MoreCarrotTicks = nbtattr.NBTAttr("MoreCarrotTicks", 'i', 0)
 
 
 class PCSheepEntityRef(PCEntityRefBase):
-    Sheared = nbtattr.NBTAttr("Sheared", nbt.TAG_Byte, 0)
+    Sheared = nbtattr.NBTAttr("Sheared", 'b', 0)
 
     # Same values as wool colors
-    Color = nbtattr.NBTAttr("Color", nbt.TAG_Byte, 0)
+    Color = nbtattr.NBTAttr("Color", 'b', 0)
 
 
 class PCVillagerEntityRef(PCEntityRefBase):
-    Profession = nbtattr.NBTAttr("Profession", nbt.TAG_Int, 0)
+    Profession = nbtattr.NBTAttr("Profession", 'i', 0)
 
 
 _entityClasses = {
@@ -351,7 +351,7 @@ class PCTileEntityRefBase(object):
     def raw_tag(self):
         return self.rootTag
 
-    id = nbtattr.NBTAttr("id", nbt.TAG_String)
+    id = nbtattr.NBTAttr("id", 't')
     Position = nbtattr.KeyedVectorAttr('x', 'y', 'z', nbt.TAG_Int, 0)
 
     def copy(self):
@@ -390,10 +390,10 @@ class PCTileEntityRefBase(object):
 class PCTileEntityControlRef(PCTileEntityRefBase):
     tileEntityID = "Control"
 
-    Command = nbtattr.NBTAttr("Command", nbt.TAG_String, "")
-    CustomName = nbtattr.NBTAttr("CustomName", nbt.TAG_String, "")
-    SuccessCount = nbtattr.NBTAttr("SuccessCount", nbt.TAG_Int, 0)
-    TrackOutput = nbtattr.NBTAttr("TrackOutput", nbt.TAG_Byte, 1)
+    Command = nbtattr.NBTAttr("Command", 't', "")
+    CustomName = nbtattr.NBTAttr("CustomName", 't', "")
+    SuccessCount = nbtattr.NBTAttr("SuccessCount", 'i', 0)
+    TrackOutput = nbtattr.NBTAttr("TrackOutput", 'b', 1)
 
 
 def convertStackTo17(stack, blocktypes):
