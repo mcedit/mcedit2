@@ -129,8 +129,10 @@ class ItemRef(nbtattr.NBTCompoundRef):
             return False
         return "id" in tag and "Damage" in tag and "Count" in tag
 
+
 class ItemStackRef(ItemRef):
     Slot = nbtattr.NBTAttr("Slot", nbt.TAG_Byte)
+
 
 class SlotsListProxy(nbtattr.NBTListProxy):
     def putItemInSlot(self, item, slot):
@@ -163,6 +165,7 @@ class SlottedInventoryAttr(nbtattr.NBTCompoundListAttr):
         super(SlottedInventoryAttr, self).__init__(name, ItemStackRef)
         self.listProxyClass = SlotsListProxy
 
+
 class _PCEntityRef(object):
 
     def create(self, entityID):
@@ -180,6 +183,7 @@ class _PCEntityRef(object):
         return cls(rootTag, chunk)
 
 PCEntityRef = _PCEntityRef()
+
 
 class PCEntityRefBase(object):
     def __init__(self, rootTag, chunk=None):
@@ -201,6 +205,16 @@ class PCEntityRefBase(object):
     Position = nbtattr.NBTVectorAttr("Pos", nbt.TAG_Double)
     Motion = nbtattr.NBTVectorAttr("Motion", nbt.TAG_Double)
     Rotation = nbtattr.NBTListAttr("Rotation", nbt.TAG_Float)
+
+    FallDistance = nbtattr.NBTAttr("FallDistance", nbt.TAG_Float)
+    Fire = nbtattr.NBTAttr("Fire", nbt.TAG_Short)
+    Air = nbtattr.NBTAttr("Air", nbt.TAG_Short)
+    OnGround = nbtattr.NBTAttr("OnGround", nbt.TAG_Byte)
+    Dimension = nbtattr.NBTAttr("Dimension", nbt.TAG_Int)
+    Invulnerable = nbtattr.NBTAttr("Invulnerable", nbt.TAG_Byte)
+    PortalCooldown = nbtattr.NBTAttr("PortalCooldown", nbt.TAG_Int)
+    CustomName = nbtattr.NBTAttr("CustomName", nbt.TAG_String)
+
     UUID = nbtattr.NBTUUIDAttr()
 
     def copy(self):
@@ -234,6 +248,7 @@ class PCEntityRefBase(object):
             return self.parent.blocktypes
         return None
 
+
 class PCPaintingEntityRefBase(PCEntityRefBase):
     # XXXXXXXXX
     # in 1.8, TilePos is the block the painting is IN
@@ -257,6 +272,7 @@ class PCPaintingEntityRefBase(PCEntityRefBase):
         faces.FaceEast: EastFacing,
 
     }
+
     def facingForMCEditFace(self, face):
         return self._mceditFacings.get(face, None)
 
@@ -269,13 +285,55 @@ class PCItemFrameEntityRef(PCPaintingEntityRefBase):
     Item = nbtattr.NBTCompoundAttr("Item", ItemRef)
 
 
+class PCBatEntityRef(PCEntityRefBase):
+    BatFlags = nbtattr.NBTAttr("BatFlags", nbt.TAG_Byte, 0)
+
+
+class PCChickenEntityRef(PCEntityRefBase):
+    IsChickenJockey = nbtattr.NBTAttr("IsChickenJockey", nbt.TAG_Byte, 0)
+    EggLayTime = nbtattr.NBTAttr("EggLayTime", nbt.TAG_Int, 0)
+
+
+class PCPigEntityRef(PCEntityRefBase):
+    Saddle = nbtattr.NBTAttr("Saddle", nbt.TAG_Byte, 0)
+
+
+class PCRabbitEntityRef(PCEntityRefBase):
+    # Possible values:
+    # 0: Brown
+    # 1: White
+    # 2: Black
+    # 3: Black&White
+    # 4: Gold
+    # 5: Salt&Pepper
+    # 99: Killer
+    RabbitType = nbtattr.NBTAttr("RabbitType", nbt.TAG_Int, 0)
+    MoreCarrotTicks = nbtattr.NBTAttr("MoreCarrotTicks", nbt.TAG_Int, 0)
+
+
+class PCSheepEntityRef(PCEntityRefBase):
+    Sheared = nbtattr.NBTAttr("Sheared", nbt.TAG_Byte, 0)
+
+    # Same values as wool colors
+    Color = nbtattr.NBTAttr("Color", nbt.TAG_Byte, 0)
+
+
 class PCVillagerEntityRef(PCEntityRefBase):
     Profession = nbtattr.NBTAttr("Profession", nbt.TAG_Int, 0)
 
 
 _entityClasses = {
-    "ItemFrame": PCItemFrameEntityRef,
+    # - Passive -
+    "Bat": PCBatEntityRef,
+    "Chicken": PCChickenEntityRef,
+    "Cow": PCEntityRefBase,
+    "MushroomCow": PCEntityRefBase,
+    "Pig": PCPigEntityRef,
+    "Rabbit": PCRabbitEntityRef,
+    "Sheep": PCSheepEntityRef,
+    "Squid": PCEntityRefBase,
     "Villager": PCVillagerEntityRef,
+    "ItemFrame": PCItemFrameEntityRef,
 }
 
 
