@@ -11,6 +11,16 @@ from mceditlib.geometry import Vector
 log = logging.getLogger(__name__)
 
 
+_tagTypes = {
+    'b': nbt.TAG_Byte,
+    's': nbt.TAG_Short,
+    'i': nbt.TAG_Int,
+    'l': nbt.TAG_Long,
+    'f': nbt.TAG_Float,
+    'd': nbt.TAG_Double,
+    't': nbt.TAG_String,
+}
+
 class NBTAttr(object):
     """
     NBT Attributes can be added to any class whose instances have a 'rootTag' attribute, usually an EntityRef
@@ -59,19 +69,9 @@ class NBTAttr(object):
     def __repr__(self):
         return "NBTAttr('%s', %s, %r)" % (self.name, self.tagType, self.default)
 
-    _tagTypes = {
-        'b': nbt.TAG_Byte,
-        's': nbt.TAG_Short,
-        'i': nbt.TAG_Int,
-        'l': nbt.TAG_Long,
-        'f': nbt.TAG_Float,
-        'd': nbt.TAG_Double,
-        't': nbt.TAG_String,
-    }
-
     def __init__(self, name, tagType, default=None, doc=""):
         self.name = name
-        self.tagType = self._tagTypes.get(tagType, tagType)
+        self.tagType = _tagTypes.get(tagType, tagType)
         self.default = default
         self.__doc__ = doc
 
@@ -244,7 +244,7 @@ class NBTListAttr(object):
 
     def __init__(self, name, listType, default=(), doc=""):
         self.name = name
-        self.listType = listType
+        self.listType = _tagTypes.get(listType, listType)
         self.default = default
         self.__doc__ = doc
 

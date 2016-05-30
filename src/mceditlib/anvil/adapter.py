@@ -1074,7 +1074,6 @@ class AnvilWorldAdapter(object):
         return mapData
 
 
-
 class AnvilMapData(NBTCompoundRef):
     def __init__(self, mapTag, mapID, adapter):
         if "data" not in mapTag:
@@ -1269,9 +1268,6 @@ class AnvilMapData(NBTCompoundRef):
         (111, 2, 0, 255),
         (58, 1, 0, 255)
     ], dtype=numpy.uint8)
-
-
-
 
 
 class PlayerAbilitiesRef(nbtattr.NBTCompoundRef):

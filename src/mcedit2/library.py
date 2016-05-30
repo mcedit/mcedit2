@@ -14,6 +14,7 @@ from mceditlib.util.lazyprop import weakrefprop
 
 log = logging.getLogger(__name__)
 
+
 class LibraryMapListModel(MapListModel):
     def flags(self, index):
         return super(LibraryMapListModel, self).flags(index) | Qt.ItemIsDragEnabled
