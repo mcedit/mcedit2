@@ -52,6 +52,7 @@ class LibraryWidget(QtGui.QWidget, Ui_library):
 
         self.schematicsModel = LibrarySchematicsTreeModel()
         self.schematicsModel.setRootPath(self.folderPath)
+        self.schematicsModel.setNameFilters(["*.schematic"])
         self.schematicsTreeView.setModel(self.schematicsModel)
         self.schematicsTreeView.setRootIndex(self.schematicsModel.index(self.folderPath))
 

@@ -83,6 +83,11 @@ class ISelection(object):
 
 
 class SelectionBox(object):
+    origin = NotImplemented
+    """:type : mceditlib.geometry.Vector"""
+    size = NotImplemented
+    """:type : mceditlib.geometry.Vector"""
+
     def __and__(self, other):
         return IntersectionBox(self, other)
 
@@ -268,7 +273,7 @@ class IntersectionBox(CombinationBox):
 
     def box_mask(self, box):
         masks = [s.box_mask(box) for s in self.selections]
-        if None in masks:
+        if any(m is None for m in masks):
             return None
 
         m = masks.pop()

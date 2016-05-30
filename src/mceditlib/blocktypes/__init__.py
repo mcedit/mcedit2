@@ -121,7 +121,6 @@ class SortedSet(MutableSet):
         self._set = set()
 
 
-
 class BlockTypeSet(object):
     defaultColor = (0xc9, 0x77, 0xf0, 0xff)
 

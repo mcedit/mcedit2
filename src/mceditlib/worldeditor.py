@@ -876,6 +876,18 @@ class WorldEditorDimension(object):
     # --- Blocks by single coordinate ---
 
     def getBlock(self, x, y, z):
+        """
+
+        Parameters
+        ----------
+        x : int
+        y : int
+        z : int
+
+        Returns
+        -------
+        block: BlockType
+        """
         ID = self.getBlockID(x, y, z)
         meta = self.getBlockData(x, y, z)
         return self.blocktypes[ID, meta]

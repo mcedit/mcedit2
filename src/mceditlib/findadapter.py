@@ -20,6 +20,10 @@ log = logging.getLogger(__name__)
 #     filename = os.path.join(saveFileDir, name)
 #     return WorldEditor(filename)
 
+class UnknownFormatError(ValueError):
+    """
+    Raised by findAdapter if no adapter was found.
+    """
 
 def findAdapter(filename, readonly=False, resume=None, getInfo=False):
     """
@@ -59,7 +63,7 @@ def findAdapter(filename, readonly=False, resume=None, getInfo=False):
             log.debug("%s: Opened%s", cls.__name__, " read-only" if readonly else "")
             return level
 
-    raise ValueError("Cannot detect type of file %s." % filename)
+    raise UnknownFormatError("Cannot detect type of file %s." % filename)
 
 
 def isLevel(cls, filename):

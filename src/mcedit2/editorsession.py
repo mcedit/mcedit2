@@ -23,8 +23,11 @@ from mcedit2.util.dialogs import NotImplementedYet
 from mcedit2.util.directories import getUserSchematicsDirectory
 from mcedit2.util.mimeformats import MimeFormats
 from mcedit2.util.resources import resourcePath
+from mcedit2.widgets.blockpicker import BlockTypeButton
 from mcedit2.widgets.mcedockwidget import MCEDockWidget
 from mcedit2.widgets.spinslider import SpinSlider
+from mceditlib.findadapter import UnknownFormatError
+from mceditlib.structure import exportStructure
 from mceditlib.util import exhaust
 from mceditlib.util.lazyprop import weakrefprop
 from mcedit2.util.raycast import rayCastInBounds, MaxDistanceError
@@ -58,6 +61,9 @@ log = logging.getLogger(__name__)
 sessionSettings = Settings().getNamespace("editorsession")
 currentViewSetting = sessionSettings.getOption("currentview", unicode, "cam")
 
+ExportDialogSettings = Settings().getNamespace("export_dialog")
+ExportDialogSettings.author = ExportDialogSettings.getOption("export_dialog/structure/author", unicode, "Anonymous")
+ExportDialogSettings.excludedBlocks = ExportDialogSettings.getOption("export_dialog/structure/excluded_blocks", "json", ["minecraft:air"])
 
 class PasteImportCommand(QtGui.QUndoCommand):
     def __init__(self, editorSession, pendingImport, text, *args, **kwargs):
@@ -329,8 +335,11 @@ class EditorSession(QtCore.QObject):
 
         self.menuImportExport = QtGui.QMenu(self.tr("Import/Export"))
 
-        self.actionExport = QtGui.QAction(self.tr("Export"), self, triggered=self.export)
+        self.actionExport = QtGui.QAction(self.tr("Export Schematic"), self, triggered=self.export)
         self.actionExport.setShortcut(QtGui.QKeySequence("Ctrl+Shift+E"))
+        self.menuImportExport.addAction(self.actionExport)
+
+        self.actionExport = QtGui.QAction(self.tr("Export Structure Block .nbt"), self, triggered=self.exportStructure)
         self.menuImportExport.addAction(self.actionExport)
 
         self.actionImport = QtGui.QAction(self.tr("Import"), self, triggered=self.import_)
@@ -938,6 +947,83 @@ class EditorSession(QtCore.QObject):
                 schematic = showProgress("Copying...", task)
                 schematic.saveToFile(filename)
 
+    def exportStructure(self):
+        if self.currentSelection is None:
+            return
+
+        sx, sy, sz = [(s + 31) // 32 for s in self.currentSelection.size]
+
+        structureOptsDialog = QtGui.QDialog()
+        structureOptsDialog.setWindowTitle(self.tr("Structure Block Options"))
+        form = QtGui.QFormLayout()
+
+        authorField = QtGui.QLineEdit()
+        author = ExportDialogSettings.author.value()
+        authorField.setText(author)
+
+        form.addRow(self.tr("Exporting %d files") % (sx * sy * sz), QtGui.QLabel(self.tr("%d x %d x %d") % (sx, sy, sz)))
+        form.addRow(self.tr("Author"), authorField)
+
+        blockButton = BlockTypeButton(multipleSelect=True)
+        blockButton.editorSession = self
+
+        form.addRow(self.tr("Excluded Blocks"), blockButton)
+
+        excludedBlockNames = ExportDialogSettings.excludedBlocks.value()
+        excludedBlocks = []
+        for n in excludedBlockNames:
+            try:
+                b = self.worldEditor.blocktypes[n]
+            except KeyError:
+                continue
+            else:
+                excludedBlocks.append(b)
+
+        blockButton.blocks = excludedBlocks
+
+        buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel)
+        buttons.accepted.connect(structureOptsDialog.accept)
+        buttons.rejected.connect(structureOptsDialog.reject)
+
+        structureOptsDialog.setLayout(Column(form, buttons))
+
+        result = structureOptsDialog.exec_()
+
+        author = authorField.text()
+        ExportDialogSettings.author.setValue(author)
+
+        excludedBlocks = blockButton.blocks
+        excludedBlockNames = [b.nameAndState for b in excludedBlocks]
+        ExportDialogSettings.excludedBlocks.setValue(excludedBlockNames)
+
+        if not result:
+            return
+
+        # prompt for filename and format. maybe use custom browser to save to export library??
+        startingDir = Settings().value("import_dialog/starting_dir", getUserSchematicsDirectory())
+        result = QtGui.QFileDialog.getSaveFileName(QtGui.qApp.mainWindow,
+                                                   self.tr("Export Schematic"),
+                                                   startingDir,
+                                                   self.tr("Structure Block Files") + " (*.nbt)")
+
+        if result:
+            filename = result[0]
+            if filename:
+                if sx > 1 or sy > 1 or sz > 1:
+                    dirname = os.path.dirname(filename)
+                    basename = os.path.join(dirname, os.path.splitext(os.path.basename(filename))[0])
+                    for tx in range(sx):
+                        for ty in range(sy):
+                            for tz in range(sz):
+                                tilename = "%s_%s_%s_%s.nbt" % (basename, tx, ty, tz)
+                                origin = self.currentSelection.origin
+                                origin += (tx * 32, ty * 32, tz * 32)
+                                box = BoundingBox(origin, (32, 32, 32))
+                                tileSelection = box.intersect(self.currentSelection)
+                                exportStructure(tilename, self.currentDimension, tileSelection, author, excludedBlocks)
+                else:
+                    exportStructure(filename, self.currentDimension, self.currentSelection, author, excludedBlocks)
+
     # --- Drag-and-drop ---
 
     def urlsWereDropped(self, mimeData, position, face):
@@ -992,7 +1078,12 @@ class EditorSession(QtCore.QObject):
     # --- Library support ---
 
     def importSchematic(self, filename, importPos=None):
-        schematic = WorldEditor(filename, readonly=True)
+        try:
+            schematic = WorldEditor(filename, readonly=True)
+        except UnknownFormatError:
+            log.exception("Unknown format.")
+            return
+
         ray = self.editorTab.currentView().rayAtCenter()
         if importPos is not None:
             pos = importPos
