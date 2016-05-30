@@ -185,6 +185,19 @@ class _PCEntityRef(object):
 PCEntityRef = _PCEntityRef()
 
 
+class CommandStatsRef(nbtattr.NBTCompoundRef):
+    SuccessCountObjective = nbtattr.NBTAttr('SuccessCountObjective', 't')
+    SuccessCountName = nbtattr.NBTAttr('SuccessCountName', 't')
+    AffectedBlocksObjective = nbtattr.NBTAttr('AffectedBlocksObjective', 't')
+    AffectedBlocksName = nbtattr.NBTAttr('AffectedBlocksName', 't')
+    AffectedEntitiesObjective = nbtattr.NBTAttr('AffectedEntitiesObjective', 't')
+    AffectedEntitiesName = nbtattr.NBTAttr('AffectedEntitiesName', 't')
+    AffectedItemsObjective = nbtattr.NBTAttr('AffectedItemsObjective', 't')
+    AffectedItemsName = nbtattr.NBTAttr('AffectedItemsName', 't')
+    QueryResultObjective = nbtattr.NBTAttr('QueryResultObjective', 't')
+    QueryResultName = nbtattr.NBTAttr('QueryResultName', 't')
+
+
 class PCEntityRefBase(object):
     def __init__(self, rootTag, chunk=None):
         self.rootTag = rootTag
@@ -214,6 +227,16 @@ class PCEntityRefBase(object):
     Invulnerable = nbtattr.NBTAttr("Invulnerable", 'b')
     PortalCooldown = nbtattr.NBTAttr("PortalCooldown", 'i')
     CustomName = nbtattr.NBTAttr("CustomName", 't')
+    CustomNameVisible = nbtattr.NBTAttr("CustomNameVisible", 'b')
+    Silent = nbtattr.NBTAttr("Silent", 'b')
+
+    Passengers = nbtattr.NBTCompoundListAttr("Passengers", PCEntityRef)
+
+    Glowing = nbtattr.NBTAttr("Glowing", 'b')
+    Tags = nbtattr.NBTListAttr("Tags", 's')
+
+    CommandStats = nbtattr.NBTCompoundAttr('CommandStats', CommandStatsRef)
+
 
     UUID = nbtattr.NBTUUIDAttr()
 
@@ -247,6 +270,61 @@ class PCEntityRefBase(object):
         if self.parent:
             return self.parent.blocktypes
         return None
+
+
+class MobAttributeModifierRef(nbtattr.NBTCompoundRef):
+    Name = nbtattr.NBTAttr('Name', 't')
+    Amount = nbtattr.NBTAttr('Amount', 'd')
+    Operation = nbtattr.NBTAttr('Operation', 'i')
+
+    UUID = nbtattr.NBTUUIDAttr()
+
+
+class MobAttributeRef(nbtattr.NBTCompoundRef):
+    Name = nbtattr.NBTAttr('Name', 't')
+    Base = nbtattr.NBTAttr('Base', 'd')
+    Modifiers = nbtattr.NBTCompoundListAttr('Modifiers', MobAttributeModifierRef)
+
+
+class MobPotionEffectRef(nbtattr.NBTCompoundRef):
+    Id = nbtattr.NBTAttr('Id', 'b')
+    Amplifier = nbtattr.NBTAttr('Amplifier', 'b')
+    Duration = nbtattr.NBTAttr('Duration', 'i')
+    Ambient = nbtattr.NBTAttr('Ambient', 'b')
+    ShowParticles = nbtattr.NBTAttr('ShowParticles', 'b')
+
+
+class PCEntityMobRefBase(PCEntityRefBase):
+
+    # xxx add rootTag[Health] as Short (1.8) or Float(1.9)?
+    @property
+    def Health(self):
+        if 'HealF' in self.rootTag:
+            return self.rootTag['HealF'].value
+        elif 'Health' in self.rootTag:
+            return self.rootTag['Health'].value
+        else:
+            self.rootTag['Health'] = nbt.TAG_Short(0.)
+            self.rootTag['HealF'] = nbt.TAG_Float(0.)
+            return 0
+
+    @Health.setter
+    def Health(self, val):
+        if 'HealF' in self.rootTag:
+            self.rootTag['HealF'].value = val
+        elif 'Health' in self.rootTag:
+            self.rootTag['Health'].value = val
+        else:
+            self.rootTag['Health'] = nbt.TAG_Short(val)
+            self.rootTag['HealF'] = nbt.TAG_Float(val)
+
+    AbsorptionAmount = nbtattr.NBTAttr('AbsorptionAmount', 'f')
+    HurtTime = nbtattr.NBTAttr('HurtTime', 's')
+    HurtByTimestamp = nbtattr.NBTAttr('HurtByTimestamp', 'i')
+    DeathTime = nbtattr.NBTAttr('DeathTime', 's')
+
+    Attributes = nbtattr.NBTCompoundListAttr('Attributes', MobAttributeRef)
+    ActiveEffects = nbtattr.NBTCompoundListAttr('ActiveEffects', MobPotionEffectRef)
 
 
 class PCPaintingEntityRefBase(PCEntityRefBase):
@@ -285,20 +363,20 @@ class PCItemFrameEntityRef(PCPaintingEntityRefBase):
     Item = nbtattr.NBTCompoundAttr("Item", ItemRef)
 
 
-class PCBatEntityRef(PCEntityRefBase):
+class PCBatEntityRef(PCEntityMobRefBase):
     BatFlags = nbtattr.NBTAttr("BatFlags", 'b', 0)
 
 
-class PCChickenEntityRef(PCEntityRefBase):
+class PCChickenEntityRef(PCEntityMobRefBase):
     IsChickenJockey = nbtattr.NBTAttr("IsChickenJockey", 'b', 0)
     EggLayTime = nbtattr.NBTAttr("EggLayTime", 'i', 0)
 
 
-class PCPigEntityRef(PCEntityRefBase):
+class PCPigEntityRef(PCEntityMobRefBase):
     Saddle = nbtattr.NBTAttr("Saddle", 'b', 0)
 
 
-class PCRabbitEntityRef(PCEntityRefBase):
+class PCRabbitEntityRef(PCEntityMobRefBase):
     # Possible values:
     # 0: Brown
     # 1: White
@@ -311,14 +389,14 @@ class PCRabbitEntityRef(PCEntityRefBase):
     MoreCarrotTicks = nbtattr.NBTAttr("MoreCarrotTicks", 'i', 0)
 
 
-class PCSheepEntityRef(PCEntityRefBase):
+class PCSheepEntityRef(PCEntityMobRefBase):
     Sheared = nbtattr.NBTAttr("Sheared", 'b', 0)
 
     # Same values as wool colors
     Color = nbtattr.NBTAttr("Color", 'b', 0)
 
 
-class PCVillagerEntityRef(PCEntityRefBase):
+class PCVillagerEntityRef(PCEntityMobRefBase):
     Profession = nbtattr.NBTAttr("Profession", 'i', 0)
 
 
@@ -326,12 +404,12 @@ _entityClasses = {
     # - Passive -
     "Bat": PCBatEntityRef,
     "Chicken": PCChickenEntityRef,
-    "Cow": PCEntityRefBase,
-    "MushroomCow": PCEntityRefBase,
+    "Cow": PCEntityMobRefBase,
+    "MushroomCow": PCEntityMobRefBase,
     "Pig": PCPigEntityRef,
     "Rabbit": PCRabbitEntityRef,
     "Sheep": PCSheepEntityRef,
-    "Squid": PCEntityRefBase,
+    "Squid": PCEntityMobRefBase,
     "Villager": PCVillagerEntityRef,
     "ItemFrame": PCItemFrameEntityRef,
 }
