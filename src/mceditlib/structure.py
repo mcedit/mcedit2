@@ -37,6 +37,8 @@ def exportStructure(filename, dim, selection, author=None, excludedBlocks=None):
     blocks = rootTag['blocks'] = nbt.TAG_List(list_type=nbt.ID_COMPOUND)
     palette = rootTag['palette'] = nbt.TAG_List(list_type=nbt.ID_COMPOUND)
 
+    ox, oy, oz = selection.origin
+
     paletteIDs = {}
     for x, y, z in selection.positions:
         block = dim.getBlock(x, y, z)
@@ -57,7 +59,7 @@ def exportStructure(filename, dim, selection, author=None, excludedBlocks=None):
 
         blockTag = nbt.TAG_Compound()
         blockTag['state'] = nbt.TAG_Int(paletteIdx)
-        blockTag['pos'] = nbt.TAG_List([nbt.TAG_Int(a) for a in x, y, z])
+        blockTag['pos'] = nbt.TAG_List([nbt.TAG_Int(a) for a in x - ox, y - oy, z - oz])
 
         tileEntity = dim.getTileEntity((x, y, z))
         if tileEntity:
