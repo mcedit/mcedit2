@@ -159,7 +159,11 @@ class AnvilWorldFolder(object):
         if not os.path.exists(path):
             self._dimensionNames.add(dimName)
             self._regionPositionsByDim[dimName].add((rx, rz))
-        regionFile = RegionFile(path, self.readonly)
+        try:
+            regionFile = RegionFile(path, self.readonly)
+        except Exception:
+            log.exception("Failed to open region file.")
+            return None
         self.regionFiles[rx, rz, dimName] = regionFile
         return regionFile
 
@@ -184,6 +188,9 @@ class AnvilWorldFolder(object):
         count = 0
         for rx, rz in self._regionPositionsByDim[dimName]:
             regionFile = self.getRegionFile(rx, rz, dimName)
+            if regionFile is None:
+                continue
+
             count += regionFile.chunkCount
         return count
 
@@ -196,6 +203,8 @@ class AnvilWorldFolder(object):
         """
         for rx, rz in set(self._regionPositionsByDim[dimName]):
             regionFile = self.getRegionFile(rx, rz, dimName)
+            if regionFile is None:
+                continue
 
             if regionFile.chunkCount:
                 for cx, cz in regionFile.chunkPositions():
