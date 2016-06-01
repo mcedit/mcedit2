@@ -611,14 +611,34 @@ class WorldEditor(object):
     # --- Dimensions ---
 
     def listDimensions(self):
+        """
+        Return a list of dimension names in this world. The name of the overworld
+        or the default dimension is an empty string and will always be in the list.
+
+        Returns
+        -------
+        dimNames : list[unicode]
+
+        """
         return self.adapter.listDimensions()
 
     def getDimension(self, dimName=""):
         """
+        Return the dimension with the given name.
 
-        :type dimName: str
-        :return:
-        :rtype: WorldEditorDimension
+        "DIM1" is The End, and "DIM-1" is The Nether. When called with an empty string or
+         with no arguments, returns the overworld. Some level formats may have no
+         dimensions other than the overworld - to get the default dimensions, call
+         with no arguments.
+
+        Parameters
+        ----------
+        dimName : unicode
+
+        Returns
+        -------
+
+        dimension: WorldEditorDimension
         """
         dim = self.dimensions.get(dimName)
         if dim is None:
