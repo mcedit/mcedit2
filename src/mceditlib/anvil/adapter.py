@@ -937,10 +937,11 @@ class AnvilWorldAdapter(object):
 
     def listPlayers(self):
         """
-        List the names of all players in this world (XXX players folder in dimension folders??)
+        List the names/UUIDs of all players in this world
+        (XXX players folder in dimension folders??)
 
         :return:
-        :rtype: Iterator of [str]
+        :rtype: Iterator of unicode
         """
         for f in self.selectedRevision.listFolder("playerdata"):
             if f.endswith(".dat"):
@@ -1279,6 +1280,7 @@ class PlayerAbilitiesRef(nbtattr.NBTCompoundRef):
 
 
 class AnvilPlayerRef(object):
+    # xxx inherit from PCEntityMobRefBase?
     def __init__(self, adapter, playerUUID):
         self.playerUUID = playerUUID
         self.adapter = adapter
