@@ -665,6 +665,9 @@ class WorldEditor(object):
                 return name
 
     def dimNumberFromName(self, dimName):
+        if dimName == "":
+            return 0
+
         matches = re.findall(r'-[0-9]+', dimName)
         if not len(matches):
             raise ValueError("Could not parse a dimension number from %s", dimName)
@@ -805,6 +808,10 @@ class WorldEditorDimension(object):
 
     def deleteChunk(self, cx, cz):
         self.worldEditor.deleteChunk(cx, cz, self.dimName)
+
+    @property
+    def dimNo(self):
+        return self.worldEditor.dimNumberFromName(self.dimName)
 
     # --- Entities and TileEntities ---
 
