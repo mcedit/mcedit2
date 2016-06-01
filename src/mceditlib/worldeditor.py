@@ -595,7 +595,10 @@ class WorldEditor(object):
     # --- Players ---
 
     def listPlayers(self):
-        return self.adapter.listPlayers()
+        if hasattr(self.adapter, 'listPlayers'):
+            return self.adapter.listPlayers()
+        else:
+            return []
 
     def getPlayer(self, playerUUID=""):
         player = self.playerCache.get(playerUUID)
