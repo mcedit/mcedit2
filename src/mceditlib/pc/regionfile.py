@@ -63,15 +63,16 @@ class RegionFile(object):
                 self.modTimes = numpy.zeros(self.SECTOR_BYTES/4, dtype='>u4')
             else:
 
-                # Increase file size if not a multiple of sector size
-                if filesize & 0xfff:
-                    filesize = (filesize | 0xfff) + 1
-                    f.truncate(filesize)
+                if not readonly:
+                    # Increase file size if not a multiple of sector size
+                    if filesize & 0xfff:
+                        filesize = (filesize | 0xfff) + 1
+                        f.truncate(filesize)
 
-                # Increase file size if empty (new regionfile)
-                if filesize == 0:
-                    filesize = self.SECTOR_BYTES * 2
-                    f.truncate(filesize)
+                    # Increase file size if empty (new regionfile)
+                    if filesize == 0:
+                        filesize = self.SECTOR_BYTES * 2
+                        f.truncate(filesize)
 
                 f.seek(0)
                 offsetsData = f.read(self.SECTOR_BYTES)
