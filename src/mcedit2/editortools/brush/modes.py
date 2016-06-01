@@ -87,6 +87,7 @@ class BrushMode(QtCore.QObject):
         """
         return {}
 
+
 class Fill(BrushMode):
     name = "fill"
 

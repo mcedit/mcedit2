@@ -146,8 +146,9 @@ class BlockTypePicker(QtGui.QDialog, Ui_blockPickerMultiple):
 
         if not self.multipleSelect:
             self.listWidget.doubleClicked.connect(self.accept)
+            self.listWidget.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         else:
-            self.listWidget.multipleSelect = True
+            self.listWidget.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
 
         self.setSizeGripEnabled(True)
         self.listModel = None

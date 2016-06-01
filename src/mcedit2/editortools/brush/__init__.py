@@ -127,8 +127,6 @@ class BrushTool(EditorTool):
         self.toolWidget.brushShapeInput.shapeChanged.connect(self.updateCursor)
         self.toolWidget.brushShapeInput.shapeOptionsChanged.connect(self.updateCursor)
 
-        self.fillBlock = editorSession.worldEditor.blocktypes["stone"]
-
         self.brushSize = BrushSizeSetting.value(QtGui.QVector3D(5, 5, 5)).toTuple()  # calls updateCursor
 
         self.toolWidget.xSpinSlider.setValue(self.brushSize[0])
@@ -168,13 +166,6 @@ class BrushTool(EditorTool):
         x, y, z = self.brushSize
         z = float(val)
         self.brushSize = x, y, z
-
-    def setBlocktypes(self, types):
-        if len(types) == 0:
-            return
-
-        self.fillBlock = types[0]
-        self.updateCursor()
 
     def hoverPosition(self, event):
         if event.blockPosition:
