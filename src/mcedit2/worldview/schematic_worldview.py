@@ -9,10 +9,14 @@ from mcedit2.rendering.textureatlas import TextureAtlas
 from mcedit2.util import minecraftinstall
 from mcedit2.util.screen import centerWidgetInScreen
 from mcedit2.util.worldloader import WorldLoader
-from mcedit2.worldview.camera import CameraWorldView, CameraPanMouseAction
+from mcedit2.worldview.camera import CameraWorldView, CameraPanMouseAction, \
+    CameraStickyPanMouseAction
 from mcedit2.worldview.viewaction import ViewAction
 
 log = logging.getLogger(__name__)
+
+minZoom = 0.1
+maxZoom = 2.0
 
 class SchematicZoomInAction(ViewAction):
     labelText = "Zoom Schematic View In"
@@ -21,7 +25,7 @@ class SchematicZoomInAction(ViewAction):
     settingsKey = None
 
     def keyPressEvent(self, event):
-        event.view.distance = min(2.0, max(0.5, event.view.distance - 0.05))
+        event.view.distance = min(maxZoom, max(minZoom, event.view.distance - 0.05))
 
 class SchematicZoomOutAction(ViewAction):
     labelText = "Zoom Schematic View Out"
@@ -30,7 +34,8 @@ class SchematicZoomOutAction(ViewAction):
     settingsKey = None
 
     def keyPressEvent(self, event):
-        event.view.distance = min(2.0, max(0.5, event.view.distance + 0.05))
+        event.view.distance = min(maxZoom, max(minZoom, event.view.distance + 0.05))
+
 
 class SchematicWorldView(CameraWorldView):
     def __init__(self, dimension, textureAtlas):
@@ -38,8 +43,10 @@ class SchematicWorldView(CameraWorldView):
 
         self.distance = 1.4
         self.centerPoint = dimension.bounds.center
+        stickyPanAction = CameraStickyPanMouseAction()
 
-        self.viewActions = [CameraPanMouseAction(),
+        self.viewActions = [CameraPanMouseAction(stickyPanAction),
+                            stickyPanAction,
                             SchematicZoomInAction(),
                             SchematicZoomOutAction()]
 
