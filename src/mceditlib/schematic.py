@@ -27,6 +27,7 @@ log = getLogger(__name__)
 
 blocktypeClassesByName = {"Alpha": PCBlockTypeSet}
 
+
 def createSchematic(shape, blocktypes='Alpha'):
     """
     Create a new .schematic of the given shape and blocktypes and return a WorldEditor.
@@ -46,6 +47,7 @@ def createSchematic(shape, blocktypes='Alpha'):
     editor = WorldEditor(adapter=adapter)
     return editor
 
+
 def blockIDMapping(blocktypes):
     mapping = nbt.TAG_Compound()
     for name, ID in blocktypes.IDsByName.iteritems():
@@ -53,11 +55,13 @@ def blockIDMapping(blocktypes):
 
     return mapping
 
+
 def itemIDMapping(blocktypes):
     mapping = nbt.TAG_Compound()
     for name, ID in blocktypes.itemTypes.IDsByInternalName.iteritems():
         mapping[str(ID)] = nbt.TAG_String(name)
     return mapping
+
 
 class SchematicChunkData(FakeChunkData):
     def addEntity(self, entity):
@@ -65,6 +69,7 @@ class SchematicChunkData(FakeChunkData):
 
     def addTileEntity(self, tileEntity):
         self.dimension.addTileEntity(tileEntity)
+
 
 class SchematicFileAdapter(FakeChunkedLevelAdapter):
     """
@@ -180,7 +185,6 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
             # the type of its `id` tag. If no itemStacks are found, the
             # version defaults to 1.8 which does not need an ItemIDs tag.
 
-
             if "itemStackVersion" in self.rootTag:
                 itemStackVersion = self.rootTag["itemStackVersion"].value
                 if itemStackVersion not in (VERSION_1_7, VERSION_1_8):
@@ -193,7 +197,6 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
                 self.blocktypes.itemStackVersion = itemStackVersion
             else:
                 self.blocktypes.itemStackVersion = self.getItemStackVersionFromEntities()
-
 
         else:
             rootTag = nbt.TAG_Compound(name="Schematic")
@@ -260,7 +263,6 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
         # No itemstacks - use version 1.8 since ItemIDs won't need to
         # be added to the root tag.
         return VERSION_1_8
-
 
     def fakeEntitiesForChunk(self, cx, cz):
         return self.entitiesByChunk[cx, cz], self.tileEntitiesByChunk[cx, cz]
@@ -329,7 +331,6 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
 
         del self.rootTag["Blocks"]
         self.rootTag.pop("AddBlocks", None)
-
 
     def __repr__(self):
         return u"SchematicFileAdapter(shape={0}, blocktypes={2}, filename=\"{1}\")".format(self.size, self.filename or u"", self.Materials)
@@ -541,7 +542,6 @@ class SchematicFileAdapter(FakeChunkedLevelAdapter):
     #
     #     for tileEntity in self.TileEntities:
     #         tileEntity["z"].value = self.Length - tileEntity["z"].value - 1
-
 
     def setBlockData(self, x, y, z, newdata):
         if x < 0 or y < 0 or z < 0:
