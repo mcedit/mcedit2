@@ -11,6 +11,7 @@ import itertools
 
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.ui.panels.player import Ui_playerWidget
+from mcedit2.util.player_server import PlayerDataCache
 from mceditlib.util.lazyprop import weakrefprop
 from mcedit2.util.screen import centerWidgetInScreen
 from mcedit2.widgets.inventory import InventoryEditor
@@ -70,11 +71,11 @@ class PlayerPanel(QtGui.QWidget, Ui_playerWidget):
             playerUUIDs.remove("")
             playerUUIDs.insert(0, "")
 
-        for UUID in playerUUIDs:  # xxx live update?
+        for UUID in playerUUIDs:
             if UUID == "":
                 displayName = "[Single-player](%s)" % singlePlayerUUID
             else:
-                displayName = UUID  # xxx mojang api here
+                displayName = UUID
                 try:
                     UUID = uuid.UUID(hex=UUID)
                     if UUID == singlePlayerUUID:
@@ -83,7 +84,25 @@ class PlayerPanel(QtGui.QWidget, Ui_playerWidget):
                     log.warn("Could not get a UUID from %s", UUID)
                     continue
 
+            idx = self.playerListBox.count()
             self.playerListBox.addItem(displayName, UUID)
+
+            def _callback(idx, fmt="%s"):
+                def callback(result, error):
+                    if result:
+                        name = result['name']
+                        self.playerListBox.setItemText(idx, fmt % name)
+                return callback
+
+            if UUID == "":
+                if singlePlayerUUID:
+                    PlayerDataCache.getPlayerInfo(singlePlayerUUID, _callback(idx, "[Single-player]%s"))
+            else:
+                if UUID == singlePlayerUUID:
+                    PlayerDataCache.getPlayerInfo(UUID, _callback(idx, "[Multiplayer]%s"))
+                else:
+                    PlayerDataCache.getPlayerInfo(UUID, _callback(idx))
+
 
         self.playerListBox.currentIndexChanged[int].connect(self.setSelectedPlayerIndex)
         if len(playerUUIDs):
