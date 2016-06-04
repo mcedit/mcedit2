@@ -230,10 +230,9 @@ class PlayerPanel(QtGui.QWidget, Ui_playerWidget):
         else:
             raise ValueError("Current view is not camera view.")
 
-
     def showPlayerView(self):
         self.editorSession.editorTab.showCameraView()
         view = self.editorSession.editorTab.cameraView
-        view.setPerspective(False)
+        view.setPerspective(True)
         view.centerPoint = self.selectedPlayer.Position
         view.yawPitch = self.selectedPlayer.Rotation
