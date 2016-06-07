@@ -42,7 +42,8 @@ def loadPNGData(data):
 
 def loadPNGFile(filename):
     img = QtGui.QImage()
-    filename = resourcePath("mcedit2/assets/mcedit2/textures/%s" % filename)
+    if not os.path.isabs(filename):
+        filename = resourcePath("mcedit2/assets/mcedit2/textures/%s" % filename)
 
     if not img.load(filename):
         raise IOError, "Failed to read PNG file " + filename
