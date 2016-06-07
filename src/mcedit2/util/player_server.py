@@ -47,7 +47,7 @@ class PlayerDataCache(QtCore.QObject):
 
         self.callbacks = {}
 
-        _netManager.finished.connect(self._queryFinished)
+        _netManager.finished.connect(self._finished)
 
     def _writeCache(self):
         with open(_playerDataCachePath, 'wb') as f:
@@ -62,23 +62,21 @@ class PlayerDataCache(QtCore.QObject):
         reply = _netManager.get(request)
         reply.uuid = uuid
 
+    def _finished(self, reply):
+        if hasattr(reply, 'uuid'):
+            self._queryFinished(reply)
+        else:
+            self._textureFetchFinished(reply)
+
     def _queryFinished(self, reply):
-        """
-
-        Parameters
-        ----------
-        reply : QtNetwork.QNetworkReply
-
-        Returns
-        -------
-
-        """
         uuid = reply.uuid
         data = reply.readAll()
+
         if uuid in self.callbacks:
             callback = self.callbacks.pop(uuid)
         else:
             callback = lambda arg, err: None
+
         try:
             jsonData = json.loads(str(data))
         except:
@@ -91,29 +89,60 @@ class PlayerDataCache(QtCore.QObject):
                 id = UUID(jsonData['id'])
                 name = jsonData['name']
                 props = jsonData['properties']
-                textureImage = None
-
-                for p in props:
-                    if p['name'] == 'textures':
-                        textureImage = p['value'].decode('base64')  # xxx py3
 
                 self.nameCache[uuid] = name
 
-                if textureImage is None:
-                    texturePath = None
-                else:
-                    texturePath = os.path.join(_playerSkinsFolder, uuid.hex + '.png')
+                for p in props:
+                    if p['name'] == 'textures':
+                        textureInfo = p['value'].decode('base64')  # xxx py3
+                        try:
+                            textureInfo = json.loads(textureInfo)
+                        except:
+                            log.exception("Cannot parse texture info.")
+                            continue
+                        from pprint import pprint; pprint(textureInfo)
+                        # timestamp = textureInfo['timestamp']
+                        # profileId = textureInfo['profileId']
+                        # profileName = textureInfo['profileName']
+                        textures = textureInfo.get('textures')
+                        if textures:
+                            skin = textures.get('SKIN')
+                            if skin:
+                                skinURL = skin.get('url')
+                                if skinURL:
+                                    # get skin
+                                    texturePath = os.path.join(_playerSkinsFolder, uuid.hex + '.png')
 
-                with file(texturePath, 'wb') as f:
-                    f.write(textureImage)
+                                    request = QtNetwork.QNetworkRequest(skinURL)
 
-                result = {
-                    'id': id,
-                    'name': name,
-                    'texturePath': texturePath,
-                }
-                self._writeCache()
-                callback(result, None)
+                                    reply = _netManager.get(request)
+
+                                    reply.texturePath = texturePath
+                                    reply.id = id
+                                    reply.name = name
+                                    reply.callback = callback
+
+                        # cape = textures.get['CAPE']
+                        # if cape:
+                        #     capeURL = skin.get['cape']
+                        #     if capeURL:
+                        #         pass
+
+
+    def _textureFetchFinished(self, reply):
+        texturePath = reply.texturePath
+        textureImage = reply.readAll()
+
+        with file(texturePath, 'wb') as f:
+            f.write(textureImage)
+
+        result = {
+            'id': reply.id,
+            'name': reply.name,
+            'texturePath': texturePath,
+        }
+        self._writeCache()
+        reply.callback(result, None)
 
     # len({'id': '23fc8bb10e5d47d1b43ff19299a28ac9', 'name': 'Denox69', 'properties': [{'name': 'textures', 'value': 'eyJ0aW1lc3...WNyYWZ0Lm5ldC90ZXh0dXJlLzQxMzVkNzQxYTRjYjFmMTA1Mjc1NDU4ZDRhMWE2OWYyOGE4MjU4NjY3NWY4ZjQ0MTJjNjRiYmQyNGU5MGJjIn19fQ=='}]})
 
@@ -143,13 +172,13 @@ class PlayerDataCache(QtCore.QObject):
         None
         """
         if uuid not in self.nameCache:
-            self.callbacks[uuid] = callback
             self._queryServer(uuid, callback)
         else:
             texturePath = os.path.join(_playerSkinsFolder, uuid.hex + '.png')
             if not os.path.exists(texturePath):
                 self._queryServer(uuid, callback)
             else:
+                log.debug("Found name and texturePath in cache")
                 name = self.nameCache[uuid]
                 result = {
                     'id': uuid,
