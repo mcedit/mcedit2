@@ -396,7 +396,7 @@ class ItemFrameMesh(EntityMeshBase):
     }
 
 
-def entityModelNode(ref, model, modelTex, chunk):
+def entityModelNode(ref, model, modelTex=None, chunk=None, flip=False):
     modelVerts = numpy.array(model.vertices)
     modelVerts.shape = modelVerts.shape[0]//4, 4, modelVerts.shape[1]
     # scale down
@@ -404,20 +404,26 @@ def entityModelNode(ref, model, modelTex, chunk):
     modelVerts[..., 1] = -modelVerts[..., 1] + 1.5 + 1/64.
     modelVerts[..., 0] = -modelVerts[..., 0]
 
-    vertexBuffer = QuadVertexArrayBuffer(len(modelVerts), lights=False, textures=True)
+    vertexBuffer = QuadVertexArrayBuffer(len(modelVerts), lights=False, textures=modelTex is not None)
     vertexBuffer.vertex[:] = modelVerts[..., :3]
-    vertexBuffer.texcoord[:] = modelVerts[..., 3:5]
+    if modelTex is not None:
+        vertexBuffer.texcoord[:] = modelVerts[..., 3:5]
 
     node = VertexNode([vertexBuffer])
+
+    pos = ref.Position
+    if chunk is not None:
+        pos = pos - (chunk.cx << 4, 0, chunk.cz << 4)
+
+    translate = Translate(pos)
+    node.addState(translate)
 
     rotate = Rotate(ref.Rotation[0], (0., 1., 0.))
     node.addState(rotate)
 
-    translate = Translate((ref.Position - (chunk.cx << 4, 0, chunk.cz << 4)))
-    node.addState(translate)
-
-    bindTexture = BindTexture(modelTex, (1./model.texWidth, 1./model.texHeight, 1))
-    node.addState(bindTexture)
+    if modelTex is not None:
+        bindTexture = BindTexture(modelTex, (1./model.texWidth, 1./model.texHeight * (-1 if flip else 1), 1))
+        node.addState(bindTexture)
     return node
 
 
@@ -500,6 +506,7 @@ def chestEntityModelNode(ref, model, modelTex, chunk, facing, largeX, largeZ):
     bindTexture = BindTexture(modelTex, (1./model.texWidth, 1./model.texHeight, 1))
     node.addState(bindTexture)
     return node
+
 
 class TileEntityModelRenderer(ChunkMeshBase):
     layer = Layer.TileEntities

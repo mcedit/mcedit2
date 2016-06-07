@@ -11,6 +11,7 @@ import numpy
 
 from mcedit2.rendering.layers import Layer
 from mcedit2.rendering import chunkupdate
+from mcedit2.rendering.players import PlayersNode
 from mcedit2.rendering.scenegraph import scenenode
 from mcedit2.rendering import renderstates
 from mcedit2.rendering.chunknode import ChunkNode, ChunkGroupNode
@@ -228,6 +229,9 @@ class WorldScene(scenenode.Node):
 
         self.minlod = 0
         self.bounds = bounds
+
+        self.playersNode = PlayersNode(dimension)
+        self.addChild(self.playersNode)
 
     def setTextureAtlas(self, textureAtlas):
         if textureAtlas is not self.textureAtlas:

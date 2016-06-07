@@ -11,6 +11,7 @@ from mcedit2.rendering.chunkmeshes.entity.biped import ModelZombie, ModelSkeleto
     ModelPigZombie
 from mcedit2.rendering.chunkmeshes.entity.chest import ModelChest, ModelLargeChest
 from mcedit2.rendering.chunkmeshes.entity.creeper import ModelCreeper
+from mcedit2.rendering.chunkmeshes.entity.player import ModelPlayer
 from mcedit2.rendering.chunkmeshes.entity.quadruped import ModelPig, ModelCow, ModelSheep, \
     ModelSheepWool
 from mcedit2.rendering.chunkmeshes.entity.shulker import ModelShulker
@@ -168,6 +169,7 @@ def getTexture(entityID):
     model = models.get(entityID)
     return model.modelTexture
 
+addModel(ModelPlayer())
 addModel(ModelCreeper())
 addModel(ModelZombie())
 addModel(ModelSkeleton())
