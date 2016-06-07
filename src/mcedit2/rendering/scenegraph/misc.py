@@ -37,6 +37,20 @@ class LineWidth(states.SceneNodeState):
         self.lineWidth = lineWidth
 
 
+class Enable(states.SceneNodeState):
+    def enter(self):
+        GL.glPushAttrib(GL.GL_ENABLE_BIT)
+        for e in self.enables:
+            GL.glEnable(e)
+
+    def exit(self):
+        GL.glPopAttrib()
+
+    def __init__(self, *enables):
+        super(Enable, self).__init__()
+        self.enables = enables
+
+
 class ClearRenderNode(rendernode.RenderNode):
     def drawSelf(self):
         color = self.sceneNode.clearColor

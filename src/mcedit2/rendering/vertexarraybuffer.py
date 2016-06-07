@@ -107,6 +107,7 @@ class VertexArrayBuffer(object):
     def __len__(self):
         return len(self.buffer)
 
+
 class QuadVertexArrayBuffer(VertexArrayBuffer):
 
     def __init__(self, count, textures=True, lights=True):
