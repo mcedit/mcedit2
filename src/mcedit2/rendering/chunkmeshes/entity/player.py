@@ -14,6 +14,7 @@ class ModelPlayer(ModelBiped):
     id = "MCEDIT_Player"
     textureWidth = 64
     textureHeight = 64
+    modelTexture = None
 
     def __init__(self, expandOffset=0.0, headOffset=0.0, smallArms=False):
         super(ModelPlayer, self).__init__(expandOffset, headOffset)
