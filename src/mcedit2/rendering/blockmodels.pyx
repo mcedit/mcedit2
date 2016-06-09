@@ -589,14 +589,22 @@ cdef class BlockModels(object):
                 v1 = faceInfo.v1
                 v2 = faceInfo.v2
 
-                uw = (w * (u2 - u1)) / 16
-                vh = (w * (v2 - v1)) / 16  # w is assumed to be the height of a single frame in an animation xxxxx read .mcmeta
-                u1 += l
-                u2 = u1 + uw
+                # u1..u2 is on the scale 0..16, convert it to l..l+w
+                # v1..v2 is also 0..16, but should be flipped to t+h..t
+                # u /= 16.
+                # u *= w
+                # u += l
+                # v /= 16.
+                # v = -v
+                # v *= h
+                # v += h
+                # v += t
 
-                # flip v axis - texcoords origin is top left but model uv origin is from bottom left
-                v1 = t + h - v1
-                v2 = v1 - vh
+                u1 = <short>(l + (u1 * w) / 16.)
+                u2 = <short>(l + (u2 * w) / 16.)
+
+                v1 = <short>(t + h + (v1 * -h) / 16.)
+                v2 = <short>(t + h + (v2 * -h) / 16.)
 
                 quadface = faceInfo.face
                 cullface = faceInfo.cullface
