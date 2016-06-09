@@ -47,6 +47,7 @@ class PlayerNode(Node):
         if value is not None:
             log.info("Got texture path: %s", value)
             w, h, modelImage = loadPNGFile(value)
+            modelImage = modelImage[::-1]
             # modelTex = loadPNGTexture(value)
             if h == 32:
                 w, h, modelImage = fixupTextureImage(modelImage)
@@ -70,7 +71,7 @@ def fixupTextureImage(modelImage):
     oh, ow, b = modelImage.shape
     
     newImage = numpy.zeros((h, w, b), dtype='uint8')
-    newImage[:oh, :ow, :] = modelImage[::-1]
+    newImage[:oh, :ow, :] = modelImage
     #newImage = newImage[::-1, :, :]
 
     def drawImage(x1, y1, x2, y2, sx1, sy1, sx2, sy2):
