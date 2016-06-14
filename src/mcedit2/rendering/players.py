@@ -131,7 +131,10 @@ class PlayersNode(Node):
         for playerName in dimension.worldEditor.listPlayers():
             player = dimension.worldEditor.getPlayer(playerName)
             if player.Dimension == dimension.dimNo:
-                playerNodes.append(PlayerNode(player))
+                if player.UUID is None:
+                    log.warning("Player %s has no UUID tags", playerName)
+                else:
+                    playerNodes.append(PlayerNode(player))
 
         for node in playerNodes:
             self.addChild(node)

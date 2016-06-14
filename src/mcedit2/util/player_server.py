@@ -55,7 +55,9 @@ class PlayerDataCache(QtCore.QObject):
             json.dump(nameCache, f)
 
     def _queryServer(self, uuid, callback):
-        assert isinstance(uuid, UUID)
+        if not isinstance(uuid, UUID):
+            raise TypeError("Expected UUID, got %s", type(uuid))
+
         self.callbacks[uuid] = callback
         url = "https://sessionserver.mojang.com/session/minecraft/profile/{}".format(uuid.hex)
         request = QtNetwork.QNetworkRequest(url)
