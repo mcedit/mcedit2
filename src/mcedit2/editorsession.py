@@ -116,7 +116,7 @@ class EditorSession(QtCore.QObject):
                  progressCallback=None):
         from mcedit2 import __version__ as v
 
-        progressMax = 7  # fixme
+        progressMax = 8  # fixme
         if progressCallback is None:
             def progress(status):
                 pass
@@ -371,6 +371,8 @@ class EditorSession(QtCore.QObject):
         self.menus.append(self.menuChunk)
 
         # - Plugins -
+
+        progress("Loading plugins...")
 
         self.menuPlugins = PluginsMenu(self)
         self.menuPlugins.loadPlugins()
