@@ -51,16 +51,23 @@ public class BlockDumper extends Block {
 		BlockModelShapes shapes = modelManager.getBlockModelShapes();
 		BlockStateMapper mapper = shapes.getBlockStateMapper();
 		Map<IBlockState, ModelResourceLocation> stateMap = mapper.putAllStateModelLocations();
+		HashSet<String> seenStates = new HashSet<String>();
 		try {
 			// -- open streams --
 
-			FileOutputStream idMappingStream = new FileOutputStream(new File("idmapping_raw.json"));
+			FileOutputStream idMappingStream = new FileOutputStream(new File("idmapping_raw_19.json"));
 			PrintWriter idMappingWriter = new PrintWriter(idMappingStream);
 			idMappingWriter.print("[\n");
 
-			FileOutputStream blockDumpStream = new FileOutputStream(new File("minecraft_raw.json"));
+			FileOutputStream blockDumpStream = new FileOutputStream(new File("minecraft_raw_19.json"));
 			PrintWriter wri = new PrintWriter(blockDumpStream);
 			wri.format("[\n");
+
+			FileOutputStream hiddenStatesStream = new FileOutputStream(new File("hiddenstates_19.json"));
+			PrintWriter hiddenStatesWriter = new PrintWriter(hiddenStatesStream);
+			hiddenStatesWriter.print("[\n");
+
+			ArrayList<String> hiddens = new ArrayList<String>();
 
 			ArrayList<String> idMapping = new ArrayList<String>();
 			ArrayList<String> blocks = new ArrayList<String>();
@@ -69,25 +76,21 @@ public class BlockDumper extends Block {
 				ArrayList<String> attrs = new ArrayList<String>();
 				String internalName = Block.REGISTRY.getNameForObject(b).toString();
 				IBlockState defaultState = b.getDefaultState();
+				for (Object vso : b.getBlockState().getValidStates()) {
+					IBlockState vs = (IBlockState) vso;
+					ModelResourceLocation mrl = (ModelResourceLocation) stateMap.get(vs);
+					if (vs != null && mrl != null)
+						hiddens.add(String.format(
+								"{\"blockState\":\"%s\", \"resourcePath\": \"%s\", \"resourceVariant\": \"%s\"}",
+								vs.toString(), mrl.getResourcePath(), mrl.getVariant()));
 
+				}
 				attrs.add(String.format("\"internalName\": \"%s\"", internalName));
-
-//					attrs.add(String.format("\"color\": %s", b.getMapColor()));
 
 				CreativeTabs creativeTabToDisplayOn = b.getCreativeTabToDisplayOn();
 				if (creativeTabToDisplayOn != null) {
 					attrs.add(String.format("\"creativeTab\": \"%s\"", creativeTabToDisplayOn.getTabLabel()));
 				}
-
-//					Material m = b.getMaterial();
-//
-//					attrs.add(String.format("\"materialBlocksMovement\": %s", m.blocksMovement()));
-//					attrs.add(String.format("\"materialBurns\": %s", m.getCanBurn()));
-//					attrs.add(String.format("\"materialMobility\": %s", m.getMaterialMobility()));
-//					attrs.add(String.format("\"materialLiquid\": %s", m.isLiquid()));
-//					attrs.add(String.format("\"materialOpaque\": %s", m.isOpaque()));
-//					attrs.add(String.format("\"materialReplacable\": %s", m.isReplaceable()));
-//					attrs.add(String.format("\"materialSolid\": %s", m.isSolid()));
 
 				attrs.add(String.format("\"opaqueCube\": %s", defaultState.isOpaqueCube()));
 				attrs.add(String.format("\"collidable\": %s", b.isCollidable()));
@@ -95,16 +98,6 @@ public class BlockDumper extends Block {
 				attrs.add(String.format("\"opacity\": %s", defaultState.getLightOpacity()));
 				attrs.add(String.format("\"brightness\": %s", defaultState.getLightValue()));
 				attrs.add(String.format("\"useNeighborBrightness\": %s", defaultState.useNeighborBrightness()));
-
-				attrs.add(String.format("\"renderType\": %s", defaultState.getRenderType()));
-//					attrs.add(String.format("\"color\": %s", b.getBlockColor()));
-
-//					attrs.add(String.format("\"minx\": %s", b.getBlockBoundsMinX()));
-//					attrs.add(String.format("\"miny\": %s", b.getBlockBoundsMinY()));
-//					attrs.add(String.format("\"minz\": %s", b.getBlockBoundsMinZ()));
-//					attrs.add(String.format("\"maxx\": %s", b.getBlockBoundsMaxX()));
-//					attrs.add(String.format("\"maxy\": %s", b.getBlockBoundsMaxY()));
-//					attrs.add(String.format("\"maxz\": %s", b.getBlockBoundsMaxZ()));
 
 				ArrayList<ItemStack> subBlocks = new ArrayList<ItemStack>();
 				Map<Integer, ItemStack> subBlocksByMeta = new HashMap<Integer, ItemStack>();
@@ -114,8 +107,6 @@ public class BlockDumper extends Block {
 					b.getSubBlocks(i.getItem(), null, subBlocks);
 
 					for (ItemStack stack : subBlocks) {
-//							ArrayList<String> subAttrs = new ArrayList<String>();
-//							int itemDamage = stack.getItemDamage();
 						int itemMeta = stack.getMetadata();
 						subBlocksByMeta.put(itemMeta, stack);
 					}
@@ -124,7 +115,6 @@ public class BlockDumper extends Block {
 					e.printStackTrace();
 				}
 
-				HashSet<String> seenStates = new HashSet<String>();
 				int defaultMeta = b.getMetaFromState(defaultState);
 				boolean hasItems = false;
 				for (int meta = 0; meta < 16; meta++) {
@@ -132,7 +122,7 @@ public class BlockDumper extends Block {
 					try {
 						IBlockState bs = b.getStateFromMeta(meta);
 						String bsString = bs.toString();
-						if(seenStates.contains(bsString)) {
+						if (seenStates.contains(bsString)) {
 							continue;
 						}
 						seenStates.add(bsString);
@@ -149,7 +139,7 @@ public class BlockDumper extends Block {
 						ModelResourceLocation loc = stateMap.get(bs);
 						if (loc != null) {
 							metaAttrs.add(String.format("\"resourcePath\": \"%s\"", loc.getResourcePath()));
-//							metaAttrs.add(String.format("\"resourceVariant\": \"%s\"", loc.getResourceVariant()));
+							metaAttrs.add(String.format("\"resourceVariant\": \"%s\"", loc.getVariant()));
 
 						}
 
@@ -174,28 +164,10 @@ public class BlockDumper extends Block {
 						logger.warn(String.format("Failed to get meta %d for block %s (error was %s)", meta, b, e));
 						e.printStackTrace();
 					}
-
 				}
 
-					// if (!hasItems) {
-					// attrs.add("\"defaultState\": 1");
-					// attrs.add(String.format("\"blockState\": \"%s\"",
-					// b.getDefaultState().toString()));
-					// attrs.add(String.format("\"unlocalizedName\": \"%s\"",
-					// b.getUnlocalizedName()));
-					// attrs.add(String.format("\"displayName\": \"%s\"",
-					// b.getLocalizedName()));
-					// ModelResourceLocation loc = (ModelResourceLocation)
-					// stateMap.get(defaultState);
-					// if (loc != null) {
-					// String resPath = loc.getResourcePath();
-					// attrs.add(String.format("\"resourcePath\": \"%s\"",
-					// resPath));
-					// }
-					// blocks.add("{" + join(attrs, ", ") + "}");
-					// }
-
 			}
+
 			idMappingWriter.println(join(idMapping, ",\n"));
 			idMappingWriter.format("]\n");
 			idMappingWriter.close();
@@ -203,6 +175,13 @@ public class BlockDumper extends Block {
 			wri.format("]\n");
 			wri.close();
 			blockDumpStream.close();
+
+			hiddenStatesWriter.println(join(hiddens, ",\n"));
+			hiddenStatesWriter.format("]\n");
+			hiddenStatesWriter.close();
+
+
+
 		} catch (FileNotFoundException e) {
 		} catch (IOException e) {
 
