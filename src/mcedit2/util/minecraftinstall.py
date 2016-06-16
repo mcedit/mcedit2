@@ -198,11 +198,11 @@ class MCInstallGroup(object):
         :return:
         :rtype:
         """
-        requiredVersion = self.findVersion1_8()
+        requiredVersion = self.findVersion1_9()
         if not requiredVersion:
             msgBox = QtGui.QMessageBox()
             msgBox.setWindowTitle("Minecraft not found.")
-            msgBox.setText("MCEdit requires an installed Minecraft version 1.8 or greater to "
+            msgBox.setText("MCEdit requires an installed Minecraft version 1.9 or greater to "
                            "access block textures, models, and metadata.")
 
             msgBox.exec_()
@@ -219,10 +219,10 @@ class MCInstallGroup(object):
             for instance in mmcInstall.instances:
                 yield instance
 
-    def findVersion1_8(self):
+    def findVersion1_9(self):
         def matchVersion(version):
             major, minor, rev = splitVersion(version)
-            if (major, minor) >= (1, 8):
+            if (major, minor) >= (1, 9):
                 if rev == "":
                     return version
                 try:
@@ -249,7 +249,7 @@ class MCInstallGroup(object):
                         return jarPath
 
     def getDefaultResourceLoader(self):
-        v18 = self.findVersion1_8()
+        v18 = self.findVersion1_9()
         loader = ResourceLoader(v18)
         loader.addZipFile(v18)
         return loader
@@ -304,8 +304,8 @@ class MCInstall(object):
                 "path": self.path}
 
     def getResourceLoader(self, version, resourcePack):
-        v1_8 = self.installGroup.findVersion1_8()
-        loader = ResourceLoader(v1_8)
+        v1_9 = self.installGroup.findVersion1_9()
+        loader = ResourceLoader(v1_9)
         if resourcePack:
             try:
                 loader.addZipFile(self.getResourcePackPath(resourcePack))
@@ -319,9 +319,9 @@ class MCInstall(object):
         loader.addZipFile(path)
         major, minor, rev = splitVersion(version)
 
-        # Need v1.8 for block models
-        if (major, minor) != (1, 8):
-            loader.addZipFile(v1_8)
+        # Need v1.9 for multipart block models
+        if (major, minor) != (1, 9):
+            loader.addZipFile(v1_9)
 
         info = ["%s (%s)" % (z.filename, md5hash(z.filename)) for z in loader.zipFiles]
         log.info("Created ResourceLoader with search path:\n%s", ",\n".join(info))
@@ -353,16 +353,16 @@ class MMCInstance(object):
         return self.install.getVersionJarPath(self.version)
 
     def getResourceLoader(self, resourcePack=None):
-        v1_8 = self.install.installGroup.findVersion1_8()
-        loader = ResourceLoader(v1_8)
+        v1_9 = self.install.installGroup.findVersion1_9()
+        loader = ResourceLoader(v1_9)
         if resourcePack:
             loader.addZipFile(resourcePack)
         loader.addZipFile(self.getVersionJarPath())
         major, minor, rev = splitVersion(self.version)
 
-        # Need v1.8 for block models
-        if (major, minor) != (1, 8):
-            loader.addZipFile(v1_8)
+        # Need v1.9 for multipart block models
+        if (major, minor) != (1, 9):
+            loader.addZipFile(v1_9)
 
         loader.addModsFolder(self.modsDir)
 
@@ -644,11 +644,11 @@ class MinecraftInstallsDialog(QtGui.QDialog, Ui_installsWidget):
             event.ignore()
 
     def close(self):
-        if not GetInstalls().findVersion1_8():
+        if not GetInstalls().findVersion1_9():
             button = QtGui.QMessageBox.critical(self,
                                                 "Minecraft Install Needed",
                                                 "Cannot start MCEdit without at least one Minecraft installation version "
-                                                "1.8 or greater.",
+                                                "1.9 or greater.",
                                                 QtGui.QMessageBox.Close | QtGui.QMessageBox.Cancel,
                                                 QtGui.QMessageBox.Cancel)
 

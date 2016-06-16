@@ -251,6 +251,7 @@ class BlockModelMesh(object):
                             props = state[:-1].split(",")
                             props = [p.split("=") for p in props]
                             return {k:v for k,v in props}
+
                         def combineProps(props):
                             props = [k + "=" + v for k, v in props.iteritems()]
                             return tuple(sorted(props))
@@ -320,7 +321,7 @@ class BlockModelMesh(object):
                                             props[p] = lowerProps[p]
                                         actualState = blocktypes.namesByID[ID], combineProps(props)
 
-                        if (redstoneWireID and ID == redstoneWireID):
+                        if redstoneWireID and ID == redstoneWireID:
                             props = parseProps(ID, meta)
                             def isConnectible(nID, nMeta, dx, dz):
                                 if (nID == redstoneWireID
@@ -366,7 +367,7 @@ class BlockModelMesh(object):
                         if actualState is None:
                             quads = blockModels.cookedModelsByID[ID][meta]
                         else:
-                            quadListObj = blockModels.cookedModelsByBlockState[actualState]
+                            quadListObj = blockModels.cookedModelsForState(actualState)
                             quads = quadListObj.quadList
 
                         if quads.count == 0:

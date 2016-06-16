@@ -209,9 +209,12 @@ cdef class BlockModels(object):
             resourcePath = block.resourcePath
             modelDict = None
 
-
             if block.forcedModel is not None:  # user-configured block
                 modelDict = self._getBlockModelByPath(block.forcedModel)
+                if modelDict is None:
+                    log.debug("No model found for %s", internalName)
+                    continue
+
                 # jam the custom models into quadsByResourcePathVariant and blockStatesByResourcePathVariant
                 resourcePath = "MCEDIT_CUSTOM_" + internalName
                 resourceVariant = "MCEDIT_CUSTOM_" + blockState
@@ -220,21 +223,20 @@ cdef class BlockModels(object):
                     variantXrot = block.forcedModelRotation[0]
                     variantYrot = block.forcedModelRotation[1]
 
+                parts = [(modelDict, variantXrot, variantYrot)]
+
             elif resourcePath is not None:
                 resourceVariant = block.resourceVariant
                 self.blockStatesByResourcePathVariant[resourcePath, resourceVariant].append((internalName, blockState))
-                result = self.loadResourceVariant(resourcePath, resourceVariant)
-                if result is None:
+                parts = self.loadResourceVariant(resourcePath, resourceVariant)
+                if parts is None or len(parts) == 0:
                     continue
-                modelDict, variantXrot, variantYrot = result
 
-            if modelDict is None:
-                log.debug("No model found for %s", internalName)
-                continue
 
-            self.loadModel(block, resourcePath, resourceVariant, modelDict, variantXrot, variantYrot)
 
-        hiddenModels = json.load(file(resources.resourcePath("mcedit2/rendering/minecraft_hiddenstates_raw.json"), "rb"))
+            self.loadModelParts(block, resourcePath, resourceVariant, parts)
+
+        hiddenModels = json.load(file(resources.resourcePath("mcedit2/rendering/hiddenstates_19.json"), "rb"))
         log.info("Loading %s hidden blockState models...", len(hiddenModels))
         hiddensLoaded = 0
         for i, hidden in enumerate(hiddenModels):
@@ -260,22 +262,25 @@ cdef class BlockModels(object):
                 log.debug("Model for variant %s#%s previously loaded", resourcePath, resourceVariant)
                 continue
 
-            result = self.loadResourceVariant(resourcePath, resourceVariant)
-            if result is None:
-                log.debug("No blockstates file found for %s#%s", resourcePath, resourceVariant)
-                continue
-            modelDict, variantXrot, variantYrot = result
-
-            if modelDict is None:
-                log.debug("No model found for hidden state of %s: %s#%s ", nameAndState, resourcePath, resourceVariant)
+            parts = self.loadResourceVariant(resourcePath, resourceVariant)
+            if parts is None:
+                log.debug("No blockstates file found for %s: %s#%s", nameAndState, resourcePath, resourceVariant)
                 continue
 
-            self.loadModel(block, resourcePath, resourceVariant, modelDict, variantXrot, variantYrot)
+            self.loadModelParts(block, resourcePath, resourceVariant, parts)
             hiddensLoaded += 1
 
         log.info("Found %s additional models for hidden states", hiddensLoaded)
 
-    def loadModel(self, block, resourcePath, resourceVariant, modelDict, variantXrot, variantYrot):
+    def loadModelParts(self, block, resourcePath, resourceVariant, parts):
+        quads = []
+        for modelDict, variantXrot, variantYrot in parts:
+            res = self._loadModel(block, resourcePath, resourceVariant, modelDict, variantXrot, variantYrot)
+            quads.extend(res)
+
+        self.quadsByResourcePathVariant[resourcePath, resourceVariant] = quads
+
+    def _loadModel(self, block, resourcePath, resourceVariant, modelDict, variantXrot, variantYrot):
 
         # model will either have an 'elements' key or a 'parent' key (maybe both).
         # 'parent' will be the name of a model
@@ -348,10 +353,11 @@ cdef class BlockModels(object):
         else:
             biomeTintType = BIOME_NONE
 
+        # each element describes a box with up to six faces, each with a texture. convert the box into
+        # quads.
+        allQuads = []
+
         try:
-            # each element describes a box with up to six faces, each with a texture. convert the box into
-            # quads.
-            allQuads = []
 
             if block.internalName == "minecraft:redstone_wire":
                 blockColor = (0xff, 0xff, 0xff)
@@ -371,12 +377,12 @@ cdef class BlockModels(object):
                 if quads:
                     allQuads.extend(quads)
 
-            self.quadsByResourcePathVariant[resourcePath, resourceVariant] = allQuads
 
         except Exception as e:
             log.error("Failed to parse variant of block %s\nelements:\n%s\ntextures:\n%s",
                       block.nameAndState, allElements, rawTextureVars)
-            return
+
+        return allQuads
 
     def loadResourceVariant(self, resourcePath, resourceVariant):
         # variants is a dict with each key a resourceVariant value (from the block's ModelResourceLocation)
@@ -414,63 +420,106 @@ cdef class BlockModels(object):
             log.warn("Could not get blockstates resource for %s#%s, skipping... (%r)", resourcePath, resourceVariant, e)
             return None
 
-        if 'variants' not in statesJson:
-            log.warn("'variants' key not found in states file %s, trying 1.8...", resourcePath)
-            try:
-                statesJson = self._getBlockState(resourcePath, True)
-            except ResourceNotFound as e:
-                # if block.internalName.startswith("minecraft:"):
-                #     log.warn("Could not get blockstates resource for %s, skipping... (%r)", block, e)
-                log.warn("Could not get blockstates resource for %s#%s, skipping... (%r)", resourcePath, resourceVariant, e)
-                return None
-
-        if 'variants' not in statesJson:
-            log.warn("'variants' key not found in states file %s, skipping...", resourcePath)
-            return
-
-        variants = statesJson['variants']
-        variantDict = variants.get(resourceVariant)
-        if variantDict is None:
-            log.warn("variant %s not found in 'variants' key of states file %s, trying 1.8...", resourceVariant, resourcePath)
-            try:
-                statesJson = self._getBlockState(resourcePath, True)
-            except ResourceNotFound as e:
-                # if block.internalName.startswith("minecraft:"):
-                #     log.warn("Could not get blockstates resource for %s, skipping... (%r)", block, e)
-                log.warn("Could not get blockstates resource for %s#%s, skipping... (%r)", resourcePath, resourceVariant, e)
-                return None
-
-            if 'variants' not in statesJson:
-                log.warn("'variants' key not found in states file %s, skipping...", resourcePath)
-                return
-
-            variants = statesJson['variants']
+        variants = statesJson.get('variants')
+        if variants is not None:
             variantDict = variants.get(resourceVariant)
             if variantDict is None:
-                log.warn("variant %s not found in 'variants' key of states file %s, skipping...", resourceVariant, resourcePath)
+                log.warn("Could not get variant key for %s#%s, skipping...", resourcePath, resourceVariant)
                 return None
 
-        if isinstance(variantDict, list):
-            variantDict = variantDict[0]  # do the random pick thing later, if at all
+            if isinstance(variantDict, list):
+                variantDict = variantDict[0]  # do the random pick thing later, if at all
 
-        modelName = variantDict.get('model')
+            modelName = variantDict.get('model')
 
-        if modelName is None:
-            log.warn("No 'model' key found for variant %s in 'variants' key of states file %s, skipping...", resourceVariant, resourcePath)
-            return None
+            if modelName is None:
+                log.warn("No 'model' key found for variant %s in 'variants' key of states file %s, skipping...", resourceVariant, resourcePath)
+                return None
 
-        try:
-            modelDict = self._getBlockModel("block/" + modelName)
-        except ResourceNotFound as e:
-            log.exception("Could not get model resource %s, skipping... (%r)", modelName, e)
-            return None
-        except ValueError as e:
-            log.exception("Error parsing json for block/%s: %s", modelName, e)
-            return None
-        variantXrot = variantDict.get("x", 0)
-        variantYrot = variantDict.get("y", 0)
-        return modelDict, variantXrot, variantYrot
+            try:
+                modelDict = self._getBlockModel("block/" + modelName)
+            except ResourceNotFound as e:
+                log.exception("Could not get model resource %s, skipping... (%r)", modelName, e)
+                return None
+            except ValueError as e:
+                log.exception("Error parsing json for block/%s: %s", modelName, e)
+                return None
+            variantXrot = variantDict.get("x", 0)
+            variantYrot = variantDict.get("y", 0)
+            return [(modelDict, variantXrot, variantYrot)]
 
+        multipart = statesJson.get('multipart')
+
+        def matchWhen(when, variantMap):
+            ok = True
+            for key, val in when.iteritems():
+                if key == 'OR':
+                    ok = False
+                    for when2 in val:
+                        ok |= matchWhen(when2, variantMap)
+                elif key == 'AND':
+                    for when2 in val:
+                        ok &= matchWhen(when2, variantMap)
+                else:
+                    varVal = variantMap.get(key)
+
+                    if varVal is None:
+                        ok = False
+
+                    if str(varVal) != val:
+                        # Gross, values in multipart may be raw values but values in resourceVariant are strings...
+                        ok = False
+
+            return ok
+
+        if multipart is not None:
+            # Multipart looks like this:
+            # [
+            # {   "when": {"north": false, "east": false, "south": false, "west": false, "up": false},
+            #     "apply": [
+            #         { "model": "fire_floor0" },
+            #         { "model": "fire_floor1" }
+            #     ]
+            # },
+            # {   "when": {"OR": [{"north": true}, {"north": false, "east": false, "south": false, "west": false, "up": false}]},
+            #     "apply": [
+            #         { "model": "fire_side0" },
+            #         { "model": "fire_side1" },
+            #         { "model": "fire_side_alt0" },
+            #         { "model": "fire_side_alt1" }
+            #     ]
+            # }
+            # ]
+            variantMap = dict(pair.split('=') for pair in resourceVariant.split(','))
+            ret = []
+
+            for part in multipart:
+                ok = True
+                when = part.get('when')
+                if when is not None:
+                    ok = matchWhen(when, variantMap)
+
+                if ok:
+                    apply = part.get('apply')
+                    if apply is not None:
+                        for model in apply:
+                            modelName = apply.get('model')
+                            if modelName is None:
+                                continue
+                            try:
+                                modelDict = self._getBlockModel("block/" + modelName)
+                            except ResourceNotFound as e:
+                                log.exception("Could not get model resource %s, skipping... (%r)", modelName, e)
+                                continue
+                            except ValueError as e:
+                                log.exception("Error parsing json for block/%s: %s", modelName, e)
+                                continue
+
+                            variantXrot = apply.get('x', 0)
+                            variantYrot = apply.get('y', 0)
+                            ret.append((modelDict, variantXrot, variantYrot))
+
+            return ret
 
     def buildBoxQuads(self, dict element, unicode nameAndState, dict textureVars,
                        short variantXrot, short variantYrot,
@@ -742,7 +791,16 @@ cdef class BlockModels(object):
                 modelQuadVerts = modelQuads.quads[face].xyzuvstc
                 modelQuadVerts[:] = quadVerts[:]
 
+    cdef cookedModelsForState(self, tuple nameAndState):
+        quads = self.cookedModelsByBlockState.get(nameAndState)
+        if quads is not None:
+            return quads
 
+        return _nullQuads
+        #name, state = nameAndState
+
+
+_nullQuads = ModelQuadListObj()
 
 cdef short FaceEast   = 0
 cdef short FaceWest   = 1

@@ -45,3 +45,5 @@ cdef class BlockModels:
     cdef unsigned char[:] foliageImageBits
 
     cdef ModelQuadList fluidQuads[9]
+
+    cdef cookedModelsForState(self, tuple nameAndState)

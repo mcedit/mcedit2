@@ -511,7 +511,7 @@ class AnvilWorldAdapter(object):
                         version = "MinecraftForge 1.7"
 
                 if stackVersion == VERSION_1_8:
-                    version = "Minecraft 1.8"
+                    version = "Minecraft 1.8+"
 
             except Exception as e:
                 log.warn("Failed to get version info for %s: %r", filename, e, exc_info=1)
@@ -572,7 +572,7 @@ class AnvilWorldAdapter(object):
                 if magic == u'\x01':  # 0x01 = blocks
 
                     if not name.startswith("minecraft:"):
-                        # we load 1.8 block IDs and mappings by default
+                        # we load 1.9 block IDs and mappings by default
                         # FML IDs should be allowed to override some of them for 1.8 blocks not in 1.7.
                         count += 1
                         replacedIDs.append(ID)
