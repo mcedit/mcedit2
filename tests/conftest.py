@@ -7,14 +7,17 @@ from os.path import dirname, basename
 import py
 import pytest
 
+import logging
+logging.basicConfig(level=logging.INFO)
+
 from mceditlib.worldeditor import WorldEditor
 
 
 _TEST_FILES_DIR = "test_files"
 
-# from $PROJECT/tests/test_mceditlib/conftest.py, get to $PROJECT/test_files
+# from $PROJECT/tests/conftest.py, get to $PROJECT/test_files
 
-_PROJECT = dirname(dirname(dirname(__file__)))
+_PROJECT = dirname(dirname(__file__))
 TEST_FILES_DIR = py.path.local(_PROJECT).join(_TEST_FILES_DIR)
 
 @pytest.fixture
@@ -41,6 +44,10 @@ def indev_file(tmpdir):
 @pytest.fixture
 def pc_world(tmpdir):
     return copy_temp_level(tmpdir, "AnvilWorld")
+
+@pytest.fixture
+def testbed_schem(tmpdir):
+    return copy_temp_level(tmpdir, "testbed.schematic")
 
 
 @pytest.fixture(params=["Station.schematic"])
