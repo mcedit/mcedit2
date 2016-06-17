@@ -288,35 +288,6 @@ class BlockTypeSet(object):
 
         return BlockType(ID, meta, self)
 
-    def matchingState(self, internalName, stateDict):
-        """
-        Find the first block with the given name whose state matches all of the keys 
-        and values in stateDict.
-        
-        Parameters
-        ----------
-        internalName : unicode 
-            block's internal name
-        stateDict : dict 
-            the keys and values that the returned state must match
-
-        Returns
-        -------
-        
-        block: BlockType
-
-        """
-        for block in self:
-            if block.internalName == internalName:
-                bsd = block.stateDict
-                for k, v in stateDict.iteritems():
-                    if bsd.get(k) != v:
-                        break
-                else:
-                    return block
-
-        return None
-
     def discardIDs(self, blockIDs):
         blockIDs = set(blockIDs)
         blocktypes = [b for b in self.allBlocks if b.ID in blockIDs]
