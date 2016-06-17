@@ -649,6 +649,10 @@ cdef class BlockModels(object):
                 # v += h
                 # v += t
 
+                # TODO: read texture .mcmeta files
+                # use top square of texture for now.
+                h = w
+
                 u1 = <short>(l + (u1 * w) / 16.)
                 u2 = <short>(l + (u2 * w) / 16.)
 
