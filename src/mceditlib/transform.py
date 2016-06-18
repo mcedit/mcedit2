@@ -7,6 +7,8 @@ import math
 import itertools
 
 import numpy as np
+
+from mceditlib.blocktypes.rotation import BlockRotations, blankRotationTable
 from mceditlib.cachefunc import lru_cache_object
 from mceditlib.geometry import Vector
 from mceditlib.multi_block import getBlocks
@@ -249,33 +251,33 @@ class SelectionTransform(DimensionTransformBase):
                 section.Data[sectionMask] = baseSection.Data[sectionMask]
 
 class DimensionTransform(DimensionTransformBase):
-    """
-    A wrapper around a WorldEditorDimension that applies a three-dimensional rotation
-    around a given anchor point. The wrapped dimension's bounds will be different from the
-    original dimension.
-
-    Parameters
-    ----------
-
-    dimension: WorldEditorDimension
-        The dimension to wrap and apply rotations to
-
-    anchor: Vector
-        The point to rotate the dimension around
-
-    rotX: float
-    rotY: float
-    rotZ: float
-        The angles to rotate the dimension around, along each axis respectively.
-        The angles are given in radians.
-
-    Returns
-    -------
-
-    transformedDimension: DimensionTransform
-        A dimension that acts as a rotated version of the given dimension.
-    """
     def __init__(self, dimension, anchor, rotX=0, rotY=0, rotZ=0):
+        """
+        A wrapper around a WorldEditorDimension that applies a three-dimensional rotation
+        around a given anchor point. The wrapped dimension's bounds will be different from the
+        original dimension.
+
+        Parameters
+        ----------
+
+        dimension: mceditlib.worldeditor.WorldEditorDimension
+            The dimension to wrap and apply rotations to
+
+        anchor: Vector
+            The point to rotate the dimension around
+
+        rotX: float
+        rotY: float
+        rotZ: float
+            The angles to rotate the dimension around, along each axis respectively.
+            The angles are given in radians.
+
+        Returns
+        -------
+
+        transformedDimension: DimensionTransform
+            A dimension that acts as a rotated version of the given dimension.
+        """
         super(DimensionTransform, self).__init__(dimension)
         self.rotX = rotX
         self.rotY = rotY
@@ -283,6 +285,21 @@ class DimensionTransform(DimensionTransformBase):
         self.anchor = anchor
 
         self.matrix = rotationMatrix(anchor, rotX, rotY, rotZ)
+
+        blockRotation = BlockRotations(dimension.blocktypes)
+        rotationTable = blankRotationTable()
+
+        while rotX >= 45.0:
+            rotX -= 90
+            rotationTable = blockRotation.rotateX90[rotationTable[..., 0], rotationTable[..., 1]]
+        while rotY >= 45.0:
+            rotY -= 90
+            rotationTable = blockRotation.rotateY90[rotationTable[..., 0], rotationTable[..., 1]]
+        while rotZ >= 45.0:
+            rotZ -= 90
+            rotationTable = blockRotation.rotateZ90[rotationTable[..., 0], rotationTable[..., 1]]
+
+        self.rotationTable = rotationTable
 
         self._transformedBounds = transformBounds(dimension.bounds, self.matrix)
 
@@ -311,5 +328,9 @@ class DimensionTransform(DimensionTransformBase):
         x, y, z, w = transformed_coords.T
 
         result = self.dimension.getBlocks(x, y, z, return_Data=True)
-        section.Blocks[:] = result.Blocks.reshape(shape)
-        section.Data[:] = result.Data.reshape(shape)
+        blocks = result.Blocks.reshape(shape)
+        data = result.Data.reshape(shape)
+        rotated = self.rotationTable[blocks, data]
+
+        section.Blocks[:] = rotated[..., 0]
+        section.Data[:] = rotated[..., 1]
