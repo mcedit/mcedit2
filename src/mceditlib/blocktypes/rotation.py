@@ -23,10 +23,15 @@ def blankRotationTable():
 class BlockRotations(object):
     mappings = {
         'y': {
-            'north': 'east',
-            'east': 'south',
-            'south': 'west',
-            'west': 'north',
+            'north': 'west',
+            'west': 'south',
+            'south': 'east',
+            'east': 'north',
+            'down_x': 'down_z',
+            'down_z': 'down_x',
+            'up_x': 'up_z',
+            'up_z': 'up_x',
+            
         },
         'x': {
             'up': 'south',
@@ -59,15 +64,15 @@ class BlockRotations(object):
     }
 
     railShapes = {
-        'ascending_north': 'ascending_east',
-        'ascending_east': 'ascending_south',
-        'ascending_south': 'ascending_west',
-        'ascending_west': 'ascending_north',
+        'ascending_north': 'ascending_west',
+        'ascending_west': 'ascending_south',
+        'ascending_south': 'ascending_east',
+        'ascending_east': 'ascending_north',
         'east_west': 'north_south',
-        'north_east': 'south_east',
-        'south_east': 'south_west',
-        'south_west': 'north_west',
-        'north_west': 'north_east',
+        'north_east': 'north_west',
+        'north_west': 'south_west',
+        'south_west': 'south_east',
+        'south_east': 'north_east',
 
     }
 
