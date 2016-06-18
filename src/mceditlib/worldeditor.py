@@ -215,7 +215,7 @@ class WorldEditor(object):
         :type filename: str or unknown or unicode
         :type create: bool
         :type readonly: bool
-        :type adapter: unknown or mceditlib.anvil.adapter.AnvilWorldAdapter or mceditlib.schematic.SchematicFileAdapter
+        :type adapter: mceditlib.anvil.adapter.AnvilWorldAdapter or mceditlib.schematic.SchematicFileAdapter
         :type adapterClass: class
         :type resume: None or bool
         :return:
@@ -445,7 +445,7 @@ class WorldEditor(object):
         May initiate a costly chunk scan.
 
         :param dimName: Name of dimension
-        :type dimName: str
+        :type dimName: unicode
         :return:
         :rtype:
         """
@@ -699,6 +699,13 @@ class WorldEditor(object):
 
 class WorldEditorDimension(object):
     def __init__(self, worldEditor, dimName):
+        """
+
+        Parameters
+        ----------
+        worldEditor : WorldEditor
+        dimName : unicode
+        """
         self.worldEditor = worldEditor
         self.adapter = worldEditor.adapter
         self.dimName = dimName
