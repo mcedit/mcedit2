@@ -87,12 +87,20 @@ class BlockRotations(object):
         self.rotateY90 = self.buildTable(axis='y')
         self.rotateX90 = self.buildTable(axis='x')
         self.rotateZ90 = self.buildTable(axis='z')
+        self.rotateX180 = self.buildTable(axis='x', aboutFace=True)
+        self.rotateZ180 = self.buildTable(axis='z', aboutFace=True)
 
-    def buildTable(self, axis):
+    def buildTable(self, axis, aboutFace=False):
         mapping = self.mappings[axis]
         axisMapping = self.axisMappings[axis]
+        
+        if aboutFace:
+            mapping90 = mapping
+            mapping = {k: mapping90[v] for k, v in mapping90.iteritems()}
 
         table = blankRotationTable()
+
+        rotIncrement = 8 if aboutFace else 4
 
         for block in self.blocktypes:
             state = block.stateDict
@@ -124,7 +132,7 @@ class BlockRotations(object):
                 # For signs and banners: rotation=10 and similar
 
                 if 'rotation' in state:
-                    rotation = (int(state['rotation']) + 4) % 16
+                    rotation = (int(state['rotation']) + rotIncrement) % 16
                     state['rotation'] = unicode(rotation)
 
                 # For rails, powered rails, etc: shape=north_east
@@ -138,10 +146,19 @@ class BlockRotations(object):
 
             # For logs and such: axis=x and similar
 
-            if 'axis' in state:
+            if not aboutFace and 'axis' in state:
                 axis = state['axis']
                 axis = axisMapping.get(axis, axis)
                 state['axis'] = axis
+
+            # For stairs/slabs: if x or z axis and 180-degree rotation, flip "half"
+
+            if axis in 'xz' and aboutFace:
+                if 'half' in state:
+                    if state['half'] == 'bottom':
+                        state['half'] = 'top'
+                    elif state['half'] == 'top':
+                        state['half'] = 'bottom'
 
             #print("Changed %s \nto %s" % (stateString, newStateString))
 
