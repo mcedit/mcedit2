@@ -40,10 +40,10 @@ class BlockRotations(object):
             'north': 'up',
         },
         'z': {
-            'east': 'up',
             'up': 'west',
             'west': 'down',
             'down': 'east',
+            'east': 'up',
         }
     }
 
@@ -75,6 +75,22 @@ class BlockRotations(object):
         'south_east': 'north_east',
 
     }
+    
+    halfFacingMappings = {
+        'y': {},
+        'x': {
+            ('top', 'south'): ('bottom', 'south'),
+            ('bottom', 'south'): ('bottom', 'north'),
+            ('bottom', 'north'): ('top', 'north'),
+            ('top', 'north'): ('top', 'south'), 
+        },
+        'z': {
+            ('top', 'west'): ('bottom', 'west'),
+            ('bottom', 'west'): ('bottom', 'east'),
+            ('bottom', 'east'): ('top', 'east'),
+            ('top', 'east'): ('top', 'west'), 
+        }
+    }
 
     def __init__(self, blocktypes):
         self.blocktypes = blocktypes
@@ -93,20 +109,29 @@ class BlockRotations(object):
     def buildTable(self, axis, aboutFace=False):
         mapping = self.mappings[axis]
         axisMapping = self.axisMappings[axis]
+        halfFacingMap = self.halfFacingMappings[axis]
         
         if aboutFace:
             mapping90 = mapping
             mapping = {k: mapping90[v] for k, v in mapping90.iteritems()}
+            if axis in 'xz':
+                mapping['down_x'] = 'up_x'
+                mapping['down_z'] = 'up_z'
+                mapping['up_x'] = 'down_x'
+                mapping['up_z'] = 'down_z'
+
+            halfFacingMap90 = halfFacingMap
+            halfFacingMap = {k: halfFacingMap90[v] for k, v in halfFacingMap90.iteritems()}
 
         table = blankRotationTable()
 
         rotIncrement = 8 if aboutFace else 4
 
         for block in self.blocktypes:
-            state = block.stateDict
+            oldState = state = block.stateDict
             if not len(state):
                 continue
-
+            
             # First pass: facing=north and similar
             newState = {}
             for k, v in state.items():
@@ -151,7 +176,7 @@ class BlockRotations(object):
                 axis = axisMapping.get(axis, axis)
                 state['axis'] = axis
 
-            # For stairs/slabs: if x or z axis and 180-degree rotation, flip "half"
+            # For slabs: if x or z axis and 180-degree rotation, flip "half"
 
             if axis in 'xz' and aboutFace:
                 if 'half' in state:
@@ -159,6 +184,13 @@ class BlockRotations(object):
                         state['half'] = 'top'
                     elif state['half'] == 'top':
                         state['half'] = 'bottom'
+
+            # For stairs, x or z axis: flip "half" upward or flip east/west to roll
+
+            if 'half' in oldState and 'facing' in oldState:
+                newHalfFacing = halfFacingMap.get((oldState['half'], oldState['facing']))
+                if newHalfFacing:
+                    state['half'], state['facing'] = newHalfFacing
 
             #print("Changed %s \nto %s" % (stateString, newStateString))
 
