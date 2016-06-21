@@ -7,12 +7,10 @@ import logging
 import numpy
 
 from mcedit2.command import SimpleRevisionCommand
-from mcedit2.editorsession import PendingImport
 from mcedit2.editortools import EditorTool
 from mcedit2.imports import PendingImportNode, PendingImport
 from mcedit2.rendering.scenegraph import scenenode
 from PySide import QtGui
-from mcedit2.rendering.selection import boxFaceUnderCursor
 from mcedit2.util.showprogress import showProgress
 from mcedit2.widgets.coord_widget import CoordinateWidget
 from mcedit2.widgets.layout import Column, Row
