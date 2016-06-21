@@ -289,12 +289,18 @@ class DimensionTransform(DimensionTransformBase):
         blockRotation = BlockRotations(dimension.blocktypes)
         rotationTable = blankRotationTable()
 
+        while rotX >= 135.0:
+            rotX -= 180
+            rotationTable = blockRotation.rotateX180[rotationTable[..., 0], rotationTable[..., 1]]
         while rotX >= 45.0:
             rotX -= 90
             rotationTable = blockRotation.rotateX90[rotationTable[..., 0], rotationTable[..., 1]]
         while rotY >= 45.0:
             rotY -= 90
             rotationTable = blockRotation.rotateY90[rotationTable[..., 0], rotationTable[..., 1]]
+        while rotZ >= 135.0:
+            rotZ -= 180
+            rotationTable = blockRotation.rotateZ180[rotationTable[..., 0], rotationTable[..., 1]]
         while rotZ >= 45.0:
             rotZ -= 90
             rotationTable = blockRotation.rotateZ90[rotationTable[..., 0], rotationTable[..., 1]]
