@@ -514,9 +514,9 @@ class EditorSession(QtCore.QObject):
             log.info("Update progressMax to %d, please.", progress.progressCount)
 
     def dealloc(self):
+        self.editorTab.dealloc()
         self.worldEditor.close()
         self.worldEditor = None
-        self.editorTab.dealloc()
 
         # Break all reference cycles just to be absolutely sure.
         self.__dict__.clear()
@@ -1477,9 +1477,13 @@ class EditorTab(QtGui.QWidget):
         self.viewButtonToolbar.addWidget(spacer)
 
     def dealloc(self, *a, **kw):
-        self.editorSession = None
         for view in self.views:
             view.dealloc()
+
+        for i in range(self.viewStack.count()):
+            self.viewStack.removeWidget(self.viewStack.widget(0))
+            
+        self.editorSession = None
 
     def setDayTime(self, value):
         if self.editorSession.textureAtlas:
