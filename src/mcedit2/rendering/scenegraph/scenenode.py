@@ -28,6 +28,17 @@ class Node(object):
             self.__class__.__name__, self.name, self.visible, len(self._children), self.states
         )
 
+    def nested_repr(self):
+        lines = []
+        lines.extend(self._nested_repr(0))
+        return "\n".join(lines)
+
+    def _nested_repr(self, indent=0):
+        yield indent * " " + repr(self)
+        for c in self.children:
+            for line in c._nested_repr(indent + 2):
+                yield line
+
     def addState(self, obj):
         self.states.append(obj)
         obj.addParent(self)
