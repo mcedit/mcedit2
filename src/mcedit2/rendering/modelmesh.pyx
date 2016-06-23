@@ -33,6 +33,9 @@ for i, (r, g, b) in enumerate(lRedstonePowerColors):
     redstonePowerColors[i*4+2] = r * 255
     redstonePowerColors[i*4+3] = 255
 
+cdef unsigned char * foliageBitsPine = [0x61, 0x99, 0x61, 0xFF];   # BGRA
+cdef unsigned char * foliageBitsBirch = [0x55, 0xA7, 0x80, 0xFF];  # BGRA
+
 class BlockModelMesh(object):
     renderstate = renderstates.RenderstateAlphaTest
     def __init__(self, sectionUpdate):
@@ -453,6 +456,10 @@ class BlockModelMesh(object):
                                     imageY = <unsigned int>((1.0 - rainfall) * (blockModels.foliageImageY - 1))
                                     imageOffset = imageX + blockModels.foliageImageX * imageY
                                     tintColor = &blockModels.foliageImageBits[imageOffset * 4]
+                                if quad.biomeTintType == blockmodels.BIOME_FOLIAGE_PINE:
+                                    tintColor = foliageBitsPine
+                                if quad.biomeTintType == blockmodels.BIOME_FOLIAGE_BIRCH:
+                                    tintColor = foliageBitsBirch
                                 if quad.biomeTintType == blockmodels.BIOME_REDSTONE:
                                     tintColor = &redstonePowerColors[redstonePower * 4]
                                     # print("REDSTONE TINT", redstonePower, tintColor[0], tintColor[1], tintColor[2])

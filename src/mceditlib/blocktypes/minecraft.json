@@ -1,5 +1,6 @@
 [
   {"internalName": "minecraft:grass", "blockState": "minecraft:grass[snowy=false]", "biomeTintType": "grass"},
+
   {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=false,decayable=true,variant=oak]", "biomeTintType": "foliage"},
   {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=false,decayable=false,variant=oak]", "biomeTintType": "foliage"},
   {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=true,decayable=false,variant=oak]", "biomeTintType": "foliage"},
@@ -8,6 +9,34 @@
   {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=false,decayable=false,variant=jungle]", "biomeTintType": "foliage"},
   {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=true,decayable=false,variant=jungle]", "biomeTintType": "foliage"},
   {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=true,decayable=true,variant=jungle]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=false,decayable=true,variant=spruce]", "biomeTintType": "foliagePine"},
+  {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=false,decayable=false,variant=spruce]", "biomeTintType": "foliagePine"},
+  {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=true,decayable=false,variant=spruce]", "biomeTintType": "foliagePine"},
+  {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=true,decayable=true,variant=spruce]", "biomeTintType": "foliagePine"},
+  {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=false,decayable=true,variant=birch]", "biomeTintType": "foliageBirch"},
+  {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=false,decayable=false,variant=birch]", "biomeTintType": "foliageBirch"},
+  {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=true,decayable=false,variant=birch]", "biomeTintType": "foliageBirch"},
+  {"internalName": "minecraft:leaves", "blockState": "minecraft:leaves[check_decay=true,decayable=true,variant=birch]", "biomeTintType": "foliageBirch"},
+
   {"internalName": "minecraft:tallgrass", "blockState": "minecraft:tallgrass[type=tall_grass]", "biomeTintType": "grass"},
-  {"internalName": "minecraft:tallgrass", "blockState": "minecraft:tallgrass[type=fern]", "biomeTintType": "grass"}
+  {"internalName": "minecraft:tallgrass", "blockState": "minecraft:tallgrass[type=fern]", "biomeTintType": "grass"},
+  
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=false,north=false,south=false,up=false,west=false]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=false,north=false,south=true,up=false,west=false]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=false,north=false,south=false,up=false,west=true]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=false,north=false,south=true,up=false,west=true]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=false,north=true,south=false,up=false,west=false]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=false,north=true,south=true,up=false,west=false]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=false,north=true,south=false,up=false,west=true]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=false,north=true,south=true,up=false,west=true]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=true,north=false,south=false,up=false,west=false]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=true,north=false,south=true,up=false,west=false]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=true,north=false,south=false,up=false,west=true]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=true,north=false,south=true,up=false,west=true]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=true,north=true,south=false,up=false,west=false]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=true,north=true,south=true,up=false,west=false]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=true,north=true,south=false,up=false,west=true]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=true,north=true,south=true,up=false,west=true]", "biomeTintType": "foliage"}
+  
+
 ]

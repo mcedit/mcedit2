@@ -350,6 +350,10 @@ cdef class BlockModels(object):
             biomeTintType = BIOME_GRASS
         elif block.biomeTintType == "foliage":
             biomeTintType = BIOME_FOLIAGE
+        elif block.biomeTintType == "foliagePine":
+            biomeTintType = BIOME_FOLIAGE_PINE
+        elif block.biomeTintType == "foliageBirch":
+            biomeTintType = BIOME_FOLIAGE_BIRCH
         else:
             biomeTintType = BIOME_NONE
 
