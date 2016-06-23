@@ -23,6 +23,7 @@ from mcedit2.util.showprogress import showProgress
 from mcedit2.util.worldloader import WorldLoader
 from mceditlib.geometry import Vector
 from mceditlib.selection import UnionBox
+from mceditlib.selection.hollow import HollowSelection
 from mceditlib.util import exhaust
 
 log = logging.getLogger(__name__)
@@ -74,7 +75,18 @@ class BrushCommand(SimplePerformCommand):
             selections = [self.brushShape.createShapedSelection(self.brushMode.brushBoxForPoint(point, self.options),
                                                                 self.editorSession.currentDimension)
                           for point in self.points]
-            selection = UnionBox(*selections)
+
+            if len(selections) > 1:
+                selection = UnionBox(*selections)
+            elif len(selections) == 0:
+                yield 0
+                return
+            else:
+                selection = selections[0]
+
+            if self.hollow:
+                selection = HollowSelection(selection)
+
             for i in self.brushMode.applyToSelection(self, selection):
                 yield i
         except NotImplementedError:
@@ -209,7 +221,8 @@ class BrushTool(EditorTool):
     def options(self):
         options = {'brushSize': self.brushSize,
                    'brushShape': self.brushShape,
-                   'brushMode': self.brushMode}
+                   'brushMode': self.brushMode,
+                   'brushHollow': self.brushHollow}
         options.update(self.brushMode.getOptions())
         return options
 
@@ -224,6 +237,10 @@ class BrushTool(EditorTool):
     @property
     def brushShape(self):
         return self.toolWidget.brushShapeInput.currentShape
+
+    @property
+    def brushHollow(self):
+        return self.toolWidget.hollowCheckBox.isChecked()
 
     def updateCursor(self):
         log.info("Updating brush cursor")

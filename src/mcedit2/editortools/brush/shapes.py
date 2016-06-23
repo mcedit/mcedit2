@@ -114,6 +114,10 @@ class Round(BrushShape):
         radius = shape / 2.0
         offset = radius - 0.5
 
+        if 0 in radius:
+            log.warn("Zero volume shape: %s", shape)
+            return None
+
         blockPositions -= offset[:, None, None, None]
 
         blockPositions *= blockPositions
@@ -132,21 +136,8 @@ class Square(BrushShape):
         super(Square, self).__init__()
         self.displayName = self.tr("Square")
 
-        self.optionsWidget = QtGui.QWidget()
-        self.hollowCheckbox = QtGui.QCheckBox()
-        self.optionsWidget.setLayout(Column(self.hollowCheckbox))
-        self.hollowCheckbox.toggled.connect(self.hollowChanged)
-
-    def hollowChanged(self):
-        # can't connect toggled to optionsChanged directly because toggled emits with the
-        # new check state as an arg, but optionsChanged takes no args.
-        self.optionsChanged.emit()
-
     def createShapedSelection(self, box, dimension):
         return BoundingBox(box.origin, box.size)
-
-    def getOptionsWidget(self):
-        return self.optionsWidget
 
 
 class Diamond(BrushShape):
