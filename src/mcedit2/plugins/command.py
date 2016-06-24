@@ -89,9 +89,11 @@ class SimpleCommandPlugin(CommandPlugin):
         if result == QtGui.QDialog.Accepted:
             command = SimpleRevisionCommand(self.editorSession, self.displayName)
             with self.editorSession.beginCommand(command):
-                self.perform(self.editorSession.worldEditor, dialog.getOptions())
+                self.perform(self.editorSession.currentDimension,
+                             self.editorSession.currentSelection,
+                             dialog.getOptions())
 
-    def perform(self, world, options):
+    def perform(self, dimension, selection, options):
         raise NotImplementedError
 
 

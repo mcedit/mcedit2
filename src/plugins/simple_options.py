@@ -90,7 +90,7 @@ class SimpleOptionsDemo(SimpleCommandPlugin):
         }
     ]
 
-    def perform(self, world, options):
+    def perform(self, dimension, selection, options):
         lines = []
         for key in [
             'myIntOption',
