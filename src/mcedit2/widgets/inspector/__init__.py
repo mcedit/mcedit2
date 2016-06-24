@@ -89,6 +89,9 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
 
         self.removeEntityButton.clicked.connect(self.removeEntity)
 
+        self.addTileEntityButton.clicked.connect(self.addTileEntity)
+        self.removeTileEntityButton.clicked.connect(self.removeTileEntity)
+
     def _changed(self, value, idx):
         if self.blockPos is None:
             return
@@ -149,12 +152,21 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
         self.blockInternalNameLabel.setText(block.internalName)
         self.blockStateLabel.setText(str(block.blockState))
 
-        if self.blockEditorWidget:
-            self.blockTabWidget.removeTab(0)
-            self.blockEditorWidget = None
+        blockBox = BoundingBox((x, y, z), (1, 1, 1))
+
+        self.selectionNode.selectionBox = blockBox
+
+        self.updateTileEntity()
+
+    def updateTileEntity(self):
+        pos = self.blockPos
 
         self.tileEntity = self.editorSession.currentDimension.getTileEntity(pos)
         log.info("Inspecting TileEntity %s at %s", self.tileEntity, pos)
+
+        if self.blockEditorWidget:
+            self.blockTabWidget.removeTab(0)
+            self.blockEditorWidget = None
 
         if self.tileEntity is not None:
             editorClass = tileEntityEditorClasses.get(self.tileEntity.id)
@@ -179,20 +191,47 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
 
         self.removeTileEntityButton.setEnabled(self.tileEntity is not None)
 
-        blockBox = BoundingBox((x, y, z), (1, 1, 1))
-
-        self.selectionNode.selectionBox = blockBox
         if self.tileEntity is not None:
             if self.tileEntity.id == "Control":
                 try:
                     commandObj = ParseCommand(self.tileEntity.Command)
-                    visuals = CommandVisuals((x, y, z), commandObj)
+                    visuals = CommandVisuals(pos, commandObj)
                     self.commandBlockVisualsNode = visuals
                     self.overlayNode.addChild(visuals)
                     self.editorSession.updateView()
                 except Exception as e:
                     log.warn("Failed to parse command.", exc_info=1)
 
+    _tileEntityIDs = {
+        "minecraft:command_block": "Control",
+        "minecraft:standing_sign": "Sign",
+        "minecraft:wall_sign": "Sign",
+        "minecraft:chest": "Chest",
+        "minecraft:hopper": "Hopper",
+        "minecraft:dispenser": "Trap",
+    }
+
+    def addTileEntity(self):
+        if self.tileEntity is not None:
+            return
+        block = self.editorSession.currentDimension.getBlock(*self.blockPos)
+
+        tileEntityID = self._tileEntityIDs[block.internalName]
+
+        ref = self.editorSession.worldEditor.TileEntityRef.create(tileEntityID)
+        ref.Position = self.blockPos
+
+        with self.editorSession.beginSimpleCommand("Create TileEntity"):
+            self.editorSession.currentDimension.addTileEntity(ref)
+
+        self.updateTileEntity()
+
+    def removeTileEntity(self):
+        if self.tileEntity is not None:
+            with self.editorSession.beginSimpleCommand("Remove TileEntity"):
+                self.editorSession.currentDimension.removeTileEntity(self.tileEntity)
+
+        self.updateTileEntity()
 
     def inspectEntity(self, entity):
         self.tileEntity = None

@@ -172,7 +172,7 @@ class _PCEntityRef(object):
         cls = _entityClasses.get(entityID)
         if cls is None:
             log.info("No PC entity ref class found for %s", entityID)
-            return None
+            cls = PCEntityRefBase
         ref = cls.create()
         ref.id = entityID
         return ref
@@ -213,6 +213,8 @@ class PCEntityRefBase(object):
         ref = cls(rootTag)
         nbtattr.SetNBTDefaults(ref)
         return ref
+
+    entityID = NotImplemented
 
     id = nbtattr.NBTAttr("id", 't')
     Position = nbtattr.NBTVectorAttr("Pos", 'd')
@@ -415,10 +417,24 @@ _entityClasses = {
 }
 
 
-def PCTileEntityRef(rootTag, chunk=None):
-    id = rootTag["id"].value
-    cls = _tileEntityClasses.get(id, PCTileEntityRefBase)
-    return cls(rootTag, chunk)
+
+class _PCTileEntityRef(object):
+
+    def create(self, entityID):
+        cls = _tileEntityClasses.get(entityID)
+        if cls is None:
+            log.info("No PC tile entity ref class found for %s", entityID)
+            cls = PCTileEntityRefBase
+        ref = cls.create()
+        ref.id = entityID
+        return ref
+
+    def __call__(self, rootTag, chunk=None):
+        id = rootTag["id"].value
+        cls = _tileEntityClasses.get(id, PCEntityRefBase)
+        return cls(rootTag, chunk)
+
+PCTileEntityRef = _PCTileEntityRef()
 
 
 class PCTileEntityRefBase(object):
@@ -428,6 +444,15 @@ class PCTileEntityRefBase(object):
 
     def raw_tag(self):
         return self.rootTag
+
+    @classmethod
+    def create(cls):
+        rootTag = nbt.TAG_Compound()
+        ref = cls(rootTag)
+        nbtattr.SetNBTDefaults(ref)
+        return ref
+
+    tileEntityID = NotImplemented
 
     id = nbtattr.NBTAttr("id", 't')
     Position = nbtattr.KeyedVectorAttr('x', 'y', 'z', nbt.TAG_Int, 0)

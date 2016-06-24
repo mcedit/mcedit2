@@ -20,7 +20,7 @@
    <item>
     <widget class="QStackedWidget" name="stackedWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="pageInspectBlock">
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -272,6 +272,13 @@
           <widget class="QPushButton" name="pushButton">
            <property name="text">
             <string>Save Custom Block</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="addTileEntityButton">
+           <property name="text">
+            <string>Add Tile Entity</string>
            </property>
           </widget>
          </item>

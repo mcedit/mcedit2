@@ -254,6 +254,7 @@ class WorldEditor(object):
 
     def __repr__(self):
         return "WorldEditor(adapter=%r)" % self.adapter
+
     # --- Summary Info ---
 
     @classmethod
@@ -261,12 +262,24 @@ class WorldEditor(object):
         worldInfo = findAdapter(filename, readonly=True, getInfo=True)
         return worldInfo
 
+    # --- Forwarded from Adapter ---
+
+    @property
+    def EntityRef(self):
+        return self.adapter.EntityRef
+
+    @property
+    def TileEntityRef(self):
+        return self.adapter.TileEntityRef
+
+
     # --- Debug ---
 
     def setCacheLimit(self, size):
         self._chunkDataCache.setCacheLimit(size)
 
     # --- Undo/redo ---
+
     def requireRevisions(self):
         self.adapter.requireRevisions()
 
@@ -864,6 +877,17 @@ class WorldEditorDimension(object):
             chunk.removeTileEntity(e)
 
         chunk.addTileEntity(ref.copy())
+
+    def removeEntity(self, ref):
+        if ref.chunk is None:
+            return
+        ref.chunk.removeEntity(ref)
+
+    def removeTileEntity(self, ref):
+        if ref.chunk is None:
+            return
+        ref.chunk.removeTileEntity(ref)
+
 
     # --- Import/Export ---
 
