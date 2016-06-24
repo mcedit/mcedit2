@@ -15,6 +15,7 @@ from mcedit2.ui.inspector import Ui_inspectorWidget
 from mcedit2.util.commandblock import ParseCommand
 from mcedit2.widgets.inspector.tileentities.chest import ChestEditorWidget, DispenserEditorWidget, HopperEditorWidget
 from mcedit2.widgets.inspector.tileentities.command import CommandBlockEditorWidget
+from mcedit2.widgets.inspector.tileentities.sign import SignEditorWidget
 from mceditlib.geometry import Vector
 from mceditlib.selection import BoundingBox
 
@@ -36,6 +37,7 @@ registerBlockInspectorWidget(ChestEditorWidget)
 registerBlockInspectorWidget(DispenserEditorWidget)
 registerBlockInspectorWidget(HopperEditorWidget)
 registerBlockInspectorWidget(CommandBlockEditorWidget)
+registerBlockInspectorWidget(SignEditorWidget)
 
 
 class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):

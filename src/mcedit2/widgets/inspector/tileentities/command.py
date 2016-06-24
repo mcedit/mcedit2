@@ -13,6 +13,7 @@ log = logging.getLogger(__name__)
 
 class CommandBlockEditorWidget(QtGui.QWidget):
     tileEntityID = "Control"
+
     def __init__(self, editorSession, tileEntityRef):
         super(CommandBlockEditorWidget, self).__init__()
         assert tileEntityRef.id == self.tileEntityID

@@ -474,6 +474,15 @@ class PCTileEntityControlRef(PCTileEntityRefBase):
     TrackOutput = nbtattr.NBTAttr("TrackOutput", 'b', 1)
 
 
+class PCTileEntitySignRef(PCTileEntityRefBase):
+    tileEntityID = "Sign"
+
+    Text1 = nbtattr.NBTAttr("Text1", 't', "")
+    Text2 = nbtattr.NBTAttr("Text2", 't', "")
+    Text3 = nbtattr.NBTAttr("Text3", 't', "")
+    Text4 = nbtattr.NBTAttr("Text4", 't', "")
+
+
 def convertStackTo17(stack, blocktypes):
     if stack["id"].tagID == nbt.ID_STRING:
         stack["id"] = nbt.TAG_Short(blocktypes.itemTypes.internalNamesByID[stack["id"].value])
@@ -521,6 +530,7 @@ _tileEntityClasses = {
     "Trap": PCTileEntityChestRef,
     "Hopper": PCTileEntityChestRef,
     "Control": PCTileEntityControlRef,
+    "Sign": PCTileEntitySignRef,
 
 }
 
