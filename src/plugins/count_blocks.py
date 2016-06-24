@@ -6,13 +6,13 @@ import logging
 
 from PySide import QtGui
 
-from mcedit2.plugins import registerPluginCommand, PluginCommand
+from mcedit2.plugins import registerPluginCommand, CommandPlugin
 
 log = logging.getLogger(__name__)
 
 
 @registerPluginCommand
-class CountBlocksPlugin(PluginCommand):
+class CountBlocksPlugin(CommandPlugin):
     def __init__(self, editorSession):
         super(CountBlocksPlugin, self).__init__(editorSession)
 

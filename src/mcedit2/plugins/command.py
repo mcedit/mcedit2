@@ -17,10 +17,10 @@ from mceditlib.blocktypes import BlockType
 log = logging.getLogger(__name__)
 
 
-class PluginCommand(QtCore.QObject):
+class CommandPlugin(QtCore.QObject):
     def __init__(self, editorSession):
         """
-        A new PluginCommand instance is created for each world opened in an editor
+        A new CommandPlugin instance is created for each world opened in an editor
         session. During initialization, the instance should set up any UI widgets it
         needs and add a menu item to the Plugins menu by calling `self.addMenuItem`. The
         instance may inspect the world opened by the editor session and opt not to
@@ -33,7 +33,7 @@ class PluginCommand(QtCore.QObject):
         ----------
         editorSession : EditorSession
         """
-        super(PluginCommand, self).__init__()
+        super(CommandPlugin, self).__init__()
         self.editorSession = editorSession
 
     def addMenuItem(self, text, func, submenu=None):
@@ -59,7 +59,7 @@ class PluginCommand(QtCore.QObject):
         self.editorSession.menuPlugins.addPluginMenuItem(self.__class__, text, func, submenu)
 
 
-class SimplePluginCommand(PluginCommand):
+class SimpleCommandPlugin(CommandPlugin):
     """
     A simple type of command that covers a common use case: Display a dialog with a list
     of options and a pair of "Confirm" and "Cancel" buttons. When the "Confirm" button is
@@ -69,7 +69,7 @@ class SimplePluginCommand(PluginCommand):
     This function is passed an object containing the option values selected by the user.
 
     To define the list of options, set the `options` variable on the subclass of
-    SimplePluginCommand. The options variable should be a list of dictionaries.
+    SimpleCommandPlugin. The options variable should be a list of dictionaries.
     """
 
     options = []
@@ -77,7 +77,7 @@ class SimplePluginCommand(PluginCommand):
     submenuName = None
 
     def __init__(self, editorSession):
-        super(SimplePluginCommand, self).__init__(editorSession)
+        super(SimpleCommandPlugin, self).__init__(editorSession)
         if self.displayName is NotImplemented:
             raise ValueError("self.displayName must be set.")
 
@@ -285,7 +285,7 @@ def dictFromFilterTuple(opt):
 
 
 class _CommandPlugins(PluginClassRegistry):
-    pluginClass = PluginCommand
+    pluginClass = CommandPlugin
 
 CommandPlugins = _CommandPlugins()
 

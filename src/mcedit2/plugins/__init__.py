@@ -287,9 +287,9 @@ def registerPluginCommand(cls):
     """
     Register a command that can be invoked from the Plugins menu.
 
-    >>> from mcedit2.plugins.command import PluginCommand
+    >>> from mcedit2.plugins.command import CommandPlugin
     >>> @registerPluginCommand
-    >>> class MyCommand(PluginCommand)
+    >>> class MyCommand(CommandPlugin)
     >>>     pass
 
     Parameters
@@ -418,4 +418,4 @@ def registerTileEntityRefClass(ID, cls):
 
 # Convenience imports for plugin modules
 
-from .command import PluginCommand, SimplePluginCommand
+from .command import CommandPlugin, SimpleCommandPlugin

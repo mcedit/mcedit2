@@ -30,7 +30,7 @@ class PluginClassRegistry(QtCore.QObject):
         if issubclass(cls, self.pluginClass):
             self.pendingRegistrations.append(cls)
         else:
-            raise ValueError("Class %s must inherit from PluginCommand" % cls)
+            raise ValueError("Class %s must inherit from CommandPlugin" % cls)
         return cls
 
     def unregisterClass(self, cls):

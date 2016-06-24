@@ -5,14 +5,14 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from PySide import QtGui
 
-from mcedit2.plugins import registerPluginCommand, SimplePluginCommand
+from mcedit2.plugins import registerPluginCommand, SimpleCommandPlugin
 import logging
 
 log = logging.getLogger(__name__)
 
 
 @registerPluginCommand
-class SimpleOptionsDemo(SimplePluginCommand):
+class SimpleOptionsDemo(SimpleCommandPlugin):
     displayName = "Simple Options Demo"
 
     options = [
