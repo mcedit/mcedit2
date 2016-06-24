@@ -3,16 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to mcedit2's documentation!
-=====================================
-
-API Documentation:
+MCEdit 2 Documentation
+======================
 
 .. toctree::
-    :maxdepth: 2
+    apidocs
 
-    apidoc/mcedit2
-    apidoc/mceditlib
 
 Indices and tables
 ==================
