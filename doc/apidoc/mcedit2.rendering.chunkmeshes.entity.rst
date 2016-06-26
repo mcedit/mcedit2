@@ -1,13 +1,34 @@
 mcedit2.rendering.chunkmeshes.entity package
 ============================================
 
+.. automodule:: mcedit2.rendering.chunkmeshes.entity
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Submodules
 ----------
+
+mcedit2.rendering.chunkmeshes.entity.armorstand module
+------------------------------------------------------
+
+.. automodule:: mcedit2.rendering.chunkmeshes.entity.armorstand
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 mcedit2.rendering.chunkmeshes.entity.biped module
 -------------------------------------------------
 
 .. automodule:: mcedit2.rendering.chunkmeshes.entity.biped
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+mcedit2.rendering.chunkmeshes.entity.chest module
+-------------------------------------------------
+
+.. automodule:: mcedit2.rendering.chunkmeshes.entity.chest
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,10 +57,26 @@ mcedit2.rendering.chunkmeshes.entity.models module
     :undoc-members:
     :show-inheritance:
 
+mcedit2.rendering.chunkmeshes.entity.player module
+--------------------------------------------------
+
+.. automodule:: mcedit2.rendering.chunkmeshes.entity.player
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 mcedit2.rendering.chunkmeshes.entity.quadruped module
 -----------------------------------------------------
 
 .. automodule:: mcedit2.rendering.chunkmeshes.entity.quadruped
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+mcedit2.rendering.chunkmeshes.entity.shulker module
+---------------------------------------------------
+
+.. automodule:: mcedit2.rendering.chunkmeshes.entity.shulker
     :members:
     :undoc-members:
     :show-inheritance:
@@ -61,10 +98,3 @@ mcedit2.rendering.chunkmeshes.entity.villager module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mcedit2.rendering.chunkmeshes.entity
-    :members:
-    :undoc-members:
-    :show-inheritance:

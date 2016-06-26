@@ -1,6 +1,11 @@
 mcedit2.widgets package
 =======================
 
+.. automodule:: mcedit2.widgets
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Subpackages
 -----------
 
@@ -12,10 +17,26 @@ Subpackages
 Submodules
 ----------
 
+mcedit2.widgets.block_replacement_list module
+---------------------------------------------
+
+.. automodule:: mcedit2.widgets.block_replacement_list
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 mcedit2.widgets.blockpicker module
 ----------------------------------
 
 .. automodule:: mcedit2.widgets.blockpicker
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+mcedit2.widgets.blockpicker_util module
+---------------------------------------
+
+.. automodule:: mcedit2.widgets.blockpicker_util
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,10 +49,18 @@ mcedit2.widgets.blocktype_list module
     :undoc-members:
     :show-inheritance:
 
-mcedit2.widgets.configureblocksdialog module
---------------------------------------------
+mcedit2.widgets.brushmode module
+--------------------------------
 
-.. automodule:: mcedit2.widgets.configureblocksdialog
+.. automodule:: mcedit2.widgets.brushmode
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+mcedit2.widgets.coord_widget module
+-----------------------------------
+
+.. automodule:: mcedit2.widgets.coord_widget
     :members:
     :undoc-members:
     :show-inheritance:
@@ -84,6 +113,14 @@ mcedit2.widgets.log_view module
     :undoc-members:
     :show-inheritance:
 
+mcedit2.widgets.mcedockwidget module
+------------------------------------
+
+.. automodule:: mcedit2.widgets.mcedockwidget
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 mcedit2.widgets.objectinspector module
 --------------------------------------
 
@@ -108,6 +145,14 @@ mcedit2.widgets.propertylist module
     :undoc-members:
     :show-inheritance:
 
+mcedit2.widgets.rotation_widget module
+--------------------------------------
+
+.. automodule:: mcedit2.widgets.rotation_widget
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 mcedit2.widgets.shapewidget module
 ----------------------------------
 
@@ -125,10 +170,3 @@ mcedit2.widgets.spinslider module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mcedit2.widgets
-    :members:
-    :undoc-members:
-    :show-inheritance:

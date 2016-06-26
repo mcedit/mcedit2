@@ -1,6 +1,11 @@
 mceditlib.operations package
 ============================
 
+.. automodule:: mceditlib.operations
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Submodules
 ----------
 
@@ -29,10 +34,3 @@ mceditlib.operations.entity module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mceditlib.operations
-    :members:
-    :undoc-members:
-    :show-inheritance:

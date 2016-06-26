@@ -1,6 +1,11 @@
 mcedit2.util.directories package
 ================================
 
+.. automodule:: mcedit2.util.directories
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Submodules
 ----------
 
@@ -29,10 +34,3 @@ mcedit2.util.directories.win32 module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mcedit2.util.directories
-    :members:
-    :undoc-members:
-    :show-inheritance:

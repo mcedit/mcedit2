@@ -1,6 +1,11 @@
 mceditlib.anvil package
 =======================
 
+.. automodule:: mceditlib.anvil
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Submodules
 ----------
 
@@ -37,10 +42,3 @@ mceditlib.anvil.worldfolder module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mceditlib.anvil
-    :members:
-    :undoc-members:
-    :show-inheritance:

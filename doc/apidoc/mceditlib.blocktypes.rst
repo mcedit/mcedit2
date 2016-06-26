@@ -1,6 +1,11 @@
 mceditlib.blocktypes package
 ============================
 
+.. automodule:: mceditlib.blocktypes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Submodules
 ----------
 
@@ -20,11 +25,12 @@ mceditlib.blocktypes.json_resources module
     :undoc-members:
     :show-inheritance:
 
+mceditlib.blocktypes.rotation module
+------------------------------------
 
-Module contents
----------------
-
-.. automodule:: mceditlib.blocktypes
+.. automodule:: mceditlib.blocktypes.rotation
     :members:
     :undoc-members:
     :show-inheritance:
+
+

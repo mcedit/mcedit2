@@ -1,6 +1,11 @@
 mcedit2.worldview package
 =========================
 
+.. automodule:: mcedit2.worldview
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Submodules
 ----------
 
@@ -52,6 +57,14 @@ mcedit2.worldview.overhead module
     :undoc-members:
     :show-inheritance:
 
+mcedit2.worldview.schematic_worldview module
+--------------------------------------------
+
+.. automodule:: mcedit2.worldview.schematic_worldview
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 mcedit2.worldview.viewaction module
 -----------------------------------
 
@@ -85,10 +98,3 @@ mcedit2.worldview.worldview module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mcedit2.worldview
-    :members:
-    :undoc-members:
-    :show-inheritance:

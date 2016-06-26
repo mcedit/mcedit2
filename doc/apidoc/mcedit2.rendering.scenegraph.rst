@@ -1,6 +1,11 @@
 mcedit2.rendering.scenegraph package
 ====================================
 
+.. automodule:: mcedit2.rendering.scenegraph
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Submodules
 ----------
 
@@ -52,6 +57,14 @@ mcedit2.rendering.scenegraph.scenenode module
     :undoc-members:
     :show-inheritance:
 
+mcedit2.rendering.scenegraph.states module
+------------------------------------------
+
+.. automodule:: mcedit2.rendering.scenegraph.states
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 mcedit2.rendering.scenegraph.texture_atlas module
 -------------------------------------------------
 
@@ -69,10 +82,3 @@ mcedit2.rendering.scenegraph.vertex_array module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mcedit2.rendering.scenegraph
-    :members:
-    :undoc-members:
-    :show-inheritance:

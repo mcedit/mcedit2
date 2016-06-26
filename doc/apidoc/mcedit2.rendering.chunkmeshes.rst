@@ -1,6 +1,11 @@
 mcedit2.rendering.chunkmeshes package
 =====================================
 
+.. automodule:: mcedit2.rendering.chunkmeshes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Subpackages
 -----------
 
@@ -27,10 +32,26 @@ mcedit2.rendering.chunkmeshes.entitymesh module
     :undoc-members:
     :show-inheritance:
 
+mcedit2.rendering.chunkmeshes.heightlevel module
+------------------------------------------------
+
+.. automodule:: mcedit2.rendering.chunkmeshes.heightlevel
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 mcedit2.rendering.chunkmeshes.lowdetail module
 ----------------------------------------------
 
 .. automodule:: mcedit2.rendering.chunkmeshes.lowdetail
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+mcedit2.rendering.chunkmeshes.mobspawns module
+----------------------------------------------
+
+.. automodule:: mcedit2.rendering.chunkmeshes.mobspawns
     :members:
     :undoc-members:
     :show-inheritance:
@@ -52,10 +73,3 @@ mcedit2.rendering.chunkmeshes.tileticks module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mcedit2.rendering.chunkmeshes
-    :members:
-    :undoc-members:
-    :show-inheritance:

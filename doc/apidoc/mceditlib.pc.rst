@@ -1,6 +1,11 @@
 mceditlib.pc package
 ====================
 
+.. automodule:: mceditlib.pc
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Submodules
 ----------
 
@@ -13,10 +18,3 @@ mceditlib.pc.regionfile module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mceditlib.pc
-    :members:
-    :undoc-members:
-    :show-inheritance:

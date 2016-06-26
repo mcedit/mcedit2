@@ -1,6 +1,11 @@
 mcedit2.synth package
 =====================
 
+.. automodule:: mcedit2.synth
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Submodules
 ----------
 
@@ -21,10 +26,3 @@ mcedit2.synth.l_system_plugin module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mcedit2.synth
-    :members:
-    :undoc-members:
-    :show-inheritance:

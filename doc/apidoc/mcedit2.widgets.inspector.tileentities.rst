@@ -1,6 +1,11 @@
 mcedit2.widgets.inspector.tileentities package
 ==============================================
 
+.. automodule:: mcedit2.widgets.inspector.tileentities
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Submodules
 ----------
 
@@ -20,11 +25,12 @@ mcedit2.widgets.inspector.tileentities.command module
     :undoc-members:
     :show-inheritance:
 
+mcedit2.widgets.inspector.tileentities.sign module
+--------------------------------------------------
 
-Module contents
----------------
-
-.. automodule:: mcedit2.widgets.inspector.tileentities
+.. automodule:: mcedit2.widgets.inspector.tileentities.sign
     :members:
     :undoc-members:
     :show-inheritance:
+
+

@@ -1,6 +1,11 @@
 mcedit2.editortools.brush package
 =================================
 
+.. automodule:: mcedit2.editortools.brush
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Submodules
 ----------
 
@@ -29,10 +34,3 @@ mcedit2.editortools.brush.shapes module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mcedit2.editortools.brush
-    :members:
-    :undoc-members:
-    :show-inheritance:

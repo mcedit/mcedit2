@@ -1,6 +1,11 @@
 mcedit2 package
 ===============
 
+.. automodule:: mcedit2
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Subpackages
 -----------
 
@@ -11,6 +16,7 @@ Subpackages
     mcedit2.editortools
     mcedit2.handles
     mcedit2.panels
+    mcedit2.plugins
     mcedit2.rendering
     mcedit2.synth
     mcedit2.util
@@ -52,6 +58,14 @@ mcedit2.editorsession module
     :undoc-members:
     :show-inheritance:
 
+mcedit2.imports module
+----------------------
+
+.. automodule:: mcedit2.imports
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 mcedit2.library module
 ----------------------
 
@@ -64,14 +78,6 @@ mcedit2.main module
 -------------------
 
 .. automodule:: mcedit2.main
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcedit2.plugins module
-----------------------
-
-.. automodule:: mcedit2.plugins
     :members:
     :undoc-members:
     :show-inheritance:
@@ -93,10 +99,3 @@ mcedit2.worldlist module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mcedit2
-    :members:
-    :undoc-members:
-    :show-inheritance:

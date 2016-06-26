@@ -1,6 +1,11 @@
 mcedit2.editortools package
 ===========================
 
+.. automodule:: mcedit2.editortools
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Subpackages
 -----------
 
@@ -10,6 +15,14 @@ Subpackages
 
 Submodules
 ----------
+
+mcedit2.editortools.clone module
+--------------------------------
+
+.. automodule:: mcedit2.editortools.clone
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 mcedit2.editortools.edit_chunk module
 -------------------------------------
@@ -67,11 +80,12 @@ mcedit2.editortools.select_entity module
     :undoc-members:
     :show-inheritance:
 
+mcedit2.editortools.tool_settings module
+----------------------------------------
 
-Module contents
----------------
-
-.. automodule:: mcedit2.editortools
+.. automodule:: mcedit2.editortools.tool_settings
     :members:
     :undoc-members:
     :show-inheritance:
+
+

@@ -1,6 +1,11 @@
 mcedit2.rendering package
 =========================
 
+.. automodule:: mcedit2.rendering
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Subpackages
 -----------
 
@@ -48,6 +53,14 @@ mcedit2.rendering.chunkupdate module
 ------------------------------------
 
 .. automodule:: mcedit2.rendering.chunkupdate
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+mcedit2.rendering.command_visuals module
+----------------------------------------
+
+.. automodule:: mcedit2.rendering.command_visuals
     :members:
     :undoc-members:
     :show-inheritance:
@@ -124,6 +137,14 @@ mcedit2.rendering.modelmesh module
     :undoc-members:
     :show-inheritance:
 
+mcedit2.rendering.players module
+--------------------------------
+
+.. automodule:: mcedit2.rendering.players
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 mcedit2.rendering.renderstates module
 -------------------------------------
 
@@ -189,10 +210,3 @@ mcedit2.rendering.worldscene module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mcedit2.rendering
-    :members:
-    :undoc-members:
-    :show-inheritance:

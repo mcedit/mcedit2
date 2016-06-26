@@ -1,6 +1,11 @@
 mcedit2.widgets.inspector package
 =================================
 
+.. automodule:: mcedit2.widgets.inspector
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Subpackages
 -----------
 
@@ -8,10 +13,3 @@ Subpackages
 
     mcedit2.widgets.inspector.tileentities
 
-Module contents
----------------
-
-.. automodule:: mcedit2.widgets.inspector
-    :members:
-    :undoc-members:
-    :show-inheritance:

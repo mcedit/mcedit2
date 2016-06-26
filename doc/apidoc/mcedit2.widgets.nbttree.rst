@@ -1,6 +1,11 @@
 mcedit2.widgets.nbttree package
 ===============================
 
+.. automodule:: mcedit2.widgets.nbttree
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Submodules
 ----------
 
@@ -21,10 +26,3 @@ mcedit2.widgets.nbttree.nbttreemodel module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mcedit2.widgets.nbttree
-    :members:
-    :undoc-members:
-    :show-inheritance:

@@ -1,6 +1,11 @@
 mceditlib.util package
 ======================
 
+.. automodule:: mceditlib.util
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Submodules
 ----------
 
@@ -20,6 +25,14 @@ mceditlib.util.lazyprop module
     :undoc-members:
     :show-inheritance:
 
+mceditlib.util.progress module
+------------------------------
+
+.. automodule:: mceditlib.util.progress
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 mceditlib.util.unique_nd module
 -------------------------------
 
@@ -29,10 +42,3 @@ mceditlib.util.unique_nd module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mceditlib.util
-    :members:
-    :undoc-members:
-    :show-inheritance:

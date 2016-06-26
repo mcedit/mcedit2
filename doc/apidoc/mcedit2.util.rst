@@ -1,6 +1,11 @@
 mcedit2.util package
 ====================
 
+.. automodule:: mcedit2.util
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Subpackages
 -----------
 
@@ -47,6 +52,14 @@ mcedit2.util.dialogs module
 ---------------------------
 
 .. automodule:: mcedit2.util.dialogs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+mcedit2.util.gen_ui module
+--------------------------
+
+.. automodule:: mcedit2.util.gen_ui
     :members:
     :undoc-members:
     :show-inheritance:
@@ -111,6 +124,14 @@ mcedit2.util.objgraphwidget module
 ----------------------------------
 
 .. automodule:: mcedit2.util.objgraphwidget
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+mcedit2.util.player_server module
+---------------------------------
+
+.. automodule:: mcedit2.util.player_server
     :members:
     :undoc-members:
     :show-inheritance:
@@ -196,10 +217,3 @@ mcedit2.util.worldloader module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mcedit2.util
-    :members:
-    :undoc-members:
-    :show-inheritance:

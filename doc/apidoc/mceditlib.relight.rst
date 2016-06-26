@@ -1,6 +1,11 @@
 mceditlib.relight package
 =========================
 
+.. automodule:: mceditlib.relight
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Submodules
 ----------
 
@@ -37,10 +42,3 @@ mceditlib.relight.with_setblocks module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mceditlib.relight
-    :members:
-    :undoc-members:
-    :show-inheritance:

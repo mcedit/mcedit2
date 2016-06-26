@@ -1,6 +1,11 @@
 mceditlib package
 =================
 
+.. automodule:: mceditlib
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Subpackages
 -----------
 
@@ -21,14 +26,6 @@ mceditlib.block_copy module
 ---------------------------
 
 .. automodule:: mceditlib.block_copy
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mceditlib.blockrotation module
-------------------------------
-
-.. automodule:: mceditlib.blockrotation
     :members:
     :undoc-members:
     :show-inheritance:
@@ -169,6 +166,22 @@ mceditlib.schematic module
     :undoc-members:
     :show-inheritance:
 
+mceditlib.structure module
+--------------------------
+
+.. automodule:: mceditlib.structure
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+mceditlib.transform module
+--------------------------
+
+.. automodule:: mceditlib.transform
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 mceditlib.worldeditor module
 ----------------------------
 
@@ -178,10 +191,3 @@ mceditlib.worldeditor module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mceditlib
-    :members:
-    :undoc-members:
-    :show-inheritance:
