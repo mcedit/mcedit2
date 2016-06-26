@@ -154,5 +154,5 @@ doctest:
 	      "results in $(BUILDDIR)/doctest/output.txt."
 
 apidoc:
-	sphinx-apidoc -o apidoc -f ../src/mceditlib ../src/mceditlib/test
-	sphinx-apidoc -o apidoc -f ../src/mcedit2 ../src/mcedit2/test
+	sphinx-apidoc -M -e -o apidoc -f ../src/mceditlib ../src/mceditlib/test
+	sphinx-apidoc -M -e -o apidoc -f ../src/mcedit2 ../src/mcedit2/test ../src/mcedit2/ui

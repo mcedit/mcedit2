@@ -7,7 +7,7 @@ MCEdit 2 Documentation
 ======================
 
 .. toctree::
-    apidocs
+    plugins
 
 
 Indices and tables
