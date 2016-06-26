@@ -39,8 +39,10 @@ class IChunkLoaderClient(object):
 
         Return None to request no chunks.
 
-        :rtype: (cx, cz)
-        :return: Chunk coordinates
+        Returns
+        -------
+
+        chunkPos : (int, int) | None
         """
         pass
 
@@ -51,7 +53,10 @@ class IChunkLoaderClient(object):
         Return False to skip loading the chunk at the given position.
         If all clients return False, the chunk is not loaded.
 
-        :rtype: boolean
+        Returns
+        -------
+
+        wantsChunk : bool
         """
 
     def recieveChunk(self, chunk):
@@ -63,10 +68,16 @@ class IChunkLoaderClient(object):
         long-running operations on a single chunk to be split over multiple calls to
         ChunkLoader.next()
 
-        :param chunk: returned by level.getChunk()
-        :type chunk: WorldEditorChunk
-        :return: See description
-        :rtype: Iterable | None
+        Parameters
+        ----------
+
+        chunk : WorldEditorChunk
+            The chunk returned by level.getChunk()
+
+        Returns
+        -------
+
+        worker : Iterable | None
         """
 
     def chunkNotLoaded(self, (cx, cz), exc):
@@ -75,8 +86,12 @@ class IChunkLoaderClient(object):
 
         Notifies each client of the chunk's position and the thrown exception.
 
-        :param (cx, cz): chunk position
-        :param exc: The exception that was thrown, usually IOError or LevelFormatError
+        Parameters
+        ----------
+        (cx, cz) : (int, int)
+            Position of the failed chunk.
+
+        exc : The Exception object thrown by the world, usually IOError or LevelFormatError
         """
 
     def chunkNotPresent(self, (cx, cz)):
@@ -85,7 +100,10 @@ class IChunkLoaderClient(object):
 
         Notifies each client of the chunk's position.
 
-        :param (cx, cz): chunk position
+        Parameters
+        ----------
+        (cx, cz) : (int, int)
+            chunk position
         """
 
     def chunkInvalid(self, (cx, cz), deleted):
@@ -122,7 +140,11 @@ class ChunkLoader(QtCore.QObject):
         to load and process chunks. `StopIteration` will be raised when all clients return None when
         requestChunk is called.
 
-        :param dimension: WorldEditorDimension
+        Parameters
+        ----------
+
+        dimension : WorldEditorDimension
+            The dimension to load chunks from.
         """
         QtCore.QObject.__init__(self, *args, **kwargs)
 
@@ -149,14 +171,20 @@ class ChunkLoader(QtCore.QObject):
 
     def addClient(self, client, index=-1):
         """
-        :type client: IChunkLoaderClient
+        Parameters
+        ----------
+
+        client : IChunkLoaderClient
         """
         self.clients.insert(index, weakref.ref(client))
         log.info("Added: client %s",  client)
 
     def removeClient(self, client):
         """
-        :type client: IChunkLoaderClient
+        Parameters
+        ----------
+
+        client : IChunkLoaderClient
         """
         try:
             self.clients[:] = [c for c in self.clients if c() is not client]

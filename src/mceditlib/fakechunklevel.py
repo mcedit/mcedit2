@@ -1,6 +1,7 @@
-'''
-    Base classes for all Minecraft levels.
-'''
+"""
+Classes used in implementing adapters for worlds physically stored as a single array.
+Slices of this array are presented as virtual chunks.
+"""
 
 from __future__ import absolute_import
 from collections import namedtuple
@@ -95,7 +96,8 @@ class FakeChunkData(object):
 
 
 class FakeChunkedLevelAdapter(object):
-    """ FakeChunkedLevelAdapter is an abstract class for implementing fixed size, non-chunked storage formats.
+    """
+    FakeChunkedLevelAdapter is an abstract class for implementing fixed size, non-chunked storage formats.
     Classic, Indev, and Schematic formats inherit from this class.  FakeChunkedLevelAdapter has dummy functions for
     pretending to have Players, Entities and TileEntities. If Entities and TileEntities already present, provides
     a working `getEntities` and `getTileEntities`.
@@ -105,22 +107,21 @@ class FakeChunkedLevelAdapter(object):
 
     FakeChunkedLevelAdapter implements IWorld and ISectionWorld.
 
-    Required attributes:
+    Attributes
+    ----------
 
-    :ivar Height: int
-    :ivar Length: int
-    :ivar Width: int
-    :ivar Blocks: ndarray of any shape, indexed [x, z, y]
-    :ivar blocktypes: BlockTypeSet
+    Height : int
+    Length : int
+    Width  : int
+    Blocks : ndarray of any shape, indexed [x, z, y]
+    blocktypes : BlockTypeSet
 
-    Optional attributes:
-
-    :ivar Entities: list or TAG_List
-    :ivar TileEntities: list or TAG_List
-    :ivar Data: ndarray, same shape and indexes as Blocks
-    :ivar BlockLight: ndarray, same shape and indexes as Blocks
-    :ivar SkyLight: ndarray, same shape and indexes as Blocks
-    :ivar Biomes: ndarray, same x and z sizes as Blocks, indexed [x, z]
+    Entities     : list or TAG_List
+    TileEntities : list or TAG_List
+    Data         : ndarray, same shape and indexes as Blocks
+    BlockLight   : ndarray, same shape and indexes as Blocks
+    SkyLight     : ndarray, same shape and indexes as Blocks
+    Biomes       : ndarray, same x and z sizes as Blocks, indexed [x, z]
 
     """
 

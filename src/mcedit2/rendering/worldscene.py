@@ -54,9 +54,11 @@ class SceneUpdateTask(object):
     def __init__(self, worldScene, textureAtlas):
         """
 
-        :type worldScene: WorldScene
-        :type bounds: BoundingBox
-        :type textureAtlas: TextureAtlas
+        Parameters
+        ----------
+
+        worldScene : WorldScene
+        textureAtlas : TextureAtlas
         """
         self.worldScene = worldScene
 

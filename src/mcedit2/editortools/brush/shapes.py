@@ -19,13 +19,18 @@ class BrushShape(QtCore.QObject):
     to the widget, and for signaling its client that the user has changed these options. It also
     provides an internal string ID and an icon to display in the shape chooser widget.
 
-    :cvar ID: String identifier
-    :type ID: str
-    :cvar icon: Path to icon file, relative to `mcedit2/assets/mcedit2/icons`
-    :type icon: basestring
-    :cvar optionsChanged: This signal should be emitted whenever the options in the BrushShape's
-    options widget are changed, to notify the shape's client that it should redraw the shape.
-    :type optionsChanged: Signal
+    Attributes
+    ----------
+
+    ID : unicode
+        Textual identifier for this shape. Used for preference saving, etc.
+
+    icon : unicode
+        Path to icon file, relative to `mcedit2/assets/mcedit2/icons`
+
+    optionsChanged : Signal
+        This signal should be emitted whenever the options in the BrushShape's
+        options widget are changed, to notify the shape's client that it should redraw the shape.
     """
 
     ID = NotImplemented
@@ -41,12 +46,18 @@ class BrushShape(QtCore.QObject):
 
         TODO: BitmapSelectionBox
 
-        :param box: Bounding box of the selection
-        :type box: BoundingBox
-        :param dimension: Dimension to create the shaped selection for.
-        :type dimension: WorldEditorDimension
-        :return: SelectionBox object that selects all blocks inside this shape
-        :rtype: SelectionBox
+        Parameters
+        ----------
+
+        box : BoundingBox
+            Bounding box of the selection
+        dimension : WorldEditorDimension
+            Dimension to create the shaped selection for.
+
+        Returns
+        -------
+        box: SelectionBox
+            SelectionBox object that selects all blocks inside this shape
         """
         return selection.ShapeFuncSelection(box, self.shapeFunc)
 
@@ -70,12 +81,18 @@ class BrushShape(QtCore.QObject):
 
         The size of the shape's bounding box is given by selectionSize.
 
-        :param blockPositions: Coordinates of requested blocks relative to Shape's bounding box.
-        :type blockPositions: numpy.ndarray[ndims=4,dtype=float32]
-        :param selectionSize: Size of the Shape's bounding box.
-        :type selectionSize: (int, int, int)
-        :return: Boolean array of the same shape as blockPositions[0] where selected blocks are True
-        :rtype: numpy.ndarray[ndims=3,dtype=bool]
+        Parameters
+        ----------
+
+        blockPositions : numpy.ndarray[ndims=4,dtype=float32]
+            Coordinates of requested blocks relative to Shape's bounding box.
+        selectionSize : (int, int, int)
+            Size of the Shape's bounding box.
+
+        Returns
+        -------
+        mask : numpy.ndarray[ndims=3,dtype=bool]
+            Boolean array of the same shape as blockPositions[0] where selected blocks are True
         """
         raise NotImplementedError
 
@@ -85,10 +102,13 @@ class BrushShape(QtCore.QObject):
 
         If there are no options to present, return None. This is the default implementation.
 
-        :return: Options widget
-        :rtype: QWidget | NoneType
+        Returns
+        -------
+
+        widget : QWidget | NoneType
         """
         return None
+
 
 class Round(BrushShape):
     ID = "Round"
