@@ -74,8 +74,8 @@ class NBTEditorWidget(QtGui.QWidget):
     """
     NBT Editor widget. Suitable for use as a custom QTreeView class in QDesigner.
 
-    Attributes:
-    -----------
+    Attributes
+    ----------
 
     editorSession: EditorSession
 
