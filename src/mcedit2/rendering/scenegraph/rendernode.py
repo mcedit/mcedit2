@@ -188,7 +188,7 @@ def createRenderNode(sceneNode):
 
 def updateRenderNode(renderNode):
     """
-    Synchronize the state of a renderNode and its childre with its scene node.
+    Synchronize the state of a renderNode and its children with its scene node.
 
     If the sceneNode that owns this renderNode is dirty, invalidates the renderNode.
     Then, updateChildren is called to add or remove renderNodes if the sceneNode had
@@ -242,8 +242,16 @@ def updateChildren(renderNode):
     for index, sceneChild in enumerate(sceneNode.children):
         renderChild = renderNode.childrenBySceneNode.get(sceneChild)
         if renderChild is None:
+            # A previously rendered sceneNode that was removed from the graph
+            # may be added back in, and will think its children don't need
+            # to have renderNodes recreated.
+            # Force createRenderNode to recurse into the sceneNode and check for
+            # missing children.
+            sceneChild.childrenChanged = True
+
             renderNode.insertNode(index, createRenderNode(sceneChild))
             sceneChild.dirty = False
+
 
 
 def printStats(renderNode):
