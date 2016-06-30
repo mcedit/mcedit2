@@ -23,6 +23,7 @@ from mceditlib import worldeditor
 
 import logging
 from mceditlib.findadapter import isLevel
+from mceditlib.nbt import NBTFormatError
 from mceditlib.worldeditor import WorldEditor
 
 log = logging.getLogger(__name__)
@@ -398,7 +399,7 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
                 try:
                     player = worldEditor.getPlayer()
                     log.info("Centering on single-player player.")
-                except PlayerNotFound:
+                except (PlayerNotFound, NBTFormatError):
                     try:
                         center = worldEditor.getWorldMetadata().Spawn
                         log.info("Centering on spawn position.")

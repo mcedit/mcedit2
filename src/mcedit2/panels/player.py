@@ -12,6 +12,7 @@ import itertools
 from mcedit2.command import SimpleRevisionCommand
 from mcedit2.ui.panels.player import Ui_playerWidget
 from mcedit2.util.player_server import PlayerDataCache
+from mceditlib.nbt import NBTFormatError
 from mceditlib.util.lazyprop import weakrefprop
 from mcedit2.util.screen import centerWidgetInScreen
 from mcedit2.widgets.inventory import InventoryEditor
@@ -59,7 +60,7 @@ class PlayerPanel(QtGui.QWidget, Ui_playerWidget):
         try:
             sp = editorSession.worldEditor.getPlayer("")
             singlePlayerUUID = sp.UUID
-        except PlayerNotFound:
+        except (PlayerNotFound, NBTFormatError):
             log.info("No single-player.")
             singlePlayerUUID = None
         except KeyError:

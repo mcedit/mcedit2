@@ -15,6 +15,7 @@ from mcedit2.rendering.scenegraph.scenenode import Node
 from mcedit2.util import glutils
 from mcedit2.util.load_png import loadPNGTexture, loadPNGFile
 from mcedit2.util.player_server import PlayerDataCache
+from mceditlib.nbt import NBTFormatError
 
 log = logging.getLogger(__name__)
 
@@ -129,7 +130,10 @@ class PlayersNode(Node):
             return
 
         for playerName in dimension.worldEditor.listPlayers():
-            player = dimension.worldEditor.getPlayer(playerName)
+            try:
+                player = dimension.worldEditor.getPlayer(playerName)
+            except NBTFormatError:
+                continue
             if player.Dimension == dimension.dimNo:
                 if player.UUID is None:
                     log.warning("Player %s has no UUID tags", playerName)

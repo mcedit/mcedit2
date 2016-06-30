@@ -957,10 +957,14 @@ class AnvilWorldAdapter(object):
         """
         Return the root NBT tag for the named player. Raise PlayerNotFound if not present.
 
-        :param playerUUID:
-        :type playerUUID: unicode
-        :return:
-        :rtype: PCPlayer
+        Parameters
+        ----------
+        playerUUID : unicode
+            The player ID returned from :ref:`listPlayers`
+
+        Returns
+        -------
+        player : AnvilPlayerRef
         """
         if playerUUID == "":
             if "Player" in self.metadata.rootTag:
