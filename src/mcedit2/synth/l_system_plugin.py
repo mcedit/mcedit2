@@ -17,12 +17,11 @@ class LSystemPlugin(GeneratePlugin):
     A GeneratePlugin subclass intended for driving an L-system.
 
     Most of the GeneratePlugin methods are already implemented. To use an LSystemPlugin,
-    you need to implement `getInputsList` and `createInitialSymbol` - after that,
+    you need to implement `getOptionsWidget` and `createInitialSymbol` - after that,
     previewing and generating the L-System is taken care of by LSystemPlugin.
 
-    If `getInputsList` is not capable enough for your needs, you may implement `getOptionsWidget`
-    from GeneratePlugin instead. If you do, you should add `self.iterationsSlider` to your widget
-    to control the iteration depth.
+    In your implementation of `getOptionsWidget`, you should add `self.iterationsSlider`
+     to your widget to control the iteration depth.
 
     A `recursive` attribute is also available. If your L-System is not recursively defined - that
     is, a finite number of iterations will result in a symbol list that has no further `replace`
@@ -47,57 +46,6 @@ class LSystemPlugin(GeneratePlugin):
         self.iterationsSlider.setMaximum(50)
         self.iterationsSlider.setValue(3)
         self.iterationsSlider.valueChanged.connect(self.updatePreview)
-
-    def getInputsList(self):
-        """
-        .... on second thought, not sure if I want to do this.
-
-        Return a list of (name, label, inputType, defaultValue, inputOptions) tuples to configure options
-        that are presented in the plugin's options widget.
-
-        This may be implemented by subclasses to easily present common types of inputs and ensure
-        the previews will be updated when the option's value is changed. Values will also be saved
-        to the user's preferences, keyed on the class name of this LSystemPlugin.
-
-        The values set by the user will be available in the LSystemPlugin's `inputValues`
-        attribute as a `dict`.
-
-        `name` is a string used as a key in the `optionValues` dict.
-        `label` is a string shown to the user in the options widget. `label` should be translated
-            using `self.tr("Label Text")`
-        `inputType` is one of the strings listed below for the different input types.
-        `defaultValue` is the initial value for the input.
-        `inputOptions` is a dict providing additional options for the input widget. See the input
-            types below for additional options for each input type.
-
-        Input types:
-
-            `SpinSlider`
-                An input for entering an integer using a text field, a pair of +/- buttons,
-                and a horizontal slider. The default value should be an integer.
-
-                `inputOptions`:
-                    `min`: Minimum value.
-                    `max`: Maximum value.
-
-            `BlockTypeButton`
-                An input for selecting a block type from the currently edited world.
-
-                `inputOptions`: None
-
-            `ChoiceButton`
-                An input for selecting one option from a list of possible options.
-
-            `TextField`
-                An input for entering arbitrary text. The default value should be a `str`, or
-                preferably a `unicode`.
-
-                `inputOptions`:
-                    `placeholder`: Placeholder text to show in grey whenever the field is empty.
-
-        :return:
-        :rtype:
-        """
 
     def createInitialSymbol(self, bounds):
         """
