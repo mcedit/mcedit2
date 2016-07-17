@@ -8,6 +8,9 @@ MCEdit 2 Documentation
 
 .. toctree::
     plugins
+    editorsession
+    selection
+    worldeditor
 
 
 Indices and tables
