@@ -258,6 +258,9 @@ class EditorSession(QtCore.QObject):
         self.actionDeleteEntities = QtGui.QAction(
             self.tr("Delete Entities"), self, triggered=self.deleteEntities, enabled=False)
 
+        self.actionDeleteEntities = QtGui.QAction(
+            self.tr("Delete Entities And Items"), self, triggered=self.deleteEntitiesAndItems, enabled=False)
+
         self.actionDeleteEntities.setShortcut(QtGui.QKeySequence("Shift+Alt+Del"))
         self.actionDeleteEntities.setObjectName("actionDeleteEntities")
         self.menuEdit.addAction(self.actionDeleteEntities)
@@ -832,6 +835,13 @@ class EditorSession(QtCore.QObject):
 
     def deleteEntities(self):
         command = SimpleRevisionCommand(self, "Delete Entities")
+        with command.begin():
+            entitiesTask = RemoveEntitiesOperation(self.currentDimension, self.currentSelection, removeItems=False)
+            showProgress("Deleting...", entitiesTask)
+        self.pushCommand(command)
+
+    def deleteEntitiesAndItems(self):
+        command = SimpleRevisionCommand(self, "Delete Entities And Items")
         with command.begin():
             entitiesTask = RemoveEntitiesOperation(self.currentDimension, self.currentSelection)
             showProgress("Deleting...", entitiesTask)
