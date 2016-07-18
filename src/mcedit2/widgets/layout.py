@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import traceback
 
+import sys
 from PySide import QtGui
 from PySide.QtCore import Qt
 
@@ -59,7 +60,8 @@ def setWidgetError(widget, exc, msg = "An error has occurred."):
     textArea = QtGui.QTextEdit()
     textArea.setReadOnly(True)
     message = msg + "\n"
-    message += str(exc) + "\n\n"
+    # Sometimes str(exc) returns non-ascii bytes - assume they are filenames?
+    message += str(exc).decode(sys.getfilesystemencoding(), errors='replace') + "\n\n"
     message += traceback.format_exc()
     textArea.setText(message)
     layout.addWidget(textArea)
