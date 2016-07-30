@@ -19,6 +19,7 @@ log = logging.getLogger(__name__)
 class FloodFillTool(EditorTool):
     name = "Flood Fill"
     iconName = "flood_fill"
+    modifiesWorld = True
 
     def mousePress(self, event):
         pos = event.blockPosition

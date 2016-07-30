@@ -98,6 +98,7 @@ class MoveFinishCommand(SimpleRevisionCommand):
 class MoveTool(EditorTool):
     iconName = "move"
     name = "Move"
+    modifiesWorld = True
 
     def __init__(self, editorSession, *args, **kwargs):
         super(MoveTool, self).__init__(editorSession, *args, **kwargs)

@@ -147,6 +147,7 @@ class GenerateTool(EditorTool):
     iconName = "generate"
 
     instantDisplayChunks = 32
+    modifiesWorld = True
 
     def __init__(self, *args, **kwargs):
         EditorTool.__init__(self, *args, **kwargs)

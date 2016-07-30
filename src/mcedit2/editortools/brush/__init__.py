@@ -112,6 +112,8 @@ class BrushTool(EditorTool):
     iconName = "brush"
     maxBrushSize = 512
 
+    modifiesWorld = True
+
     def __init__(self, editorSession, *args, **kwargs):
         super(BrushTool, self).__init__(editorSession, *args, **kwargs)
         self.toolWidget = BrushToolWidget()

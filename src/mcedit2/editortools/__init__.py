@@ -57,6 +57,8 @@ class EditorTool(QtCore.QObject):
     overlayNode = None
     editorSession = weakrefprop()
 
+    modifiesWorld = False
+
     def __init__(self, editorSession, *args, **kwargs):
         """
         Initialize toolWidget here.
@@ -120,6 +122,8 @@ class EditorTool(QtCore.QObject):
     toolPicked = QtCore.Signal(object)
 
     def pick(self):
+        if self.editorSession.readonly and self.modifiesWorld:
+            return
         self.toolPicked.emit(self.name)
 
     def pickToolAction(self):
@@ -142,6 +146,7 @@ class EditorTool(QtCore.QObject):
             triggered=self.pick,
             checkable=True,
             icon=icon,
+            enabled=not(self.editorSession.readonly and self.modifiesWorld)
             )
         action.toolName = name
 

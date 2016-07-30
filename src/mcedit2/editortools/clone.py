@@ -110,6 +110,7 @@ class CloneTool(EditorTool):
     """
     iconName = "clone"
     name = "Clone"
+    modifiesWorld = True
 
     def __init__(self, editorSession, *args, **kwargs):
         super(CloneTool, self).__init__(editorSession, *args, **kwargs)
