@@ -80,6 +80,28 @@ class PasteImportCommand(QtGui.QUndoCommand):
         self.editorSession.moveTool.currentImport = self.pendingImport
         self.editorSession.chooseTool("Move")
 
+class EditingAction(QtGui.QAction):
+    """
+    QAction subclass that is disabled if the EditorSession is in read-only mode.
+    """
+
+    def __init__(self, editorSession, *a, **kw):
+        """
+        QAction ( QObject * parent )
+        QAction ( const QString & text, QObject * parent )
+        QAction ( const QIcon & icon, const QString & text, QObject * parent )
+
+          PySide.QtGui.QAction(PySide.QtCore.QObject)
+          PySide.QtGui.QAction(unicode, PySide.QtCore.QObject)
+          PySide.QtGui.QAction(PySide.QtGui.QIcon, unicode, PySide.QtCore.QObject)
+        """
+        self.editorSession = editorSession
+        a = a + (editorSession,)
+        super(EditingAction, self).__init__(*a, **kw)
+        self.setEnabled(not editorSession.readonly)
+
+    def setEnabled(self, enabled):
+        super(EditingAction, self).setEnabled(enabled and not self.editorSession.readonly)
 
 class EditorSession(QtCore.QObject):
     """
@@ -204,8 +226,8 @@ class EditorSession(QtCore.QObject):
 
         # ---
 
-        self.actionCut = QtGui.QAction(
-            self.tr("Cut"), self, triggered=self.cut, enabled=False)
+        self.actionCut = EditingAction(self,
+            self.tr("Cut"), triggered=self.cut, enabled=False)
 
         self.actionCut.setShortcut(QtGui.QKeySequence.Cut)
         self.actionCut.setObjectName("actionCut")
@@ -218,22 +240,22 @@ class EditorSession(QtCore.QObject):
         self.actionCopy.setObjectName("actionCopy")
         self.menuEdit.addAction(self.actionCopy)
 
-        self.actionPaste = QtGui.QAction(
-            self.tr("Paste"), self, triggered=self.paste, enabled=False)
+        self.actionPaste = EditingAction(self,
+            self.tr("Paste"), triggered=self.paste, enabled=False)
 
         self.actionPaste.setShortcut(QtGui.QKeySequence.Paste)
         self.actionPaste.setObjectName("actionPaste")
         self.menuEdit.addAction(self.actionPaste)
 
-        self.actionPaste_Blocks = QtGui.QAction(
-            self.tr("Paste Blocks"), self, triggered=self.pasteBlocks, enabled=False)
+        self.actionPaste_Blocks = EditingAction(self,
+            self.tr("Paste Blocks"), triggered=self.pasteBlocks, enabled=False)
 
         self.actionPaste_Blocks.setShortcut(QtGui.QKeySequence("Ctrl+Shift+V"))
         self.actionPaste_Blocks.setObjectName("actionPaste_Blocks")
         self.menuEdit.addAction(self.actionPaste_Blocks)
 
-        self.actionPaste_Entities = QtGui.QAction(
-            self.tr("Paste Entities"), self, triggered=self.pasteEntities, enabled=False)
+        self.actionPaste_Entities = EditingAction(self,
+            self.tr("Paste Entities"), triggered=self.pasteEntities, enabled=False)
 
         self.actionPaste_Entities.setShortcut(QtGui.QKeySequence("Ctrl+Alt+V"))
         self.actionPaste_Entities.setObjectName("actionPaste_Entities")
@@ -242,24 +264,24 @@ class EditorSession(QtCore.QObject):
 
         # ---
 
-        self.actionClear = QtGui.QAction(
-            self.tr("Delete"), self, triggered=self.deleteSelection, enabled=False)
+        self.actionClear = EditingAction(self,
+            self.tr("Delete"), triggered=self.deleteSelection, enabled=False)
         self.actionClear.setShortcut(QtGui.QKeySequence.Delete)
         self.actionClear.setObjectName("actionClear")
         self.menuEdit.addAction(self.actionClear)
 
-        self.actionDeleteBlocks = QtGui.QAction(
-            self.tr("Delete Blocks"), self, triggered=self.deleteBlocks, enabled=False)
+        self.actionDeleteBlocks = EditingAction(self,
+            self.tr("Delete Blocks"), triggered=self.deleteBlocks, enabled=False)
 
         self.actionDeleteBlocks.setShortcut(QtGui.QKeySequence("Shift+Del"))
         self.actionDeleteBlocks.setObjectName("actionDeleteBlocks")
         self.menuEdit.addAction(self.actionDeleteBlocks)
 
-        self.actionDeleteEntities = QtGui.QAction(
-            self.tr("Delete Entities"), self, triggered=self.deleteEntities, enabled=False)
+        self.actionDeleteEntities = EditingAction(self,
+            self.tr("Delete Entities"), triggered=self.deleteEntities, enabled=False)
 
-        self.actionDeleteEntities = QtGui.QAction(
-            self.tr("Delete Entities And Items"), self, triggered=self.deleteEntitiesAndItems, enabled=False)
+        self.actionDeleteEntities = EditingAction(self,
+            self.tr("Delete Entities And Items"), triggered=self.deleteEntitiesAndItems, enabled=False)
 
         self.actionDeleteEntities.setShortcut(QtGui.QKeySequence("Shift+Alt+Del"))
         self.actionDeleteEntities.setObjectName("actionDeleteEntities")
@@ -268,8 +290,8 @@ class EditorSession(QtCore.QObject):
 
         # ---
 
-        self.actionFill = QtGui.QAction(
-            self.tr("Fill"), self, triggered=self.fill, enabled=False)
+        self.actionFill = EditingAction(self,
+            self.tr("Fill"), triggered=self.fill, enabled=False)
 
         self.actionFill.setShortcut(QtGui.QKeySequence("Shift+Ctrl+F"))
         self.actionFill.setObjectName("actionFill")
@@ -345,15 +367,15 @@ class EditorSession(QtCore.QObject):
         self.actionExport = QtGui.QAction(self.tr("Export Structure Block .nbt"), self, triggered=self.exportStructure)
         self.menuImportExport.addAction(self.actionExport)
 
-        self.actionImport = QtGui.QAction(self.tr("Import"), self, triggered=self.import_)
+        self.actionImport = EditingAction(self, self.tr("Import"), triggered=self.import_)
         self.actionImport.setShortcut(QtGui.QKeySequence("Ctrl+Shift+D"))
         self.menuImportExport.addAction(self.actionImport)
 
-        self.actionImport = QtGui.QAction(self.tr("Show Exports Library"), self,
-                                          triggered=QtGui.qApp.libraryDockWidget.toggleViewAction().trigger)
+        self.actionShowExportsLibrary = QtGui.QAction(self.tr("Show Exports Library"), self,
+                                                      triggered=QtGui.qApp.libraryDockWidget.toggleViewAction().trigger)
 
-        self.actionImport.setShortcut(QtGui.QKeySequence("Ctrl+Shift+L"))
-        self.menuImportExport.addAction(self.actionImport)
+        self.actionShowExportsLibrary.setShortcut(QtGui.QKeySequence("Ctrl+Shift+L"))
+        self.menuImportExport.addAction(self.actionShowExportsLibrary)
 
         self.menus.append(self.menuImportExport)
 
@@ -361,12 +383,12 @@ class EditorSession(QtCore.QObject):
 
         self.menuChunk = QtGui.QMenu(self.tr("Chunk"))
 
-        self.actionDeleteChunks = QtGui.QAction(self.tr("Delete Chunks"), self, triggered=self.deleteChunks)
-        self.actionCreateChunks = QtGui.QAction(self.tr("Create Chunks"), self, triggered=self.createChunks)
-        self.actionRepopChunks = QtGui.QAction(self.tr("Mark Chunks For Repopulation"),
-                                               self, triggered=self.repopChunks)
-        self.actionRepopChunks = QtGui.QAction(self.tr("Unmark Chunks For Repopulation"),
-                                               self, triggered=self.unRepopChunks)
+        self.actionDeleteChunks = EditingAction(self, self.tr("Delete Chunks"), triggered=self.deleteChunks)
+        self.actionCreateChunks = EditingAction(self, self.tr("Create Chunks"), triggered=self.createChunks)
+        self.actionRepopChunks = EditingAction(self, self.tr("Mark Chunks For Repopulation"),
+                                               triggered=self.repopChunks)
+        self.actionRepopChunks = EditingAction(self, self.tr("Unmark Chunks For Repopulation"),
+                                               triggered=self.unRepopChunks)
 
         self.menuChunk.addAction(self.actionDeleteChunks)
         self.menuChunk.addAction(self.actionCreateChunks)
@@ -408,7 +430,7 @@ class EditorSession(QtCore.QObject):
         saveIcon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/save.png"))
         saveIcon.addFile(resourcePath("mcedit2/assets/mcedit2/icons/save_ok.png"), mode=QtGui.QIcon.Disabled)
 
-        self.actionSave = QtGui.QAction(saveIcon, self.tr("Save"), self, triggered=self.save)
+        self.actionSave = EditingAction(self, saveIcon, self.tr("Save"), triggered=self.save)
         self.actionSave.setEnabled(False)
 
         self.topToolbarActions.append(self.actionSave)
@@ -1492,7 +1514,7 @@ class EditorTab(QtGui.QWidget):
 
         for i in range(self.viewStack.count()):
             self.viewStack.removeWidget(self.viewStack.widget(0))
-            
+
         self.editorSession = None
 
     def setDayTime(self, value):
