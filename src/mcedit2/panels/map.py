@@ -77,7 +77,7 @@ class MapPanel(QtGui.QWidget, Ui_mapWidget):
         self.setupUi(self)
 
         icon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/edit_map.png"))
-        action = QtGui.QAction(icon, "Edit Maps", self)
+        action = QtGui.QAction(icon, self.tr("Edit Maps"), self)
         action.setCheckable(True)
         action.triggered.connect(self.toggleView)
         self._toggleViewAction = action

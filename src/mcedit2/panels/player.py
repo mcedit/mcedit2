@@ -110,7 +110,7 @@ class PlayerPanel(QtGui.QWidget, Ui_playerWidget):
             self.setSelectedPlayerIndex(0)
 
         icon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/edit_player.png"))
-        action = QtGui.QAction(icon, "Edit Player", self)
+        action = QtGui.QAction(icon, self.tr("Edit Player"), self)
         action.setCheckable(True)
         action.triggered.connect(self.toggleView)
         self._toggleViewAction = action
