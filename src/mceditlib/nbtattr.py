@@ -304,7 +304,10 @@ class NBTVectorAttr(NBTListAttr):
             return self
 
         val = super(NBTVectorAttr, self).__get__(instance, owner)
-        return Vector(*val)
+        try:
+            return Vector(*val)
+        except TypeError:
+            raise TypeError("NBT list too short for Vector: %s" % list(val))
 
 
 class KeyedVectorAttr(object):

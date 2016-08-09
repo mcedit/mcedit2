@@ -431,7 +431,7 @@ class _PCTileEntityRef(object):
 
     def __call__(self, rootTag, chunk=None):
         id = rootTag["id"].value
-        cls = _tileEntityClasses.get(id, PCEntityRefBase)
+        cls = _tileEntityClasses.get(id, PCTileEntityRefBase)
         return cls(rootTag, chunk)
 
 PCTileEntityRef = _PCTileEntityRef()
