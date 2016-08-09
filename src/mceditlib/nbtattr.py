@@ -119,10 +119,15 @@ class NBTUUIDAttr(object):
         least = uuidInt & 0xffffffffffffffffL
         most = (uuidInt >> 64) & 0xffffffffffffffffL
         tag = instance.rootTag
-        tag["UUIDLeast"].value = least
-        tag["UUIDMost"].value = most
+        tag["UUIDLeast"].value = _signed(least)
+        tag["UUIDMost"].value = _signed(most)
         instance.dirty = True
 
+
+def _signed(bits):
+    if bits >= (1 << 63):
+        bits -= (1 << 64)
+    return bits
 
 class NBTCompoundRef(object):
     def __init__(self, rootTag, parent):
