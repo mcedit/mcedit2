@@ -3,6 +3,8 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import logging
+import uuid
+
 from mceditlib import nbt
 from mceditlib.blocktypes import VERSION_1_7, VERSION_1_8
 from mceditlib.blocktypes.itemtypes import ItemType
@@ -251,6 +253,7 @@ class PCEntityRefBase(object):
         tag = self.rootTag.copy()
         entity = newEntityClass(tag)
         entity.Position = self.Position + copyOffset
+        entity.UUID = uuid.uuid1()
 
         return self.__class__(tag)
 
