@@ -80,6 +80,7 @@ class PasteImportCommand(QtGui.QUndoCommand):
         self.editorSession.moveTool.currentImport = self.pendingImport
         self.editorSession.chooseTool("Move")
 
+
 class EditingAction(QtGui.QAction):
     """
     QAction subclass that is disabled if the EditorSession is in read-only mode.
@@ -102,6 +103,7 @@ class EditingAction(QtGui.QAction):
 
     def setEnabled(self, enabled):
         super(EditingAction, self).setEnabled(enabled and not self.editorSession.readonly)
+
 
 class EditorSession(QtCore.QObject):
     """
@@ -985,8 +987,6 @@ class EditorSession(QtCore.QObject):
         if self.currentSelection is None:
             return
 
-        sx, sy, sz = [(s + 31) // 32 for s in self.currentSelection.size]
-
         structureOptsDialog = QtGui.QDialog()
         structureOptsDialog.setWindowTitle(self.tr("Structure Block Options"))
         form = QtGui.QFormLayout()
@@ -995,7 +995,6 @@ class EditorSession(QtCore.QObject):
         author = ExportDialogSettings.author.value()
         authorField.setText(author)
 
-        form.addRow(self.tr("Exporting %d files") % (sx * sy * sz), QtGui.QLabel(self.tr("%d x %d x %d") % (sx, sy, sz)))
         form.addRow(self.tr("Author"), authorField)
 
         blockButton = BlockTypeButton(multipleSelect=True)
@@ -1044,23 +1043,8 @@ class EditorSession(QtCore.QObject):
             def _export():
                 filename = result[0]
                 if filename:
-                    if sx > 1 or sy > 1 or sz > 1:
-                        total = sx * sy * sz
-                        dirname = os.path.dirname(filename)
-                        basename = os.path.join(dirname, os.path.splitext(os.path.basename(filename))[0])
-                        for tx in range(sx):
-                            for ty in range(sy):
-                                for tz in range(sz):
-                                    tilename = "%s_%s_%s_%s.nbt" % (basename, tx, ty, tz)
-                                    origin = self.currentSelection.origin
-                                    origin += (tx * 32, ty * 32, tz * 32)
-                                    box = BoundingBox(origin, (32, 32, 32))
-                                    tileSelection = box.intersect(self.currentSelection)
-                                    exportStructure(tilename, self.currentDimension, tileSelection, author, excludedBlocks)
-                                    yield tx * sy * sz + ty * sz + tz, total, os.path.basename(tilename)
-                    else:
-                        exportStructure(filename, self.currentDimension, self.currentSelection, author, excludedBlocks)
-                        yield 1, 1, os.path.basename(filename)
+                    exportStructure(filename, self.currentDimension, self.currentSelection, author, excludedBlocks)
+                    yield 1, 1, os.path.basename(filename)
 
             showProgress(self.tr("Exporting structure blocks..."), _export())
 

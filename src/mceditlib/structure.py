@@ -23,9 +23,6 @@ def exportStructure(filename, dim, selection, author=None, excludedBlocks=None):
     -------
 
     """
-    for s in selection.size:
-        if s > 32:
-            raise ValueError("Structure files are limited to 32x32x32")
 
     excludedBlocks = set(excludedBlocks or [])
 
