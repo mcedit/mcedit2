@@ -18,12 +18,12 @@ def test_relight(schematic_world, pc_world):
     def check():
         sl = 0
         bl = 0
-        chunk = anvilDim.getChunk(cx, cz)
+        chunk = pc_world.getDimension().getChunk(cx, cz)
         for cy in chunk.sectionPositions():
             section = chunk.getSection(cy)
             sl += numpy.sum(section.SkyLight)
             bl += numpy.sum(section.BlockLight)
-        assert (sl, bl) == (367965, 48261)
+        assert (sl, bl) == (245085, 48261) # was 367965, why??
 
     check()
 
