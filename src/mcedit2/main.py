@@ -182,6 +182,8 @@ def startup():
         pygments.lexers.PythonLexer = pygments.lexers.newmod.PythonLexer
 
     from mcedit2.editorapp import MCEditApp
+    
+    from mcedit2 import support_modules
 
     editorApp = MCEditApp(sys.argv)
 
