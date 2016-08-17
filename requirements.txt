@@ -1,8 +1,8 @@
 -r requirements-mceditlib.txt
+pyzmq==15.0.0  # v15.4.0 fails to freeze with PyInstaller - see pyinstaller/issues/2147
 pyside>=1.2.0
 pyopengl
 ipython
 qtconsole
 pygments
-pyzmq
 pastebin
