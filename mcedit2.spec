@@ -20,7 +20,8 @@ except ImportError:
 
 # --- Configurations ---
 
-onefile = True  # if False, also skips the distribution packaging
+is_win = sys.platform == 'win32'
+is_osx = sys.platform == 'darwin'
 
 SEVENZIP = r"C:\Program Files\7-Zip\7z.exe"
 
@@ -32,10 +33,18 @@ if 'APPVEYOR_BUILD_FOLDER' in os.environ:
 arch_plat = os.environ.get('PYTHON_ARCH_PLAT')
 if arch_plat is None:
     _arch = platform.architecture()[0][:2]
-    _plat = "win" if os.name == 'nt' else os.name
+    _plat = "win" if sys.platform == 'win32' else os.name
     
     arch_plat = _plat + _arch
 
+if is_win:
+    exe_name = dist_app_name = "mcedit2.exe"
+    exclude_binaries = False
+
+if is_osx:
+    exe_name = "MCEdit 2"
+    dist_app_name = "MCEdit 2.app"
+    exclude_binaries = True
 
 # --- Get version number and write to _version.py ---
 
@@ -152,20 +161,20 @@ def apply_filter(toc):
 a.datas = apply_filter(a.datas)
 a.binaries = apply_filter(a.binaries)
 
-if onefile:
+if is_win:
     a.scripts += a.binaries + a.zipfiles + a.datas + a.zipped_data
 
 exe = EXE(pyz,
           a.scripts,
-          exclude_binaries=not onefile,
-          name='mcedit2.exe',
+          exclude_binaries=exclude_binaries,
+          name=exe_name,
           debug=True,
           strip=None,
           upx=False,
           console=True,
           icon="mcediticon.ico")
 
-if not onefile:
+if is_osx:
     coll = COLLECT(exe,
                    a.binaries,
                    a.zipfiles,
@@ -174,20 +183,31 @@ if not onefile:
                    upx=True,
                    name='mcedit2')
     
+    bundle = BUNDLE(coll,
+                    name=dist_app_name,
+                    icon="mcedit2.icns",
+                    bundle_identifier='net.mcedit.mcedit2',
+                    )
+    
 # --- Distribution packaging ---
 
-if onefile:
-    dist_folder_path = path.join("dist", dist_folder_name)
-    os.makedirs(dist_folder_path)
-    shutil.copy(path.join("dist", "mcedit2.exe"), dist_folder_path)
+
+dist_folder_path = path.join("dist", dist_folder_name)
+os.makedirs(dist_folder_path)
+
+if is_osx:
+    shutil.copytree(path.join("dist", dist_app_name), path.join(dist_folder_path, dist_app_name))
+else:
+    shutil.copy(path.join("dist", dist_app_name), dist_folder_path)
+
+userdata_path = path.join(dist_folder_path, "MCEdit 2 Files")
+plugins_path = path.join(userdata_path, "plugins")
+
+os.makedirs(userdata_path)
+
+shutil.copytree(path.join('src', 'plugins'), plugins_path)
     
-    userdata_path = path.join(dist_folder_path, "MCEdit 2 Files")
-    plugins_path = path.join(userdata_path, "plugins")
-    
-    os.makedirs(userdata_path)
-    
-    shutil.copytree(path.join('src', 'plugins'), plugins_path)
-    
+if is_win:
     sfx_exe_path = path.join("dist", sfx_exe_name)
     
     subprocess.check_call(
