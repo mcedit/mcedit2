@@ -47,7 +47,7 @@ def getUserFilesDirectory():
 
     else:
         folder = os.path.dirname(resources.getSrcFolder())
-        dataDir = os.path.join(folder, "MCEdit User Data")
+        dataDir = os.path.join(folder, "MCEdit 2 Files")
 
     if not os.path.exists(dataDir):
         os.makedirs(dataDir)
