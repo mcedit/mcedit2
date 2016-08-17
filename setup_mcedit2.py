@@ -18,12 +18,17 @@ install_requires = [
     "numpy",
 ]
 
+include_dirs = [numpy.get_include()]
+
 mcedit2_ext_modules = cythonize(
     [
         "src/mcedit2/rendering/blockmodels.pyx",
         "src/mcedit2/rendering/modelmesh.pyx",
-    ]
+    ],
     )
+
+for m in mcedit2_ext_modules:
+    m.include_dirs = include_dirs
 
 setup(name='mcedit2',
       version=version,
@@ -49,7 +54,7 @@ setup(name='mcedit2',
       packages=["mcedit2"],
       package_dir={'': 'src'},
       ext_modules=mcedit2_ext_modules,
-      include_dirs=numpy.get_include(),
+      include_dirs=include_dirs,
       include_package_data=True,
       zip_safe=False,
       install_requires=install_requires,

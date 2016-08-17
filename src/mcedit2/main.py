@@ -32,8 +32,10 @@ def writer(stream):
 
     return _write
 
-sys.stdout = codecs.getwriter(sys.stdin.encoding)(sys.stdout, errors='ignore')
-sys.stderr = codecs.getwriter(sys.stdin.encoding)(sys.stderr, errors='ignore')
+ioencoding = sys.stdin.encoding or 'utf-8'
+
+sys.stdout = codecs.getwriter(ioencoding)(sys.stdout, errors='ignore')
+sys.stderr = codecs.getwriter(ioencoding)(sys.stderr, errors='ignore')
 
 sys.stdout.write = writer(sys.stdout)
 sys.stderr.write = writer(sys.stderr)
@@ -109,7 +111,7 @@ def setup_logging():
     logging.captureWarnings(True)
     from mcedit2.util.directories import getUserFilesDirectory
     mceditUserData = getUserFilesDirectory()
-    logfilename = os.path.join(mceditUserData, 'mcedit.log')
+    logfilename = os.path.join(mceditUserData, 'mcedit2.log')
 
     abslogfile = os.path.abspath(logfilename)
     if hasattr(sys, 'frozen'):
@@ -117,7 +119,7 @@ def setup_logging():
 
         if sys.platform == "darwin":
             log_debug("OS X found.")
-            logfile = os.path.expanduser(b"~/Library/Logs/" + logfilename)
+            logfile = os.path.expanduser(b"~/Library/Logs/" + 'mcedit2.log')
         else:
             logfile = abslogfile
     else:

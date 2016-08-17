@@ -18,10 +18,15 @@ install_requires = [
     "numpy",
 ]
 
+include_dirs = [numpy.get_include()]
+
 mceditlib_ext_modules = cythonize([
     "src/mceditlib/nbt.pyx",
     "src/mceditlib/relight/with_cython.pyx"
 ])
+
+for m in mceditlib_ext_modules:
+    m.include_dirs = include_dirs
 
 setup(name='mceditlib',
       version=version,
@@ -45,7 +50,7 @@ setup(name='mceditlib',
       packages=["mceditlib"],
       package_dir={'': 'src'},
       ext_modules=mceditlib_ext_modules,
-      include_dirs=numpy.get_include(),
+      include_dirs=include_dirs,
       include_package_data=True,
       zip_safe=False,
       install_requires=install_requires,
