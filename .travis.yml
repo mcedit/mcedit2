@@ -9,9 +9,6 @@ cache:
   directories:
     - $HOME/.cache/pip
 
-os:
-  - linux
-
 python:
   - "2.7"
 
