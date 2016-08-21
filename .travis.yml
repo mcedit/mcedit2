@@ -41,3 +41,10 @@ script:
   # - if [ "${TRAVIS_TAG}x" = "x" ]; then return 0; fi
   - pyinstaller mcedit2.spec
 
+deploy:
+  provider: releases
+  api_key: $GITHUB_AUTH_TOKEN
+  file: dist/mcedit2-*.exe
+  skip_cleanup: true
+  on:
+    tags: true
