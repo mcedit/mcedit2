@@ -33,7 +33,7 @@ if 'APPVEYOR_BUILD_FOLDER' in os.environ:
 arch_plat = os.environ.get('PYTHON_ARCH_PLAT')
 if arch_plat is None:
     _arch = platform.architecture()[0][:2]
-    _plat = "win" if sys.platform == 'win32' else os.name
+    _plat = "win" if sys.platform == 'win32' else "macosx" if sys.platform == 'darwin' else sys.platform
     
     arch_plat = _plat + _arch
 
@@ -70,6 +70,7 @@ with file("src/mcedit2/_version.py", "w") as f:
 
 dist_folder_name = "mcedit2-%s-%s" % (arch_plat, build_version)
 sfx_exe_name = dist_folder_name + ".exe"
+dist_zip_name = dist_folder_name + ".zip"
 
 # --- Install mcedit2 in develop-mode and rebuild extensions ---
 
@@ -219,3 +220,9 @@ if is_win:
         ],
         cwd="dist")
 
+if is_osx:
+    dist_zip_path = path.join("dist", dist_zip_name)
+    subprocess.check_call(
+        ["zip", "-r", dist_zip_name, dist_folder_name],
+        cwd="dist"
+    )
