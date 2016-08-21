@@ -1,6 +1,8 @@
 os:
   - osx
 
+osx_image: xcode8
+
 language: generic
 
 # Use new container-based Travis infrastructure.
@@ -9,23 +11,23 @@ sudo: false
 # Cache pip packages. `cache: pip` does not work with custom install steps.
 cache:
   directories:
-    - $HOME/.cache/pip
+    - $HOME/Library/Caches/pip
+    - $HOME/.pip-accel
 
 install:
-  - brew install python qt pyside
   # Install wheel, upgrade pip to use wheel-cache
   - pip install -U pip wheel
   
   # Download-progress bars break Travis's log view. Disable them by piping output
   # through another program (if output is not a tty, no progress bars)
   # Install dependencies.
-  - pip install -r requirements-mceditlib.txt | cat
+  - pip install -r requirements.txt | cat
 
   # Install dependencies for tests.
   - pip install -r tests/requirements.txt | cat
 
-  # Install mceditlib.
-  - python setup_mceditlib.py develop
+  # Install mcedit.
+  - python setup.py develop
 
 script:
   - py.test -n 5 tests
