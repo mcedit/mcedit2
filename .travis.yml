@@ -1,19 +1,18 @@
 os:
   - osx
 
-language: python
+language: generic
+
 # Use new container-based Travis infrastructure.
 sudo: false
+
 # Cache pip packages. `cache: pip` does not work with custom install steps.
 cache:
   directories:
     - $HOME/.cache/pip
 
-python:
-  - "2.7"
-
-
 install:
+  - brew install python qt pyside
   # Install wheel, upgrade pip to use wheel-cache
   - pip install -U pip wheel
   
