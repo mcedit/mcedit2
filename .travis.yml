@@ -1,3 +1,6 @@
+os:
+  - osx
+
 language: python
 # Use new container-based Travis infrastructure.
 sudo: false
