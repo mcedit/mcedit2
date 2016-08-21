@@ -32,7 +32,7 @@ install:
 
   - pip install git+http://github.com/pyinstaller/pyinstaller
 
-  - pip install pyside # xxx?
+  - brew install pyside
   # Install mcedit.
   - python setup.py develop
 
