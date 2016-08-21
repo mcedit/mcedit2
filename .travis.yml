@@ -8,6 +8,10 @@ language: generic
 # Use new container-based Travis infrastructure.
 sudo: false
 
+branches:
+  only:
+    - appveyor-testing
+
 # Cache pip packages. `cache: pip` does not work with custom install steps.
 cache:
   directories:
@@ -30,5 +34,7 @@ install:
   - python setup.py develop
 
 script:
-  - py.test -n 5 tests
+  - export MCEDIT_BUILD_VERSION=2.0.0-travis.${TRAVIS_BUILD_NUMBER}
+  # - if [ "${TRAVIS_TAG}x" = "x" ]; then return 0; fi
+  - pyinstaller mcedit2.spec
 
