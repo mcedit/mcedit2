@@ -42,6 +42,7 @@ deploy:
   provider: releases
   api_key: $GITHUB_AUTH_TOKEN
   file: dist/mcedit2-*.zip
+  file_glob: true
   skip_cleanup: true
   on:
     tags: true
