@@ -8,10 +8,6 @@ language: generic
 # Use new container-based Travis infrastructure.
 sudo: false
 
-branches:
-  only:
-    - appveyor-testing
-
 # Cache pip packages. `cache: pip` does not work with custom install steps.
 cache:
   directories:
