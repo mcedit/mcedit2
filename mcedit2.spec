@@ -70,6 +70,7 @@ with file("src/mcedit2/_version.py", "w") as f:
 
 dist_folder_name = "mcedit2-%s-%s" % (arch_plat, build_version)
 sfx_exe_name = dist_folder_name + ".exe"
+dist_zip_name = dist_folder_name + ".zip"
 
 # --- Install mcedit2 in develop-mode and rebuild extensions ---
 
@@ -219,3 +220,8 @@ if is_win:
         ],
         cwd="dist")
 
+if is_osx:
+    dist_zip_path = path.join("dist", dist_zip_name)
+    subprocess.check_call(
+        ["zip", "-r", dist_zip_path, dist_folder_path]
+    )
