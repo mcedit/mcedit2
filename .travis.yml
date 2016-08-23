@@ -41,6 +41,7 @@ script:
   # - if [ "${TRAVIS_TAG}x" = "x" ]; then return 0; fi
   - pyinstaller mcedit2.spec
 
+# Deploy to GitHub Releases
 deploy:
   provider: releases
   api_key: $GITHUB_AUTH_TOKEN
