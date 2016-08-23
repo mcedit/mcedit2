@@ -33,7 +33,7 @@ if 'APPVEYOR_BUILD_FOLDER' in os.environ:
 arch_plat = os.environ.get('PYTHON_ARCH_PLAT')
 if arch_plat is None:
     _arch = platform.architecture()[0][:2]
-    _plat = "win" if sys.platform == 'win32' else os.name
+    _plat = "win" if sys.platform == 'win32' else "macosx" if sys.platform == 'darwin' else sys.platform
     
     arch_plat = _plat + _arch
 
