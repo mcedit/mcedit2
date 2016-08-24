@@ -1544,7 +1544,9 @@ class EditorTab(QtGui.QWidget):
     viewChanged = QtCore.Signal(object)
 
     def _viewChanged(self, index):
-        self.viewChanged.emit(self.currentView())
+        view = self.currentView()
+        if view is not None:
+            self.viewChanged.emit(view)
 
     def viewDidChange(self, view):
         self.miniMap.centerOnPoint(view.viewCenter())
