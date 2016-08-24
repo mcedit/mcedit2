@@ -33,8 +33,8 @@ install:
   - python setup.py develop
 
 script:
-  - export MCEDIT_BUILD_VERSION=2.0.0-travis.${TRAVIS_BUILD_NUMBER}
-  # - if [ "${TRAVIS_TAG}x" = "x" ]; then return 0; fi
+  - if [ "${TRAVIS_TAG}x" = "x" ]; then return 0; fi
+  - export MCEDIT_BUILD_VERSION=${TRAVIS_TAG}
   - pyinstaller mcedit2.spec
 
 # Deploy to GitHub Releases

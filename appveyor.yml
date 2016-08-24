@@ -11,11 +11,6 @@
 # version format
 version: 2.0.0-appveyor-testing-{build}
 
-# branches to build
-branches:
-  # whitelist
-  only:
-    - appveyor-testing
 
 cache:
   # Cache downloaded pip packages.
@@ -38,7 +33,7 @@ environment:
       PYTHON_ARCH_PLAT: 'win64'
 
   global:
-    MCEDIT_BUILD_VERSION: $(appveyor_build_version)
+    MCEDIT_BUILD_VERSION: $(APPVEYOR_REPO_TAG_NAME)
 
 
 # scripts that run after cloning repository
@@ -52,18 +47,16 @@ build_script:
   - pyinstaller mcedit2.spec
 
 artifacts:
-  - path: dist/mcedit2-$(PYTHON_ARCH_PLAT)-$(MCEDIT_BUILD_VERSION).exe
+  - path: dist/mcedit2-.*.exe
 
 deploy:
-  # release: MCEdit-{MCEDIT_BUILD_VERSION}
-  release: MCEdit-2.0.0-appveyor-testing
+  release: MCEdit-{MCEDIT_BUILD_VERSION}
   description: 'MCEdit 2 beta release $(MCEDIT_BUILD_VERSION)'
   provider: GitHub
   auth_token: "$(GITHUB_AUTH_TOKEN)"
-  artifact: dist/mcedit2-$(PYTHON_ARCH_PLAT)-$(MCEDIT_BUILD_VERSION).exe
+  artifact: dist/mcedit2-.*.exe
   draft: true
-  prerelease: false
+  prerelease: true
   force_update: true
   on:
-    branch: appveyor-testing
-    # appveyor_repo_tag: true        # deploy on tag push only
+    appveyor_repo_tag: true        # deploy on tag push only
