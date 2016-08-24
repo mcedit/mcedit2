@@ -47,14 +47,13 @@ build_script:
   - pyinstaller mcedit2.spec
 
 artifacts:
-  - path: dist/mcedit2-.*.exe
+  - path: dist/mcedit2-*.exe
 
 deploy:
-  release: MCEdit-{MCEDIT_BUILD_VERSION}
-  description: 'MCEdit 2 beta release $(MCEDIT_BUILD_VERSION)'
+  description: 'MCEdit 2 beta release $(APPVEYOR_REPO_TAG_NAME)'
   provider: GitHub
   auth_token: "$(GITHUB_AUTH_TOKEN)"
-  artifact: dist/mcedit2-.*.exe
+  artifact: /dist\/mcedit2-.*\.exe/
   draft: true
   prerelease: true
   force_update: true
