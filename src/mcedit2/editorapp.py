@@ -81,8 +81,7 @@ class MCEditApp(QtGui.QApplication):
     def __init__(self, argv):
         super(MCEditApp, self).__init__(argv)
         MCEditApp.app = self
-
-        minecraftinstall.GetInstalls().ensureValidInstall()
+        
         self.ensureSingle()
 
         self.commandLineWorlds = []
@@ -336,12 +335,12 @@ class MCEditApp(QtGui.QApplication):
 
         mainWindow.showMaximized()
 
-        QtCore.QTimer.singleShot(0, self.didFinishLaunching)
-
     # --- Startup code ---
+    
+    def startup(self):
+        
+        minecraftinstall.GetInstalls().ensureValidInstall()
 
-    @profiler.function
-    def didFinishLaunching(self):
         log.info("Finding plugins")
 
         if getattr(sys, 'frozen', False):

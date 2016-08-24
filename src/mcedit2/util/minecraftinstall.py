@@ -3,15 +3,19 @@
 """
 from __future__ import absolute_import, division, print_function
 import hashlib
+import json
 import re
 import zipfile
-from PySide import QtGui, QtCore
+
+import time
+from PySide import QtGui, QtCore, QtNetwork
 import logging
 import os
 from PySide.QtCore import Qt
 from mcedit2.resourceloader import ResourceLoader
 from mcedit2.ui.minecraft_installs import Ui_installsWidget
 from mcedit2.util import settings
+from mcedit2.util.directories import getUserFilesDirectory
 from mceditlib import directories
 
 log = logging.getLogger(__name__)
@@ -25,12 +29,15 @@ allowSnapshotsOption = settings.Settings().getOption("minecraft_installs/allow_s
 
 _installs = None
 
+_netManager = QtNetwork.QNetworkAccessManager()
+
+_versionCacheDir = os.path.join(getUserFilesDirectory(), 'versionCache')
 
 def getResourceLoaderForFilename(filename):
-    # Is this world inside a MultiMC instance?
     filename = os.path.normpath(filename)
     installs = GetInstalls()
 
+    # Is this world inside a MultiMC instance?
     for instance in installs.instances:
         savesFolder = os.path.normpath(instance.saveFileDir)
         if filename.startswith(savesFolder):
@@ -79,7 +86,10 @@ def md5hash(filename):
         return md5.hexdigest()
 
 
-class MCInstallGroup(object):
+class MCInstallGroup(QtCore.QObject):
+    
+    _requiredVersion = '1.9.4'
+            
     def __init__(self):
         """
         Represents all Minecraft installs known to MCEdit. Loads installs from settings and detects the current install
@@ -90,6 +100,7 @@ class MCInstallGroup(object):
         :return:
         :rtype:
         """
+        super(MCInstallGroup, self).__init__()
         self._installations = list(self._loadInstalls())
         self._mmcInstalls = list(self._loadMMCInstalls())
         path = currentInstallOption.value()
@@ -198,16 +209,18 @@ class MCInstallGroup(object):
         :return:
         :rtype:
         """
-        requiredVersion = self.findVersion1_9()
+        requiredVersion = self.findVersionWithAssets()
         if not requiredVersion:
-            msgBox = QtGui.QMessageBox()
-            msgBox.setWindowTitle("Minecraft not found.")
-            msgBox.setText("MCEdit requires an installed Minecraft version 1.9 or greater to "
-                           "access block textures, models, and metadata.")
-
-            msgBox.exec_()
-            installsWidget = MinecraftInstallsDialog()
-            installsWidget.exec_()
+            self.downloadVersionWithAssets()
+            
+            # msgBox = QtGui.QMessageBox()
+            # msgBox.setWindowTitle("Minecraft not found.")
+            # msgBox.setText("MCEdit requires an installed Minecraft version 1.9 or greater to "
+            #                "access block textures, models, and metadata.")
+            #
+            # msgBox.exec_()
+            # installsWidget = MinecraftInstallsDialog()
+            # installsWidget.exec_()
 
     @property
     def mmcInstalls(self):
@@ -219,7 +232,11 @@ class MCInstallGroup(object):
             for instance in mmcInstall.instances:
                 yield instance
 
-    def findVersion1_9(self):
+    def findVersionWithAssets(self):
+        cachedVersionPath = os.path.join(_versionCacheDir, self._requiredVersion + ".jar")
+        if os.path.exists(cachedVersionPath):
+            return cachedVersionPath
+        
         def matchVersion(version):
             major, minor, rev = splitVersion(version)
             if (major, minor) >= (1, 9):
@@ -248,8 +265,130 @@ class MCInstallGroup(object):
                     if jarOkay(jarPath):
                         return jarPath
 
+    def downloadVersionWithAssets(self):
+        progressDialog = QtGui.QProgressDialog(self.tr("Downloading Minecraft %s") % self._requiredVersion,
+                                               "Cancel",
+                                               0, 4)
+        
+        try:
+            self._downloadVersionWithAssets(progressDialog)
+            
+        finally:
+            progressDialog.reset()
+                    
+    def _downloadVersionWithAssets(self, progressDialog):
+
+        def displayFailure(msg):
+            result = QtGui.QMessageBox.warning(None,
+                                       self.tr("Failed to download the required Minecraft version."),
+                                       self.tr("An error occured while downloading Minecraft from the official servers.\n\n")
+                                       + msg,
+                                       QtGui.QMessageBox.Retry | QtGui.QMessageBox.Cancel)
+            
+            return result == QtGui.QMessageBox.Retry
+            
+                    
+        manifestURL = 'https://launchermeta.mojang.com/mc/game/version_manifest.json'
+        
+        versionInfoURL = None
+        clientURL = None
+        
+        shouldRetry = True
+        while shouldRetry:
+            if versionInfoURL is None:
+                # -- Download version manifest --
+                log.info("Downloading version manifest")
+                progressDialog.setLabelText(self.tr("Downloading version manifest"))
+                        
+                request = QtNetwork.QNetworkRequest(manifestURL)
+                manifestReply = _netManager.get(request)
+                
+                while not manifestReply.isFinished():
+                    QtGui.QApplication.processEvents()
+                    progressDialog.setValue(1)
+                    
+                log.info("Finished")
+                code = manifestReply.error()
+                if code:
+                    shouldRetry = displayFailure(self.tr("Failed to download version manifest. (Error code: %s)") % str(code))
+                    continue
+                    
+                try:
+                    data = manifestReply.readAll()
+                    log.info("Parsing version manifest")
+                    progressDialog.setLabelText(self.tr("Parsing version manifest"))
+ 
+                    jsonManifest = json.loads(data.data())
+                    
+                    versions = jsonManifest['versions']
+                    
+                    targetInfo = [v for v in versions if v['id'] == self._requiredVersion][0]
+                    versionInfoURL = targetInfo['url']
+
+                except Exception as e:
+                    log.exception("Error parsing version manifest")
+                    shouldRetry = displayFailure(self.tr("Failed to parse version manifest. (Exception: %s)") % str(e))
+                    continue
+            
+            if clientURL is None:
+                # -- Download version info file --
+                request = QtNetwork.QNetworkRequest(versionInfoURL)
+                versionInfoDownloadReply = _netManager.get(request)
+                log.info("Downloading version info")
+                progressDialog.setLabelText(self.tr("Downloading version info"))
+
+                while not versionInfoDownloadReply.isFinished():
+                    QtGui.QApplication.processEvents()
+                    progressDialog.setValue(2)
+                
+                code = versionInfoDownloadReply.error()
+                if code:
+                    shouldRetry = displayFailure(self.tr("Failed to download version info. (Error code: %s)") % str(code))
+                    continue
+            
+                try:
+                    data = versionInfoDownloadReply.readAll()
+                    log.info("Parsing Minecraft %s info", self._requiredVersion)
+                    progressDialog.setLabelText(self.tr("Parsing version info"))
+                    
+                    jsonVersion = json.loads(data.data())
+                    downloads = jsonVersion['downloads']
+                    client = downloads['client']
+                    clientURL = client['url']
+                
+                except Exception as e:
+                    log.exception("Error parsing version info file")
+                    shouldRetry = displayFailure(self.tr("Failed to parse version info file. (Exception: %s)") % str(e))
+                    continue
+            
+            # -- Download client jar --
+            request = QtNetwork.QNetworkRequest(clientURL)
+            versionDownloadReply = _netManager.get(request)
+            log.info("Downloading Minecraft jar")
+            progressDialog.setLabelText(self.tr("Downloading Minecraft jar"))
+            
+            while not versionDownloadReply.isFinished():
+                QtGui.QApplication.processEvents()
+                progressDialog.setValue(3)
+            
+            code = versionDownloadReply.error()
+            if code:
+                shouldRetry = displayFailure(self.tr("Failed to download Minecraft jar. (Error code: %s)") % str(code))
+                continue
+            
+            data = versionDownloadReply.readAll()
+            if not os.path.exists(_versionCacheDir):
+                os.makedirs(_versionCacheDir)
+                
+            with file(os.path.join(_versionCacheDir, self._requiredVersion + '.jar'), 'wb') as f:
+                f.write(data.data())
+                
+            shouldRetry = False
+            log.info("Downloaded %s", self._requiredVersion + '.jar')
+            
+
     def getDefaultResourceLoader(self):
-        v18 = self.findVersion1_9()
+        v18 = self.findVersionWithAssets()
         loader = ResourceLoader(v18)
         loader.addZipFile(v18)
         return loader
@@ -304,7 +443,7 @@ class MCInstall(object):
                 "path": self.path}
 
     def getResourceLoader(self, version, resourcePack):
-        v1_9 = self.installGroup.findVersion1_9()
+        v1_9 = self.installGroup.findVersionWithAssets()
         loader = ResourceLoader(v1_9)
         if resourcePack:
             try:
@@ -353,7 +492,7 @@ class MMCInstance(object):
         return self.install.getVersionJarPath(self.version)
 
     def getResourceLoader(self, resourcePack=None):
-        v1_9 = self.install.installGroup.findVersion1_9()
+        v1_9 = self.install.installGroup.findVersionWithAssets()
         loader = ResourceLoader(v1_9)
         if resourcePack:
             loader.addZipFile(resourcePack)
@@ -644,7 +783,7 @@ class MinecraftInstallsDialog(QtGui.QDialog, Ui_installsWidget):
             event.ignore()
 
     def close(self):
-        if not GetInstalls().findVersion1_9():
+        if not GetInstalls().findVersionWithAssets():
             button = QtGui.QMessageBox.critical(self,
                                                 "Minecraft Install Needed",
                                                 "Cannot start MCEdit without at least one Minecraft installation version "

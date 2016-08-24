@@ -188,6 +188,7 @@ def startup():
     from mcedit2 import support_modules
 
     editorApp = MCEditApp(sys.argv)
+    editorApp.startup()
 
     return editorApp
 
