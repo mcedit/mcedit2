@@ -223,5 +223,6 @@ if is_win:
 if is_osx:
     dist_zip_path = path.join("dist", dist_zip_name)
     subprocess.check_call(
-        ["zip", "-r", dist_zip_path, dist_folder_path]
+        ["zip", "-r", dist_zip_name, dist_folder_name],
+        cwd="dist"
     )
