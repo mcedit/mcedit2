@@ -58,14 +58,15 @@ class SelectionCoordinateWidget(QtGui.QWidget, Ui_selectionCoordWidget):
             self.heightLabel.setText("to")
             self.lengthLabel.setText("to")
 
-        self.xMaxInput.setValue(size[0])
-        self.yMaxInput.setValue(size[1])
-        self.zMaxInput.setValue(size[2])
-
         minVal = 0 if state else -2000000000
         self.xMaxInput.setMinimum(minVal)
         self.yMaxInput.setMinimum(minVal)
         self.zMaxInput.setMinimum(minVal)
+
+        self.xMaxInput.setValue(size[0])
+        self.yMaxInput.setValue(size[1])
+        self.zMaxInput.setValue(size[2])
+
 
     boxChanged = QtCore.Signal(BoundingBox)
 
