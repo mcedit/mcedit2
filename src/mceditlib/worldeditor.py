@@ -684,7 +684,7 @@ class WorldEditor(object):
         if dimName == "":
             return 0
 
-        matches = re.findall(r'-[0-9]+', dimName)
+        matches = re.findall(r'-?[0-9]+', dimName)
         if not len(matches):
             raise ValueError("Could not parse a dimension number from %s", dimName)
         return int(matches[-1])
