@@ -53,3 +53,4 @@ src/mceditlib/relight/with_cython.html
 src/mcedit2/ui/**/*.py
 !__init__.py
 env-av
+MCEdit 2 Files
