@@ -340,6 +340,8 @@ cdef class BlockModels(object):
 
         textureVars = {}
         for k, v in rawTextureVars.iteritems():
+            if v is None:
+                continue
             while v.startswith("#"):
                 v = rawTextureVars.get(v[1:])
             if v:
