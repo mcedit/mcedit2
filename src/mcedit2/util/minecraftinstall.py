@@ -209,19 +209,38 @@ class MCInstallGroup(QtCore.QObject):
         :return:
         :rtype:
         """
-        requiredVersion = self.findVersionWithAssets()
-        if not requiredVersion:
-            self.downloadVersionWithAssets()
+        while True:
+            requiredVersion = self.findVersionWithAssets()
+            if not requiredVersion:
+                self.downloadVersionWithAssets()
+            else:
+                break
+            requiredVersion = self.findVersionWithAssets()
+            if not requiredVersion:
             
-            # msgBox = QtGui.QMessageBox()
-            # msgBox.setWindowTitle("Minecraft not found.")
-            # msgBox.setText("MCEdit requires an installed Minecraft version 1.9 or greater to "
-            #                "access block textures, models, and metadata.")
-            #
-            # msgBox.exec_()
-            # installsWidget = MinecraftInstallsDialog()
-            # installsWidget.exec_()
-
+                msgBox = QtGui.QMessageBox()
+                msgBox.setWindowTitle("Minecraft not found.")
+                msgBox.setText("MCEdit requires an installed Minecraft version 1.9 or greater to "
+                               "access block textures, models, and metadata.")
+                
+                download = msgBox.addButton(self.tr("Download Minecraft"), QtGui.QMessageBox.AcceptRole)
+                configure = msgBox.addButton(self.tr("Configure Installs"), QtGui.QMessageBox.ActionRole)
+                exit_ = msgBox.addButton(self.tr("Exit MCEdit"), QtGui.QMessageBox.RejectRole)
+    
+                msgBox.exec_()
+                result = msgBox.clickedButton()
+                log.info("Result: %s", result)
+                if result == download:
+                    continue
+                if result == configure:
+                    installsWidget = MinecraftInstallsDialog()
+                    installsWidget.exec_()
+                    continue
+                if result == exit_:
+                    raise SystemExit
+            else:
+                break
+                
     @property
     def mmcInstalls(self):
         return self._mmcInstalls
