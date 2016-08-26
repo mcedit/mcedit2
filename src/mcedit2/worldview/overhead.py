@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from PySide import QtGui
 import logging
 from mcedit2.worldview.worldview import WorldView
-from mcedit2.worldview.viewaction import MoveViewMouseAction, ZoomWheelAction
+from mcedit2.worldview.viewaction import MoveViewMouseAction, ZoomWheelActions
 from mcedit2.worldview import worldruler
 from mceditlib.geometry import Vector
 
@@ -40,8 +40,9 @@ class OverheadWorldView(WorldView):
         self.compassNode.yawPitch = 180, 0
         self.viewActions.extend((
             MoveViewMouseAction(),
-            ZoomWheelAction(),
         ))
+        self.viewActions.extend(ZoomWheelActions())
+        
         self.worldScene.minlod = 2
 
     def updateMatrices(self):

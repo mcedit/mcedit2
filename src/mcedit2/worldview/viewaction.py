@@ -254,40 +254,17 @@ class MoveViewMouseAction(ViewAction):
         event.view.update()
 
 
-class ZoomWheelAction(ViewAction):
-    _zooms = None
-    labelText = "Zoom View"
+def ZoomWheelActions():
     maxScale = 16.
     minScale = 1. / 64
-    settingsKey = None
-
-    @property
-    def zooms(self):
-        if self._zooms:
-            return self._zooms
-        zooms = []
-        _i = self.minScale
-        while _i < self.maxScale:
-            zooms.append(_i)
-            _i *= 2.0
-
-        self._zooms = zooms
-        return zooms
-
-    def wheelEvent(self, event):
-        d = event.delta()
-        mousePos = (event.x(), event.y())
-
-        if d < 0:
-            i = self.zooms.index(event.view.scale)
-            if i < len(self.zooms) - 1:
-                self.zoom(event.view, self.zooms[i + 1], mousePos)
-        elif d > 0:
-            i = self.zooms.index(event.view.scale)
-            if i > 0:
-                self.zoom(event.view, self.zooms[i - 1], mousePos)
-
-    def zoom(self, view, scale, (mx, my)):
+    
+    zooms = []
+    _i = minScale
+    while _i < maxScale:
+        zooms.append(_i)
+        _i *= 2.0
+    
+    def zoom(view, scale, (mx, my)):
 
         # Get mouse position in world coordinates
         worldPos = view.unprojectAtHeight(mx, my, 0)
@@ -303,3 +280,33 @@ class ZoomWheelAction(ViewAction):
             view.centerPoint = view.centerPoint - delta
 
             log.debug("zoom offset %s, pos %s, delta %s, scale %s", view.centerPoint, (mx, my), delta, view.scale)
+    
+    class ZoomInAction(ViewAction):
+        settingsKey = "worldview.general.zoom_in"
+        button = ViewAction.WHEEL_UP
+        acceptsMouseWheel = True
+        labelText = "Zoom In"
+        
+        def buttonPressEvent(self, event):
+            log.debug(self.labelText)
+            mousePos = (event.x(), event.y())
+
+            i = zooms.index(event.view.scale)
+            if i > 0:
+                zoom(event.view, zooms[i - 1], mousePos)
+
+    class ZoomOutAction(ViewAction):
+        settingsKey = "worldview.general.zoom_out"
+        button = ViewAction.WHEEL_DOWN
+        acceptsMouseWheel = True
+        labelText = "Zoom Out"
+        
+        def buttonPressEvent(self, event):
+            log.debug(self.labelText)
+            mousePos = (event.x(), event.y())
+    
+            i = zooms.index(event.view.scale)
+            if i < len(zooms) - 1:
+                zoom(event.view, zooms[i + 1], mousePos)
+
+    return [ZoomInAction(), ZoomOutAction()]
