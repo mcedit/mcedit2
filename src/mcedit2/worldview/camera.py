@@ -29,6 +29,8 @@ log = logging.getLogger(__name__)
 
 settings = Settings().getNamespace("worldview/camera")
 ViewDistanceSetting = settings.getOption("view_distance", int, 12)
+MaxViewDistanceSetting = settings.getOption("max_view_distance", int, 64)
+
 PerspectiveSetting = settings.getOption("perspective", bool, True)
 StickyMouselookSetting = settings.getOption("sticky_mouselook", bool, True)
 
@@ -56,7 +58,9 @@ class CameraWorldViewFrame(QtGui.QWidget):
         viewDistanceInput = QtGui.QSpinBox(minimum=2, maximum=64, singleStep=2)
         viewDistanceInput.setValue(self.worldView.viewDistance)
         viewDistanceInput.valueChanged.connect(ViewDistanceSetting.setValue)
-
+        
+        MaxViewDistanceSetting.connectAndCall(viewDistanceInput.setMaximum)
+        
         PerspectiveSetting.connectAndCall(view.setPerspective)
 
         perspectiveInput = QtGui.QCheckBox(self.tr("Perspective"))
