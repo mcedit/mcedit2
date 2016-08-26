@@ -258,6 +258,7 @@ class MCEditApp(QtGui.QApplication):
 
         mainWindow.actionPreferences.triggered.connect(self.showPrefsDialog)
         mainWindow.actionConfigure_Blocks_Items.triggered.connect(self.showConfigureBlocksDialog)
+        mainWindow.actionConfigure_Blocks_Items.setEnabled(False)
         mainWindow.actionPlugins.triggered.connect(self.showPluginsDialog)
 
         mainWindow.actionEnable_Developer_Mode.setChecked(DevModeSetting.value())
@@ -655,6 +656,7 @@ class MCEditApp(QtGui.QApplication):
 
     def tabChanged(self):
         session = self.currentSession()
+        self.mainWindow.actionConfigure_Blocks_Items.setEnabled(session is not None)
         self.sessionChanged.emit(session, self._currentSession)
         self._currentSession = session
 
