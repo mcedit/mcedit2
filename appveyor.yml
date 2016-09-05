@@ -27,8 +27,10 @@ os: Windows Server 2012
 environment:
   matrix:
     - PYTHON: "c:\\python27"
+    - WHL_ARCH: 32
 
     - PYTHON: "c:\\python27-x64"
+    - WHL_ARCH: _amd64
 
   global:
     MCEDIT_BUILD_VERSION: $(APPVEYOR_REPO_TAG_NAME)
@@ -38,6 +40,7 @@ environment:
 install:
   # by default, all script lines are interpreted as batch
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - pip install https://github.com/mcedit/mcedit2-deps/raw/master/wheels/PySide-1.2.2-cp27-none-win%WHL_ARCH%.whl
   - pip install -r requirements.txt
   - pip install git+http://github.com/pyinstaller/pyinstaller
 
