@@ -434,8 +434,12 @@ cdef class BlockModels(object):
                 return None
 
             if isinstance(variantDict, list):
-                variantDict = variantDict[0]  # do the random pick thing later, if at all
-
+                if len(variantDict):
+                    variantDict = variantDict[0]  # do the random pick thing later, if at all
+                else:
+                    log.warn("Variant key for %s#%s contains no variants, skipping...", resourcePath, resourceVariant)
+                    return None
+            
             modelName = variantDict.get('model')
 
             if modelName is None:
