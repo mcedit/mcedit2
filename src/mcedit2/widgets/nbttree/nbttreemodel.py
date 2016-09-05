@@ -74,7 +74,7 @@ class NBTTreeCompound(object):
 
     def data(self, column):
         if column == 0:
-            return self.tag.name or self.tagCompoundName()
+            return self.tag.name or self.childNumber()
         if column == 1:
             return self.tagCompoundSummary()
 
@@ -170,7 +170,7 @@ class NBTTreeList(object):
 
     def data(self, column):
         if column == 0:
-            return self.tag.name
+            return self.tag.name or self.childNumber()
         if column == 1:
             tagID = self.tag.list_type
 
@@ -251,7 +251,7 @@ class NBTTreeItem(object):
 
     def data(self, column):
         if column == 0:
-            return self.tag.name or str(self.childNumber())
+            return self.tag.name or self.childNumber()
         if column == 1:
             if self.tag.tagID in (nbt.ID_BYTE_ARRAY, nbt.ID_SHORT_ARRAY, nbt.ID_INT_ARRAY):
                 size = self.tag.value.size
@@ -343,17 +343,28 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
                 return self.removeIcon if item is not self.rootItem else None
 
         if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
-            if column == 0:
+            if column == 1:
+                summary = None
                 if item.tag.tagID == nbt.ID_COMPOUND:
-                    nameTag = item.tag.get("id")
-                    if nameTag and nameTag.tagID == nbt.ID_SHORT:
-                        # Item ID?
-                        itemTypes = self.blocktypes.itemTypes
-                        try:
-                            itemType = itemTypes[nameTag.value]
-                            return itemType.internalName
-                        except KeyError:
-                            pass
+                    if "id" in item.tag:
+                        nameTag = item.tag["id"]
+                        if nameTag.tagID == nbt.ID_SHORT:
+                            # Item ID?
+                            itemTypes = self.blocktypes.itemTypes
+                            try:
+                                itemType = itemTypes[nameTag.value]
+                                summary = itemType.internalName
+                            except KeyError:
+                                pass
+                            
+                        elif nameTag.tagID == nbt.ID_STRING:
+                            summary = nameTag.value
+                        
+                        if summary and "Count" in item.tag:
+                            summary += " (x%s)" % (item.tag['Count'].value,)
+                
+                if summary:
+                    return summary
 
             return item.data(column)
 
@@ -443,6 +454,7 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
         column = index.column()
         if column == 0:
             if item.parentItem.tag.tagID == nbt.ID_COMPOUND and item.tag.name != value:
+                del item.parentItem.tag[item.tag.name]
                 item.parentItem.tag[value] = item.tag
                 item.tag.name = value
                 result = True
@@ -484,8 +496,8 @@ class NBTFilterProxyModel(QtGui.QSortFilterProxyModel):
         if column == 0:
             leftTag = self.sourceModel().tagID(left)
             rightTag = self.sourceModel().tagID(right)
-            leftTuple = (leftTag not in (nbt.ID_COMPOUND, nbt.ID_LIST), leftData and leftData.lower())
-            rightTuple = (rightTag not in (nbt.ID_COMPOUND, nbt.ID_LIST), rightData and rightData.lower())
+            leftTuple = (leftTag not in (nbt.ID_COMPOUND, nbt.ID_LIST), leftData.lower() if isinstance(leftData, basestring) else leftData)
+            rightTuple = (rightTag not in (nbt.ID_COMPOUND, nbt.ID_LIST), rightData.lower() if isinstance(rightData, basestring) else rightData)
 
             return leftTuple < rightTuple
         if column == 1:
