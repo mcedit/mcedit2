@@ -36,7 +36,15 @@
   {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=true,north=true,south=false,up=false,west=false]", "biomeTintType": "foliage"},
   {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=true,north=true,south=true,up=false,west=false]", "biomeTintType": "foliage"},
   {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=true,north=true,south=false,up=false,west=true]", "biomeTintType": "foliage"},
-  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=true,north=true,south=true,up=false,west=true]", "biomeTintType": "foliage"}
+  {"internalName": "minecraft:vine", "blockState": "minecraft:vine[east=true,north=true,south=true,up=false,west=true]", "biomeTintType": "foliage"},
   
+  {"internalName": "minecraft:leaves2", "blockState": "minecraft:leaves2[check_decay=false,decayable=true,variant=acacia]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:leaves2", "blockState": "minecraft:leaves2[check_decay=false,decayable=false,variant=acacia]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:leaves2", "blockState": "minecraft:leaves2[check_decay=true,decayable=false,variant=acacia]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:leaves2", "blockState": "minecraft:leaves2[check_decay=true,decayable=true,variant=acacia]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:leaves2", "blockState": "minecraft:leaves2[check_decay=false,decayable=true,variant=dark_oak]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:leaves2", "blockState": "minecraft:leaves2[check_decay=false,decayable=false,variant=dark_oak]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:leaves2", "blockState": "minecraft:leaves2[check_decay=true,decayable=false,variant=dark_oak]", "biomeTintType": "foliage"},
+  {"internalName": "minecraft:leaves2", "blockState": "minecraft:leaves2[check_decay=true,decayable=true,variant=dark_oak]", "biomeTintType": "foliage"}
 
 ]
