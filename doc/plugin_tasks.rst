@@ -36,6 +36,89 @@ use the string of text, for both readability and for compatibility.
 NOTE: When using block types added by mods, you *must* use the text identifier, because
 the integer IDs will vary from world to world.
 
+Alternately, you may pass a BlockType instance. A BlockType instance may be obtained
+by presenting a block type input to the user (e.g. using an option with `type="blocktype"`
+in a `SimpleCommandPlugin` or by constructing a `BlockTypeButton` yourself). BlockTypes
+may also be found by looking up a textual or numeric ID in the dimension's `blocktypes`.
+To wit::
+
+    stone = dimension.blocktypes['minecraft:stone']
+    granite = dimension.blocktypes['minecraft:stone[variant=granite]']
+    cobblestone = dimension.blocktypes[1]  # don't do this!
+    podzol = dimension.blocktypes[3, 2]    # don't do this either!
+
+    dimension.setBlock(0, 0, 0, granite)   # etc.
+
+To discover which block is at a given position, call `dimension.getBlock`, which will return
+a `BlockType` instance.
+
+.. automethod:: mceditlib.worldeditor.WorldEditorDimension.getBlock
+
 To change the block at a given position, call `dimension.setBlock`
 
 .. automethod:: mceditlib.worldeditor.WorldEditorDimension.setBlock
+
+Array-based, high performance variants of these two methods are available. When given
+parallel arrays of x, y, z coordinates, `dimension.getBlocks` will return an array of the
+same size containing the block IDs at those coordinates. If requested, it will also return
+the block metadata values, light values, and/or biome values for those coordinates at the
+same time.
+
+Likewise, `dimension.setBlocks` may be given parallel arrays of x, y, z coordinates along
+with arrays of any of the following: block IDs, block metadata values, light values,
+biome values. To set all coordinates to the same value, you may pass a single value
+instead of an array.
+
+.. automethod:: mceditlib.worldeditor.WorldEditorDimension.getBlocks
+.. automethod:: mceditlib.worldeditor.WorldEditorDimension.setBlocks
+
+Editing Entities
+----------------
+
+Entities are the free-roaming elements of a Minecraft world. They are not bound to the
+block grid, they may be present at any position in the world, and may even overlap. Animals,
+monsters, items, and experience orbs are examples of entities.
+
+Since entities may be at any position, you cannot specify an entity with a single x, y, z
+coordinate triple. Instead, you may create a BoundingBox (or any other SelectionBox object)
+and ask MCEdit to find all of the entities within it. You may even ask it to find only
+the entities which have specific attributes, such as `id="Pig"` to find only Pigs, or
+`name="Notch"` to find entities named "Notch". This is all done by calling
+`dimension.getEntities`
+
+.. automethod:: mceditlib.worldeditor.WorldEditorDimension.getEntities
+
+It is important to know that this function only returns an iterator over the found entities.
+If you assign one of these entities to another variable (or put it into a container such
+as a `list` or `dict`) then that entity will keep its containing chunk loaded, which may
+possibly lead to out-of-memory errors. Thus, it is best to simply modify the entities
+in-place while iterating through them rather than hold references to them.
+
+The entities are returned as instances of `EntityRef`. An `EntityRef` is a wrapper around
+the underlying NBT Compound Tag that contains the entity's data. The `EntityRef` allows you
+to change the values of the entity's attributes without having to deal with the individual
+tags and tag types that represent those attributes.
+
+In other words, instead of writing::
+
+    entity["Name"] = nbt.TAG_String("codewarrior0")
+
+You only have to write::
+
+    entity.Name = "codewarrior0"
+
+However, it may occasionally be useful to access the entity's NBT tags directly. This can
+be done using the `entity.raw_tag` attribute. After modifying the `raw_tag`, you must always
+mark the entity as dirty by doing `entity.dirty = True` to ensure your changes are saved::
+
+    import nbt
+    tag = entity.raw_tag()
+    tag["Name"] = nbt.TAG_String("codewarrior0")
+    entity.dirty = True
+
+
+Creating entities
+-----------------
+
+TODO: Describe creating entities, either by calling `dimension.worldEditor.EntityRef.create(entityID)` or
+by crafting the entity's tag by hand.

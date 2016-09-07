@@ -25,8 +25,8 @@ installation.
 Undo History
 ------------
 
-NOTE: The following only applies to plugin types other than `SimpleCommandPlugin`.  Plugins
-derived from `SimpleCommandPlugin` will automatically manage the undo history for you.
+NOTE: The following mainly applies to the full-featured `CommandPlugin`. Plugins derived from
+`SimpleCommandPlugin` or `BrushMode` will automatically manage the undo history for you.
 
 Plugins that edit the world must make it possible for these edits to be undone. This is
 done by enclosing your editing commands within a call to `editorSession.beginSimpleCommand`.

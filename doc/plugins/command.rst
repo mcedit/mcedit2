@@ -31,10 +31,10 @@ A basic command plugin::
                 "The current dimension contains "
                 "%d chunks") % chunkCount)
 
-You can do nearly anything you want in the `perform()` function. To operate on the world
-and dimension being edited and the current selection, use `self.editorSession`. See
-:doc:`editorsession`, :doc:`worldeditor`, and :ref:`world-editor-dimension` for details
-about what can be edited and how.
+You can do nearly anything you want in the `perform()` function. The currently edited
+dimension can be accessed as `self.editorSession.currentDimension`. See
+:doc:`plugin_tasks` for an overview of the dimension object. If you need to modify the
+world, be sure to read :ref:`undo-history` first.
 
 Simple Commands
 ===============
@@ -49,6 +49,9 @@ it opens a dialog box with a list of options defined by the class; when the user
 "OK", it calls a `perform()` function with those same arguments. The options to present
 are defined by a Python data structure, making it possible to create a simple
 UI for your plugin without having to learn any of Qt's UI widgets.
+
+`SimpleCommandPlugin` also manages the undo history automatically. There is no need to
+call `beginCommand()` here, and to do so is an error.
 
 A minimal SimpleCommandPlugin::
 
