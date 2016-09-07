@@ -839,6 +839,25 @@ class WorldEditorDimension(object):
     # --- Entities and TileEntities ---
 
     def getEntities(self, selection, **kw):
+        """
+        Iterate through all entities within the given selection. If any keyword arguments
+        are passed, only yields those entities whose attributes match the given keywords.
+        
+        For example, to iterate through only the zombies in the selection:
+            
+            for entity in dimension.getEntities(selection, id="Zombie"):
+                # do stuff
+            
+        Parameters
+        ----------
+        selection : SelectionBox
+        kw : Entity attributes to match exactly.
+
+        Returns
+        -------
+        entities: Iterator[EntityRef]
+        
+        """
         for chunk in self.getChunks(selection.chunkPositions()):
             for ref in chunk.Entities:
                 if ref.Position in selection:
