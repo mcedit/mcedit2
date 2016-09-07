@@ -938,6 +938,13 @@ class WorldEditorDimension(object):
 
     def getBlock(self, x, y, z):
         """
+        Returns the block at the given position as an instance of BlockType.
+        This instance will have `id`, `meta`, and `internalName` attributes
+        that uniquely identify the block's type, and will have further attributes
+        describing the block's properties. See :ref:`BlockType` for a full description.
+        
+        If the given position is outside the generated area of the world, the
+        `minecraft:air` BlockType will be returned.
 
         Parameters
         ----------
@@ -954,6 +961,28 @@ class WorldEditorDimension(object):
         return self.blocktypes[ID, meta]
 
     def setBlock(self, x, y, z, blocktype):
+        """
+        Changes the block at the given position. The `blocktype` argument
+        may be either a BlockType instance, a textual identifier, a tuple containing
+        a textual identifier and a block metadata value, or a tuple containing
+        a block ID number and a block metadata value.
+        
+        This function will change both the ID value and metadata value at the given position.
+        
+        It is recommended to pass either a BlockType instance or a textual identifier
+        for readability and compatibility.
+
+        Parameters
+        ----------
+        x : int
+        y : int
+        z : int
+        blocktype: BlockType | str | (str, int) | (int, int)
+
+        Returns
+        -------
+        block: BlockType
+        """
         if not isinstance(blocktype, BlockType):
             blocktype = self.blocktypes[blocktype]
 
@@ -961,6 +990,21 @@ class WorldEditorDimension(object):
         self.setBlockData(x, y, z, blocktype.meta)
 
     def getBlockID(self, x, y, z, default=0):
+        """
+        Return the numeric block ID at the given position. If the position is outside
+        the world's generated area, returns the given default value instead.
+        
+        Parameters
+        ----------
+        x : int
+        y : int
+        z : int
+        default : int
+
+        Returns
+        -------
+        id : int
+        """
         cx = x >> 4
         cy = y >> 4
         cz = z >> 4
@@ -974,6 +1018,16 @@ class WorldEditorDimension(object):
         return default
 
     def setBlockID(self, x, y, z, value):
+        """
+        Changes the numeric block ID at the given position.
+        
+        Parameters
+        ----------
+        x : int
+        y : int
+        z : int
+        value : int
+        """
         cx = x >> 4
         cy = y >> 4
         cz = z >> 4
@@ -988,6 +1042,21 @@ class WorldEditorDimension(object):
             chunk.dirty = True
 
     def getBlockData(self, x, y, z, default=0):
+        """
+        Return the block metadata value at the given position. If the position is outside
+        the world's generated area, returns the given default value instead.
+        
+        Parameters
+        ----------
+        x : int
+        y : int
+        z : int
+        default : int
+
+        Returns
+        -------
+        metadata : int
+        """
         cx = x >> 4
         cy = y >> 4
         cz = z >> 4
@@ -1001,6 +1070,18 @@ class WorldEditorDimension(object):
         return default
 
     def setBlockData(self, x, y, z, value):
+        """
+        Changes the block metadata value at the given position. The value must be between
+        0 and 15 inclusive.
+        
+        Parameters
+        ----------
+        x : int
+        y : int
+        z : int
+        value : int
+        
+        """
         cx = x >> 4
         cy = y >> 4
         cz = z >> 4

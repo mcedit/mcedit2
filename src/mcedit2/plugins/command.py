@@ -94,6 +94,18 @@ class SimpleCommandPlugin(CommandPlugin):
                              dialog.getOptions())
 
     def perform(self, dimension, selection, options):
+        """
+        
+        Parameters
+        ----------
+        dimension : mceditlib.worldeditor.WorldEditorDimension
+        selection : mceditlib.selection.SelectionBox
+        options : dict
+
+        Returns
+        -------
+        progress: iterator or None
+        """
         raise NotImplementedError
 
 

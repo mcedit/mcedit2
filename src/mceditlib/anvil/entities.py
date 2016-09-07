@@ -241,7 +241,6 @@ class PCEntityRefBase(object):
 
     CommandStats = nbtattr.NBTCompoundAttr('CommandStats', CommandStatsRef)
 
-
     UUID = nbtattr.NBTUUIDAttr()
 
     def copy(self):
