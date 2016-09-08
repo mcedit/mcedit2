@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>741</width>
-    <height>394</height>
+    <width>429</width>
+    <height>390</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout_4">
    <item>
     <widget class="QGroupBox" name="groupBox">
      <property name="title">
@@ -21,22 +21,18 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_9">
-        <item>
+       <layout class="QFormLayout" name="formLayout_2">
+        <item row="0" column="0">
          <widget class="QCheckBox" name="searchNameCheckbox">
           <property name="text">
            <string>Tag Names</string>
           </property>
          </widget>
         </item>
-        <item>
+        <item row="0" column="1">
          <widget class="QLineEdit" name="nameField"/>
         </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_23">
-        <item>
+        <item row="1" column="0">
          <widget class="QCheckBox" name="searchValueCheckbox">
           <property name="text">
            <string>Values</string>
@@ -46,129 +42,133 @@
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QLineEdit" name="valueField"/>
+        <item row="1" column="1">
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QLineEdit" name="valueField"/>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_9">
+            <property name="text">
+             <string>Tag Type:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="tagTypeComboBox">
+            <item>
+             <property name="text">
+              <string>Any</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Any Numeric</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Any Integer</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Any Floating-Point</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Any Array</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>String</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Byte</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Short</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Int</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Long</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Float</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Double</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>List</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Compound</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Byte Array</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Int Array</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Short Array</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
         </item>
-        <item>
-         <widget class="QLabel" name="label_9">
-          <property name="text">
-           <string>Tag Type:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QComboBox" name="tagTypeComboBox">
-          <item>
-           <property name="text">
-            <string>Any</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Any Numeric</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Any Integer</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Any Floating-Point</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Any Array</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>String</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Byte</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Short</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Int</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Long</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Float</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Double</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>List</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Compound</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Byte Array</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Int Array</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Short Array</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_10">
-        <item>
+        <item row="2" column="0">
          <widget class="QLabel" name="label_10">
           <property name="text">
            <string>Tag Path:</string>
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QLineEdit" name="tagPathBox">
-          <property name="placeholderText">
-           <string>Path to search in, such as 'Data/Player/Inventory'</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="tagPathHelpButton">
-          <property name="text">
-           <string>?</string>
-          </property>
-         </widget>
+        <item row="2" column="1">
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QLineEdit" name="tagPathBox">
+            <property name="placeholderText">
+             <string>Path to search in, such as 'Data/Player/Inventory'</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="tagPathHelpButton">
+            <property name="text">
+             <string>?</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </item>
@@ -182,81 +182,84 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_26">
-        <item>
+       <layout class="QFormLayout" name="formLayout">
+        <property name="fieldGrowthPolicy">
+         <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+        </property>
+        <item row="0" column="0">
          <widget class="QCheckBox" name="replaceNameCheckbox">
           <property name="text">
            <string>Replace Name With:</string>
           </property>
          </widget>
         </item>
-        <item>
+        <item row="0" column="1">
          <widget class="QLineEdit" name="replaceNameField"/>
         </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_27">
-        <item>
+        <item row="1" column="0">
          <widget class="QCheckBox" name="replaceValueCheckbox">
           <property name="text">
            <string>Replace Value With:</string>
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QLineEdit" name="replaceValueField"/>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_12">
-          <property name="text">
-           <string>Tag Type:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QComboBox" name="replaceValueTagTypeComboBox">
+        <item row="1" column="1">
+         <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
-           <property name="text">
-            <string>Existing</string>
-           </property>
+           <widget class="QLineEdit" name="replaceValueField"/>
           </item>
           <item>
-           <property name="text">
-            <string>String</string>
-           </property>
+           <widget class="QLabel" name="label_12">
+            <property name="text">
+             <string>Tag Type:</string>
+            </property>
+           </widget>
           </item>
           <item>
-           <property name="text">
-            <string>Byte</string>
-           </property>
+           <widget class="QComboBox" name="replaceValueTagTypeComboBox">
+            <item>
+             <property name="text">
+              <string>Existing</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>String</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Byte</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Short</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Int</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Long</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Float</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Double</string>
+             </property>
+            </item>
+           </widget>
           </item>
-          <item>
-           <property name="text">
-            <string>Short</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Int</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Long</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Float</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Double</string>
-           </property>
-          </item>
-         </widget>
+         </layout>
         </item>
        </layout>
       </item>
@@ -268,54 +271,52 @@
      <property name="title">
       <string>Search in...</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_4">
+     <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_19">
-        <item>
+       <layout class="QFormLayout" name="formLayout_3">
+        <item row="0" column="0">
          <widget class="QCheckBox" name="searchEntitiesCheckbox">
           <property name="text">
            <string>Search Entities</string>
           </property>
          </widget>
         </item>
-        <item>
+        <item row="0" column="1">
          <widget class="QLineEdit" name="entityIDField">
           <property name="placeholderText">
            <string>Entity IDs, separted by ';'</string>
           </property>
          </widget>
         </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_24">
-        <item>
+        <item row="1" column="0">
          <widget class="QCheckBox" name="searchTileEntitiesCheckbox">
           <property name="text">
            <string>Search Tile Entities</string>
           </property>
          </widget>
         </item>
-        <item>
+        <item row="1" column="1">
          <widget class="QLineEdit" name="tileEntityIDField">
           <property name="placeholderText">
            <string>TileEntity IDs, separted by ';'</string>
           </property>
          </widget>
         </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_22">
-        <item>
+        <item row="2" column="0">
          <widget class="QCheckBox" name="searchItemsCheckbox">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
            <string>Search Items</string>
           </property>
          </widget>
         </item>
-        <item>
+        <item row="2" column="1">
          <widget class="QLineEdit" name="itemIDField">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="placeholderText">
            <string>Item IDs, separated by ';'</string>
           </property>
@@ -327,6 +328,9 @@
        <layout class="QHBoxLayout" name="horizontalLayout_20">
         <item>
          <widget class="QCheckBox" name="searchPlayersCheckbox">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
            <string>Search Players</string>
           </property>
@@ -334,6 +338,9 @@
         </item>
         <item>
          <widget class="QCheckBox" name="searchChunksCheckbox">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
            <string>Search Chunks</string>
           </property>
@@ -341,6 +348,9 @@
         </item>
         <item>
          <widget class="QCheckBox" name="searchOtherDatsCheckbox">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
            <string>Search other .dat files</string>
           </property>

@@ -133,6 +133,20 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="removeAllButton">
+       <property name="text">
+        <string>Remove Tags</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="removeSelectedButton">
+       <property name="text">
+        <string>Remove Selected</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="stopButton">
        <property name="text">
         <string>Stop</string>

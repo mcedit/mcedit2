@@ -35,7 +35,7 @@ nbtReplaceSettings.replaceValueTagType = nbtReplaceSettings.getOption("replaceVa
 
 class NBTResultsEntry(object):
     # namedtuple("NBTResultsEntry", "tagName value id path position uuid resultType")):
-    def __init__(self, model, tagNameIndex, tagName, value, ID, path, position, uuid, resultType):
+    def __init__(self, model, tagNameIndex, tagName, value, ID, path, position, uuid, resultType, dimension):
         self.model = model
         self.tagNameIndex = tagNameIndex  # xxx REALLY SHOULD change model data through the model itself
         self.tagName = tagName
@@ -45,6 +45,7 @@ class NBTResultsEntry(object):
         self.position = position
         self.uuid = uuid
         self.resultType = resultType
+        self.dimension = dimension
 
     EntityResult = "ENTITY"
     TileEntityResult = "TILE_ENTITY"
@@ -57,13 +58,26 @@ class NBTResultsEntry(object):
         self.tagName = value
         self.model.dataChanged.emit(self.tagNameIndex, self.tagNameIndex)
 
-    def getEntity(self, dim):
+    def getEntity(self):
         assert self.resultType == self.EntityResult
+        dim = self.dimension
+        
         box = BoundingBox(self.position.intfloor(), (1, 1, 1)).chunkBox(dim)
         entities = dim.getEntities(box, UUID=self.uuid)
         for entity in entities:
             return entity
         return None
+    
+    def getTargetRef(self):
+        dim = self.dimension
+        if self.resultType == self.TileEntityResult:
+            return dim.getTileEntity(self.position)
+        
+        if self.resultType == self.EntityResult:
+            return self.getEntity()
+                        
+        # if result.resultType == result.ItemResult:  # xxx
+        
 
 
 class NBTResultsModel(QtCore.QAbstractItemModel):
@@ -78,7 +92,12 @@ class NBTResultsModel(QtCore.QAbstractItemModel):
         self.results.append(entry)
         self.endInsertRows()
         return entry
-
+    
+    def removeEntries(self, entries):
+        self.beginResetModel()
+        self.results = [r for r in self.results if r not in entries]
+        self.endResetModel()
+        
     # --- Shape ---
 
     def rowCount(self, parent):
@@ -144,6 +163,9 @@ class NBTResultsModel(QtCore.QAbstractItemModel):
                 #         return "Unknown value %s" % value
                 # else:
                 #     return value
+        
+        if role == Qt.UserRole:
+            return entry
 
     def addResults(self, results):
         size = len(self.results)
@@ -215,6 +237,9 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
         self.resultsWidget.replaceSelectedButton.clicked.connect(self.replaceSelected)
         self.resultsWidget.replaceAllButton.clicked.connect(self.replaceAll)
 
+        self.resultsWidget.removeSelectedButton.clicked.connect(self.removeSelected)
+        self.resultsWidget.removeAllButton.clicked.connect(self.removeAll)
+        
         self.searchNameCheckbox.toggled.connect(self.searchForToggled)
         self.searchValueCheckbox.toggled.connect(self.searchForToggled)
         self.findTimer = None
@@ -317,7 +342,7 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
         row = modelIndex.row()
         result = self.resultsModel.results[row]
         if result.resultType == result.EntityResult:
-            entity = result.getEntity(self.editorSession.currentDimension)
+            entity = result.getEntity()
             if entity is not None:
                 self.editorSession.zoomAndInspectEntity(entity)  # xxxxxxx!!!
             else:
@@ -395,7 +420,8 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
                                                path=[],
                                                position=entity.Position,
                                                uuid=uuid,
-                                               resultType=NBTResultsEntry.EntityResult)
+                                               resultType=NBTResultsEntry.EntityResult,
+                                               dimension=self.editorSession.currentDimension)
                     continue
 
                 tag = entity.raw_tag()
@@ -411,7 +437,8 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
                                                    path=path,
                                                    position=entity.Position,
                                                    uuid=uuid,
-                                                   resultType=NBTResultsEntry.EntityResult)
+                                                   resultType=NBTResultsEntry.EntityResult,
+                                                   dimension=self.editorSession.currentDimension)
 
         def _findTileEntitiesInChunk(chunk):
             for tileEntity in chunk.TileEntities:
@@ -428,7 +455,8 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
                                                path=[],
                                                position=tileEntity.Position,
                                                uuid=None,
-                                               resultType=NBTResultsEntry.TileEntityResult)
+                                               resultType=NBTResultsEntry.TileEntityResult,
+                                               dimension=self.editorSession.currentDimension)
                     continue
 
                 tag = tileEntity.raw_tag()
@@ -443,7 +471,8 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
                                                    path=path,
                                                    position=tileEntity.Position,
                                                    uuid=None,
-                                                   resultType=NBTResultsEntry.TileEntityResult)
+                                                   resultType=NBTResultsEntry.TileEntityResult,
+                                                   dimension=self.editorSession.currentDimension)
 
         def _find():
             self.resultsDockWidget.show()
@@ -518,30 +547,21 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
                 else:
                     value = newValue
                 subtag.value = value
+                result.value = value
 
         def _replace():
             for result in entries:
-                if result.resultType == result.TileEntityResult:
-                    tileEntity = self.editorSession.currentDimension.getTileEntity(result.position)
-                    if tileEntity:
-                        tag = tileEntity.raw_tag()
-                        _replaceInTag(result, tag)
-                        tileEntity.dirty = True
+                ref = result.getTargetRef()
+                
+                tag = ref.raw_tag()
+                _replaceInTag(result, tag)
+                ref.dirty = True
 
-                if result.resultType == result.EntityResult:
-                    entity = result.getEntity(self.editorSession.currentDimension)  # xxx put dimension in result!!!!
-                    if entity:
-                        tag = entity.raw_tag()
-                        _replaceInTag(result, tag)
-                        entity.dirty = True
-
-                # if result.resultType == result.ItemResult:  # xxx
                 yield
 
         command = NBTReplaceCommand(self.editorSession, "Replace NBT data")  # xxx replace details
         with command.begin():
-            replacer = _replace()
-            showProgress("Replacing NBT data...", replacer)
+            showProgress("Replacing NBT data...", _replace())
 
         self.editorSession.pushCommand(command)
 
@@ -549,4 +569,40 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
         self.replaceEntries(self.resultsModel.results)
 
     def replaceSelected(self):
-        pass
+        entries = []
+        for index in self.resultsWidget.resultsView.selectedIndices():
+            entries.append(self.resultsModel.data(index, role=Qt.UserRole))
+            
+        self.replaceEntries(entries)
+
+    def removeEntries(self, entries):
+        def _remove():
+            for result in entries:
+                ref = result.getTargetRef()
+                tag = ref.raw_tag()
+                
+                for component in result.path[:-1]:
+                    tag = tag[component]
+                
+                del tag[result.tagName]
+                ref.dirty = True
+                
+                yield
+            
+            self.resultsModel.removeEntries(entries)
+
+        command = NBTReplaceCommand(self.editorSession, "Remove NBT tags")
+        with command.begin():
+            showProgress("Removing NBT tags...", _remove())
+
+        self.editorSession.pushCommand(command)
+
+    def removeAll(self):
+        self.removeEntries(self.resultsModel.results)
+
+    def removeSelected(self):
+        entries = []
+        for index in self.resultsWidget.resultsView.selectedIndices():
+            entries.append(self.resultsModel.data(index, role=Qt.UserRole))
+            
+        self.removeEntries(entries)
