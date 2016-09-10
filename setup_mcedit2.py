@@ -1,7 +1,9 @@
 """
     setup-mcedit2
 """
+from os import path
 
+import sys
 from setuptools import setup, find_packages
 from Cython.Build import cythonize
 import numpy
@@ -30,6 +32,7 @@ mcedit2_ext_modules = cythonize(
 for m in mcedit2_ext_modules:
     m.include_dirs = include_dirs
 
+sys.path.append(path.join(path.dirname(__file__), "src"))
 from mcedit2.util.gen_ui import compile_ui
 compile_ui()
 
