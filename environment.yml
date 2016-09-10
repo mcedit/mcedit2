@@ -3,12 +3,13 @@ name: mcedit2-docs
 dependencies:
   - python=2.7
   - pyzmq
-  - pyside>=1.2.0
+  - pyside
   - pyopengl
   - ipython
   - qtconsole
   - pygments
-  - pastebin
   - cython
   - numpy
-  - arrow
+  - pip:
+    - pastebin
+    - arrow
