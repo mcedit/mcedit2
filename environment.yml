@@ -13,4 +13,3 @@ dependencies:
   - pip:
     - pastebin
     - arrow
-    - -e .
