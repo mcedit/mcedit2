@@ -2,7 +2,7 @@
     setup_mceditlib
 """
 
-from setuptools import setup
+from setuptools import setup, find_packages
 from Cython.Build import cythonize
 
 # Output annotated .html
@@ -47,7 +47,7 @@ setup(name='mceditlib',
       author_email='codewarrior0@gmail.com',
       url='https://github.com/mcedit/mcedit2',
       license='MIT License',
-      packages=["mceditlib"],
+      packages=find_packages('src', include="mceditlib*"),
       package_dir={'': 'src'},
       ext_modules=mceditlib_ext_modules,
       include_dirs=include_dirs,

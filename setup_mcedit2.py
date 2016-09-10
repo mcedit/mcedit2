@@ -1,8 +1,10 @@
 """
     setup-mcedit2
 """
+from os import path
 
-from setuptools import setup
+import sys
+from setuptools import setup, find_packages
 from Cython.Build import cythonize
 import numpy
 
@@ -30,6 +32,10 @@ mcedit2_ext_modules = cythonize(
 for m in mcedit2_ext_modules:
     m.include_dirs = include_dirs
 
+sys.path.append(path.join(path.dirname(__file__), "src"))
+from mcedit2.util.gen_ui import compile_ui
+compile_ui()
+
 setup(name='mcedit2',
       version=version,
       description="Interactive 3D World Editor for Minecraft Levels",
@@ -51,7 +57,7 @@ setup(name='mcedit2',
       author_email='codewarrior0@gmail.com',
       url='https://github.com/mcedit/mcedit2',
       license='MIT License',
-      packages=["mcedit2"],
+      packages=find_packages('src', include="mcedit2*"),
       package_dir={'': 'src'},
       ext_modules=mcedit2_ext_modules,
       include_dirs=include_dirs,

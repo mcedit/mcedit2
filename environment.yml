@@ -1,0 +1,16 @@
+name: mcedit2-docs
+
+dependencies:
+  - python=2.7
+  - pyzmq
+  - pyside
+  - pyopengl
+  - ipython
+  - qtconsole
+  - pygments
+  - cython
+  - numpy
+  - pip:
+    - pastebin
+    - arrow
+    - git+https://github.com/mcedit/pysideuic-pkg
