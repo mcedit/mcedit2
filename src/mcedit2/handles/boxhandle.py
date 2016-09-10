@@ -156,7 +156,7 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
         size = [1, 1, 1]
 
         if self.classicSelection:
-            endPoint = event.blockPosition
+            endPoint = (event.blockPosition - (event.blockFace.vector * 0.5 + (0.5, 0.5, 0.5))).intround()
         else:
             ray = event.ray
             dim = face >> 1
@@ -170,7 +170,7 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
             endPoint = ray.intersectPlane(dim, point[dim])
 
         startBox = BoundingBox(point, size)
-        endBox = BoundingBox(endPoint.intfloor(), size)
+        endBox = BoundingBox(endPoint, size)
 
         return startBox.union(endBox)
 
@@ -226,9 +226,10 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
     def beginCreate(self, event):
         # If the distance to the block is too far, face selection becomes inconsistent
         # and aggravating. Use YIncreasing if it is more than 50 blocks away.
-        distance = (event.blockPosition - event.ray.point).length()
+        pos = (event.blockPosition - (event.blockFace.vector * 0.5 + (0.5, 0.5, 0.5))).intround()
+        distance = (pos - event.ray.point).length()
 
-        self.dragStartPoint = event.blockPosition
+        self.dragStartPoint = pos
         self.dragStartFace = faces.FaceYIncreasing if distance > 50 else event.blockFace
         self.isCreating = True
 
@@ -364,5 +365,3 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
 
             elif self.isResizing:
                 self.endResize(event)
-
-

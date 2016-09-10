@@ -42,9 +42,9 @@ class CameraWorldViewFrame(QtGui.QWidget):
         self.worldView = view = CameraWorldView(dimension, textureAtlas, geometryCache, shareGLWidget)
 
         auxControlWidget = QtGui.QWidget()
-        
+
         StickyMouselookSetting.connectAndCall(view.setStickyMouselook)
-        
+
         stickyCheckbox = QtGui.QCheckBox(self.tr("Sticky Mouselook"))
         stickyCheckbox.setChecked(StickyMouselookSetting.value())
         stickyCheckbox.toggled.connect(StickyMouselookSetting.setValue)
@@ -58,9 +58,9 @@ class CameraWorldViewFrame(QtGui.QWidget):
         viewDistanceInput = QtGui.QSpinBox(minimum=2, maximum=64, singleStep=2)
         viewDistanceInput.setValue(self.worldView.viewDistance)
         viewDistanceInput.valueChanged.connect(ViewDistanceSetting.setValue)
-        
+
         MaxViewDistanceSetting.connectAndCall(viewDistanceInput.setMaximum)
-        
+
         PerspectiveSetting.connectAndCall(view.setPerspective)
 
         perspectiveInput = QtGui.QCheckBox(self.tr("Perspective"))
@@ -266,13 +266,12 @@ class CameraKeyControls(object):
         def keyReleaseEvent(self, event):
             self.controls.down = 0
 
-
 class CameraWorldView(WorldView):
     def __init__(self, *a, **kw):
         self.fov = 70.0  # needed by updateMatrices called from WorldView.__init__
         self._yawPitch = -45., 25.
         self.viewDistance = 32
-        
+
         self.stickyMouselook = False
 
         self.workplaneNode = WorkplaneNode()
@@ -304,7 +303,6 @@ class CameraWorldView(WorldView):
     def updateWorkplane(self):
         distance = 40
         pos = self.centerPoint + self.cameraVector * distance
-        pos = pos.intfloor()
 
         self.workplaneNode.position = Vector(pos[0], self.workplaneLevel, pos[2])
 
@@ -333,11 +331,11 @@ class CameraWorldView(WorldView):
 
         point = event.ray.atHeight(self.workplaneLevel)
         if point != event.ray.point:
-            direction = point - event.ray.point
-            if direction.length() >= (event.blockPosition - event.ray.point).length():
-                return
+            #direction = point - event.ray.point
+            #if direction.length() >= (event.blockPosition - event.ray.point).length():
+            #    return
 
-            event.blockPosition = point.intfloor()
+            event.blockPosition = point
             if direction.y >= 0:
                 event.blockFace = faces.FaceDown
             else:
@@ -348,7 +346,7 @@ class CameraWorldView(WorldView):
         self._chunkIter = None
         self.discardChunksOutsideViewDistance()
         self.update()
-        
+
     def setStickyMouselook(self, val):
         self.stickyMouselook = val
 

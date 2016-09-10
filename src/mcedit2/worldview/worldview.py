@@ -86,7 +86,6 @@ class BufferSwapper(QtCore.QObject):
         self.view.doneCurrent()
         self.swapDone.emit()
 
-
 class WorldView(QGLWidget):
     """
     Superclass for the following views:
@@ -548,6 +547,9 @@ class WorldView(QGLWidget):
 
         position, face = self.rayCastInView(ray)
 
+        d = (position.intfloor() + (face.vector * 0.5 + (0.5, 0.5, 0.5)) - ray.point).dot(face.vector) / (ray.vector.dot(face.vector))
+        position = ray.point + ray.vector * d
+
         self.mouseBlockPos = event.blockPosition = position
         self.mouseBlockFace = event.blockFace = face
         self.mouseRay = ray
@@ -623,9 +625,8 @@ class WorldView(QGLWidget):
             # p = self.pointsAtPositions((x, y, depth))[0]
             #
             # face = faces.FaceYIncreasing
-            # position = p.intfloor()
             defaultDistance = 200
-            position = (ray.point + ray.vector * defaultDistance).intfloor()
+            position = (ray.point + ray.vector * defaultDistance)
             face = faces.FaceUp
 
         return position, face
@@ -742,7 +743,7 @@ class WorldView(QGLWidget):
         self.worldScene.invalidateChunk(cx, cz)
         if deleted:
             self.loadableChunksNode.dirty = True
-            
+
         self.resetLoadOrder()
 
 def iterateChunks(x, z, radius):
@@ -815,9 +816,9 @@ class WorldCursorInfo(InfoPanel):
         pos = self.object.mouseBlockPos
         if pos is not None:
             x, y, z = pos
-            cx = x >> 4
-            cy = y >> 4
-            cz = z >> 4
+            cx = int(x) >> 4
+            cy = int(y) >> 4
+            cz = int(z) >> 4
             return "%s (cx=%d, cy=%d, cz=%d)" % (pos, cx, cy, cz)
         else:
             return "(None)"

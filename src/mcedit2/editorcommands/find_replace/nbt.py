@@ -61,23 +61,23 @@ class NBTResultsEntry(object):
     def getEntity(self):
         assert self.resultType == self.EntityResult
         dim = self.dimension
-        
-        box = BoundingBox(self.position.intfloor(), (1, 1, 1)).chunkBox(dim)
+
+        box = BoundingBox(self.position, (1, 1, 1)).chunkBox(dim)
         entities = dim.getEntities(box, UUID=self.uuid)
         for entity in entities:
             return entity
         return None
-    
+
     def getTargetRef(self):
         dim = self.dimension
         if self.resultType == self.TileEntityResult:
             return dim.getTileEntity(self.position)
-        
+
         if self.resultType == self.EntityResult:
             return self.getEntity()
-                        
+
         # if result.resultType == result.ItemResult:  # xxx
-        
+
 
 
 class NBTResultsModel(QtCore.QAbstractItemModel):
@@ -92,12 +92,12 @@ class NBTResultsModel(QtCore.QAbstractItemModel):
         self.results.append(entry)
         self.endInsertRows()
         return entry
-    
+
     def removeEntries(self, entries):
         self.beginResetModel()
         self.results = [r for r in self.results if r not in entries]
         self.endResetModel()
-        
+
     # --- Shape ---
 
     def rowCount(self, parent):
@@ -163,7 +163,7 @@ class NBTResultsModel(QtCore.QAbstractItemModel):
                 #         return "Unknown value %s" % value
                 # else:
                 #     return value
-        
+
         if role == Qt.UserRole:
             return entry
 
@@ -239,7 +239,7 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
 
         self.resultsWidget.removeSelectedButton.clicked.connect(self.removeSelected)
         self.resultsWidget.removeAllButton.clicked.connect(self.removeAll)
-        
+
         self.searchNameCheckbox.toggled.connect(self.searchForToggled)
         self.searchValueCheckbox.toggled.connect(self.searchForToggled)
         self.findTimer = None
@@ -552,7 +552,7 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
         def _replace():
             for result in entries:
                 ref = result.getTargetRef()
-                
+
                 tag = ref.raw_tag()
                 _replaceInTag(result, tag)
                 ref.dirty = True
@@ -572,7 +572,7 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
         entries = []
         for index in self.resultsWidget.resultsView.selectedIndices():
             entries.append(self.resultsModel.data(index, role=Qt.UserRole))
-            
+
         self.replaceEntries(entries)
 
     def removeEntries(self, entries):
@@ -580,15 +580,15 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
             for result in entries:
                 ref = result.getTargetRef()
                 tag = ref.raw_tag()
-                
+
                 for component in result.path[:-1]:
                     tag = tag[component]
-                
+
                 del tag[result.tagName]
                 ref.dirty = True
-                
+
                 yield
-            
+
             self.resultsModel.removeEntries(entries)
 
         command = NBTReplaceCommand(self.editorSession, "Remove NBT tags")
@@ -604,5 +604,5 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
         entries = []
         for index in self.resultsWidget.resultsView.selectedIndices():
             entries.append(self.resultsModel.data(index, role=Qt.UserRole))
-            
+
         self.removeEntries(entries)

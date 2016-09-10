@@ -31,11 +31,10 @@ class ChunkTool(EditorTool):
         self.toolWidget = ChunkToolWidget()
 
     def mousePress(self, event):
-        self.setMousePos(event.blockPosition)
+        self.setMousePos((event.blockPosition - (event.blockFace.vector * 0.5 + (0.5, 0.5, 0.5))).intround())
 
     def setMousePos(self, pos):
         x, y, z = self.mousePos = pos
         cx = x >> 4
         cz = z >> 4
         self.editorSession.inspectChunk(cx, cz)
-

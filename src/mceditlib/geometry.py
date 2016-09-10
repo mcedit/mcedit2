@@ -130,6 +130,27 @@ class Vector(namedtuple("_Vector", ("x", "y", "z"))):
     def intfloor(self):
         return Vector(*[int(math.floor(p)) for p in self])
 
+    def intround(self):
+        return Vector(*[int(round(p)) for p in self])
+
+    def intceil(self):
+        return Vector(*[int(math.ceil(p)) for p in self])
+
+    def min(self, another):
+        vec = range(0, 3)
+        for i in vec:
+            vec[i] = min(self[i], another[i])
+        return Vector(*vec)
+
+    def max(self, another):
+        vec = range(0, 3)
+        for i in vec:
+            vec[i] = max(self[i], another[i])
+        return Vector(*vec)
+
+    def dot(self, another):
+        return self[0] * another[0] + self[1] * another[1] + self[2] * another[2]
+
     def cross(self, other):
         return Vector(*numpy.cross(self, other))
 
@@ -207,4 +228,3 @@ class Ray(object):
         vector = vector / vector[dim]
 
         return point + vector * d
-
