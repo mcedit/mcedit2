@@ -298,6 +298,7 @@ class CutawayWorldView(WorldView):
         event.point = self.slicedPoint(x, y)
         blockPos = event.point.intfloor()
 
+        event.hitPositionFloat = event.point
         self.mouseBlockPos = event.blockPosition = blockPos
         vec = [0, 0, 0]
         vec[self.dim] = 1

@@ -42,9 +42,9 @@ class CameraWorldViewFrame(QtGui.QWidget):
         self.worldView = view = CameraWorldView(dimension, textureAtlas, geometryCache, shareGLWidget)
 
         auxControlWidget = QtGui.QWidget()
-        
+
         StickyMouselookSetting.connectAndCall(view.setStickyMouselook)
-        
+
         stickyCheckbox = QtGui.QCheckBox(self.tr("Sticky Mouselook"))
         stickyCheckbox.setChecked(StickyMouselookSetting.value())
         stickyCheckbox.toggled.connect(StickyMouselookSetting.setValue)
@@ -58,9 +58,9 @@ class CameraWorldViewFrame(QtGui.QWidget):
         viewDistanceInput = QtGui.QSpinBox(minimum=2, maximum=64, singleStep=2)
         viewDistanceInput.setValue(self.worldView.viewDistance)
         viewDistanceInput.valueChanged.connect(ViewDistanceSetting.setValue)
-        
+
         MaxViewDistanceSetting.connectAndCall(viewDistanceInput.setMaximum)
-        
+
         PerspectiveSetting.connectAndCall(view.setPerspective)
 
         perspectiveInput = QtGui.QCheckBox(self.tr("Perspective"))
@@ -272,7 +272,7 @@ class CameraWorldView(WorldView):
         self.fov = 70.0  # needed by updateMatrices called from WorldView.__init__
         self._yawPitch = -45., 25.
         self.viewDistance = 32
-        
+
         self.stickyMouselook = False
 
         self.workplaneNode = WorkplaneNode()
@@ -337,6 +337,7 @@ class CameraWorldView(WorldView):
             if direction.length() >= (event.blockPosition - event.ray.point).length():
                 return
 
+            event.hitPositionFloat = point
             event.blockPosition = point.intfloor()
             if direction.y >= 0:
                 event.blockFace = faces.FaceDown
@@ -348,7 +349,7 @@ class CameraWorldView(WorldView):
         self._chunkIter = None
         self.discardChunksOutsideViewDistance()
         self.update()
-        
+
     def setStickyMouselook(self, val):
         self.stickyMouselook = val
 

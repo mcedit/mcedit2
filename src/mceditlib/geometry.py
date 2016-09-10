@@ -139,6 +139,14 @@ class Vector(namedtuple("_Vector", ("x", "y", "z"))):
     def chunkPos(self):
         return Vector(*[p >> 4 for p in self.intfloor()])
 
+    def intround(self):
+        return Vector(*[int(round(p)) for p in self])
+
+    def intceil(self):
+        return Vector(*[int(math.ceil(p)) for p in self])
+
+    def dot(self, another):
+        return self[0] * another[0] + self[1] * another[1] + self[2] * another[2]
 
 class Ray(object):
     """
@@ -207,4 +215,3 @@ class Ray(object):
         vector = vector / vector[dim]
 
         return point + vector * d
-

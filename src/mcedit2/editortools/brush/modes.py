@@ -29,7 +29,7 @@ class BrushMode(QtCore.QObject):
         options = options or {}
         size = options['brushSize']
         x, y, z = size
-        origin = Vector(*center) - (Vector(x, y, z) / 2) + Vector((x % 2) * 0.5, (y % 2) * 0.5, (z % 2) * 0.5)
+        origin = Vector(*center)
         return BoundingBox(origin, size)
 
     def brushBoxForPoint(self, point, options):

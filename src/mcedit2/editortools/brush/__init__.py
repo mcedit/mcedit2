@@ -182,9 +182,10 @@ class BrushTool(EditorTool):
         self.brushSize = x, y, z
 
     def hoverPosition(self, event):
-        if event.blockPosition:
-            vector = (event.blockFace.vector * self.hoverDistance)
-            pos = event.blockPosition + vector
+        if event.hitPositionFloat:
+            x, y, z = self.brushSize
+            vector = (event.blockFace.vector * self.hoverDistance / 2.0)
+            pos = ((event.hitPositionFloat + vector) - (Vector(x, y, z) / 2.0)).intround() #+ Vector((x % 2) * 0.5, (y % 2) * 0.5, (z % 2) * 0.5)).intround()
             return pos
 
     def mousePress(self, event):
@@ -192,7 +193,7 @@ class BrushTool(EditorTool):
         pos = self.hoverPosition(event)
         if pos:
             self.dragPoints.append(pos)
-            
+
     def mouseMove(self, event):
         pos = self.hoverPosition(event)
         if pos:
@@ -267,5 +268,3 @@ class BrushTool(EditorTool):
             self.cursorBoxNode.filled = False
 
             self.cursorNode.addChild(self.cursorBoxNode)
-
-

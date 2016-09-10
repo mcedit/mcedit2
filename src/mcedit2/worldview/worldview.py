@@ -548,6 +548,10 @@ class WorldView(QGLWidget):
 
         position, face = self.rayCastInView(ray)
 
+        d = (position + (face.vector * 0.5 + (0.5, 0.5, 0.5)) - ray.point).dot(face.vector) / (ray.vector.dot(face.vector))
+        positionf = ray.point + ray.vector * d
+
+        event.hitPositionFloat = positionf
         self.mouseBlockPos = event.blockPosition = position
         self.mouseBlockFace = event.blockFace = face
         self.mouseRay = ray
@@ -742,7 +746,7 @@ class WorldView(QGLWidget):
         self.worldScene.invalidateChunk(cx, cz)
         if deleted:
             self.loadableChunksNode.dirty = True
-            
+
         self.resetLoadOrder()
 
 def iterateChunks(x, z, radius):
