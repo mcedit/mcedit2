@@ -4,7 +4,6 @@ dependencies:
   - python=2.7
   - pyzmq
   - pyside
-  - pyside-tools
   - pyopengl
   - ipython
   - qtconsole
@@ -14,3 +13,4 @@ dependencies:
   - pip:
     - pastebin
     - arrow
+    - git+https://github.com/mcedit/pysideuic-pkg
