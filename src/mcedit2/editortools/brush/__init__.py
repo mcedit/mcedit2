@@ -183,7 +183,14 @@ class BrushTool(EditorTool):
 
     def hoverPosition(self, event):
         if event.blockPosition:
-            vector = (event.blockFace.vector * self.hoverDistance)
+            # To account for the center of even-sized brushes being just past the exact
+            # center, adjust hover position out by 1 if the brush size is even and the
+            # face vector is positive
+            v = []
+            for sx, vx in zip(self.brushSize, event.blockFace.vector):
+                v.append(1 if vx > 0 and sx % 2 == 0 else 0)
+                    
+            vector = (event.blockFace.vector * self.hoverDistance) + v
             pos = event.blockPosition + vector
             return pos
 
