@@ -98,6 +98,7 @@ public class BlockDumper extends Block {
 				attrs.add(String.format("\"opacity\": %s", defaultState.getLightOpacity()));
 				attrs.add(String.format("\"brightness\": %s", defaultState.getLightValue()));
 				attrs.add(String.format("\"useNeighborBrightness\": %s", defaultState.useNeighborBrightness()));
+				attrs.add(String.format("\"renderLayer\": \"%s\"", b.getBlockLayer()));
 
 				ArrayList<ItemStack> subBlocks = new ArrayList<ItemStack>();
 				Map<Integer, ItemStack> subBlocksByMeta = new HashMap<Integer, ItemStack>();
