@@ -1,3 +1,4 @@
 alabaster
 sphinx
+-e /usr/lib/python2.7/dist-packages/PySide/
 -r ../requirements.txt
