@@ -1,2 +1,3 @@
 alabaster
 sphinx
+-r ../requirements.txt
