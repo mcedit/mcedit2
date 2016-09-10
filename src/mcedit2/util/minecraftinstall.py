@@ -88,7 +88,8 @@ def md5hash(filename):
 
 class MCInstallGroup(QtCore.QObject):
     
-    _requiredVersion = '1.9.4'
+    _requiredVersion = '1.10.2'
+    _requiredMajorMinor = (1, 10)
             
     def __init__(self):
         """
@@ -220,8 +221,8 @@ class MCInstallGroup(QtCore.QObject):
             
                 msgBox = QtGui.QMessageBox()
                 msgBox.setWindowTitle("Minecraft not found.")
-                msgBox.setText("MCEdit requires an installed Minecraft version 1.9 or greater to "
-                               "access block textures, models, and metadata.")
+                msgBox.setText("MCEdit requires an installed Minecraft version %s or greater to "
+                               "access block textures, models, and metadata." % self._requiredVersion)
                 
                 download = msgBox.addButton(self.tr("Download Minecraft"), QtGui.QMessageBox.AcceptRole)
                 configure = msgBox.addButton(self.tr("Configure Installs"), QtGui.QMessageBox.ActionRole)
@@ -462,8 +463,8 @@ class MCInstall(object):
                 "path": self.path}
 
     def getResourceLoader(self, version, resourcePack):
-        v1_9 = self.installGroup.findVersionWithAssets()
-        loader = ResourceLoader(v1_9)
+        assetsVersion = self.installGroup.findVersionWithAssets()
+        loader = ResourceLoader(assetsVersion)
         if resourcePack:
             try:
                 loader.addZipFile(self.getResourcePackPath(resourcePack))
@@ -477,9 +478,9 @@ class MCInstall(object):
         loader.addZipFile(path)
         major, minor, rev = splitVersion(version)
 
-        # Need v1.9 for multipart block models
-        if (major, minor) != (1, 9):
-            loader.addZipFile(v1_9)
+        # Need assets version for multipart block models
+        if (major, minor) != (self.installGroup._requiredMajorMinor):
+            loader.addZipFile(assetsVersion)
 
         info = ["%s (%s)" % (z.filename, md5hash(z.filename)) for z in loader.zipFiles]
         log.info("Created ResourceLoader with search path:\n%s", ",\n".join(info))
@@ -511,16 +512,16 @@ class MMCInstance(object):
         return self.install.getVersionJarPath(self.version)
 
     def getResourceLoader(self, resourcePack=None):
-        v1_9 = self.install.installGroup.findVersionWithAssets()
-        loader = ResourceLoader(v1_9)
+        assetsVersion = self.install.installGroup.findVersionWithAssets()
+        loader = ResourceLoader(assetsVersion)
         if resourcePack:
             loader.addZipFile(resourcePack)
         loader.addZipFile(self.getVersionJarPath())
         major, minor, rev = splitVersion(self.version)
 
-        # Need v1.9 for multipart block models
-        if (major, minor) != (1, 9):
-            loader.addZipFile(v1_9)
+        # Need assetsVersion for multipart block models
+        if (major, minor) != (self.install.installGroup._requiredMajorMinor):
+            loader.addZipFile(assetsVersion)
 
         loader.addModsFolder(self.modsDir)
 
