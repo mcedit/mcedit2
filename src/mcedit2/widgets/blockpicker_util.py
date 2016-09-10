@@ -140,6 +140,7 @@ class BlockTypesItemWidget(QtGui.QWidget):
             if len(internalName) > internalNameLimit:
                 internalName = internalName[:internalNameLimit-3]+"..."
             self.singleInternalNameLabel.setText("(%d:%d) %s" % (block.ID, block.meta, internalName))
+            self.singleParentTypeLabel.setText("")
 
             if block.meta != 0:
                 try:
