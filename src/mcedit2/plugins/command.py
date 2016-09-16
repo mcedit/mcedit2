@@ -293,6 +293,8 @@ class SimpleOptionsDialog(QtGui.QDialog):
             raise ValueError("Unknown type %s for option dict" % type)
         
 
+def optionsFromFilterInputs(inputs):
+    return [dictFromFilterTuple(opt) for opt in inputs]
 
 def dictFromFilterTuple(opt):
     """
@@ -306,8 +308,94 @@ def dictFromFilterTuple(opt):
     -------
     optDict : dict
     """
+    name, value = opt
+    
+    min = max = increment = None
 
+    option = dict(name=name,
+                  text=name)
+    
+    if isinstance(value, tuple):
+        if not len(value):
+            raise ValueError("Filter option value must have nonzero length.")
+        
 
+        if isinstance(value[0], basestring):
+            if value[0] == "block":
+                # blocktype input
+                option["type"] = "blocktype"
+                option["value"] = value[1]
+            elif value[0] == "string":
+                # text input
+                option["type"] = "text"
+                for kwd in value[1:]:
+                    if '=' in kwd:
+                        k, v = kwd.split('=')
+                        if k == 'width':
+                            option["width"] = v
+                        if k == 'value':
+                            option["value"] = v
+            else:
+                # Choice input
+                option['choices'] = [(v, v) for v in value]
+                option["type"] = "choice"
+                value = None
+        
+        if isinstance(value[0], (int, float)):
+            if len(value) == 2:
+                min, max = value
+                value = min
+            if len(value) == 3:
+                value, min, max = value
+            if len(value) == 4:
+                value, min, max, increment = value
+                
+    if min is not None:
+        option["min"] = min
+    if max is not None:
+        option["max"] = max
+    if increment is not None:
+        option["increment"] = increment
+            
+    if value == "label":
+        option["type"] = "label"
+        return option
+
+    elif value == "blocktype":
+        option["type"] = "blocktype"
+        option["value"] = "minecraft:stone"
+    
+    elif value == "string":
+        option["type"] = "text"
+        option["value"] = ""
+    
+    elif isinstance(value, basestring):
+        option["type"] = "text"
+        option["value"] = value
+    
+    elif isinstance(value, int):
+        option["type"] = "int"
+        option["value"] = value
+    
+    elif isinstance(value, float):
+        option["type"] = "float"
+        option["value"] = value
+    
+    elif isinstance(value, bool):
+        option['type'] = 'bool'
+        option['value'] = bool
+    
+    elif isinstance(value, BlockType):
+        option["type"] = "blocktype"
+        option["value"] = value
+        
+    if "value" in option:
+        return option
+    else:
+        return dict(type="label",
+                    name=name,
+                    text="Unknown filter option: %s" % (opt,))
+        
 
 class _CommandPlugins(PluginClassRegistry):
     pluginClass = CommandPlugin
