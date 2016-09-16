@@ -19,13 +19,16 @@ log = logging.getLogger(__name__)
 _errorShown = False
 
 
-def showErrorDialog(text, tb, fatal):
+def showErrorDialog(text, tb=None, fatal=True):
     global _errorShown
+    if tb is None:
+        tb = sys.exc_info()
     _errorShown = True
     grabber = QtGui.QWidget.mouseGrabber()
     if grabber:
         grabber.releaseMouse()
 
+        
     dialog = ErrorDialog(text, tb, fatal)
     dialog.exec_()
     _errorShown = False
