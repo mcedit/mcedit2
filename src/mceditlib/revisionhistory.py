@@ -276,13 +276,9 @@ class RevisionHistory(object):
         self.nodes.append(newNode)
 
         for node in deadNodes:
-            if node.isPresave:
-                node.previousNode = self.nodes[0]
-                self.nodes[0] = node
-            else:
-                node.worldFolder.close()
-                shutil.rmtree(node.worldFolder.filename, ignore_errors=True)
-                node.invalid = True
+            node.worldFolder.close()
+            shutil.rmtree(node.worldFolder.filename, ignore_errors=True)
+            node.invalid = True
 
         return newNode
 
@@ -527,13 +523,12 @@ class RevisionHistoryNode(object):
         self.parentNode = parentNode
         self.deadChunks = set()
         self.deadFiles = set()
-        self.isPresave = False
         self.readonly = False
         self.differences = None
         self.invalid = False
 
     def __repr__(self):
-        return "RevisionHistoryNode(readonly=%s, isPresave=%s, worldFolder=%s)" % (self.readonly, self.isPresave, repr(
+        return "RevisionHistoryNode(readonly=%s, worldFolder=%s)" % (self.readonly, repr(
             self.worldFolder))
 
     def getChanges(self):
