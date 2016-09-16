@@ -168,6 +168,8 @@ class SimpleOptionsDialog(QtGui.QDialog):
             maximum = optDict.get('max', None)
 
             value = optDict.get('value', 0)
+            increment = optDict.get('increment', None)
+            
             name = optDict.get('name', None)
             if name is None:
                 raise ValueError("Option dict must have 'name' key")
@@ -186,8 +188,11 @@ class SimpleOptionsDialog(QtGui.QDialog):
                     widget.setMaximum(maximum)
                 else:
                     widget.setMaximum(2000000000)
+                
+                if increment is not None:
+                    widget.setSingleStep(increment)
             else:
-                widget = SpinSlider(double=(type == 'float'), minimum=minimum, maximum=maximum, value=value)
+                widget = SpinSlider(double=(type == 'float'), minimum=minimum, maximum=maximum, value=value, increment=increment)
 
             self.widgets.append(widget)
 
