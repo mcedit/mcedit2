@@ -1104,10 +1104,12 @@ class EditorSession(QtCore.QObject):
     def importSchematic(self, filename, importPos=None):
         try:
             schematic = WorldEditor(filename, readonly=True)
+            self.placeSchematic(schematic, importPos, os.path.basename(filename))
         except UnknownFormatError:
             log.exception("Unknown format.")
             return
-
+    
+    def placeSchematic(self, schematic, importPos=None, name="Unknown"):
         ray = self.editorTab.currentView().rayAtCenter()
         if importPos is not None:
             pos = importPos
@@ -1121,12 +1123,11 @@ class EditorSession(QtCore.QObject):
             else:
                 pos = pos + face.vector
 
-        name = os.path.basename(filename)
         dim = schematic.getDimension()
         center = dim.bounds.center
         bottomCenter = pos - (center[0], 0, center[2])
 
-        imp = PendingImport(schematic.getDimension(), bottomCenter, dim.bounds, name)
+        imp = PendingImport(schematic.getDimension(), bottomCenter.intfloor(), dim.bounds, name)
         command = PasteImportCommand(self, imp, "Import %s" % name)
         self.undoStack.push(command)
 
