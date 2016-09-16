@@ -131,7 +131,7 @@ class MoveTool(EditorTool):
         if self.currentImport:
             if live:
                 self.currentImportNode.setPreviewRotation(rots)
-            else:
+            elif rots != self.currentImport.rotation:
                 command = MoveRotateCommand(self.currentImport.rotation, rots, self.currentImport)
                 self.editorSession.pushCommand(command)
 
