@@ -437,17 +437,17 @@ def copyToFolder(destFolder, sourceNode, presaveNode=None):
         pass
 
 
-def copyToFolderIter(destFolder, sourceNode, presaveNode=None):
+def copyToFolderIter(destFolder, sourceNode, reversionNode=None):
     # Progress counts:
     # 0-10:   deleted chunks
     # 10-80:  new/modified chunks
     # 80-90:  deleted files
     # 90-100: new/modified files
 
-    if presaveNode:
-        presaveFolder = presaveNode.worldFolder
+    if reversionNode:
+        reversionFolder = reversionNode.worldFolder
     else:
-        presaveFolder = None
+        reversionFolder = None
 
     sourceFolder = sourceNode.worldFolder
 
@@ -458,8 +458,8 @@ def copyToFolderIter(destFolder, sourceNode, presaveNode=None):
         yield deadProgress, maxprogress, "Removing deleted chunks"
 
         if destFolder.containsChunk(cx, cz, dimName):
-            if presaveFolder and not presaveFolder.containsChunk(cx, cz, dimName):
-                presaveFolder.writeChunkBytes(cx, cz, dimName, destFolder.readChunkBytes(cx, cz, dimName))
+            if reversionFolder and not reversionFolder.containsChunk(cx, cz, dimName):
+                reversionFolder.writeChunkBytes(cx, cz, dimName, destFolder.readChunkBytes(cx, cz, dimName))
             destFolder.deleteChunk(cx, cz, dimName)
 
     # Write new and modified chunks
@@ -473,11 +473,11 @@ def copyToFolderIter(destFolder, sourceNode, presaveNode=None):
         for chunkProgress, (cx, cz) in enumProgress(cPos, progress, progress + dimProgress):
             yield chunkProgress, maxprogress, "Writing new and modified chunks"
 
-            if presaveFolder and not presaveFolder.containsChunk(cx, cz, dimName):
+            if reversionFolder and not reversionFolder.containsChunk(cx, cz, dimName):
                 if destFolder.containsChunk(cx, cz, dimName):
-                    presaveFolder.writeChunkBytes(cx, cz, dimName, destFolder.readChunkBytes(cx, cz, dimName))
+                    reversionFolder.writeChunkBytes(cx, cz, dimName, destFolder.readChunkBytes(cx, cz, dimName))
                 else:  # new chunk
-                    presaveNode.deleteChunk(cx, cz, dimName)
+                    reversionNode.deleteChunk(cx, cz, dimName)
             destFolder.writeChunkBytes(cx, cz, dimName, sourceFolder.readChunkBytes(cx, cz, dimName))
 
     # Remove deleted files
@@ -485,8 +485,8 @@ def copyToFolderIter(destFolder, sourceNode, presaveNode=None):
         yield delProgress, maxprogress, "Removing deleted files"
 
         if destFolder.containsFile(path):
-            if presaveFolder and not presaveFolder.containsFile(path):
-                presaveFolder.writeFile(path, destFolder.readFile(path))
+            if reversionFolder and not reversionFolder.containsFile(path):
+                reversionFolder.writeFile(path, destFolder.readFile(path))
             destFolder.deleteFile(path)
 
     # Write new and modified files
@@ -495,11 +495,11 @@ def copyToFolderIter(destFolder, sourceNode, presaveNode=None):
     for delProgress, path in enumProgress(files, 90, 10):
         yield delProgress, maxprogress, "Writing new and modified files"
 
-        if presaveFolder and not presaveFolder.containsFile(path):
+        if reversionFolder and not reversionFolder.containsFile(path):
             if destFolder.containsFile(path):
-                presaveFolder.writeFile(path, destFolder.readFile(path))
+                reversionFolder.writeFile(path, destFolder.readFile(path))
             else:  # new file
-                presaveNode.deleteFile(path)
+                reversionNode.deleteFile(path)
         destFolder.writeFile(path, sourceFolder.readFile(path))
 
     yield maxprogress, maxprogress, "Done"
