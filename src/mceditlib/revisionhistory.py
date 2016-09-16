@@ -359,7 +359,6 @@ class RevisionHistory(object):
         else:
             requestedIndex = requestedRevision
 
-        orphanChainProgress = 20
         if self.orphanChainIndex is not None:
             # Root node is orphaned - collapse orphan chain into it in reverse order
             orphanNodes = []
@@ -373,7 +372,7 @@ class RevisionHistory(object):
                 yield (progress, maxprogress, "Collapsing orphaned chain")
 
                 copyTask = copyToFolderIter(self.rootFolder, orphanChainNode)
-                copyTask = rescaleProgress(copyTask, progress, 20/len(orphanNodes))
+                copyTask = rescaleProgress(copyTask, progress, progress + 20./len(orphanNodes))
                 for current, _, status in copyTask:
                     yield current, maxprogress, status
 
@@ -397,7 +396,7 @@ class RevisionHistory(object):
             
         log.info("writeAllChanges: moving %s", "forwards" if direction == 1 else "backwards")
 
-        for progress, currentIndex in enumProgress(indexes, 20, 80):
+        for progress, currentIndex in enumProgress(indexes, 20, 100):
             # Write all changes from each node into the initial folder. Save the previous
             # chunk and file data from the initial folder into a reverse revision.
 
@@ -410,7 +409,7 @@ class RevisionHistory(object):
             self.rootNode.differences = currentNode.getChanges()
 
             copyTask = copyToFolderIter(self.rootFolder, currentNode, reverseNode)
-            copyTask = rescaleProgress(copyTask, progress, 80 / len(indexes))
+            copyTask = rescaleProgress(copyTask, progress, progress + 80. / len(indexes))
             for current, _, status in copyTask:
                 yield current, maxprogress, status
 
@@ -465,7 +464,7 @@ def copyToFolderIter(destFolder, sourceNode, presaveNode=None):
 
     # Write new and modified chunks
     dims = list(sourceFolder.listDimensions())
-    dimProgress = 70 / len(dims)
+    dimProgress = 70. / len(dims)
 
     for i, dimName in enumerate(dims):
         progress = 10 + i * dimProgress
