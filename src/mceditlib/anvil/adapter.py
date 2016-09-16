@@ -670,10 +670,11 @@ class AnvilWorldAdapter(object):
             raise IOError("World is opened read only.")
 
         self.checkSessionLock()
+        index = self.revisionHistory.nodes.index(self.selectedRevision)
         for status in self.revisionHistory.writeAllChangesIter(self.selectedRevision):
             yield status
 
-        self.selectedRevision = self.revisionHistory.getHead()
+        self.selectedRevision = self.revisionHistory.nodes[index]
         yield
 
     def close(self):
