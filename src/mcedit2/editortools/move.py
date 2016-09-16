@@ -144,6 +144,9 @@ class MoveTool(EditorTool):
     # --- Pending imports ---
 
     def importDidMove(self, newPoint, oldPoint):
+        if self.currentImport is None:
+            return
+        
         if newPoint != oldPoint:
             command = MoveOffsetCommand(oldPoint, newPoint, self.currentImport)
             self.editorSession.pushCommand(command)
