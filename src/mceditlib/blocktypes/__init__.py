@@ -90,7 +90,9 @@ class BlockType(namedtuple("_BlockType", "ID meta blocktypeSet")):
             return self.__dict__[attr]
 
         return self.blocktypeSet.getBlockTypeAttr(self, attr)
-
+    
+    def __nonzero__(self):
+        return int(self.ID) != 0  # self.ID is a numpy.int
 
 id_limit = 4096
 
