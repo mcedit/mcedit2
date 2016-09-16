@@ -305,7 +305,7 @@ class RevisionHistory(object):
                 orphanNodes.append(orphanChainNode)
                 orphanChainNode = orphanChainNode.parentNode
 
-            for progress, orphanChainNode in enumProgress(reversed(orphanNodes), 0, 20):
+            for progress, orphanChainNode in enumProgress(orphanNodes[::-1], 0, 20):
                 yield (progress, maxprogress, "Collapsing orphaned chain")
 
                 copyTask = copyToFolderIter(self.rootFolder, orphanChainNode)
