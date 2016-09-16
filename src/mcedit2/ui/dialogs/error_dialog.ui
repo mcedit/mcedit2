@@ -101,6 +101,13 @@
       </spacer>
      </item>
      <item>
+      <widget class="QPushButton" name="debugButton">
+       <property name="text">
+        <string>Debug</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="copyToPastebinButton">
        <property name="text">
         <string>Copy to PasteBin</string>

@@ -11,6 +11,7 @@ from PySide import QtGui, QtCore
 
 from mcedit2.ui.dialogs.error_dialog import Ui_errorDialog
 from mcedit2.util import qglcontext
+from mcedit2.util.resources import isSrcCheckout
 from mcedit2.util.screen import centerWidgetInScreen
 from mcedit2.util.showprogress import MCEProgressDialog
 
@@ -45,6 +46,7 @@ class ErrorDialog(QtGui.QDialog, Ui_errorDialog):
         super(ErrorDialog, self).__init__()
         self.setupUi(self)
         self.setModal(True)
+        self.exc_info = exc_info
 
         exc_type, exc_value, exc_tb = exc_info
 
@@ -77,6 +79,9 @@ class ErrorDialog(QtGui.QDialog, Ui_errorDialog):
 
         self.quitMCEditButton.setVisible(fatal)
         self.quitMCEditButton.clicked.connect(self.quitMCEdit)
+        
+        self.debugButton.setEnabled(isSrcCheckout())
+        self.debugButton.clicked.connect(self.debugPdb)
 
         try:
             import Pastebin
@@ -127,3 +132,6 @@ class ErrorDialog(QtGui.QDialog, Ui_errorDialog):
 
     def quitMCEdit(self):
         raise SystemExit
+    
+    def debugPdb(self):
+        import pdb; pdb.post_mortem(self.exc_info[2])
