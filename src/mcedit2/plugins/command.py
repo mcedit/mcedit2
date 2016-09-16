@@ -180,9 +180,12 @@ class SimpleOptionsDialog(QtGui.QDialog):
                     widget = QtGui.QSpinBox(value=value)
                 if minimum is not None:
                     widget.setMinimum(minimum)
+                else:
+                    widget.setMinimum(-2000000000)
                 if maximum is not None:
                     widget.setMaximum(maximum)
-
+                else:
+                    widget.setMaximum(2000000000)
             else:
                 widget = SpinSlider(double=(type == 'float'), minimum=minimum, maximum=maximum, value=value)
 
