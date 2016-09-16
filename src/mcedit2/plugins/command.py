@@ -89,9 +89,11 @@ class SimpleCommandPlugin(CommandPlugin):
         if result == QtGui.QDialog.Accepted:
             command = SimpleRevisionCommand(self.editorSession, self.displayName)
             with self.editorSession.beginCommand(command):
-                self.perform(self.editorSession.currentDimension,
-                             self.editorSession.currentSelection,
-                             dialog.getOptions())
+                result = self.perform(self.editorSession.currentDimension,
+                                      self.editorSession.currentSelection,
+                                      dialog.getOptions())
+            if result is not None:
+                self.editorSession.placeSchematic(result, name=self.displayName)
 
     def perform(self, dimension, selection, options):
         """
