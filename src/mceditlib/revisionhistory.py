@@ -337,13 +337,28 @@ class RevisionHistory(object):
 
     def writeAllChangesIter(self, requestedRevision=None):
         """
-        Write all changes to the root world folder, preserving undo history. The world folder
-        becomes the new head node. The previous head node is no longer valid after calling
-        writeAllChanges. Specify a revision to only save changes up to and including that
-        revision.
+        Write all changes to the root world folder, preserving undo history.
+        
+        If a revision is requested, the state of the world at that revision will be
+        written, otherwise, the last node in the history is used.
+        
+        All nodes between the root node and the requested node, inclusive, are replaced
+        with new nodes. The old nodes are no longer valid. The root node will be placed at
+        the position in the nodes list previously occupied by the requested node.
 
-        :return:
-        :rtype:
+        Parameters
+        ----------
+        
+        requestedRevision: RevisionHistoryNode | int | None
+            If given, this specifies the revision to write to the world folder, otherwise
+            the most recent revision is written.
+        
+        Returns
+        -------
+        
+        progress: Iterator[(current, max, status)]
+            Progress information for the write-changes task.
+            
         """
         # XXXXX wait for async writes to complete here
         # Progress counts:
