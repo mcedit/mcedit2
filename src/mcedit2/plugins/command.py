@@ -8,6 +8,7 @@ from collections import defaultdict
 from PySide import QtCore, QtGui
 
 from mcedit2.command import SimpleRevisionCommand
+from mcedit2.dialogs.error_dialog import showErrorDialog
 from mcedit2.plugins.registry import PluginClassRegistry
 from mcedit2.widgets.blockpicker import BlockTypeButton
 from mcedit2.widgets.layout import Column
@@ -328,13 +329,17 @@ class PluginsMenu(QtGui.QMenu):
 
     def loadPlugins(self):
         for cls in CommandPlugins.registeredPlugins:
-            instance = cls(self.editorSession)
-            self.plugins.append(instance)
+            self.pluginAdded(cls)
 
     def pluginAdded(self, cls):
-        instance = cls(self.editorSession)
-        self.plugins.append(instance)
-
+        try:
+            instance = cls(self.editorSession)
+            self.plugins.append(instance)
+        except Exception as e:
+            msg = "Error while instantiating plugin class %s" % (cls,)
+            log.exception(msg)
+            showErrorDialog(msg, fatal=False)
+            
     def pluginRemoved(self, cls):
         self.plugins = [p for p in self.plugins if not isinstance(p, cls)]
 
