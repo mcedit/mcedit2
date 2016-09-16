@@ -918,7 +918,7 @@ class AnvilWorldAdapter(object):
         :rtype: AnvilChunkData
         """
         if self.selectedRevision.containsChunk(cx, cz, dimName):
-            raise ValueError("Chunk %s already exists in dim %s", (cx, cz), dimName)
+            raise ValueError("Chunk %s already exists in dim %r" % ((cx, cz), dimName))
         chunk = AnvilChunkData(self, cx, cz, dimName, create=True)
         self.selectedRevision.writeChunkBytes(cx, cz, dimName, chunk.buildNBTTag().save(compressed=False))
         return chunk
