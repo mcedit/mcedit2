@@ -50,7 +50,7 @@ log = logging.getLogger(__name__)
 #
 # How to preserve undo history after writing changes?
 #
-# Problem: the root folder now reflects all changes and cannot be the root folder any more, and must be
+# Problem: the root folder now reflects all changes and cannot be the tail node any more, and must be
 # moved to the head of the history. All chunks and files in the root folder that are overwritten will be lost
 # from the history completely.
 #
@@ -60,6 +60,60 @@ log = logging.getLogger(__name__)
 # then replace the written revision. The reverse revision must also store delete commands for any files/chunks added
 #  in the written revision. The reverse revision's previousNode should then point forward in the history,
 # toward the world folder's new position. In fact, previousNode may not even be needed.
+#
+#
+# ---
+# Each node has a 'parentNode' pointer which points to the node that its revision is
+# based on. The pointer will point in one of three directions:
+#
+# Backward if the root node is earlier in the history
+# Forward if `writeAllChanges` was previously called (this node is now a "revert" node)
+# To an "orphaned" node not in the history if the root node is no longer in the history
+# A node will be "orphaned" if, after `writeAllChanges` is called, a new revision is
+# created before the root node's current position in the history.
+#
+# Initial State:
+#
+# root
+# ^-head
+#
+# After adding several revisions with changes:
+#
+# root <- 1 <- 2 <- 3
+#                   ^-head
+#
+# After calling writeAllChanges:
+#
+# 1' -> 2' -> 3' -> root
+#                   ^-head
+#
+# After undoing twice:
+#
+# 1' -> 2' -> 3' -> root
+#       ^-head
+#
+#
+# Adding revisions to 2' will create an orphan chain starting with 2':
+#
+#       orphanChainIndex -> 2'
+#
+#       -> 3' -> root
+#       |
+# 1' -> 2' <- 4 <- 5
+#                  ^-head
+#
+# Here, calling writeAllChanges must re-revert the changes in 3' and then 2' before
+# applying the changes in 4 and 5. orphanChainIndex points to 2'. We walk this chain
+# until it hits root and collect all nodes, including 2', and then apply them to root
+# in reverse order. After collapsing the orphan chain, we should have this:
+#
+# 1' -> root <- 4 <- 5
+#                    ^-head
+#
+# Then we can call the rest of writeAllChanges as usual:
+#
+# 1' -> 4' -> 5' -> root
+#                   ^-head
 
 
 class RevisionChanges(object):
@@ -69,6 +123,7 @@ class RevisionChanges(object):
 
     def __repr__(self):
         return "RevisionChanges(chunks=%r, files=%r)" % (self.chunks, self.files)
+
 
 class UndoFolderExists(IOError):
     """
@@ -97,16 +152,17 @@ class RevisionHistory(object):
     When the RevisionHistory is deleted, all partial folders are removed from disk.
     """
 
-
     def __init__(self, filename, resume=None):
         """
-
-        :param resume: Whether to resume editing if an undo folder already exists. Pass True to resume editing,
-        False to delete the old world folder, or None to raise an exception if the folder exists.
-        :type resume: bool | None
-        :param filename: Path to the world folder to open
-        :type filename: str | unicode
-        :rtype: RevisionHistory
+        
+        Parameters
+        ----------
+        
+        resume : bool | None
+            Whether to resume editing if an undo folder already exists. Pass True to resume editing,
+            False to delete the old world folder, or None to raise an exception if the folder exists.
+        filename : str | unicode
+            Path to the world folder to open
         """
 
         # Create undo folder in the folder containing the root folder.
@@ -185,19 +241,30 @@ class RevisionHistory(object):
             self.nodes[revisionIndex+1:] = []
             self.rootNodeIndex = revisionIndex
             self.orphanChainIndex = revisionIndex
-
-            # Root folder is about to be orphaned. Revisions from revisionIndex on to the root folder won't show up
-            #  in the history, but the world folder needs to stay as is. The node at revisionIndex will point
-            # forward to the chain leading to the root folder, and the revision about to be created will point
-            # backward to the node at revisionIndex. When the root folder is saved, it will need to move backwards
-            # along its subchain until it reaches revisionIndex, deleting revisions as it goes instead of
-            # reversing them, then move forward to the new revision.
-            # Root folder won't be orphaned in more than one position in the history. When it needs to be moved
-            # again because createRevision is called on a previous revision, the intervening revisions are made part
-            #  of the new orphan chain and the newly created revision added as before. When it needs to be moved
-            # because of a call to writeAllChanges, the orphan chain is collapsed onto the root folder before
-            # writing changes as usual.
-
+            
+            # The root folder is ahead of the requested revision. We want this newly
+            # created revision to point to the current state of the world folder, but
+            # we also don't want to modify the root folder right now.
+            #
+            # The node at `revisionIndex` captures the current state of the world folder,
+            # since its chain of `previousNode` pointers will point along a list of
+            # "reversion" revisions that eventually points to the root folder.
+            # We allow it to keep this chain while all of the nodes in that chain
+            # are removed from the revision history, and we store the index
+            # of this node in `orphanChainIndex` so we can later collapse the orphaned
+            # chain back onto the root folder during `writeAllChanges()`
+            #
+            # Oddly, `rootNodeIndex` now points to this node, which is not the original
+            # root node. However, it is the "effective" root node because when `createRevision`
+            # is called again with a revision that comes before the "root node", the
+            # intervening revisions will be added onto the tail of the orphan chain
+            # and the `orphanChainIndex` will be updated accordingly.
+            #
+            # This also means there is no possibility of having multiple orphaned chains.
+            # Either the new revision is created after the "effective" root node and is
+            # created normally, or it is created before this node and the orphan chain
+            # is extended.
+            
         newFolder = self._createRevisionFolder()
 
         previousNode = self.nodes[revisionIndex]
@@ -304,7 +371,8 @@ class RevisionHistory(object):
             while orphanChainNode is not self.rootNode:
                 orphanNodes.append(orphanChainNode)
                 orphanChainNode = orphanChainNode.parentNode
-
+            
+            # Apply each orphaned node onto the root node.
             for progress, orphanChainNode in enumProgress(orphanNodes[::-1], 0, 20):
                 yield (progress, maxprogress, "Collapsing orphaned chain")
 
@@ -313,17 +381,24 @@ class RevisionHistory(object):
                 for current, _, status in copyTask:
                     yield current, maxprogress, status
 
+            # Root node now replaces the orphan chain's tail in the history.
+            # (the nodes ahead and behind of the root node should now point to this node)
             self.nodes[self.orphanChainIndex] = self.rootNode
             self.orphanChainIndex = None
-
+            
         if requestedIndex == self.rootNodeIndex:
             return  # nothing to do
         elif requestedIndex < self.rootNodeIndex:
+            # Nodes behind the root node in the history will be re-reverted and replaced
+            # with plain nodes
             direction = -1
             indexes = xrange(self.rootNodeIndex-1, requestedIndex-1, -1)
         else:
+            # Nodes ahead of the root node will be reverted and replaced with
+            # "reversion" nodes.
             direction = 1
             indexes = xrange(self.rootNodeIndex+1, requestedIndex+1)
+            
         log.info("writeAllChanges: moving %s", "forwards" if direction == 1 else "backwards")
 
         for progress, currentIndex in enumProgress(indexes, 20, 80):
