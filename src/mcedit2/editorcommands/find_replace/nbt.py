@@ -396,7 +396,7 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
                 elif tag.isList():
                     value = "List"  # describeList
                 else:
-                    value = str(tag.value)
+                    value = unicode(tag.value)
 
                 return str(name_or_index), path, value
 
