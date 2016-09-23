@@ -794,7 +794,7 @@ class EditorSession(QtCore.QObject):
             self.copiedSchematic = showProgress("Cutting...", task)
             task = self.currentDimension.fillBlocksIter(self.currentSelection, "air")
             showProgress("Cutting...", task)
-        self.undoStack.push(command)
+        self.pushCommand(command)
 
     def copy(self):
         task = self.currentDimension.exportSchematicIter(self.currentSelection)
@@ -807,7 +807,7 @@ class EditorSession(QtCore.QObject):
         dim = self.copiedSchematic.getDimension()
         imp = PendingImport(dim, view.mouseBlockPos, dim.bounds, self.tr("<Pasted Object>"))
         command = PasteImportCommand(self, imp, "Paste")
-        self.undoStack.push(command)
+        self.pushCommand(command)
 
     def pasteBlocks(self):
         NotImplementedYet()
@@ -1129,7 +1129,7 @@ class EditorSession(QtCore.QObject):
 
         imp = PendingImport(schematic.getDimension(), bottomCenter.intfloor(), dim.bounds, name)
         command = PasteImportCommand(self, imp, "Import %s" % name)
-        self.undoStack.push(command)
+        self.pushCommand(command)
 
     # --- Undo support ---
 

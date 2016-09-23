@@ -302,7 +302,7 @@ class SelectionTool(EditorTool):
             command = SelectCommand(self.editorSession, selection)
             if oldBox is not None:
                 command.setText(self.tr("Resize Selection"))
-            self.editorSession.undoStack.push(command)
+            self.editorSession.pushCommand(command)
             self.updateNodes()
             self.selectionNode.loadImmediateChunks()
         else:
