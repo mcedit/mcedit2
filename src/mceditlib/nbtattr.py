@@ -119,8 +119,8 @@ class NBTUUIDAttr(object):
         least = uuidInt & 0xffffffffffffffffL
         most = (uuidInt >> 64) & 0xffffffffffffffffL
         tag = instance.rootTag
-        tag["UUIDLeast"].value = _signed(least)
-        tag["UUIDMost"].value = _signed(most)
+        tag["UUIDLeast"] = nbt.TAG_Long(_signed(least))
+        tag["UUIDMost"] = nbt.TAG_Long(_signed(most))
         instance.dirty = True
 
 
