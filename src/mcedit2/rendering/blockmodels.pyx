@@ -229,10 +229,9 @@ cdef class BlockModels(object):
                 resourceVariant = block.resourceVariant
                 self.blockStatesByResourcePathVariant[resourcePath, resourceVariant].append((internalName, blockState))
                 parts = self.loadResourceVariant(resourcePath, resourceVariant)
-                if parts is None or len(parts) == 0:
-                    continue
-
-
+                
+            if parts is None or len(parts) == 0:
+                continue
 
             self.loadModelParts(block, resourcePath, resourceVariant, parts)
 
