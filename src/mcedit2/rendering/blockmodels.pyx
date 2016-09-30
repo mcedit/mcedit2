@@ -746,9 +746,8 @@ cdef class BlockModels(object):
                     try:
                         ID, meta = self.blocktypes.IDsByState[internalName + blockState]
                     except KeyError:
-                        continue  # xxx put models for hidden states where??
-
-
+                        continue
+                    
                 # cookedModels[nameAndState] = cookedQuads
                 if path == UNKNOWN_BLOCK:
                     unknownBlockModel = modelQuads

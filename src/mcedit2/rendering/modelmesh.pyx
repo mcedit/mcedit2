@@ -137,6 +137,9 @@ class BlockModelMesh(object):
         cdef unsigned short acaciaDoorID = getID("minecraft:acacia_door")
         cdef unsigned short darkOakDoorID = getID("minecraft:dark_oak_door")
 
+        cdef unsigned short cobbleWallID = getID("minecraft:cobblestone_wall")
+
+
         cdef unsigned short redstoneWireID = getID("minecraft:redstone_wire")
         cdef list powerSources
 
@@ -210,7 +213,7 @@ class BlockModelMesh(object):
         cdef char doCull = 0
         cdef char foundActualState
         cdef char redstonePower
-
+        cdef char wallCount
 
 
         cdef blockmodels.ModelQuadListObj quadListObj
@@ -323,7 +326,31 @@ class BlockModelMesh(object):
                                         for p in ['facing', 'hinge', 'open']:
                                             props[p] = lowerProps[p]
                                         actualState = blocktypes.namesByID[ID], combineProps(props)
-
+                        
+                        if cobbleWallID and ID == cobbleWallID:
+                            props = parseProps(ID, meta)
+                            props['up'] = "true"
+                            wallCount = 0
+                            for direction, dx, dz in [
+                                ("north", 0, -1),
+                                ("south", 0, 1),
+                                ("west", -1, 0),
+                                ("east", 1, 0),
+                            ]:
+                                nID = areaBlocks[y, z+dz, x+dx]
+                                if nID == ID:
+                                    props[direction] = "true"
+                                wallCount += 1
+                                
+                            if wallCount == 2 and (
+                                (props['north'] == props['south'] == 'true')
+                                or (props['east'] == props['west'] == 'true')
+                            ):
+                                if areaBlocks[y+1, z, x] == 0:
+                                    props['up'] = 'false'
+                            
+                            actualState = blocktypes.namesByID[ID], combineProps(props)
+                        
                         if redstoneWireID and ID == redstoneWireID:
                             props = parseProps(ID, meta)
                             def isConnectible(nID, nMeta, dx, dz):
