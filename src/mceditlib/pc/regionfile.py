@@ -4,7 +4,7 @@
     Reads and writes chunks to *.mcr* (Minecraft Region)
     and *.mca* (Minecraft Anvil Region) files
 """
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 import logging
 import os
 import struct
@@ -59,8 +59,8 @@ class RegionFile(object):
             if newFile:
                 filesize = self.SECTOR_BYTES * 2
                 f.truncate(filesize)
-                self.offsets = numpy.zeros(self.SECTOR_BYTES/4, dtype='>u4')
-                self.modTimes = numpy.zeros(self.SECTOR_BYTES/4, dtype='>u4')
+                self.offsets = numpy.zeros(self.SECTOR_BYTES//4, dtype='>u4')
+                self.modTimes = numpy.zeros(self.SECTOR_BYTES//4, dtype='>u4')
             else:
 
                 if not readonly:
@@ -81,7 +81,7 @@ class RegionFile(object):
                 self.offsets = numpy.fromstring(offsetsData, dtype='>u4')
                 self.modTimes = numpy.fromstring(modTimesData, dtype='>u4')
 
-            self.freeSectors = [True] * (filesize / self.SECTOR_BYTES)
+            self.freeSectors = [True] * (filesize // self.SECTOR_BYTES)
             self.freeSectors[0:2] = False, False
 
             if not newFile:
@@ -251,7 +251,7 @@ class RegionFile(object):
         offset = self._getOffset(cx, cz)
         sectorNumber = offset >> 8
         sectorsAllocated = offset & 0xff
-        sectorsNeeded = (len(data) + self.CHUNK_HEADER_SIZE) / self.SECTOR_BYTES + 1
+        sectorsNeeded = (len(data) + self.CHUNK_HEADER_SIZE) // self.SECTOR_BYTES + 1
         if sectorsNeeded >= 256:
             err = RegionFormatError("Cannot save chunk %s with compressed length %s (exceeds 1 megabyte)" %
                                     ((cx, cz), len(data)))
