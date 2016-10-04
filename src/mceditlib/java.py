@@ -87,7 +87,7 @@ class JavaLevel(FakeChunkedLevelAdapter):
             gz = gzip.GzipFile(filename)
             strdata = gz.read()
         except Exception:
-            strdata = file(filename, "rb").read()
+            strdata = open(filename, "rb").read()
 
         data = fromstring(strdata, dtype='uint8')
 

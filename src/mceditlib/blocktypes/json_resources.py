@@ -23,7 +23,7 @@ def openResource(filename):
             log.exception("pkg_resources not available")
             raise
 
-    return file(path)
+    return open(path)
 
 def getJsonFile(filename):
     if filename in _cachedJsons:

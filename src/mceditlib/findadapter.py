@@ -79,7 +79,7 @@ def isLevel(cls, filename):
         return cls.canOpenFile(filename)
 
     if os.path.isfile(filename):
-        with file(filename, "rb") as f:
+        with open(filename, "rb") as f:
             data = f.read()
 
         if hasattr(cls, "_isDataLevel"):

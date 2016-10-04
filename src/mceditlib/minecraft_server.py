@@ -85,7 +85,7 @@ class ServerJarStorage(object):
             os.makedirs(self.cacheDir)
         readme = os.path.join(self.cacheDir, "README.TXT")
         if not os.path.exists(readme):
-            with file(readme, "w") as f:
+            with open(readme, "w") as f:
                 f.write("""
 About this folder:
 
@@ -163,7 +163,7 @@ this way.
 
     def checksumForVersion(self, v):
         jf = self.jarfileForVersion(v)
-        with file(jf, "rb") as f:
+        with open(jf, "rb") as f:
             import hashlib
             return hashlib.md5(f.read()).hexdigest()
 
@@ -198,14 +198,14 @@ def readProperties(filename):
     if not os.path.exists(filename):
         return {}
 
-    with file(filename) as f:
+    with open(filename) as f:
         properties = dict((line.split("=", 2) for line in (l.strip() for l in f) if not line.startswith("#")))
 
     return properties
 
 
 def saveProperties(filename, properties):
-    with file(filename, "w") as f:
+    with open(filename, "w") as f:
         for k, v in properties.iteritems():
             f.write("{0}={1}\n".format(k, v))
 
@@ -304,7 +304,7 @@ class MCServerChunkGenerator(object):
         readme = os.path.join(self.worldCacheDir, "README.TXT")
 
         if not os.path.exists(readme):
-            with file(readme, "w") as f:
+            with open(readme, "w") as f:
                 f.write("""
     About this folder:
 

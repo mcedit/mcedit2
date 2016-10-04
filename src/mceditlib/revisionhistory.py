@@ -656,7 +656,7 @@ class RevisionHistoryNode(object):
         if self.worldFolder.containsChunk(cx, cz, dimName):
             self.worldFolder.deleteChunk(cx, cz, dimName)
         else:
-            with file(self._deadChunksFile(), "w") as f:
+            with open(self._deadChunksFile(), "w") as f:
                 f.write("%d, %d, %s\n" % (cx, cz, dimName))
                 f.close()
             self.deadChunks.add((cx, cz, dimName))
@@ -669,7 +669,7 @@ class RevisionHistoryNode(object):
         """
         if self.invalid:
             raise RuntimeError("Accessing invalid node: %r" % self)
-        with file(self._deadChunksFile()) as f:
+        with open(self._deadChunksFile()) as f:
             lines = f.read().split('\n')
 
         def _coords():
@@ -733,7 +733,7 @@ class RevisionHistoryNode(object):
         if self.worldFolder.containsFile(path):
             self.worldFolder.deleteFile(path)
         else:
-            with file(self._deadFilesFile(), "w") as f:
+            with open(self._deadFilesFile(), "w") as f:
                 f.write("%s\n" % path)
                 f.close()
             self.deadFiles.add(path)
@@ -746,7 +746,7 @@ class RevisionHistoryNode(object):
         """
         if self.invalid:
             raise RuntimeError("Accessing invalid node: %r" % self)
-        with file(self._deadFilesFile()) as f:
+        with open(self._deadFilesFile()) as f:
             return f.read().split('\n')
 
     def readFile(self, path):

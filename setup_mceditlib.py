@@ -11,7 +11,7 @@ Cython.Compiler.Options.annotate = True
 
 import numpy
 
-with file("version.txt") as f:
+with open("version.txt") as f:
     version = f.read().strip()
 
 install_requires = [

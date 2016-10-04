@@ -63,7 +63,7 @@ class AnvilWorldFolder(object):
         return os.unlink(self.getFilePath(path))
 
     def readFile(self, path):
-        with file(self.getFilePath(path), "rb") as f:
+        with open(self.getFilePath(path), "rb") as f:
             return f.read()
 
     def writeFile(self, path, data):
@@ -71,7 +71,7 @@ class AnvilWorldFolder(object):
         dirpath = os.path.dirname(path)
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
-        with file(path, "wb") as f:
+        with open(path, "wb") as f:
             f.write(data)
 
     def listFolder(self, path):
