@@ -23,7 +23,9 @@ include_dirs = [numpy.get_include()]
 mceditlib_ext_modules = cythonize([
     "src/mceditlib/nbt.pyx",
     "src/mceditlib/relight/with_cython.pyx"
-])
+],
+    compile_time_env={'IS_PY2': True},
+    )
 
 for m in mceditlib_ext_modules:
     m.include_dirs = include_dirs
