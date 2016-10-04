@@ -10,6 +10,7 @@ import Cython.Compiler.Options
 Cython.Compiler.Options.annotate = True
 
 import numpy
+import sys
 
 with open("version.txt") as f:
     version = f.read().strip()
@@ -24,7 +25,7 @@ mceditlib_ext_modules = cythonize([
     "src/mceditlib/nbt.pyx",
     "src/mceditlib/relight/with_cython.pyx"
 ],
-    compile_time_env={'IS_PY2': True},
+    compile_time_env={'IS_PY2': sys.version_info[0] < 3},
     )
 
 for m in mceditlib_ext_modules:
@@ -50,10 +51,12 @@ setup(name='mceditlib',
       url='https://github.com/mcedit/mcedit2',
       license='MIT License',
       packages=find_packages('src', include=["mceditlib*"]),
+      package_data={'mceditlib': ['blocktypes/*.json', 'anvil/biomes.csv']},
       package_dir={'': 'src'},
       ext_modules=mceditlib_ext_modules,
       include_dirs=include_dirs,
       include_package_data=True,
       zip_safe=False,
       install_requires=install_requires,
+      use_2to3=True,
       )
