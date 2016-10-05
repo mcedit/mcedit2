@@ -26,7 +26,7 @@ class AnalyzeOperation(Operation):
         super(AnalyzeOperation, self).__init__(dimension, selection)
 
         self.createSections = False
-        self.blocks = numpy.zeros(65536, dtype='uint32')
+        self.blocks = numpy.zeros(65536, dtype='uintp')
         self.selection = selection
         self.entityCounts = defaultdict(int)
         self.tileEntityCounts = defaultdict(int)
