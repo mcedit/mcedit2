@@ -54,9 +54,13 @@ IF IS_PY2:
     from cStringIO import StringIO
     from cpython cimport PyString_FromStringAndSize
     binary_type = str
+    cdef object iteritems(obj):
+        return obj.iteritems()
 ELSE:
     from io import BytesIO as StringIO
     binary_type = bytes
+    cdef object iteritems(obj):
+        return obj.items()
 
 import numpy
 
@@ -71,8 +75,8 @@ IF IS_PY2:
     cdef PycStringIO_CAPI *PycStringIO = <PycStringIO_CAPI *> PyCObject_Import("cStringIO", "cStringIO_CAPI")
     cdef PyTypeObject * StringO = PycStringIO.OutputType
 ELSE:
-    # The equivalent python3 code has not been written, so for now only reading
-    # is supported in python3
+    # The equivalent python3 code has not been written, so for now we fall back
+    # on a codepath that might have poor performance.
     pass
 
 # Tag IDs
@@ -827,7 +831,7 @@ cdef void cwrite(obj, char *buf, size_t len):
     IF IS_PY2:
         PycStringIO.cwrite(obj, buf, len)
     ELSE:
-        raise Exception("[nbt.pyx python3 port] cwrite was not ported to python3")
+        obj.write(buf[:len])
 
 
 cdef void save_tag_id(char tagID, object buf):
@@ -940,7 +944,7 @@ def nested_string(tag, indent_string="  ", indent=0):
     if tag.tagID == _ID_COMPOUND:
         result += 'TAG_Compound({\n'
         indent += 1
-        for key, value in tag.iteritems():
+        for key, value in iteritems(tag):
             result += indent_string * indent + '"%s": %s,\n' % (key, nested_string(value, indent_string, indent))
         indent -= 1
         result += indent_string * indent + '})'
@@ -982,7 +986,7 @@ def walk(tag, path=None):
     if path is None:
         path = []
     if tag.isCompound():
-        for name, subtag in tag.iteritems():
+        for name, subtag in iteritems(tag):
             yield (name, subtag, path)
             for result in walk(subtag, path + [name]):
                 yield result
