@@ -38,25 +38,46 @@ DEF UNICODE_NAMES = True
 # For each NBT file loaded, cache all of the unicode strings used for tag names. Saves some hundred kilobytes per
 # file since tag names often appear multiple times
 
-DEF UNICODE_CACHE = True
+# The value of the IS_PY2 macro is received from the build script
+IF IS_PY2:
+    DEF UNICODE_CACHE = True
+ELSE:
+    # This codepath is currently unsupported in the python3 version
+    DEF UNICODE_CACHE = False
 
 import collections
 import gzip
 import zlib
 
-from cStringIO import StringIO
-from cpython cimport PyTypeObject, PyUnicode_DecodeUTF8, PyList_Append, PyString_FromStringAndSize
+from cpython cimport PyTypeObject, PyUnicode_DecodeUTF8, PyList_Append
+IF IS_PY2:
+    from cStringIO import StringIO
+    from cpython cimport PyString_FromStringAndSize
+    binary_type = str
+    cdef object iteritems(obj):
+        return obj.iteritems()
+ELSE:
+    from io import BytesIO as StringIO
+    binary_type = bytes
+    cdef object iteritems(obj):
+        return obj.items()
+
 import numpy
 
-cdef extern from "cStringIO.h":
-    struct PycStringIO_CAPI:
-        int cwrite(object o, char * buf, Py_ssize_t len)
-        PyTypeObject * OutputType
-cdef extern from "cobject.h":
-    void * PyCObject_Import(char * module_name, char * cobject_name)
+IF IS_PY2:
+    cdef extern from "cStringIO.h":
+        struct PycStringIO_CAPI:
+            int cwrite(object o, char * buf, Py_ssize_t len)
+            PyTypeObject * OutputType
+    cdef extern from "cobject.h":
+        void * PyCObject_Import(char * module_name, char * cobject_name)
 
-cdef PycStringIO_CAPI *PycStringIO = <PycStringIO_CAPI *> PyCObject_Import("cStringIO", "cStringIO_CAPI")
-cdef PyTypeObject * StringO = PycStringIO.OutputType
+    cdef PycStringIO_CAPI *PycStringIO = <PycStringIO_CAPI *> PyCObject_Import("cStringIO", "cStringIO_CAPI")
+    cdef PyTypeObject * StringO = PycStringIO.OutputType
+ELSE:
+    # The equivalent python3 code has not been written, so for now we fall back
+    # on a codepath that might have poor performance.
+    pass
 
 # Tag IDs
 
@@ -131,7 +152,7 @@ cdef class TAG_Value:
 
         def __set__(self, val):
             IF UNICODE_NAMES:
-                if isinstance(val, str):
+                if isinstance(val, binary_type):
                     val = PyUnicode_DecodeUTF8(val, len(val), "strict")
             ELSE:
                 if isinstance(val, unicode):
@@ -327,7 +348,7 @@ cdef class TAG_String(TAG_Value):
             return self._value
 
         def __set__(self, value):
-            if isinstance(value, str):
+            if isinstance(value, binary_type):
                 value = PyUnicode_DecodeUTF8(value, len(value), "strict")
             self._value = value
 
@@ -509,7 +530,7 @@ cdef class _TAG_Compound(TAG_Value):
             return data
 
         if isinstance(filename_or_buf, basestring):
-            f = file(filename_or_buf, "wb")
+            f = open(filename_or_buf, "wb")
             f.write(data)
         else:
             filename_or_buf.write(data)
@@ -545,7 +566,7 @@ def load(filename="", buf=None):
     :rtype: TAG_Compound
     """
     if filename:
-        buf = file(filename, "rb")
+        buf = open(filename, "rb")
 
     if hasattr(buf, "read"):
         buf = buf.read()
@@ -807,7 +828,10 @@ def hexdump(src, length=8):
 
 cdef void cwrite(obj, char *buf, size_t len):
     #print "cwrite %s %s %d" % (map(ord, buf[:min(4, len)]), buf[:min(4, len)].decode('ascii', 'replace'), len)
-    PycStringIO.cwrite(obj, buf, len)
+    IF IS_PY2:
+        PycStringIO.cwrite(obj, buf, len)
+    ELSE:
+        obj.write(buf[:len])
 
 
 cdef void save_tag_id(char tagID, object buf):
@@ -920,7 +944,7 @@ def nested_string(tag, indent_string="  ", indent=0):
     if tag.tagID == _ID_COMPOUND:
         result += 'TAG_Compound({\n'
         indent += 1
-        for key, value in tag.iteritems():
+        for key, value in iteritems(tag):
             result += indent_string * indent + '"%s": %s,\n' % (key, nested_string(value, indent_string, indent))
         indent -= 1
         result += indent_string * indent + '})'
@@ -962,7 +986,7 @@ def walk(tag, path=None):
     if path is None:
         path = []
     if tag.isCompound():
-        for name, subtag in tag.iteritems():
+        for name, subtag in iteritems(tag):
             yield (name, subtag, path)
             for result in walk(subtag, path + [name]):
                 yield result

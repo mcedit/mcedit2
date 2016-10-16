@@ -30,7 +30,7 @@ class PocketChunksFile(object):
 
     @property
     def file(self):
-        openfile = lambda: file(self.path, "rb+")
+        openfile = lambda: open(self.path, "rb+")
         if PocketChunksFile.holdFileOpen:
             if self._file is None:
                 self._file = openfile()
@@ -47,7 +47,7 @@ class PocketChunksFile(object):
         self.path = path
         self._file = None
         if not os.path.exists(path):
-            file(path, "w").close()
+            open(path, "w").close()
 
         with self.file as f:
 

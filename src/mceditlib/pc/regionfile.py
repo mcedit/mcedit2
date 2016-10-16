@@ -4,7 +4,7 @@
     Reads and writes chunks to *.mcr* (Minecraft Region)
     and *.mca* (Minecraft Anvil Region) files
 """
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 import logging
 import os
 import struct
@@ -49,18 +49,18 @@ class RegionFile(object):
         if not os.path.exists(path):
             if readonly:
                 raise IOError("Region file not found: %r" % path)
-            file(path, "w").close()
+            open(path, "w").close()
             newFile = True
 
         filesize = os.path.getsize(path)
         mode = "rb" if readonly else "rb+"
-        with file(self.path, mode) as f:
+        with open(self.path, mode) as f:
 
             if newFile:
                 filesize = self.SECTOR_BYTES * 2
                 f.truncate(filesize)
-                self.offsets = numpy.zeros(self.SECTOR_BYTES/4, dtype='>u4')
-                self.modTimes = numpy.zeros(self.SECTOR_BYTES/4, dtype='>u4')
+                self.offsets = numpy.zeros(self.SECTOR_BYTES//4, dtype='>u4')
+                self.modTimes = numpy.zeros(self.SECTOR_BYTES//4, dtype='>u4')
             else:
 
                 if not readonly:
@@ -81,7 +81,7 @@ class RegionFile(object):
                 self.offsets = numpy.fromstring(offsetsData, dtype='>u4')
                 self.modTimes = numpy.fromstring(modTimesData, dtype='>u4')
 
-            self.freeSectors = [True] * (filesize / self.SECTOR_BYTES)
+            self.freeSectors = [True] * (filesize // self.SECTOR_BYTES)
             self.freeSectors[0:2] = False, False
 
             if not newFile:
@@ -208,7 +208,7 @@ class RegionFile(object):
         if sectorStart + numSectors > len(self.freeSectors):
             raise ChunkNotPresent((cx, cz))
 
-        with file(self.path, "rb") as f:
+        with open(self.path, "rb") as f:
             f.seek(sectorStart * self.SECTOR_BYTES)
             data = f.read(numSectors * self.SECTOR_BYTES)
         if len(data) < 5:
@@ -251,7 +251,7 @@ class RegionFile(object):
         offset = self._getOffset(cx, cz)
         sectorNumber = offset >> 8
         sectorsAllocated = offset & 0xff
-        sectorsNeeded = (len(data) + self.CHUNK_HEADER_SIZE) / self.SECTOR_BYTES + 1
+        sectorsNeeded = (len(data) + self.CHUNK_HEADER_SIZE) // self.SECTOR_BYTES + 1
         if sectorsNeeded >= 256:
             err = RegionFormatError("Cannot save chunk %s with compressed length %s (exceeds 1 megabyte)" %
                                     ((cx, cz), len(data)))
@@ -301,7 +301,7 @@ class RegionFile(object):
 
                 region_debug("REGION SAVE {0},{1}, growing by {2}b".format(cx, cz, len(data)))
 
-                with file(self.path, "rb+") as f:
+                with open(self.path, "rb+") as f:
                     f.seek(0, 2)
                     filesize = f.tell()
 
@@ -320,7 +320,7 @@ class RegionFile(object):
         self.setTimestamp(cx, cz)
 
     def writeSector(self, sectorNumber, data, format):
-        with file(self.path, "rb+") as f:
+        with open(self.path, "rb+") as f:
             region_debug("REGION: Writing sector {0}".format(sectorNumber))
 
             f.seek(sectorNumber * self.SECTOR_BYTES)
@@ -341,7 +341,7 @@ class RegionFile(object):
         cx &= 0x1f
         cz &= 0x1f
         self.offsets[cx + cz * 32] = offset
-        with file(self.path, "rb+") as f:
+        with open(self.path, "rb+") as f:
             f.seek(0)
             f.write(self.offsets.tostring())
 
@@ -366,8 +366,6 @@ class RegionFile(object):
         cx &= 0x1f
         cz &= 0x1f
         self.modTimes[cx + cz * 32] = timestamp
-        with file(self.path, "rb+") as f:
+        with open(self.path, "rb+") as f:
             f.seek(self.SECTOR_BYTES)
             f.write(self.modTimes.tostring())
-
-

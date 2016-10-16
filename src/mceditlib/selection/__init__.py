@@ -23,12 +23,13 @@ class ISelection(object):
     """
     chunkPositions = NotImplemented
 
-    def __contains__(self, (x, y, z)):
+    def __contains__(self, xyz):
         """
         Return True if the given set of coordinates is within this selection.
 
         :rtype: bool
         """
+        (x, y, z) = xyz
 
     def contains_coords(self, x, y, z):
         """
@@ -544,7 +545,8 @@ class BoundingBox(SelectionBox):
         # return self.__class__(origin, size)
         return BoundingBox(origin, size)
 
-    def __contains__(self, (x, y, z)):
+    def __contains__(self, xyz):
+        (x, y, z) = xyz
         if x < self.minx or x >= self.maxx:
             return False
         if y < self.miny or y >= self.maxy:

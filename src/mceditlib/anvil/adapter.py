@@ -780,7 +780,7 @@ class AnvilWorldAdapter(object):
         """
         lockfile = self.revisionHistory.rootFolder.getFilePath("session.lock")
         self.lockTime = int(time.time() * 1000)
-        with file(lockfile, "wb") as f:
+        with open(lockfile, "wb") as f:
             f.write(struct.pack(">q", self.lockTime))
             f.flush()
             os.fsync(f.fileno())
@@ -798,7 +798,7 @@ class AnvilWorldAdapter(object):
 
         lockfile = self.revisionHistory.rootFolder.getFilePath("session.lock")
         try:
-            (lock, ) = struct.unpack(">q", file(lockfile, "rb").read())
+            (lock, ) = struct.unpack(">q", open(lockfile, "rb").read())
         except struct.error:
             lock = -1
         if lock != self.lockTime:
