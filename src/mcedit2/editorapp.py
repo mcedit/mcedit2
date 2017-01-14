@@ -823,6 +823,7 @@ class MCEditApp(QtGui.QApplication):
         from mcedit2 import __version__ as v
         credits = """<b>Supporters:</b>
 <br>
+<br>Saurik Works
 <br>Gamer2313
 <br>Andrew Devillez
 <br>Alek Poyato
