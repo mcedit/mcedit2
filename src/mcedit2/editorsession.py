@@ -385,6 +385,7 @@ class EditorSession(QtCore.QObject):
 
         self.menuChunk = QtGui.QMenu(self.tr("Chunk"))
 
+        self.actionPruneWorld = EditingAction(self, self.tr("Prune World"), triggered=self.pruneWorld)
         self.actionDeleteChunks = EditingAction(self, self.tr("Delete Chunks"), triggered=self.deleteChunks)
         self.actionCreateChunks = EditingAction(self, self.tr("Create Chunks"), triggered=self.createChunks)
         self.actionRepopChunks = EditingAction(self, self.tr("Mark Chunks For Repopulation"),
@@ -392,6 +393,7 @@ class EditorSession(QtCore.QObject):
         self.actionRepopChunks = EditingAction(self, self.tr("Unmark Chunks For Repopulation"),
                                                triggered=self.unRepopChunks)
 
+        self.menuChunk.addAction(self.actionPruneWorld)
         self.menuChunk.addAction(self.actionDeleteChunks)
         self.menuChunk.addAction(self.actionCreateChunks)
         self.menuChunk.addAction(self.actionRepopChunks)
@@ -886,6 +888,16 @@ class EditorSession(QtCore.QObject):
         self.pushCommand(command)
 
     # - Chunk -
+
+    def pruneWorld(self):
+        if self.currentSelection is None:
+            return
+
+        keep = set(self.currentSelection.chunkPositions())
+        with self.beginSimpleCommand(self.tr("Prune World")):
+            for cx, cz in list(self.currentDimension.chunkPositions()):
+                if (cx, cz) not in keep:
+                    self.currentDimension.deleteChunk(cx, cz)
 
     def deleteChunks(self):
         if self.currentSelection is None:
