@@ -22,9 +22,14 @@ This is not needed if you already have MSVC 2008 (Visual Studio 9.0) or the Wind
 installed, but you probably don't so install it anyway.
 - Install virtualenv: `pip install virtualenv` (pip is now included with recent versions of Python)
 - Update to the latest setuptools to make sure Cython modules compile: `pip install -U setuptools`
-- Open a bash shell and `cd` to the folder containing the MCEdit sources.
+- Create a local clone of the MCEdit sources: `git clone https://github.com/mcedit/mcedit2`
+- Using the `bash` shell, change directory to the local clone: `cd mcedit2`
 - Create a virtualenv using `virtualenv ENV`
 - Activate the virtualenv using `. ENV/scripts/activate`
+
+A virtualenv is created in the local clone directory to keep MCEdit's required libraries isolated from those
+installed in the systemwide Python folder. This prevents unpleasant surprises when you update a library 
+for another project and later find it isn't compatible with MCEdit.
 
 Now, install the required libraries. 
 
