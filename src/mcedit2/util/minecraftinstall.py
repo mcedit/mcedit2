@@ -760,13 +760,13 @@ class MinecraftInstallsDialog(QtGui.QDialog, Ui_installsWidget):
 
     def removeInstall(self):
         row = self.minecraftInstallsTable.currentRow()
-        path = self.minecraftInstallsTable.item(row, 2).data()
+        path = self.minecraftInstallsTable.item(row, 2).data(Qt.EditRole)
         GetInstalls().removeInstall(path)
         self.minecraftInstallsTable.removeRow(row)
 
     def selectInstall(self):
         row = self.minecraftInstallsTable.currentRow()
-        path = self.minecraftInstallsTable.item(row, 2).data()
+        path = self.minecraftInstallsTable.item(row, 2).data(Qt.EditRole)
         currentInstallOption.setValue(path)
         self._hiliteRow(row)
 
