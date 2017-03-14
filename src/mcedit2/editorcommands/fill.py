@@ -18,15 +18,13 @@ class FillCommandWidget(QtGui.QDialog, Ui_fillDialog):
         self.blockTypeInput.editorSession = editorSession
         self.blockTypeInput.block = "minecraft:stone"
 
-_fillWidget = None
-
-# xxxx why?
+# Cache the FillCommandWidget on the session. Gross.
 def getFillWidget(editorSession):
-    global _fillWidget
-    if _fillWidget is None:
-        _fillWidget = FillCommandWidget(editorSession)
-    _fillWidget.editorSession = editorSession
-    return _fillWidget
+    widget = getattr(editorSession, '_fillWidget', None)
+    
+    if widget is None:
+        widget = editorSession._fillWidget = FillCommandWidget(editorSession)
+    return widget
 
 
 def fillCommand(editorSession):
