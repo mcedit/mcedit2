@@ -77,5 +77,6 @@ class WorldLoader(object):
         else:
             chunkPositions = self.scene.dimension.chunkPositions()
         for cPos in chunkPositions:
-            for _ in self.scene.workOnChunk(self.scene.dimension.getChunk(*cPos)):
-                yield _
+            if self.scene.dimension.containsChunk(*cPos):
+                for _ in self.scene.workOnChunk(self.scene.dimension.getChunk(*cPos)):
+                    yield _

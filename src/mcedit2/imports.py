@@ -80,6 +80,9 @@ class PendingImportNode(Node, QtCore.QObject):
             object's position, rotation, and scale.
         textureAtlas: TextureAtlas
             The textures and block models used to render the preview of the object.
+        hasHandle: bool
+            True if this import node should have a user-interactive BoxHandle associated
+            with it. This is False for the extra copies displayed by a repeated clone.
 
         Attributes
         ----------
