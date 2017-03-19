@@ -473,7 +473,7 @@ cdef class BlockModels(object):
                     if varVal is None:
                         ok = False
 
-                    if str(varVal) != val:
+                    if str(varVal).lower() != str(val).lower():
                         # Gross, values in multipart may be raw values but values in resourceVariant are strings...
                         ok = False
 
@@ -509,8 +509,11 @@ cdef class BlockModels(object):
                 if ok:
                     apply = part.get('apply')
                     if apply is not None:
+                        if not isinstance(apply, list):
+                            apply = [apply]
+                            
                         for model in apply:
-                            modelName = apply.get('model')
+                            modelName = model.get('model')
                             if modelName is None:
                                 continue
                             try:
@@ -522,10 +525,10 @@ cdef class BlockModels(object):
                                 log.exception("Error parsing json for block/%s: %s", modelName, e)
                                 continue
 
-                            variantXrot = apply.get('x', 0)
-                            variantYrot = apply.get('y', 0)
+                            variantXrot = model.get('x', 0)
+                            variantYrot = model.get('y', 0)
                             ret.append((modelDict, variantXrot, variantYrot))
-
+            
             return ret
 
     def buildBoxQuads(self, dict element, unicode nameAndState, dict textureVars,

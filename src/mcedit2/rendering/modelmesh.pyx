@@ -301,11 +301,11 @@ class BlockModelMesh(object):
                                 nID = areaBlocks[y, z+dz, x+dx]
                                 props[direction] = ("true"
                                              if opaqueCube[nID]
-                                                or paneID and nID == paneID
-                                                or barsID and nID == barsID
-                                                or stainedGlassPaneID and nID == stainedGlassPaneID
-                                                or glassID and nID == glassID
-                                                or stainedGlassID and nID == stainedGlassID
+                                                or (paneID and nID == paneID)
+                                                or (barsID and nID == barsID)
+                                                or (stainedGlassPaneID and nID == stainedGlassPaneID)
+                                                or (glassID and nID == glassID)
+                                                or (stainedGlassID and nID == stainedGlassID)
                                              else "false")
                             actualState = blocktypes.namesByID[ID], combineProps(props)
 
