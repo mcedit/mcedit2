@@ -426,9 +426,9 @@ class PCBlockTypeSet(BlockTypeSet):
         super(PCBlockTypeSet, self).__init__()
         self.itemStackVersion = itemStackVersion or VERSION_1_7
         self.name = "Alpha"
-        self.addIDMappingFromJSON(getJsonFile("idmapping_raw_1_10.json"))
+        self.addIDMappingFromJSON(getJsonFile("idmapping_raw_1_11.json"))
         self.addIDMappingFromJSON(getJsonFile("idmapping.json"))
-        self.addBlocksFromJSON(getJsonFile("minecraft_raw_1_10.json"))
+        self.addBlocksFromJSON(getJsonFile("minecraft_raw_1_11.json"))
         self.addBlocksFromJSON(getJsonFile("minecraft.json"))
 
         self.itemTypes = itemtypes.PCItemTypeSet()

@@ -235,7 +235,7 @@ cdef class BlockModels(object):
 
             self.loadModelParts(block, resourcePath, resourceVariant, parts)
 
-        hiddenModels = json.load(file(resources.resourcePath("mcedit2/rendering/hiddenstates_1_10.json"), "rb"))
+        hiddenModels = json.load(file(resources.resourcePath("mcedit2/rendering/hiddenstates_1_11.json"), "rb"))
         log.info("Loading %s hidden blockState models...", len(hiddenModels))
         hiddensLoaded = 0
         for i, hidden in enumerate(hiddenModels):
