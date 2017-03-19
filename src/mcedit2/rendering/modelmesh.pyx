@@ -138,7 +138,8 @@ class BlockModelMesh(object):
         cdef unsigned short darkOakDoorID = getID("minecraft:dark_oak_door")
 
         cdef unsigned short cobbleWallID = getID("minecraft:cobblestone_wall")
-
+        cdef unsigned short tripwireID = getID("minecraft:tripwire")
+        
 
         cdef unsigned short redstoneWireID = getID("minecraft:redstone_wire")
         cdef list powerSources
@@ -350,7 +351,21 @@ class BlockModelMesh(object):
                                     props['up'] = 'false'
                             
                             actualState = blocktypes.namesByID[ID], combineProps(props)
-                        
+                            
+                        if tripwireID and ID == tripwireID:
+                            props = parseProps(ID, meta)
+                            for direction, dx, dz in [
+                                ("north", 0, -1),
+                                ("south", 0, 1),
+                                ("west", -1, 0),
+                                ("east", 1, 0),
+                            ]:
+                                nID = areaBlocks[y, z+dz, x+dx]
+                                if nID == ID:
+                                    props[direction] = "true"
+                                
+                            actualState = blocktypes.namesByID[ID], combineProps(props)
+                                                
                         if redstoneWireID and ID == redstoneWireID:
                             props = parseProps(ID, meta)
                             def isConnectible(nID, nMeta, dx, dz):
