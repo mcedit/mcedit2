@@ -28,7 +28,18 @@ install:
 
   - pip install git+http://github.com/pyinstaller/pyinstaller
 
-  - brew install pyside pyside-tools
+  # Install qt4 from third-party source
+  # https://github.com/cartr/homebrew-qt4
+  - brew tap cartr/qt4
+  - brew tap-pin cartr/qt4
+  - brew install cartr/qt4/qt
+  - brew install pyside@1.2 pyside-tools@1.2
+
+  # where are libs?
+  - python -c 'from PySide.QtCore import QCoreApplication;app = QCoreApplication([]);print([str(p) for p in app.libraryPaths()])'
+
+  # - brew install pyside pyside-tools
+
   # Install mcedit.
   - python setup.py develop
 
