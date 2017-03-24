@@ -19,7 +19,9 @@ class SpinSlider(QtGui.QWidget):
         minimum = kwargs.pop('minimum', None)
         maximum = kwargs.pop('maximum', None)
         value = kwargs.pop('value', None)
-        increment = kwargs.pop('increment', 0.1 if isDouble else 1)
+        increment = kwargs.pop('increment', None)
+        if increment is None:
+            increment = 0.1 if isDouble else 1
 
         self.isDouble = isDouble
 
