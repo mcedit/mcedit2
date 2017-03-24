@@ -70,7 +70,12 @@ class WorldListItemWidget(QtGui.QWidget):
     def setWorldInfo(self, (name, lastPlayed, versionInfo)):
         self.displayNameLabel.setText(name)
         if lastPlayed:
-            lastPlayedText = arrow.Arrow.fromtimestamp(lastPlayed / 1000.0).humanize()
+            try:
+                lastPlayedText = arrow.Arrow.fromtimestamp(lastPlayed / 1000.0).humanize()
+            except ValueError:
+                # Nonsense value for LastPlayed?
+                lastPlayedText = "Unknown (Timestamp %s)" % (lastPlayed / 1000.0,)
+                
             self.lastPlayedLabel.setText(lastPlayedText)
         else:
             self.lastPlayedLabel.setText("")
