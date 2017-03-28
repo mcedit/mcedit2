@@ -565,7 +565,13 @@ cdef class BlockModels(object):
             if uv is not None:
                 u1, v1, u2, v2 = uv
             else:
-                u1, v1, u2, v2 = 0, 0, 16, 16
+                if face == FaceDown or face == FaceUp:
+                    u1, v1, u2, v2 = <short>(x1 * 16), <short>(z1 * 16), <short>(x2 * 16), <short>(z2 * 16)
+                elif face == FaceNorth or face == FaceSouth:
+                    u1, v1, u2, v2 = <short>(x1 * 16), <short>(y1 * 16), <short>(x2 * 16), <short>(y2 * 16)
+                elif face == FaceEast or face == FaceWest:
+                    u1, v1, u2, v2 = <short>(z1 * 16), <short>(y1 * 16), <short>(z2 * 16), <short>(y2 * 16)
+                    
 
             lasttexvar = texture
 
