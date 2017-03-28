@@ -309,16 +309,25 @@ cdef class BlockModels(object):
 
         # grab textures and elements from this model, then get parent and merge its textures and elements
         # continue until no parent is found
-        rawTextureVars = {}
+        textureVars = {}
         allElements = []
 
         for i in range(MAX_TEXTURE_RECURSIONS):
             textures = modelDict.get("textures")
             if textures is not None:
-                rawTextureVars.update(textures)
+                # Resolve texture variables in parent to values in child
+                for k, v in textures.iteritems():
+                    if k in textureVars:
+                        # Child always overrides parent
+                        continue
+                    if v.startswith("#"):
+                        v = textureVars.get(v[1:], v)
+                    textureVars[k] = v
+                    
             elements = modelDict.get("elements")
             if elements is not None:
                 allElements.extend(elements)
+                
             parentName = modelDict.get("parent")
             if parentName is None:
                 break
@@ -333,17 +342,7 @@ cdef class BlockModels(object):
 
         if block.forcedModelTextures:  # user-configured model textures
             for var, tex in block.forcedModelTextures.iteritems():
-                rawTextureVars[var[1:]] = tex
-
-        # pre-resolve texture vars
-
-        textureVars = {}
-        for k, v in rawTextureVars.iteritems():
-            while v is not None and v.startswith("#"):
-                v = rawTextureVars.get(v[1:])
-            if v:
-                textureVars[k] = v
-
+                textureVars[var[1:]] = tex
 
         if block.biomeTintType == "grass":
             biomeTintType = BIOME_GRASS
@@ -382,8 +381,8 @@ cdef class BlockModels(object):
 
 
         except Exception as e:
-            log.error("Failed to parse variant of block %s\nelements:\n%s\ntextures:\n%s",
-                      block.nameAndState, allElements, rawTextureVars)
+            log.exception("Failed to parse variant of block %s\nelements:\n%s\ntextures:\n%s",
+                      block.nameAndState, allElements, textureVars)
 
         return allQuads
 
