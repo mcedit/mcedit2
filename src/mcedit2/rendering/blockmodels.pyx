@@ -560,7 +560,7 @@ cdef class BlockModels(object):
             face = facesByCardinal[face]
             texture = info["texture"]
             cullface = info.get("cullface")
-            cullface = facesByCardinal[cullface] if cullface is not None else -1
+            cullface = facesByCardinal.get(cullface, -1)
             uv = info.get("uv")
             if uv is not None:
                 u1, v1, u2, v2 = uv
