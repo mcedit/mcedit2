@@ -3,6 +3,8 @@
 """
 from __future__ import absolute_import, division, print_function
 import logging
+from contextlib import contextmanager
+
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
 from mcedit2.util.load_ui import registerCustomWidget
@@ -22,7 +24,9 @@ class SpinSlider(QtGui.QWidget):
         increment = kwargs.pop('increment', None)
         if increment is None:
             increment = 0.1 if isDouble else 1
-
+        
+        self._changing = False
+        
         self.isDouble = isDouble
 
         super(SpinSlider, self).__init__(*args, **kwargs)
@@ -49,23 +53,49 @@ class SpinSlider(QtGui.QWidget):
         self.slider.sliderReleased.connect(self.sliderReleased)
 
         self.setLayout(Row(self.spinBox, self.slider, margin=0))
-
+        
         if minimum is not None:
             self.setMinimum(minimum)
         if maximum is not None:
             self.setMaximum(maximum)
         if value is not None:
             self.setValue(value)
-
+            
+    @contextmanager
+    def suppressChanges(self):
+        try:
+            self._changing = True
+            yield
+        finally:
+            self._changing = False
+        
+    def toSlider(self, value):
+        return value * self.sliderFactor
+        
+    def fromSlider(self, value):
+        return value / self.sliderFactor
+        
     def spinBoxChanged(self, value):
+        if self._changing:
+            return
+        
         self._value = value
-        self.slider.setValue(value * self.sliderFactor)
+        
+        with self.suppressChanges():
+            self.slider.setValue(self.toSlider(value))
+            
         self.valueChanged.emit(value, False)
 
     def sliderChanged(self, value):
-        value /= self.sliderFactor
+        if self._changing:
+            return
+        
+        value = self.fromSlider(value)
         self._value = value
-        self.spinBox.setValue(value)
+        
+        with self.suppressChanges():
+            self.spinBox.setValue(value)
+            
         self.valueChanged.emit(value, self.slider.isSliderDown())
     
     def sliderReleased(self):
@@ -77,7 +107,9 @@ class SpinSlider(QtGui.QWidget):
     def setValue(self, value):
         self._value = value
         self.spinBox.setValue(value)
-        self.slider.setValue(value * self.sliderFactor)
+        # if value is not None:
+        #     value *= self.sliderFactor
+        # self.slider.setValue(value)
 
     def minimum(self):
         return self._minimum
