@@ -496,7 +496,7 @@ cdef class BlockModels(object):
             #     ]
             # }
             # ]
-            variantMap = dict(pair.split('=') for pair in resourceVariant.split(','))
+            variantMap = dict(pair.split('=') for pair in resourceVariant.split(',') if '=' in pair)
             ret = []
 
             for part in multipart:
