@@ -87,7 +87,11 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
         if box != self.boxNode.selectionBox:
             self.boxNode.selectionBox = box
             self.faceDragNode.selectionBox = box
-            self.boundsChanged.emit(box)
+    
+    def changeBounds(self, box):
+        # Call in response to user input, but not programmatic bounds change
+        self.bounds = box
+        self.boundsChanged.emit(box)
 
     def moveModifierDown(self, event):
         return event.modifiers() & self.modifier
@@ -199,7 +203,7 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
             return True
         else:
             # Didn't hit - start new selection
-            self.bounds = None
+            self.changeBounds(None)
 
     def continueResize(self, event):
         # Hilite face being dragged
@@ -209,7 +213,7 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
 
         # Update selection box to resized size in progress
         newBox = self.boxFromDragResize(self.oldBounds, event.ray)
-        self.bounds = newBox
+        self.changeBounds(newBox)
 
     def endResize(self, event):
         log.info("endResize")
@@ -235,13 +239,14 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
     def continueCreate(self, event):
         # Show new box being dragged out
         newBox = self.boxFromDragSelect(event)
-        self.bounds = newBox
+        self.changeBounds(newBox)
 
     def endCreate(self, event):
         newBox = self.boxFromDragSelect(event)
         self.isCreating = False
         self.dragStartPoint = None
         self.dragResizeFace = None
+
         self.bounds = newBox
         self.boundsChangedDone.emit(newBox, None)
 
