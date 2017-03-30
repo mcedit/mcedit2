@@ -46,6 +46,7 @@ class SpinSlider(QtGui.QWidget):
 
         self.spinBox.valueChanged.connect(self.spinBoxChanged)
         self.slider.valueChanged.connect(self.sliderChanged)
+        self.slider.sliderReleased.connect(self.sliderReleased)
 
         self.setLayout(Row(self.spinBox, self.slider, margin=0))
 
@@ -59,13 +60,16 @@ class SpinSlider(QtGui.QWidget):
     def spinBoxChanged(self, value):
         self._value = value
         self.slider.setValue(value * self.sliderFactor)
-        self.valueChanged.emit(value)
+        self.valueChanged.emit(value, False)
 
     def sliderChanged(self, value):
         value /= self.sliderFactor
         self._value = value
         self.spinBox.setValue(value)
-        self.valueChanged.emit(value)
+        self.valueChanged.emit(value, self.slider.isSliderDown())
+    
+    def sliderReleased(self):
+        self.valueChanged.emit(self._value, False)
 
     def value(self):
         return self._value
@@ -91,5 +95,5 @@ class SpinSlider(QtGui.QWidget):
         self.slider.setMaximum(value * self.sliderFactor)
         self.spinBox.setMaximum(value)
 
+    valueChanged = QtCore.Signal(float, bool)
 
-    valueChanged = QtCore.Signal(float)
