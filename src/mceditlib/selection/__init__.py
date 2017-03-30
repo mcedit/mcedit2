@@ -193,6 +193,59 @@ class SelectionBox(object):
     def chunkCount(self):
         return (self.maxcx - self.mincx) * (self.maxcz - self.mincz)
 
+    @property
+    def center(self):
+        return self.origin + self.size * 0.5
+
+    @property
+    def width(self):
+        """The dimension along the X axis"""
+        return self.size.x
+
+    @property
+    def height(self):
+        """The dimension along the Y axis"""
+        return self.size.y
+
+    @property
+    def length(self):
+        """The dimension along the Z axis"""
+        return self.size.z
+
+    @property
+    def minx(self):
+        return self.origin.x
+
+    @property
+    def miny(self):
+        return self.origin.y
+
+    @property
+    def minz(self):
+        return self.origin.z
+
+    @property
+    def maxx(self):
+        return self.origin.x + self.size.x
+
+    @property
+    def maxy(self):
+        return self.origin.y + self.size.y
+
+    @property
+    def maxz(self):
+        return self.origin.z + self.size.z
+
+    @property
+    def maximum(self):
+        "The largest point of the box; origin plus size."
+        return self.origin + self.size
+
+    @property
+    def volume(self):
+        "The volume of the box in blocks"
+        return self.size.x * self.size.y * self.size.z
+
 
 class InvertedBox(SelectionBox):
     def __init__(self, base):
@@ -421,59 +474,6 @@ class BoundingBox(SelectionBox):
         :rtype: Vector
         """
         return self._size
-
-    @property
-    def center(self):
-        return self.origin + self.size * 0.5
-
-    @property
-    def width(self):
-        """The dimension along the X axis"""
-        return self._size.x
-
-    @property
-    def height(self):
-        """The dimension along the Y axis"""
-        return self._size.y
-
-    @property
-    def length(self):
-        """The dimension along the Z axis"""
-        return self._size.z
-
-    @property
-    def minx(self):
-        return self.origin.x
-
-    @property
-    def miny(self):
-        return self.origin.y
-
-    @property
-    def minz(self):
-        return self.origin.z
-
-    @property
-    def maxx(self):
-        return self.origin.x + self.size.x
-
-    @property
-    def maxy(self):
-        return self.origin.y + self.size.y
-
-    @property
-    def maxz(self):
-        return self.origin.z + self.size.z
-
-    @property
-    def maximum(self):
-        "The largest point of the box; origin plus size."
-        return self._origin + self._size
-
-    @property
-    def volume(self):
-        "The volume of the box in blocks"
-        return self.size.x * self.size.y * self.size.z
 
     @property
     def positions(self):
