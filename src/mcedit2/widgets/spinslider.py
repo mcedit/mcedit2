@@ -116,16 +116,49 @@ class SpinSlider(QtGui.QWidget):
 
     def setMinimum(self, value):
         self._minimum = value
-        self.slider.setMinimum(value * self.sliderFactor)
         self.spinBox.setMinimum(value)
+        if value is not None:
+            value = self.toSlider(value)
+        self.slider.setMinimum(value)
 
     def maximum(self):
         return self._maximum
 
     def setMaximum(self, value):
         self._maximum = value
-        self.slider.setMaximum(value * self.sliderFactor)
         self.spinBox.setMaximum(value)
+        if value is not None:
+            value = self.toSlider(value)
+        self.slider.setMaximum(value)
 
     valueChanged = QtCore.Signal(float, bool)
 
+@registerCustomWidget
+class DoubleSpinSlider(SpinSlider):
+    def __init__(self, *a, **kw):
+        kw['double'] = True
+        super(DoubleSpinSlider, self).__init__(*a, **kw)
+        
+@registerCustomWidget
+class ScaleSpinSlider(DoubleSpinSlider):
+    def __init__(self, *a, **kw):
+        kw['minimum'] = -20
+        kw['maximum'] = 20
+        kw['value'] = 1
+        
+        super(ScaleSpinSlider, self).__init__(*a, **kw)
+        
+    def toSlider(self, value):
+        if value < -1.0:
+            return (value * 50) - 1000
+        if value > 1.0:
+            return (value * 50) + 1000
+        
+        return value * 1000
+        
+    def fromSlider(self, value):
+        if value < -1000:
+            return ((value + 1000) * 2) / 100.
+        if value > 1000:
+            return ((value - 1000) * 2) / 100.
+        return value / 1000.

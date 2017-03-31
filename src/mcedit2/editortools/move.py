@@ -15,6 +15,7 @@ from mcedit2.util.showprogress import showProgress
 from mcedit2.widgets.coord_widget import CoordinateWidget
 from mcedit2.widgets.layout import Column
 from mcedit2.widgets.rotation_widget import RotationWidget
+from mcedit2.widgets.scale_widget import ScaleWidget
 from mceditlib.export import extractSchematicFromIter
 from mceditlib.selection import BoundingBox
 
@@ -72,6 +73,21 @@ class MoveRotateCommand(QtGui.QUndoCommand):
         self.pendingImport.rotation = self.newRotation
 
 
+class MoveScaleCommand(QtGui.QUndoCommand):
+    def __init__(self, oldScale, newScale, pendingImport):
+        super(MoveScaleCommand, self).__init__()
+        self.pendingImport = pendingImport
+        self.setText(QtGui.qApp.tr("Scale Object"))
+        self.newScale = newScale
+        self.oldScale = oldScale
+
+    def undo(self):
+        self.pendingImport.scale = self.oldScale
+
+    def redo(self):
+        self.pendingImport.scale = self.newScale
+
+
 class MoveFinishCommand(SimpleRevisionCommand):
     def __init__(self, moveTool, pendingImport, *args, **kwargs):
         super(MoveFinishCommand, self).__init__(moveTool.editorSession, moveTool.tr("Finish Move"), *args, **kwargs)
@@ -114,6 +130,9 @@ class MoveTool(EditorTool):
         self.rotationInput = RotationWidget()
         self.rotationInput.rotationChanged.connect(self.rotationChanged)
 
+        self.scaleInput = ScaleWidget()
+        self.scaleInput.scaleChanged.connect(self.scaleChanged)
+
         self.copyOptionsWidget = QtGui.QGroupBox(self.tr("Options"))
 
         self.copyAirCheckbox = QtGui.QCheckBox(self.tr("Copy Air"))
@@ -123,6 +142,7 @@ class MoveTool(EditorTool):
         confirmButton.clicked.connect(self.confirmImport)
         self.toolWidget.setLayout(Column(self.pointInput,
                                          self.rotationInput,
+                                         self.scaleInput,
                                          self.copyOptionsWidget,
                                          confirmButton,
                                          None))
@@ -133,6 +153,16 @@ class MoveTool(EditorTool):
                 self.currentImportNode.setPreviewRotation(rots)
             elif rots != self.currentImport.rotation:
                 command = MoveRotateCommand(self.currentImport.rotation, rots, self.currentImport)
+                self.editorSession.pushCommand(command)
+
+            self.editorSession.updateView()
+
+    def scaleChanged(self, scale, live):
+        if self.currentImport:
+            if live:
+                self.currentImportNode.setPreviewScale(scale)
+            elif scale != self.currentImport.scale:
+                command = MoveScaleCommand(self.currentImport.scale, scale, self.currentImport)
                 self.editorSession.pushCommand(command)
 
             self.editorSession.updateView()
@@ -161,6 +191,7 @@ class MoveTool(EditorTool):
         self._currentImport = pendingImport
         self.pointInput.setEnabled(pendingImport is not None)
         if pendingImport is not None:
+            pendingImport.scaleChanged.connect(self.setScaleInput)
             pendingImport.rotationChanged.connect(self.setRotationInput)
             pendingImport.positionChanged.connect(self.setPositionInput)
 
@@ -183,6 +214,9 @@ class MoveTool(EditorTool):
     @property
     def currentImportNode(self):
         return self._currentImportNode
+
+    def setScaleInput(self, scale):
+        self.scaleInput.scale = scale
 
     def setRotationInput(self, rots):
         self.rotationInput.rotation = rots

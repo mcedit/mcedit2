@@ -90,9 +90,20 @@ class Scale(states.SceneNodeState):
         GL.glMatrixMode(GL.GL_MODELVIEW)
         GL.glPopMatrix()
 
-    def __init__(self, scale):
+    def __init__(self, scale=(1.0, 1.0, 1.0)):
         super(Scale, self).__init__()
         self.scale = scale
+    
+    _scale = (1.0, 1.0, 1.0)
+    
+    @property
+    def scale(self):
+        return self._scale
+
+    @scale.setter
+    def scale(self, value):
+        self._scale = value
+        self.dirty = True
 
 
 class MatrixState(states.SceneNodeState):

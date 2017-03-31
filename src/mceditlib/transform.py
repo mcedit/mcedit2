@@ -30,34 +30,42 @@ def transformBounds(bounds, matrix):
     corners = np.array(boundsCorners(bounds))
     corners = np.hstack([corners, ([1],)*8])
     corners = corners * matrix
-
-    minx = min(corners[:, 0])
-    miny = min(corners[:, 1])
-    minz = min(corners[:, 2])
-    maxx = max(corners[:, 0])
-    maxy = max(corners[:, 1])
-    maxz = max(corners[:, 2])
-
-    if maxx % 1:
-        maxx += 1
-    if maxy % 1:
-        maxy += 1
-    if maxz % 1:
-        maxz += 1
+    
+    minx = math.floor(min(corners[:, 0]))
+    miny = math.floor(min(corners[:, 1]))
+    minz = math.floor(min(corners[:, 2]))
+    maxx = math.ceil(max(corners[:, 0]))
+    maxy = math.ceil(max(corners[:, 1]))
+    maxz = math.ceil(max(corners[:, 2]))
+    
+    # Why? Weird hacks for rotation?
+    
+    # if maxx % 1:
+    #     maxx += 1
+    # if maxy % 1:
+    #     maxy += 1
+    # if maxz % 1:
+    #     maxz += 1
 
     newbox = BoundingBox(origin=Vector(minx, miny, minz).intfloor(),
                          maximum=Vector(maxx, maxy, maxz).intfloor())
     return newbox
 
 
-def rotationMatrix(anchor, rotX, rotY, rotZ):
+def transformationMatrix(anchor, rotation, scale):
+    rotX, rotY, rotZ = rotation
+    
+    scaleInv = tuple([1.0/c if c != 0 else 1.0 for c in scale])
+    
     translate = np.matrix(np.identity(4))
     translate[3, 0] = anchor[0]
     translate[3, 1] = anchor[1]
     translate[3, 2] = anchor[2]
-
-    # Rotate around center of cells.
-    anchor = Vector(*anchor) - (0.5, 0.5, 0.5)
+    
+    scaleMatrix = np.matrix(np.identity(4))
+    scaleMatrix[0, 0] = scaleInv[0]
+    scaleMatrix[1, 1] = scaleInv[1]
+    scaleMatrix[2, 2] = scaleInv[2]
 
     reverse_translate = np.matrix(np.identity(4))
     reverse_translate[3, 0] = -anchor[0]
@@ -72,6 +80,8 @@ def rotationMatrix(anchor, rotX, rotY, rotZ):
         matrix = npRotate('y', rotY) * matrix
     if rotZ:
         matrix = npRotate('z', rotZ) * matrix
+
+    matrix = scaleMatrix * matrix
 
     matrix = reverse_translate * matrix
     return matrix
@@ -250,8 +260,9 @@ class SelectionTransform(DimensionTransformBase):
                 section.Blocks[sectionMask] = baseSection.Blocks[sectionMask]
                 section.Data[sectionMask] = baseSection.Data[sectionMask]
 
+
 class DimensionTransform(DimensionTransformBase):
-    def __init__(self, dimension, anchor, rotX=0, rotY=0, rotZ=0):
+    def __init__(self, dimension, anchor, rotation=(0, 0, 0), scale=(1, 1, 1)):
         """
         A wrapper around a WorldEditorDimension that applies a three-dimensional rotation
         around a given anchor point. The wrapped dimension's bounds will be different from the
@@ -263,14 +274,16 @@ class DimensionTransform(DimensionTransformBase):
         dimension: mceditlib.worldeditor.WorldEditorDimension
             The dimension to wrap and apply rotations to
 
-        anchor: Vector
-            The point to rotate the dimension around
+        anchor: mceditlib.geometry.Vector
+            The point to rotate and scale the dimension around
 
-        rotX: float
-        rotY: float
-        rotZ: float
+        rotation: float[3]
             The angles to rotate the dimension around, along each axis respectively.
             The angles are given in radians.
+            
+        scale: float[3]
+            The scales to resize the dimension along each axis respectively. 1.0 is
+            normal size.
 
         Returns
         -------
@@ -279,12 +292,14 @@ class DimensionTransform(DimensionTransformBase):
             A dimension that acts as a rotated version of the given dimension.
         """
         super(DimensionTransform, self).__init__(dimension)
+        rotX, rotY, rotZ = rotation
         self.rotX = rotX
         self.rotY = rotY
         self.rotZ = rotZ
         self.anchor = anchor
+        self.scale = scale
 
-        self.matrix = rotationMatrix(anchor, rotX, rotY, rotZ)
+        self.matrix = transformationMatrix(anchor, rotation, scale)
 
         blockRotation = BlockRotations(dimension.blocktypes)
         rotationTable = blankRotationTable()
@@ -308,6 +323,10 @@ class DimensionTransform(DimensionTransformBase):
         self.rotationTable = rotationTable
 
         self._transformedBounds = transformBounds(dimension.bounds, self.matrix)
+        
+        print("Bounds: ", dimension.bounds)
+        print("Transformed: ", self._transformedBounds)
+        print("Anchor: ", anchor)
 
     def initSection(self, section):
         shape = (16, 16, 16)

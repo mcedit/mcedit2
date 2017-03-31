@@ -15,6 +15,7 @@ from mcedit2.util.showprogress import showProgress
 from mcedit2.widgets.coord_widget import CoordinateWidget
 from mcedit2.widgets.layout import Column, Row
 from mcedit2.widgets.rotation_widget import RotationWidget
+from mcedit2.widgets.scale_widget import ScaleWidget
 from mceditlib import transform
 
 log = logging.getLogger(__name__)
@@ -67,6 +68,21 @@ class CloneRotateCommand(QtGui.QUndoCommand):
 
     def redo(self):
         self.cloneTool.setRotation(self.newRotation)
+
+
+class CloneScaleCommand(QtGui.QUndoCommand):
+    def __init__(self, oldScale, newScale, cloneTool):
+        super(CloneScaleCommand, self).__init__()
+        self.cloneTool = cloneTool
+        self.setText(QtGui.qApp.tr("Scale Cloned Objects"))
+        self.newScale = newScale
+        self.oldScale = oldScale
+
+    def undo(self):
+        self.cloneTool.setScale(self.oldScale)
+
+    def redo(self):
+        self.cloneTool.setScale(self.newScale)
 
 
 class CloneFinishCommand(SimpleRevisionCommand):
@@ -130,6 +146,9 @@ class CloneTool(EditorTool):
         self.rotationInput = RotationWidget()
         self.rotationInput.rotationChanged.connect(self.rotationChanged)
 
+        self.scaleInput = ScaleWidget()
+        self.scaleInput.scaleChanged.connect(self.scaleChanged)
+        
         confirmButton = QtGui.QPushButton(self.tr("Confirm"))  # xxxx should be in worldview
         confirmButton.clicked.connect(self.confirmClone)
 
@@ -147,6 +166,7 @@ class CloneTool(EditorTool):
                                          self.rotationInput,
                                          Row(self.rotateRepeatsCheckbox,
                                              self.rotateOffsetCheckbox),
+                                         self.scaleInput,
                                          Row(QtGui.QLabel(self.tr("Repeat count: ")), self.repeatCountInput),
                                          confirmButton,
                                          None))
@@ -159,14 +179,30 @@ class CloneTool(EditorTool):
             self.updateTiling()
 
     def rotationChanged(self, rots, live):
+        scale = self.scaleInput.scale
         if live:
-            for node, (nodePos, nodeRots) in zip(self.pendingCloneNodes, self.getTilingPositions(rotations=rots)):
+            for node, (nodePos, nodeRots, nodeScale) in zip(self.pendingCloneNodes, self.getTilingPositions(None, rots, scale)):
                 node.setPreviewRotation(nodeRots)
+                node.setPreviewScale(nodeScale)
                 node.setPreviewBasePosition(nodePos + node.pendingImport.transformOffset)
             self.editorSession.updateView()
         else:
             if self.mainPendingClone and self.mainPendingClone.rotation != rots:
                 command = CloneRotateCommand(self.mainPendingClone.rotation, rots, self)
+                self.editorSession.pushCommand(command)
+                self.updateTiling()
+
+    def scaleChanged(self, scale, live):
+        rots = self.rotationInput.rotation
+        if live:
+            for node, (nodePos, nodeRots, nodeScale) in zip(self.pendingCloneNodes, self.getTilingPositions(None, rots, scale)):
+                node.setPreviewRotation(nodeRots)
+                node.setPreviewScale(nodeScale)
+                node.setPreviewBasePosition(nodePos + node.pendingImport.transformOffset)
+            self.editorSession.updateView()
+        else:
+            if self.mainPendingClone and self.mainPendingClone.scale != scale:
+                command = CloneScaleCommand(self.mainPendingClone.scale, scale, self)
                 self.editorSession.pushCommand(command)
                 self.updateTiling()
 
@@ -179,6 +215,13 @@ class CloneTool(EditorTool):
             return
         else:
             self.mainPendingClone.rotation = rots
+            self.updateTiling()
+
+    def setScale(self, scale):
+        if self.mainPendingClone is None:
+            return
+        else:
+            self.mainPendingClone.scale = scale
             self.updateTiling()
 
     def updateTiling(self):
@@ -221,21 +264,24 @@ class CloneTool(EditorTool):
 
     def updateTilingPositions(self, offsetPoint=None):
         if self.originPoint is not None:
-            for clone, (pos, rots) in zip(self.pendingClones, self.getTilingPositions(offsetPoint)):
+            for clone, (pos, rots, scale) in zip(self.pendingClones, self.getTilingPositions(offsetPoint)):
                 clone.basePosition = pos
                 clone.rotation = rots
+                clone.scale = scale
 
         self.editorSession.updateView()
 
-    def getTilingPositions(self, offsetPoint=None, rotations=None):
+    def getTilingPositions(self, offsetPoint=None, rotations=None, scale=None):
         rotateRepeats = self.rotateRepeatsCheckbox.isChecked()
         rotateOffsets = self.rotateOffsetCheckbox.isChecked()
         baseRotations = rotations or self.mainPendingClone.rotation
         rotations = baseRotations
+        scale = scale or self.mainPendingClone.scale
 
-        matrix = transform.rotationMatrix((0, 0, 0), *rotations)
+        matrix = transform.transformationMatrix((0, 0, 0), rotations, scale)
         matrix = numpy.linalg.inv(matrix)[:3, :3]
-
+    
+        # TODO: Use scales here
         if offsetPoint is None:
             offsetPoint = self.mainPendingClone.basePosition
         if None not in (offsetPoint, self.originPoint):
@@ -243,7 +289,7 @@ class CloneTool(EditorTool):
             offset = offsetPoint - self.originPoint
             for i in range(self.repeatCount):
                 pos = pos + offset
-                yield pos.intfloor(), rotations
+                yield pos.intfloor(), rotations, scale
                 if rotateRepeats:
                     rotations = [a+b for a,b in zip(rotations, baseRotations)]
                 if rotateOffsets:

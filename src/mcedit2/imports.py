@@ -7,7 +7,7 @@ from PySide import QtCore, QtGui
 from PySide.QtCore import Qt
 from mcedit2.handles.boxhandle import BoxHandle
 from mcedit2.rendering.depths import DepthOffsets
-from mcedit2.rendering.scenegraph.matrix import Translate, Rotate
+from mcedit2.rendering.scenegraph.matrix import Translate, Rotate, Scale
 from mcedit2.rendering.scenegraph.scenenode import Node
 from mcedit2.rendering.selection import SelectionBoxNode
 from mcedit2.rendering.worldscene import WorldScene
@@ -123,6 +123,10 @@ class PendingImportNode(Node, QtCore.QObject):
         self.rotateNode.setAnchor(self.pendingImport.selection.size * 0.5)
         self.rotateNode.addChild(self.worldScene)
 
+        self.scaleNode = Scale3DNode()
+        self.scaleNode.setAnchor(self.pendingImport.selection.size * 0.5)
+        self.scaleNode.addChild(self.rotateNode)
+
         # plainSceneNode contains the non-transformed preview of the imported
         # object, including its world scene. This preview will be rotated model-wise
         # while the user is dragging the rotate controls.
@@ -130,7 +134,7 @@ class PendingImportNode(Node, QtCore.QObject):
         self.plainSceneNode = Node("plainScene")
         self.positionTranslate = Translate()
         self.plainSceneNode.addState(self.positionTranslate)
-        self.plainSceneNode.addChild(self.rotateNode)
+        self.plainSceneNode.addChild(self.scaleNode)
 
         self.addChild(self.plainSceneNode)
 
@@ -178,6 +182,7 @@ class PendingImportNode(Node, QtCore.QObject):
 
         self.pendingImport.positionChanged.connect(self.setPosition)
         self.pendingImport.rotationChanged.connect(self.setRotation)
+        self.pendingImport.scaleChanged.connect(self.setScale)
 
     # Emitted when the user finishes dragging the box handle and releases the mouse
     # button. Arguments are (newPosition, oldPosition).
@@ -193,6 +198,7 @@ class PendingImportNode(Node, QtCore.QObject):
             self.importMoved.emit(point, oldPoint)
 
     def handleBoundsChanged(self, bounds):
+        log.info("handleBoundsChanged: %s", bounds)
         self.setPreviewBasePosition(bounds.origin)
 
     def setPreviewBasePosition(self, origin):
@@ -213,6 +219,16 @@ class PendingImportNode(Node, QtCore.QObject):
         self.updateTransformedScene()
         self.updateBoxHandle()
         self.rotateNode.setRotation(rots)
+
+    def setPreviewScale(self, scale):
+        self.plainSceneNode.visible = True
+        self.transformedSceneNode.visible = False
+        self.scaleNode.setScale(scale)
+
+    def setScale(self, scale):
+        self.updateTransformedScene()
+        self.updateBoxHandle()
+        self.scaleNode.setScale(scale)
 
     def updateTransformedScene(self):
         if self.pendingImport.transformedDim is not None:
@@ -458,23 +474,23 @@ class PendingImport(QtCore.QObject):
 
     @property
     def scale(self):
-        return self._rotation
+        return self._scale
 
     @scale.setter
     def scale(self, value):
         if self._scale == value:
             return
         self._scale = Vector(*value)
-        self.scaleChanged.emit(self._scale)
         self.updateTransform()
+        self.scaleChanged.emit(self._scale)
 
     def updateTransform(self):
-        if self.rotation == (0, 0, 0) and self.scale == (0, 0, 0):
+        if self.rotation == (0, 0, 0) and self.scale == (1, 1, 1):
             self.transformedDim = None
             self.transformOffset = Vector(0, 0, 0)
         else:
             selectionDim = SelectionTransform(self.sourceDim, self.selection)
-            self.transformedDim = DimensionTransform(selectionDim, self.rotateAnchor, *self.rotation)
+            self.transformedDim = DimensionTransform(selectionDim, self.rotateAnchor, self.rotation, self.scale)
             self.transformOffset = self.transformedDim.bounds.origin - self.selection.origin
 
         self.updateImportPos()
@@ -508,6 +524,25 @@ class Rotate3DNode(Node):
         self.rotX.degrees = rx
         self.rotY.degrees = ry
         self.rotZ.degrees = rz
+
+    def setAnchor(self, point):
+        self.anchor.translateOffset = point
+        self.recenter.translateOffset = -point
+        
+
+class Scale3DNode(Node):
+    def __init__(self):
+        super(Scale3DNode, self).__init__()
+        self.anchor = Translate()
+        self.scale = Scale()
+        self.recenter = Translate()
+
+        self.addState(self.anchor)
+        self.addState(self.scale)
+        self.addState(self.recenter)
+
+    def setScale(self, scale):
+        self.scale.scale = scale
 
     def setAnchor(self, point):
         self.anchor.translateOffset = point
