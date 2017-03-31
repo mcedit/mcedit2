@@ -436,7 +436,6 @@ class WorldView(QGLWidget):
 
     def dragEnterEvent(self, event):
         # xxx show drop preview as scene node
-        print("DRAG ENTER. FORMATS:\n%s" % event.mimeData().formats())
         for mimeType in self.acceptableMimeTypes:
             if event.mimeData().hasFormat(mimeType):
                 event.acceptProposedAction()

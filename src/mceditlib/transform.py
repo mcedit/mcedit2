@@ -323,10 +323,6 @@ class DimensionTransform(DimensionTransformBase):
         self.rotationTable = rotationTable
 
         self._transformedBounds = transformBounds(dimension.bounds, self.matrix)
-        
-        print("Bounds: ", dimension.bounds)
-        print("Transformed: ", self._transformedBounds)
-        print("Anchor: ", anchor)
 
     def initSection(self, section):
         shape = (16, 16, 16)
