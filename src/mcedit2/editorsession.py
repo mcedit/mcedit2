@@ -1541,6 +1541,17 @@ class EditorTab(QtGui.QWidget):
         if view is not None:
             self.editorSession.loader.addClient(view)
 
+    def redrawWidget(self, tool):
+        '''
+        Primarily for plugin use. Access via 'editorSession.editorTab.redrawWidget()'
+        :param widget: EditorTool
+        '''
+        if tool.toolWidget:
+            self.toolOptionsArea.takeWidget()
+            self.toolOptionsArea.setWidget(tool.toolWidget)
+            self.toolOptionsArea.update()
+            self.toolOptionsArea.repaint()
+            self.toolOptionsArea.show()
 
     def toolDidChange(self, tool):
         if tool.toolWidget:
