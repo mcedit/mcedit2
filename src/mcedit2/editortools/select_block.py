@@ -34,17 +34,8 @@ class SelectBlockTool(EditorTool):
         self.toolWidget = SelectBlockToolWidget()
 
     def mousePress(self, event):
-        self.setMousePos(event.blockPosition)
+        self.setMousePos((event.blockPosition - (event.blockFace.vector * 0.5 + (0.5, 0.5, 0.5))).intround())
 
     def setMousePos(self, pos):
         self.mousePos = pos
         self.editorSession.inspectBlock(pos)
-
-
-
-
-
-
-
-
-

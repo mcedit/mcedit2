@@ -22,7 +22,7 @@ class FloodFillTool(EditorTool):
     modifiesWorld = True
 
     def mousePress(self, event):
-        pos = event.blockPosition
+        pos = (event.blockPosition - (event.blockFace.vector * 0.5 + (0.5, 0.5, 0.5))).intround()
         if self.hoverCheckbox.isChecked():
             pos = pos + event.blockFace.vector
 
@@ -37,7 +37,7 @@ class FloodFillTool(EditorTool):
         self.mouseDrag(event)
 
     def mouseDrag(self, event):
-        self.cursorNode.point = event.blockPosition
+        self.cursorNode.point = (event.blockPosition - (event.blockFace.vector * 0.5 + (0.5, 0.5, 0.5))).intround()
         self.cursorNode.face = event.blockFace
 
     def __init__(self, editorSession, *args, **kwargs):
@@ -54,14 +54,14 @@ class FloodFillTool(EditorTool):
         self.floodYNegCheckbox = QtGui.QCheckBox(self.tr("Y-"), checked=True)
         self.floodZPosCheckbox = QtGui.QCheckBox(self.tr("Z+"), checked=True)
         self.floodZNegCheckbox = QtGui.QCheckBox(self.tr("Z-"), checked=True)
-        
+
         floodDirsLayout = Column(Row(
-            self.floodXPosCheckbox, 
-            self.floodYPosCheckbox, 
+            self.floodXPosCheckbox,
+            self.floodYPosCheckbox,
             self.floodZPosCheckbox,
         ), Row(
-            self.floodXNegCheckbox, 
-            self.floodYNegCheckbox, 
+            self.floodXNegCheckbox,
+            self.floodYNegCheckbox,
             self.floodZNegCheckbox,
         ), )
 
@@ -87,7 +87,7 @@ class FloodFillTool(EditorTool):
                  (faces.FaceXDecreasing, self.floodXNegCheckbox),
                  (faces.FaceYDecreasing, self.floodYNegCheckbox),
                  (faces.FaceZDecreasing, self.floodZNegCheckbox))}
-    
+
 
 class FloodFillCommand(SimplePerformCommand):
     def __init__(self, editorSession, point, blockInfo, indiscriminate, floodDirs):

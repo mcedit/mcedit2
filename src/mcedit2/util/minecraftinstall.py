@@ -259,7 +259,7 @@ class MCInstallGroup(QtCore.QObject):
         
         def matchVersion(version):
             major, minor, rev = splitVersion(version)
-            if (major, minor) >= self._requiredMajorMinor:
+            if (major, minor) >= (1, 9):
                 if rev == "":
                     return version
                 try:
@@ -408,9 +408,9 @@ class MCInstallGroup(QtCore.QObject):
             
 
     def getDefaultResourceLoader(self):
-        assetsVersion = self.findVersionWithAssets()
-        loader = ResourceLoader(assetsVersion)
-        loader.addZipFile(assetsVersion)
+        v18 = self.findVersionWithAssets()
+        loader = ResourceLoader(v18)
+        loader.addZipFile(v18)
         return loader
 
 class MCInstall(object):

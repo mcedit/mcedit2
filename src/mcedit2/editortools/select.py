@@ -189,7 +189,7 @@ class SelectionTool(EditorTool):
 
         self.optionsMenu = QtGui.QMenu()
         self.optionsButton.setMenu(self.optionsMenu)
-        
+
         classicSelectionAction = self.optionsMenu.addAction(self.tr("Classic Selection"))
         stickySelectionAction = self.optionsMenu.addAction(self.tr("Sticky Selection"))
 
@@ -316,7 +316,7 @@ class SelectionTool(EditorTool):
 
     def mouseDrag(self, event):
         # Update cursor
-        self.cursorNode.point = event.blockPosition
+        self.cursorNode.point = (event.blockPosition - (event.blockFace.vector * 0.5 + (0.5, 0.5, 0.5))).intround()
         self.cursorNode.face = event.blockFace
 
         self.boxHandleNode.mouseMove(event)

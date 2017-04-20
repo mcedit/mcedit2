@@ -32,7 +32,6 @@ def rayCastInBounds(ray, dimension, maxDistance=100):
         ixs = rayIntersectsBox(dimension.bounds, ray)
         if ixs:
             position, face = ixs[0]
-            position = position.intfloor()
         else:
             position, face = None, None
     return position, face

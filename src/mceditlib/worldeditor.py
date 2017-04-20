@@ -842,12 +842,12 @@ class WorldEditorDimension(object):
         """
         Iterate through all entities within the given selection. If any keyword arguments
         are passed, only yields those entities whose attributes match the given keywords.
-        
+
         For example, to iterate through only the zombies in the selection:
-            
+
             for entity in dimension.getEntities(selection, id="Zombie"):
                 # do stuff
-            
+
         Parameters
         ----------
         selection : SelectionBox
@@ -856,7 +856,7 @@ class WorldEditorDimension(object):
         Returns
         -------
         entities: Iterator[EntityRef]
-        
+
         """
         for chunk in self.getChunks(selection.chunkPositions()):
             for ref in chunk.Entities:
@@ -947,8 +947,8 @@ class WorldEditorDimension(object):
 
     def fillBlocks(self, box, block, blocksToReplace=(), updateLights=True):
         return exhaust(self.fillBlocksIter(box, block, blocksToReplace, updateLights))
-    
-    # --- Analyze ---   
+
+    # --- Analyze ---
 
     def analyzeIter(self, selection):
         return AnalyzeOperation(self, selection)
@@ -961,7 +961,7 @@ class WorldEditorDimension(object):
         This instance will have `id`, `meta`, and `internalName` attributes
         that uniquely identify the block's type, and will have further attributes
         describing the block's properties. See :ref:`BlockType` for a full description.
-        
+
         If the given position is outside the generated area of the world, the
         `minecraft:air` BlockType will be returned.
 
@@ -985,9 +985,9 @@ class WorldEditorDimension(object):
         may be either a BlockType instance, a textual identifier, a tuple containing
         a textual identifier and a block metadata value, or a tuple containing
         a block ID number and a block metadata value.
-        
+
         This function will change both the ID value and metadata value at the given position.
-        
+
         It is recommended to pass either a BlockType instance or a textual identifier
         for readability and compatibility.
 
@@ -1012,7 +1012,7 @@ class WorldEditorDimension(object):
         """
         Return the numeric block ID at the given position. If the position is outside
         the world's generated area, returns the given default value instead.
-        
+
         Parameters
         ----------
         x : int
@@ -1024,6 +1024,11 @@ class WorldEditorDimension(object):
         -------
         id : int
         """
+
+        x = int(x)
+        y = int(y)
+        z = int(z)
+
         cx = x >> 4
         cy = y >> 4
         cz = z >> 4
@@ -1039,7 +1044,7 @@ class WorldEditorDimension(object):
     def setBlockID(self, x, y, z, value):
         """
         Changes the numeric block ID at the given position.
-        
+
         Parameters
         ----------
         x : int
@@ -1047,6 +1052,11 @@ class WorldEditorDimension(object):
         z : int
         value : int
         """
+
+        x = int(x)
+        y = int(y)
+        z = int(z)
+
         cx = x >> 4
         cy = y >> 4
         cz = z >> 4
@@ -1064,7 +1074,7 @@ class WorldEditorDimension(object):
         """
         Return the block metadata value at the given position. If the position is outside
         the world's generated area, returns the given default value instead.
-        
+
         Parameters
         ----------
         x : int
@@ -1076,6 +1086,11 @@ class WorldEditorDimension(object):
         -------
         metadata : int
         """
+
+        x = int(x)
+        y = int(y)
+        z = int(z)
+
         cx = x >> 4
         cy = y >> 4
         cz = z >> 4
@@ -1092,15 +1107,20 @@ class WorldEditorDimension(object):
         """
         Changes the block metadata value at the given position. The value must be between
         0 and 15 inclusive.
-        
+
         Parameters
         ----------
         x : int
         y : int
         z : int
         value : int
-        
+
         """
+
+        x = int(x)
+        y = int(y)
+        z = int(z)
+
         cx = x >> 4
         cy = y >> 4
         cz = z >> 4
@@ -1115,6 +1135,10 @@ class WorldEditorDimension(object):
             chunk.dirty = True
 
     def getLight(self, arrayName, x, y, z, default=0):
+        x = int(x)
+        y = int(y)
+        z = int(z)
+
         cx = x >> 4
         cy = y >> 4
         cz = z >> 4
@@ -1128,6 +1152,10 @@ class WorldEditorDimension(object):
         return default
 
     def setLight(self, arrayName, x, y, z, value):
+        x = int(x)
+        y = int(y)
+        z = int(z)
+
         cx = x >> 4
         cy = y >> 4
         cz = z >> 4
@@ -1153,6 +1181,9 @@ class WorldEditorDimension(object):
         return self.setLight("SkyLight", x, y, z, value)
 
     def getBiomeID(self, x, z, default=0):
+        x = int(x)
+        z = int(z)
+
         cx = x >> 4
         cz = z >> 4
         if self.containsChunk(cx, cz):
@@ -1163,6 +1194,9 @@ class WorldEditorDimension(object):
         return default
 
     def setBiomeID(self, x, z, value):
+        x = int(x)
+        z = int(z)
+
         cx = x >> 4
         cz = z >> 4
         if self.containsChunk(cx, cz):

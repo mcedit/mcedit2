@@ -243,7 +243,7 @@ class CloneTool(EditorTool):
             offset = offsetPoint - self.originPoint
             for i in range(self.repeatCount):
                 pos = pos + offset
-                yield pos.intfloor(), rotations
+                yield pos, rotations
                 if rotateRepeats:
                     rotations = [a+b for a,b in zip(rotations, baseRotations)]
                 if rotateOffsets:
@@ -288,7 +288,7 @@ class CloneTool(EditorTool):
         #     self.mainCloneNode.hoverFace(None)
 
         self.confirmClone()
-        
+
     def confirmClone(self):
         if self.mainPendingClone is None:
             return
