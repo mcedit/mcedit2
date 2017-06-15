@@ -386,9 +386,9 @@ class WorldListWidget(QtGui.QDialog, Ui_worldList):
         try:
             worldEditor = worldeditor.WorldEditor(filename, readonly=True)
 
-        except (EnvironmentError, LevelFormatError, zipfile.BadZipfile) as e:
+        except Exception as e:
             self.errorWidget = QtGui.QWidget()
-            setWidgetError(self.errorWidget, e, "An error occurred while reading the world %s." % filename)
+            setWidgetError(self.errorWidget, e, "An error occurred while reading the file %s. This file might not be a Minecraft world. If it is, please file a bug report." % filename)
             self.stackedWidget.addWidget(self.errorWidget)
             self.stackedWidget.setCurrentWidget(self.errorWidget)
 
