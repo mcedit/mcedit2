@@ -187,6 +187,7 @@ def startup():
     
     from mcedit2 import support_modules
 
+    # TODO: get wchar_t argv from windows
     editorApp = MCEditApp(sys.argv)
     editorApp.startup()
 

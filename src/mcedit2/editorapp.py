@@ -487,11 +487,17 @@ class MCEditApp(QtGui.QApplication):
 
         for filename in self.args.filename:
             try:
+                # we use `unicode` filenames, but argv is `str`
+                # should only get `str` on linux/osx - need to get wargv on windows
+                if isinstance(filename, str):
+                    filename = filename.decode(sys.getfilesystemencoding())
                 if os.path.exists(filename):
                     self.commandLineWorlds.append(filename)
                 else:
                     log.info("File not found: %s", filename)
             except EnvironmentError as e:
+                log.info("%r", e)
+            except UnicodeDecodeError as e:
                 log.info("%r", e)
 
     # --- Language Menu ---
