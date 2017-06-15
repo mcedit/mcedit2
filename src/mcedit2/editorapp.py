@@ -77,6 +77,8 @@ class MCEditMainWindow(QtGui.QMainWindow, Ui_mainWindow):
 
         MCEditApp.app.quit()
 
+LangSetting = Settings().getOption("app_language", str)
+
 class MCEditApp(QtGui.QApplication):
     def __init__(self, argv):
         super(MCEditApp, self).__init__(argv)
@@ -89,13 +91,43 @@ class MCEditApp(QtGui.QApplication):
 
         log.warn("UserFilesDirectory: %s", getUserFilesDirectory())
 
-        # --- Necessities ---
+        # --- Translations ---
 
-        translator = QtCore.QTranslator()
-        translator.load(resourcePath('mcedit2/i18n/en_US.ts'))
-        self.installTranslator(translator)
+        self.transDir = resourcePath('mcedit2/i18n')
+        self.transLangs = [f for f in os.listdir(self.transDir) if f.endswith(".qm")]
+
+        lang = LangSetting.value()
+
+        langFile = self.findLangFile(lang)
+
+        if langFile is None:
+            systemLocale = QtCore.QLocale.system()
+            lang = systemLocale.name()  # "en_US"
+            langFile = self.findLangFile(lang)
+
+            if langFile is None:
+                langFile = os.path.join(self.transDir, "en.qm")
+
+        self.translator = QtCore.QTranslator()
+        self.translator.load(langFile)
+        self.installTranslator(self.translator)
 
         log.info("Loaded translator.")
+
+        self.translationsMenu = QtGui.QMenu()
+        self.translationsMenu.setTitle(self.tr("Language"))
+
+        for lang in self.transLangs:
+            locale = QtCore.QLocale(lang)
+            language = locale.nativeLanguageName()
+            country = locale.nativeCountryName()
+            title = "%s (%s)" % (language, country)
+            langAction = self.translationsMenu.addAction(title)
+            langAction.setData(lang)
+
+        self.translationsMenu.triggered.connect(self.changeLanguage)
+
+        # --- Necessities ---
 
         self.setOrganizationName("MCEdit")
         self.setOrganizationDomain("mcedit.net")
@@ -265,6 +297,8 @@ class MCEditApp(QtGui.QApplication):
         mainWindow.actionEnable_Developer_Mode.toggled.connect(DevModeSetting.setValue)
         DevModeSetting.valueChanged.connect(self.toggleDeveloperMode)
         self.toggleDeveloperMode(DevModeSetting.value())
+
+        mainWindow.menuOptions.addMenu(self.translationsMenu)
 
         log.info("Loaded menus.")
 
@@ -459,6 +493,25 @@ class MCEditApp(QtGui.QApplication):
                     log.info("File not found: %s", filename)
             except EnvironmentError as e:
                 log.info("%r", e)
+
+    # --- Language Menu ---
+
+    def findLangFile(self, lang):
+        if lang + ".qm" in self.transLangs:
+            return os.path.join(self.transDir, lang + ".qm")
+        lang = lang.split("_")[0]
+        if lang + ".qm" in self.transLangs:
+            return os.path.join(self.transDir, lang + ".qm")
+        return None
+
+    def changeLanguage(self, action):
+        lang = action.data()
+        langFile = self.findLangFile(lang)
+        self.removeTranslator(self.translator)
+        self.translator = QtCore.QTranslator()
+        self.translator.load(langFile)
+        self.installTranslator(self.translator)
+
 
     # --- Status Bar ---
 
