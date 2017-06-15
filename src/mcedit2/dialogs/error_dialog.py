@@ -127,7 +127,7 @@ class ErrorDialog(QtGui.QDialog, Ui_errorDialog):
             self.copyToPastebinLabel.setText(self.tr("Pastebin URL copied to clipboard!"))
 
     def restartMCEdit(self):
-        QtCore.QProcess.startDetached(sys.executable, sys.argv)
+        QtCore.QProcess.startDetached(sys.executable, sys.argv[1:])
         raise SystemExit
 
     def quitMCEdit(self):
