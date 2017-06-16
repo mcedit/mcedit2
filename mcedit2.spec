@@ -81,10 +81,10 @@ subprocess.check_call([sys.executable, 'setup.py', 'develop'])
 subprocess.check_call([sys.executable, '-m', 'mcedit2.util.gen_ui'])
 
 # --- Languages ---
-
-subprocess.check_call(["git", "checkout", "https://github.com/mcedit/mcedit2-lang", "--depth", "1"])
-subprocess.check_call([sys.executable, "mcedit2-lang", "release.py"])
-shutil.copytree("mcedit2-lang/build", "src/mcedit2/i18n", ignore=shutil.ignore_patterns(["en.qm"]))
+subprocess.check_call(["git", "clone", "https://github.com/mcedit/mcedit2-lang", "--depth", "1"])
+subprocess.check_call([sys.executable, "mcedit2-lang/release.py"])
+shutil.rmtree("src/mcedit2/i18n")
+shutil.copytree("mcedit2-lang/build", "src/mcedit2/i18n")
 
 # --- Call PyInstaller to perform build ---
 
