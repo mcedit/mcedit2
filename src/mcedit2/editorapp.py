@@ -94,7 +94,7 @@ class MCEditApp(QtGui.QApplication):
         # --- Translations ---
 
         self.transDir = resourcePath('mcedit2/i18n')
-        self.transLangs = [f for f in os.listdir(self.transDir) if f.endswith(".qm")]
+        self.transLangs = [f[:-3] for f in os.listdir(self.transDir) if f.endswith(".qm")]
 
         lang = LangSetting.value()
 
@@ -106,24 +106,32 @@ class MCEditApp(QtGui.QApplication):
             langFile = self.findLangFile(lang)
 
             if langFile is None:
+                lang = "en"
                 langFile = os.path.join(self.transDir, "en.qm")
 
+        chosenLang = lang
         self.translator = QtCore.QTranslator()
         self.translator.load(langFile)
         self.installTranslator(self.translator)
 
-        log.info("Loaded translator.")
+        log.info("Loaded translator. Selected language: %s", lang)
 
         self.translationsMenu = QtGui.QMenu()
         self.translationsMenu.setTitle(self.tr("Language"))
 
+        self.langActions = []
+
         for lang in self.transLangs:
             locale = QtCore.QLocale(lang)
-            language = locale.nativeLanguageName()
-            country = locale.nativeCountryName()
-            title = "%s (%s)" % (language, country)
-            langAction = self.translationsMenu.addAction(title)
+            language = locale.nativeLanguageName().title() or lang
+            if lang == "pr":
+                language = "Pirate"
+            langAction = self.translationsMenu.addAction(language)
             langAction.setData(lang)
+            langAction.setCheckable(True)
+            if lang == chosenLang:
+                langAction.setChecked(True)
+            self.langActions.append(langAction)
 
         self.translationsMenu.triggered.connect(self.changeLanguage)
 
@@ -503,10 +511,10 @@ class MCEditApp(QtGui.QApplication):
     # --- Language Menu ---
 
     def findLangFile(self, lang):
-        if lang + ".qm" in self.transLangs:
+        if lang in self.transLangs:
             return os.path.join(self.transDir, lang + ".qm")
         lang = lang.split("_")[0]
-        if lang + ".qm" in self.transLangs:
+        if lang in self.transLangs:
             return os.path.join(self.transDir, lang + ".qm")
         return None
 
@@ -517,6 +525,13 @@ class MCEditApp(QtGui.QApplication):
         self.translator = QtCore.QTranslator()
         self.translator.load(langFile)
         self.installTranslator(self.translator)
+
+        for a in self.langActions:
+            a.setChecked(False)
+        action.setChecked(True)
+
+        LangSetting.setValue(lang)
+        log.info("Changed language to %s", lang)
 
 
     # --- Status Bar ---
