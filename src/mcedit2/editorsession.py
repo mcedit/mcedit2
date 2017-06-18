@@ -547,9 +547,6 @@ class EditorSession(QtCore.QObject):
         self.worldEditor.close()
         self.worldEditor = None
 
-        # Break all reference cycles just to be absolutely sure.
-        self.__dict__.clear()
-
     def _updateVersionsAndResourcePacks(self):
         self.mcVersionMapper = QtCore.QSignalMapper()
         self.mcVersionMapper.mapped[str].connect(self.changeMCVersion)

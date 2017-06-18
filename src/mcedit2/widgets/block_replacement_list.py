@@ -19,7 +19,7 @@ class BlockReplacementButton(QtGui.QWidget):
         super(BlockReplacementButton, self).__init__()
 
         self.replacementList = BlockReplacementList()
-        self.replacementDialog = QtGui.QDialog(QtGui.qApp.mainWindow)
+        self.replacementDialog = QtGui.QDialog()
 
         self.replacementOk = QtGui.QPushButton(self.tr("OK"))
         self.replacementOk.clicked.connect(self.replacementDialog.accept)

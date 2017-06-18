@@ -589,12 +589,14 @@ class MCEditApp(QtGui.QApplication):
             for menu in previousSession.menus:
                 menuBar.removeAction(menu.menuAction())
 
-        if session is not None:
+        if session is None:
+            self.undoGroup.setActiveStack(None)
+        else:
             self.undoGroup.setActiveStack(session.undoStack)
 
             log.info("Adding session menus: %s", session.menus)
             for menu in session.menus:
-                menuBar.insertMenu(self.mainWindow.menuWindow.menuAction(), menu)
+                menuBar.insertAction(self.mainWindow.menuWindow.menuAction(), menu.menuAction())
 
             for action in session.topToolbarActions:
                 if action is None:
@@ -719,6 +721,8 @@ class MCEditApp(QtGui.QApplication):
                 self.undoGroup.removeStack(session.undoStack)
                 self.sessions.remove(session)
                 session.dealloc()
+                del tab
+                del session
                 gc.collect()
         else:
             self.tabWidget.removeTab(index)
