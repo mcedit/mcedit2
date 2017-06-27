@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>690</width>
-    <height>550</height>
+    <width>726</width>
+    <height>619</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,8 +18,13 @@
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <widget class="QLabel" name="label">
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;An Error Has Occurred:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>An Error Has Occurred:</string>
        </property>
        <property name="textFormat">
         <enum>Qt::RichText</enum>
@@ -36,6 +41,11 @@
          <horstretch>1</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
        </property>
        <property name="text">
         <string>(no error yet!)</string>
@@ -62,14 +72,87 @@
     </widget>
    </item>
    <item>
-    <widget class="QTextBrowser" name="tracebackView"/>
-   </item>
-   <item>
-    <widget class="QLabel" name="label_4">
-     <property name="text">
-      <string>Send this error report to the plugin or application developer to help get it fixed. </string>
+    <widget class="QTextBrowser" name="tracebackView">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>1</verstretch>
+      </sizepolicy>
      </property>
     </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <item>
+      <widget class="QCheckBox" name="reportErrorCheckbox">
+       <property name="text">
+        <string>Report Error</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QStackedWidget" name="reportingLabelStack">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <widget class="QWidget" name="page">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="margin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="autoSendErrorLabel">
+           <property name="text">
+            <string>This error will be automatically reported when this window is closed.</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="page_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="margin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="manualSendErrorLabel">
+           <property name="text">
+            <string>Send this error report to the plugin or application developer to help get it fixed. </string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <widget class="QLabel" name="copyToPastebinLabel">
@@ -79,11 +162,28 @@
     </widget>
    </item>
    <item>
-    <widget class="QLineEdit" name="pastebinURLBox">
-     <property name="readOnly">
-      <bool>true</bool>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <item>
+      <widget class="QPushButton" name="copyToPastebinButton">
+       <property name="text">
+        <string>Copy to PasteBin</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="pastebinURLBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>1</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
@@ -104,13 +204,6 @@
       <widget class="QPushButton" name="debugButton">
        <property name="text">
         <string>Debug</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="copyToPastebinButton">
-       <property name="text">
-        <string>Copy to PasteBin</string>
        </property>
       </widget>
      </item>
@@ -141,24 +234,16 @@
     </layout>
    </item>
   </layout>
+  <zorder>restartMCEditLabel</zorder>
+  <zorder>label_3</zorder>
+  <zorder>tracebackView</zorder>
+  <zorder>copyToPastebinLabel</zorder>
+  <zorder>pastebinURLBox</zorder>
+  <zorder>copyToPastebinButton</zorder>
+  <zorder>reportingLabelStack</zorder>
+  <zorder>reportErrorCheckbox</zorder>
+  <zorder>autoSendErrorLabel</zorder>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>continueButton</sender>
-   <signal>clicked()</signal>
-   <receiver>errorDialog</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>650</x>
-     <y>523</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>505</x>
-     <y>5</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

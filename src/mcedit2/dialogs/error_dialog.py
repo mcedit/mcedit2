@@ -9,15 +9,21 @@ import platform
 
 from PySide import QtGui, QtCore
 
+from mcedit2.sentry import get_sentry_client
 from mcedit2.ui.dialogs.error_dialog import Ui_errorDialog
 from mcedit2.util import qglcontext
 from mcedit2.util.resources import isSrcCheckout
 from mcedit2.util.screen import centerWidgetInScreen
+from mcedit2.util.settings import Settings
 from mcedit2.util.showprogress import MCEProgressDialog
 
 log = logging.getLogger(__name__)
 
 _errorShown = False
+
+settings = Settings()
+
+ReportErrorSetting = settings.getOption("errors/reporting_enabled", bool, True)
 
 
 def showErrorDialog(text, tb=None, fatal=True):
@@ -28,7 +34,6 @@ def showErrorDialog(text, tb=None, fatal=True):
     grabber = QtGui.QWidget.mouseGrabber()
     if grabber:
         grabber.releaseMouse()
-
         
     dialog = ErrorDialog(text, tb, fatal)
     dialog.exec_()
@@ -79,19 +84,25 @@ class ErrorDialog(QtGui.QDialog, Ui_errorDialog):
 
         self.quitMCEditButton.setVisible(fatal)
         self.quitMCEditButton.clicked.connect(self.quitMCEdit)
-        
+
+        self.continueButton.clicked.connect(self.continueMCEdit)
+
         self.debugButton.setEnabled(isSrcCheckout())
         self.debugButton.clicked.connect(self.debugPdb)
+
+        self.reportErrorCheckbox.toggled.connect(self.reportErrorToggled)
+        self.reportErrorCheckbox.setChecked(ReportErrorSetting.value())
 
         try:
             import Pastebin
         except ImportError:
             self.copyToPastebinButton.setVisible(False)
+            self.pastebinURLBox.setVisible(False)
         else:
             self.copyToPastebinButton.setVisible(True)
-            self.copyToPastebinButton.clicked.connect(self.copyToPastebin)
+            self.pastebinURLBox.setVisible(True)
 
-        self.pastebinURLBox.setVisible(False)
+            self.copyToPastebinButton.clicked.connect(self.copyToPastebin)
 
     def show(self, *args, **kwargs):
         super(ErrorDialog, self).show(*args, **kwargs)
@@ -117,21 +128,42 @@ class ErrorDialog(QtGui.QDialog, Ui_errorDialog):
         except Exception as e:
             log.warn("Failed to upload to pastebin!", exc_info=1)
             self.copyToPastebinLabel.setText(self.tr("Failed to upload to pastebin: ") + str(e))
+            if e.message.startswith("https://pastebin.com"):
+                url = e.message
         finally:
             dialog.hide()
 
         if url:
-            self.pastebinURLBox.setVisible(True)
             self.pastebinURLBox.setText(url)
             QtGui.QApplication.clipboard().setText(url)
             self.copyToPastebinLabel.setText(self.tr("Pastebin URL copied to clipboard!"))
 
     def restartMCEdit(self):
+        self.reportToSentry()
         QtCore.QProcess.startDetached(sys.executable, sys.argv[1:])
         raise SystemExit
 
     def quitMCEdit(self):
+        self.reportToSentry()
         raise SystemExit
-    
+
+    def continueMCEdit(self):
+        self.reportToSentry()
+        self.accept()
+
+    def reportToSentry(self):
+        if not self.reportErrorCheckbox.isChecked():
+            return
+
+        client = get_sentry_client()
+        client.captureException(self.exc_info)
+
+    def reportErrorToggled(self, checked):
+        ReportErrorSetting.setValue(checked)
+        
+        page = 0 if checked else 1
+        self.reportingLabelStack.setCurrentIndex(page)
+
+
     def debugPdb(self):
         import pdb; pdb.post_mortem(self.exc_info[2])

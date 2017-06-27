@@ -45,6 +45,9 @@ from mceditlib.anvil.adapter import SessionLockLost
 log = logging.getLogger(__name__)
 
 
+class UserRequestedError(ValueError):
+    """ Raised from the "Raise Error" item in the "Debug" menu. Used to test error reporting. """
+
 class MCEditMainWindow(QtGui.QMainWindow, Ui_mainWindow):
     def __init__(self, *args, **kwargs):
         super(MCEditMainWindow, self).__init__(*args, **kwargs)
@@ -428,7 +431,7 @@ class MCEditApp(QtGui.QApplication):
                                             self.tr("Raise an error? This may crash MCEdit."),
                                             buttons=QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
             if ret == QtGui.QMessageBox.Yes:
-                raise ValueError("User requested error")
+                raise UserRequestedError("User requested error")
 
         debugMenu.addAction(self.tr("Raise Error")).triggered.connect(raiseError)
 

@@ -12,6 +12,7 @@ import sys
 
 import OpenGL
 
+from mcedit2.sentry import get_sentry_client
 from mcedit2.util import custom_traceback
 
 import codecs
@@ -168,6 +169,7 @@ def startup():
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_X11InitThreads, True)
     global editorApp
     setup_logging()
+    get_sentry_client()
     compile_ui()
     sys.excepthook = excepthook
 
