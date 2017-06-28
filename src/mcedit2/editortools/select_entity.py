@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 
 from PySide import QtGui
+from PySide.QtCore import Qt
 
 from mcedit2.editortools import EditorTool
 from mcedit2.ui.editortools.select_entity import Ui_selectEntityWidget
@@ -68,8 +69,14 @@ class SelectEntityTool(EditorTool):
             tableWidget.setRowCount(len(self.selectedEntities))
             for row, e in enumerate(self.selectedEntities):
                 pos = e.Position
-                tableWidget.setItem(row, 0, QtGui.QTableWidgetItem(e.id))
-                tableWidget.setItem(row, 1, QtGui.QTableWidgetItem("%0.2f, %0.2f, %0.2f" % (pos[0], pos[1], pos[2])))
+                flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled
+                idItem = QtGui.QTableWidgetItem(e.id)
+                idItem.setFlags(flags)
+                posItem = QtGui.QTableWidgetItem("%0.2f, %0.2f, %0.2f" % (pos[0], pos[1], pos[2]))
+                posItem.setFlags(flags)
+
+                tableWidget.setItem(row, 0, idItem)
+                tableWidget.setItem(row, 1, posItem)
 
             self.cellWasClicked(0, 0)
 
