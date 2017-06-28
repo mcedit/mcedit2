@@ -37,7 +37,8 @@ install:
 
   # where are libs?
   - python -c 'from PySide.QtCore import QCoreApplication;app = QCoreApplication([]);print([str(p) for p in app.libraryPaths()])'
-
+  - which lrelease
+  - which lconvert
   # - brew install pyside pyside-tools
 
   # Install mcedit.
