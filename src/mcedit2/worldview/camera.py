@@ -487,13 +487,13 @@ class CameraStickyPanMouseAction(ViewAction):
     hidden = True
     settingsKey = None
 
-    _sticking = False
+    sticking = False
     mouseDragStart = None
 
     def toggleSticky(self, event):
         view = event.view
-        if not self._sticking:
-            self._sticking = True
+        if not self.sticking:
+            self.sticking = True
             cursor = view.cursor()
             self._oldPos = cursor.pos()
             self._oldShape = cursor.shape()
@@ -505,7 +505,7 @@ class CameraStickyPanMouseAction(ViewAction):
             self.mouseDragStart = event.x(), event.y()
 
         else:
-            self._sticking = False
+            self.sticking = False
             cursor = view.cursor()
             cursor.setPos(self._oldPos)
             cursor.setShape(self._oldShape)
@@ -520,7 +520,7 @@ class CameraStickyPanMouseAction(ViewAction):
     _last_dx = _last_dy = 0
 
     def mouseMoveEvent(self, event):
-        if not self._sticking:
+        if not self.sticking:
             return
 
         x = event.x()
@@ -552,7 +552,7 @@ class CameraStickyPanMouseAction(ViewAction):
                 # Disable camera movement while the cursor is repositioned
                 # since QCursor.setPos emits a mouseMoved event
 
-                self._sticking = False
+                self.sticking = False
 
                 self.mouseDragStart = (w / 2, h / 2)
 
@@ -561,7 +561,7 @@ class CameraStickyPanMouseAction(ViewAction):
                 QtGui.QCursor.setPos(pos)
 
                 def resumeSticking():
-                    self._sticking = True
+                    self.sticking = True
 
                 QtCore.QTimer.singleShot(0, resumeSticking)
 
@@ -586,6 +586,9 @@ class CameraPanMouseAction(ViewAction):
     def buttonPressEvent(self, event):
         self.downTime = time.time()
 
+        if self._stickyAction.sticking:
+            return
+
         x = event.x()
         y = event.y()
         self.mouseDragStart = x, y
@@ -594,7 +597,7 @@ class CameraPanMouseAction(ViewAction):
         if self.downTime is None:
             return
 
-        if event.view.stickyMouselook and time.time() - self.downTime < self._stickyThreshold:
+        if self._stickyAction.sticking or (event.view.stickyMouselook and  time.time() - self.downTime < self._stickyThreshold):
             self._stickyAction.toggleSticky(event)
 
         self.mouseDragStart = None
