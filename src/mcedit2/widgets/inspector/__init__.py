@@ -266,6 +266,9 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
         with command.begin():
             self.entity.chunk.Entities.remove(self.entity)
 
+        self.entity = None
+        self.hide()
+
     def inspectChunk(self, cx, cz):
         self.clearVisuals()
 
