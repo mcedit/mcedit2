@@ -800,6 +800,9 @@ class EditorSession(QtCore.QObject):
         self.copiedSchematic = showProgress("Copying...", task)
 
     def paste(self):
+        if self.readonly:
+            return
+
         if self.copiedSchematic is None:
             return
         view = self.editorTab.currentView()
@@ -1119,6 +1122,9 @@ class EditorSession(QtCore.QObject):
             return
     
     def placeSchematic(self, schematic, importPos=None, name="Unknown"):
+        if self.readonly:
+            return
+
         ray = self.editorTab.currentView().rayAtCenter()
         if importPos is not None:
             pos = importPos
