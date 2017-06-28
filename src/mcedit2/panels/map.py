@@ -44,6 +44,10 @@ class MapListModel(QtCore.QAbstractListModel):
     def getMap(self, mapID):
         return self.editorSession.worldEditor.getMap(mapID)
 
+    def deleteMap(self, mapID):
+        self.mapIDs.remove(mapID)
+        self.editorSession.worldEditor.deleteMap(mapID)
+
     def imageForMapID(self, mapID):
         try:
             mapData = self.getMap(mapID)
@@ -92,8 +96,12 @@ class MapPanel(QtGui.QWidget, Ui_mapWidget):
 
         self.importImageButton.clicked.connect(self.importImage)
 
-        self.currentlyEditingLabel.setVisible(False)
+        self.deleteMapButton.clicked.connect(self.deleteMap)
 
+        self.currentlyEditingLabel.setVisible(False)
+        self.displayFirstMap()
+
+    def displayFirstMap(self):
         if len(self.mapListModel.mapIDs):
             index = self.mapListModel.index(0, 0)
             self.mapListView.setCurrentIndex(index)
@@ -183,7 +191,18 @@ class MapPanel(QtGui.QWidget, Ui_mapWidget):
                             newMap.colors[:] = colors
                             newMap.save()
 
-                        self.reloadModel()
+                    self.reloadModel()
+                    self.displayMapID(newMap.mapID)
+
+    def deleteMap(self):
+        idx = self.mapListView.currentIndex()
+        if idx.isValid():
+            mapID = self.mapListModel.data(idx, MapListModel.MapIDRole)
+            with self.editorSession.beginSimpleCommand(self.tr("Delete Map {0}").format(mapID)):
+                self.mapListModel.deleteMap(mapID)
+
+            self.reloadModel()
+            self.displayFirstMap()
 
     def reloadModel(self):
         self.mapListModel = MapListModel(self.editorSession)

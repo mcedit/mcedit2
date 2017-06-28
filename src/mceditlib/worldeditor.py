@@ -605,6 +605,9 @@ class WorldEditor(object):
     def createMap(self):
         return self.adapter.createMap()
 
+    def deleteMap(self, mapID):
+        return self.adapter.deleteMap(mapID)
+
     # --- Players ---
 
     def listPlayers(self):

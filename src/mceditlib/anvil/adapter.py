@@ -1045,8 +1045,11 @@ class AnvilWorldAdapter(object):
     def getMap(self, mapID):
         return AnvilMapData(self.getMapTag(mapID), mapID, self)
 
+    def _getMapPath(self, mapID):
+        return "data/map_%s.dat" % mapID
+
     def getMapTag(self, mapID):
-        mapPath = "data/map_%s.dat" % mapID
+        mapPath = self._getMapPath(mapID)
         if not self.selectedRevision.containsFile(mapPath):
             raise KeyError("Map %s not found" % mapID)
 
@@ -1055,8 +1058,7 @@ class AnvilWorldAdapter(object):
         return mapNBT
 
     def saveMapTag(self, mapID, mapTag):
-        mapPath = "data/map_%s.dat" % mapID
-        self.selectedRevision.writeFile(mapPath, mapTag.save())
+        self.selectedRevision.writeFile(self._getMapPath(mapID), mapTag.save())
 
     def createMap(self):
         # idcounts.dat should hold the ID number of the last created map
@@ -1078,6 +1080,9 @@ class AnvilWorldAdapter(object):
 
         mapData.save()
         return mapData
+
+    def deleteMap(self, mapID):
+        self.selectedRevision.deleteFile(self._getMapPath(mapID))
 
 
 class AnvilMapData(NBTCompoundRef):
