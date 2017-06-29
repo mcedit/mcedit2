@@ -70,7 +70,7 @@ def anglesToVector(yaw, pitch):
     dz = math.cos(math.radians(yaw)) * math.cos(math.radians(pitch))
     return Vector(*map(nanzero, [dx, dy, dz]))
 
-THREADED_BUFFER_SWAP = True
+THREADED_BUFFER_SWAP = False
 
 class BufferSwapper(QtCore.QObject):
     def __init__(self, view):
