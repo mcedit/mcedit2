@@ -168,7 +168,7 @@ class MoveTool(EditorTool):
             self.editorSession.updateView()
 
     def pointInputChanged(self, value):
-        if value is not None:
+        if value is not None and self.currentImport is not None:
             self.importDidMove(value, self.currentImport.basePosition)
 
     # --- Pending imports ---
@@ -250,6 +250,8 @@ class MoveTool(EditorTool):
         self.editorSession.selectionTool.hideSelectionWalls = True
         if self.currentImport is None:
             self.rotationInput.rotation = (0, 0, 0)
+            self.scaleInput.scale = (1., 1., 1)
+
             if self.editorSession.currentSelection is None:
                 return
 
