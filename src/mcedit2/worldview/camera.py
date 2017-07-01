@@ -499,7 +499,7 @@ class CameraStickyPanMouseAction(ViewAction):
             self._oldShape = cursor.shape()
             cursor.setShape(Qt.BlankCursor)
             view.setCursor(cursor)
-            view.grabMouse()
+            #view.grabMouse()
             view.forceMouseCenter = True
 
             self.mouseDragStart = event.x(), event.y()
@@ -510,7 +510,7 @@ class CameraStickyPanMouseAction(ViewAction):
             cursor.setPos(self._oldPos)
             cursor.setShape(self._oldShape)
             view.setCursor(cursor)
-            view.releaseMouse()
+            #view.releaseMouse()
             view.forceMouseCenter = False
 
             self.mouseDragStart = None
