@@ -670,6 +670,8 @@ class MinecraftInstallsDialog(QtGui.QDialog, Ui_installsWidget):
             self._addMMCInstall(path)
 
         self.minecraftInstallsTable.cellChanged.connect(self.itemChanged)
+        self.minecraftInstallsTable.itemSelectionChanged.connect(self.itemSelectionChanged)
+
         self.addButton.clicked.connect(self.addInstall)
         self.removeButton.clicked.connect(self.removeInstall)
         self.selectButton.clicked.connect(self.selectInstall)
@@ -681,6 +683,12 @@ class MinecraftInstallsDialog(QtGui.QDialog, Ui_installsWidget):
 
         self.addMMCButton.clicked.connect(self.addMMCInstall)
         self.removeMMCButton.clicked.connect(self.removeMMCInstall)
+
+    def itemSelectionChanged(self):
+        row = self.minecraftInstallsTable.currentRow()
+        enabled = row != -1
+        self.removeButton.setEnabled(enabled)
+        self.selectButton.setEnabled(enabled)
 
     def itemChanged(self, row, column):
         install = GetInstalls().installs[row]
@@ -760,13 +768,19 @@ class MinecraftInstallsDialog(QtGui.QDialog, Ui_installsWidget):
 
     def removeInstall(self):
         row = self.minecraftInstallsTable.currentRow()
-        path = self.minecraftInstallsTable.item(row, 2).data(Qt.EditRole)
+        item = self.minecraftInstallsTable.item(row, 2)
+        if item is None: return
+
+        path = item.data(Qt.EditRole)
         GetInstalls().removeInstall(path)
         self.minecraftInstallsTable.removeRow(row)
 
     def selectInstall(self):
         row = self.minecraftInstallsTable.currentRow()
-        path = self.minecraftInstallsTable.item(row, 2).data(Qt.EditRole)
+        item = self.minecraftInstallsTable.item(row, 2)
+        if item is None: return
+
+        path = item.data(Qt.EditRole)
         currentInstallOption.setValue(path)
         self._hiliteRow(row)
 
