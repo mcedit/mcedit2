@@ -6,3 +6,4 @@ ipython
 qtconsole
 pygments
 pastebin
+raven
