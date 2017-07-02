@@ -290,7 +290,7 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
     NBTPathRole = QtCore.Qt.UserRole + 1
     NBTTagTypeRole = NBTPathRole + 1
 
-    def __init__(self, rootTag, blocktypes):
+    def __init__(self, rootTag, blocktypes, editable):
         """
 
         Parameters
@@ -303,6 +303,7 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
         self.blocktypes = blocktypes
         self.rootItem = MakeNBTTreeItem(rootTag, None)
         self.rootTag = rootTag
+        self.editable = editable
         self.allowNameChanges = True
         self.addIcon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/add.png"))
         self.removeIcon = QtGui.QIcon(resourcePath("mcedit2/assets/mcedit2/icons/remove.png"))
@@ -326,7 +327,7 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
         parent = self.parent(index)
         parentItem = self.getItem(parent) if parent else None
 
-        if index.column() == 1 or (index.column() == 0 and self.allowNameChanges and parentItem and parentItem.isCompound):
+        if self.editable and (index.column() == 1 or (index.column() == 0 and self.allowNameChanges and parentItem and parentItem.isCompound)):
             flags |= QtCore.Qt.ItemIsEditable
         return flags
 

@@ -123,7 +123,7 @@ class NBTEditorWidget(QtGui.QWidget):
             self.model = None
             return
 
-        self.model = NBTTreeModel(rootTagRef.rootTag, self.editorSession.worldEditor.blocktypes)
+        self.model = NBTTreeModel(rootTagRef.rootTag, self.editorSession.worldEditor.blocktypes, not self.editorSession.readonly)
         expanded = []
         current = None
         if keepExpanded and self.proxyModel:
@@ -177,6 +177,9 @@ class NBTEditorWidget(QtGui.QWidget):
     indexAddingTo = None
 
     def itemClicked(self, index):
+        if self.editorSession.readonly:
+            return
+
         index = self.proxyModel.mapToSource(index)
         item = self.model.getItem(index)
         if index.column() == 2:
