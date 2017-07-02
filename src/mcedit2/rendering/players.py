@@ -47,14 +47,18 @@ class PlayerNode(Node):
         self._texturePath = value
         if value is not None:
             log.info("Got texture path: %s", value)
-            w, h, modelImage = loadPNGFile(value)
-            modelImage = modelImage[::-1]
-            # modelTex = loadPNGTexture(value)
-            if h == 32:
-                w, h, modelImage = fixupTextureImage(modelImage)
+            try:
+                w, h, modelImage = loadPNGFile(value)
+                modelImage = modelImage[::-1]
+                # modelTex = loadPNGTexture(value)
+                if h == 32:
+                    w, h, modelImage = fixupTextureImage(modelImage)
 
-            tex = glutils.Texture(name=os.path.basename(value), image=modelImage.ravel(),
-                                  width=w, height=h)
+                tex = glutils.Texture(name=os.path.basename(value), image=modelImage.ravel(),
+                                      width=w, height=h)
+            except Exception as e:
+                log.warn("Error while loading player texture: %r", e)
+                return
 
             if self.entityNode:
                 self.removeChild(self.entityNode)
