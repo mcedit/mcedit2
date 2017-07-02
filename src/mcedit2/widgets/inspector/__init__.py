@@ -92,6 +92,18 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
         self.addTileEntityButton.clicked.connect(self.addTileEntity)
         self.removeTileEntityButton.clicked.connect(self.removeTileEntity)
 
+        enabled = not self.editorSession.readonly
+
+        self.removeEntityButton.setEnabled(enabled)
+
+        self.addTileEntityButton.setEnabled(enabled)
+        self.removeTileEntityButton.setEnabled(enabled)
+        self.terrainPopulatedInput.setEnabled(enabled)
+        self.lightPopulatedInput.setEnabled(enabled)
+        self.inhabitedTimeInput.setEnabled(enabled)
+        self.updateTimeInput.setEnabled(enabled)
+        self.tileTicksSpinBox.setEnabled(enabled)
+
     def _changed(self, value, idx):
         if self.blockPos is None:
             return
@@ -189,7 +201,7 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
         else:
             self.blockNBTEditor.setRootTagRef(None)
 
-        self.removeTileEntityButton.setEnabled(self.tileEntity is not None)
+        self.removeTileEntityButton.setEnabled(self.tileEntity is not None and not self.editorSession.readonly)
 
         if self.tileEntity is not None:
             if self.tileEntity.id == "Control":
