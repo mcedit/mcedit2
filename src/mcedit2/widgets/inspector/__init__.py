@@ -334,45 +334,36 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
         if self.currentChunk.TerrainPopulated == value:
             return
 
-        command = InspectPropertyChangeCommand(self.editorSession,
-                                               self.tr("Change chunk (%s, %s) property TerrainPopulated")
-                                               % self.currentChunk.chunkPosition)
-        with command.begin():
+        with self.editorSession.beginSimpleCommand(self.tr("Change chunk (%s, %s) property TerrainPopulated")
+                                                   % self.currentChunk.chunkPosition):
             self.currentChunk.TerrainPopulated = value
-        self.editorSession.pushCommand(command)
 
     def lightPopulatedDidChange(self, value):
         if self.currentChunk.rootTag["Level"]["LightPopulated"].value == value:
             return
 
-        command = InspectPropertyChangeCommand(self.editorSession,
-                                               self.tr("Change chunk (%s, %s) property LightPopulated")
-                                               % self.currentChunk.chunkPosition)
-        with command.begin():
+        with self.editorSession.beginSimpleCommand(self.tr("Change chunk (%s, %s) property LightPopulated")
+                                                   % self.currentChunk.chunkPosition):
             self.currentChunk.rootTag["Level"]["LightPopulated"].value = value
-        self.editorSession.pushCommand(command)
+
 
     def inhabitedTimeDidChange(self, value):
         if self.currentChunk.rootTag["Level"]["InhabitedTime"].value == value:
             return
 
-        command = InspectPropertyChangeCommand(self.editorSession,
-                                               self.tr("Change chunk (%s, %s) property InhabitedTime")
-                                               % self.currentChunk.chunkPosition)
-        with command.begin():
+        with self.editorSession.beginSimpleCommand(self.tr("Change chunk (%s, %s) property InhabitedTime")
+                                                   % self.currentChunk.chunkPosition):
             self.currentChunk.rootTag["Level"]["InhabitedTime"].value = value
-        self.editorSession.pushCommand(command)
+
 
     def updateTimeDidChange(self, value):
         if self.currentChunk.rootTag["Level"]["LastUpdate"].value == value:
             return
 
-        command = InspectPropertyChangeCommand(self.editorSession,
-                                               self.tr("Change chunk (%s, %s) property LastUpdate")
-                                               % self.currentChunk.chunkPosition)
-        with command.begin():
+        with self.editorSession.beginSimpleCommand(self.tr("Change chunk (%s, %s) property LastUpdate")
+                                                   % self.currentChunk.chunkPosition):
             self.currentChunk.rootTag["Level"]["LastUpdate"].value = value
-        self.editorSession.pushCommand(command)
+
 
     def chunkTabDidChange(self, index):
         if self.chunkTabWidget.widget(index) is self.chunkPropertiesTab:
@@ -392,6 +383,3 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
     #     cx = self.cxSpinBox.value()
     #     cz = self.czSpinBox.value()
     #     self.selectChunk(cx, cz)
-
-class InspectPropertyChangeCommand(SimpleRevisionCommand):
-    pass

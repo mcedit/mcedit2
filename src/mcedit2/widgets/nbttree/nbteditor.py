@@ -65,10 +65,6 @@ class NBTEditorItemDelegate(QtGui.QStyledItemDelegate):
             super(NBTEditorItemDelegate, self).setModelData(editor, model, index)
 
 
-class NBTDataChangeCommand(SimpleRevisionCommand):
-    pass
-
-
 @registerCustomWidget
 class NBTEditorWidget(QtGui.QWidget):
     """
@@ -268,22 +264,18 @@ class NBTEditorWidget(QtGui.QWidget):
         else:
             text = "Unknown data changed."
 
-        command = NBTDataChangeCommand(self.editorSession, text)
-        with command.begin():
+        with self.editorSession.beginSimpleCommand(text):
             self.rootTagRef.dirty = True
             self.editorSession.worldEditor.syncToDisk()
-        self.editorSession.pushCommand(command)
         self.tagValueChanged.emit(index.data(NBTTreeModel.NBTPathRole))
 
     def rowsDidInsert(self, index):
         name = self.tagNameForUndo(index.parent())
         text = "%sInsert NBT tag under %s" % (self.undoCommandPrefixText, name)
 
-        command = NBTDataChangeCommand(self.editorSession, text)
-        with command.begin():
+        with self.editorSession.beginSimpleCommand(text):
             self.rootTagRef.dirty = True
             self.editorSession.worldEditor.syncToDisk()
-        self.editorSession.pushCommand(command)
 
     doomedTagName = None
 
@@ -291,11 +283,9 @@ class NBTEditorWidget(QtGui.QWidget):
         name = self.tagNameForUndo(index)
         text = "%sRemove NBT tag %s from %s" % (self.undoCommandPrefixText, self.doomedTagName, name)
 
-        command = NBTDataChangeCommand(self.editorSession, text)
-        with command.begin():
+        with self.editorSession.beginSimpleCommand(text):
             self.rootTagRef.dirty = True
             self.editorSession.worldEditor.syncToDisk()
-        self.editorSession.pushCommand(command)
 
     tagValueChanged = QtCore.Signal(list)
     tagAdded = QtCore.Signal(list)

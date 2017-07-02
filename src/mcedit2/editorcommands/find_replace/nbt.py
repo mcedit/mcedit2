@@ -202,10 +202,6 @@ class ReplaceValueTagType(object):
     DOUBLE = 7
 
 
-class NBTReplaceCommand(SimpleRevisionCommand):
-    pass
-
-
 class FindReplaceNBTResults(QtGui.QWidget, Ui_findNBTResults):
     pass
 
@@ -565,11 +561,8 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
 
                 yield
 
-        command = NBTReplaceCommand(self.editorSession, "Replace NBT data")  # xxx replace details
-        with command.begin():
+        with self.editorSession.beginSimpleCommand(self.tr("Replace NBT data")):
             showProgress("Replacing NBT data...", _replace())
-
-        self.editorSession.pushCommand(command)
 
     def replaceAll(self):
         self.replaceEntries(self.resultsModel.results)
