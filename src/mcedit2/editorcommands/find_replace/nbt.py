@@ -239,7 +239,13 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
 
         self.resultsWidget.removeSelectedButton.clicked.connect(self.removeSelected)
         self.resultsWidget.removeAllButton.clicked.connect(self.removeAll)
-        
+
+        self.resultsWidget.replaceSelectedButton.setEnabled(not self.editorSession.readonly)
+        self.resultsWidget.replaceAllButton.setEnabled(not self.editorSession.readonly)
+
+        self.resultsWidget.removeSelectedButton.setEnabled(not self.editorSession.readonly)
+        self.resultsWidget.removeAllButton.setEnabled(not self.editorSession.readonly)
+
         self.searchNameCheckbox.toggled.connect(self.searchForToggled)
         self.searchValueCheckbox.toggled.connect(self.searchForToggled)
         self.findTimer = None

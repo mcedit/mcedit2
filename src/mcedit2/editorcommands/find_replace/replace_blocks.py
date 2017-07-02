@@ -32,6 +32,7 @@ class FindReplaceBlocks(QtCore.QObject):
 
         self.widget.replacementList.editorSession = editorSession
         self.widget.blocksReplaceButton.clicked.connect(self.doReplace)
+        self.widget.blocksReplaceButton.setEnabled(not self.editorSession.readonly)
 
     def doReplace(self):
         replacements = self.widget.replacementList.getReplacements()
