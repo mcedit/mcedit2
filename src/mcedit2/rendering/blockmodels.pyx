@@ -471,9 +471,9 @@ cdef class BlockModels(object):
 
                     if varVal is None:
                         ok = False
+                    matchVals = str(val).lower().split("|")
 
-                    if str(varVal).lower() != str(val).lower():
-                        # Gross, values in multipart may be raw values but values in resourceVariant are strings...
+                    if str(varVal).lower() not in matchVals:
                         ok = False
 
             return ok
