@@ -152,6 +152,9 @@ class KochSnowflakePlugin(LSystemPlugin):
         return symbol
 
     def boundsChanged(self, bounds):
+        if bounds is None:
+            return  # no selection
+
         size = (bounds.width + bounds.length) / 2
         maxiter = math.log(size, 4) + 2
         self.iterationsSlider.setMaximum(maxiter)
