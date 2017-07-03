@@ -88,8 +88,8 @@ def md5hash(filename):
 
 class MCInstallGroup(QtCore.QObject):
     
-    _requiredVersion = '1.10.2'
-    _requiredMajorMinor = (1, 10)
+    _requiredVersion = '1.12'
+    _requiredMajorMinor = (1, 12)
             
     def __init__(self):
         """
