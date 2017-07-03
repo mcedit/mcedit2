@@ -273,6 +273,8 @@ class ConfigureBlocksDialog(QtGui.QDialog, Ui_configureBlocks):
 
         self.blocksView.clicked.connect(self.currentBlockClicked)
 
+        self.internalNameBox.textChanged.connect(self.nameTextChanged)
+
         self.addBlockButton.clicked.connect(self.addBlock)
         self.removeBlockButton.clicked.connect(self.removeBlock)
 
@@ -344,6 +346,8 @@ class ConfigureBlocksDialog(QtGui.QDialog, Ui_configureBlocks):
             self.modelNameBox.setCurrentIndex(row)
             self.modelNameChanged(row)
 
+    def nameTextChanged(self, text):
+        self.addBlockButton.setEnabled(len(text) > 0)
 
     def modelNameChanged(self, row):
         blockIndex = self.blocksView.currentIndex()
