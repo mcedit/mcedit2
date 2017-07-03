@@ -206,6 +206,8 @@ class BlockTypeSet(object):
         if nameAndState is None:
             nameAndState = self.statesByID.get((block.ID, 0))
         if nameAndState is None:
+            if attr == "nameAndState":
+                return "UNKNOWN_NAME[id=%d,meta=%d]"
             return self.defaults[attr]
 
         if attr == "nameAndState":
