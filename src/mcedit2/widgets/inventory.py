@@ -339,6 +339,7 @@ class InventoryEditor(QtGui.QWidget):
         self.enableFields(False)
 
     def enableFields(self, enabled):
+        enabled = enabled and not self.editorSession.readonly
         self.internalNameField.setEnabled(enabled)
         self.rawIDInput.setEnabled(enabled)
         self.rawIDCheckbox.setEnabled(enabled)
@@ -426,7 +427,7 @@ class InventoryEditor(QtGui.QWidget):
     def itemTypeChanged(self, index):
         if self.currentIndex is None or self.itemListModel is None:
             return
-        if self.editsDisabled:
+        if self.editsDisabled or self.editorSession.readonly:
             return
 
         internalName = index.data(ItemTypeListModel.InternalNameRole)
