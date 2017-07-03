@@ -49,6 +49,13 @@ class CommandBlockEditorWidget(QtGui.QWidget):
         self.trackOutputCheckbox.setChecked(tileEntityRef.TrackOutput != 0)
         self.successCountSpinBox.setValue(tileEntityRef.SuccessCount)
 
+        enabled = not editorSession.readonly
+
+        self.trackOutputCheckbox.setEnabled(enabled)
+        self.successCountSpinBox.setEnabled(enabled)
+        self.commandTextEdit.setEnabled(enabled)
+        self.customNameField.setEnabled(enabled)
+
         try:
             self.parsedCommand = ParseCommand(tileEntityRef.Command)
         except Exception:
