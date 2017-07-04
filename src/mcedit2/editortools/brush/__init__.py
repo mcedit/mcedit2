@@ -126,6 +126,7 @@ class BrushTool(EditorTool):
         BrushModeSetting.connectAndCall(self.modeSettingChanged)
 
         self.cursorWorldScene = None
+        self.cursorBoxNode = None
         self.cursorNode = Node("brushCursor")
         self.cursorTranslate = Translate()
         self.cursorNode.addState(self.cursorTranslate)
@@ -249,6 +250,8 @@ class BrushTool(EditorTool):
         if self.cursorWorldScene:
             self.brushLoader.timer.stop()
             self.cursorNode.removeChild(self.cursorWorldScene)
+
+        if self.cursorBoxNode:
             self.cursorNode.removeChild(self.cursorBoxNode)
 
         cursorLevel = self.brushMode.createCursorLevel(self)
