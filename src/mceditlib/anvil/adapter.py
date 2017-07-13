@@ -778,6 +778,7 @@ class AnvilWorldAdapter(object):
         :return:
         :rtype:
         """
+
         lockfile = self.revisionHistory.rootFolder.getFilePath("session.lock")
         self.lockTime = int(time.time() * 1000)
         with open(lockfile, "wb") as f:
@@ -803,6 +804,11 @@ class AnvilWorldAdapter(object):
             lock = -1
         if lock != self.lockTime:
             raise SessionLockLost("Session lock lost. This world is being accessed from another location.")
+
+    def stealSessionLock(self):
+        if self.readonly:
+            raise IOError("World is opened read only.")
+        self.acquireSessionLock()
 
     # --- Format detection ---
 

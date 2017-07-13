@@ -26,6 +26,7 @@ from mcedit2.util.resources import resourcePath
 from mcedit2.widgets.blockpicker import BlockTypeButton
 from mcedit2.widgets.mcedockwidget import MCEDockWidget
 from mcedit2.widgets.spinslider import SpinSlider
+from mceditlib.anvil.adapter import SessionLockLost
 from mceditlib.findadapter import UnknownFormatError
 from mceditlib.structure import exportStructure
 from mceditlib.util import exhaust
@@ -174,7 +175,9 @@ class EditorSession(QtCore.QObject):
         self.configuredBlocks = None
 
         self.copiedSchematic = None  # xxx should be app global!!
-        """:type : WorldEditor"""
+        """:type: mceditlib.worldeditor.WorldEditor"""
+
+        self.worldEditor = None  # type: WorldEditor
 
         # --- Open world editor ---
         try:
@@ -779,7 +782,37 @@ class EditorSession(QtCore.QObject):
         self.undoStack.clearUndoBlock()
 
         saveTask = self.worldEditor.saveChangesIter()
-        showProgress("Saving...", saveTask)
+        try:
+            showProgress("Saving...", saveTask)
+        except SessionLockLost:
+            msgBox = QtGui.QMessageBox(QtGui.QMessageBox.Critical,
+                                       self.tr("Session Lock Lost"),
+                                       self.tr("This world has been modified by another application.\n\n"
+                                               "You may attempt to"
+                                               " retake the lock and override any changes made by the other application. If"
+                                               " the other application is still modifying the world, retaking the lock may "
+                                               " <b>permanently damage the world</b>."))
+
+            cancelBtn = msgBox.addButton(self.tr("Cancel"), QtGui.QMessageBox.RejectRole)
+            discardBtn = msgBox.addButton(self.tr("Discard Changes"), QtGui.QMessageBox.DestructiveRole)
+            retakeBtn = msgBox.addButton(self.tr("Retake Lock"), QtGui.QMessageBox.AcceptRole)
+
+            msgBox.exec_()
+
+            btn = msgBox.clickedButton()
+
+            if btn == cancelBtn:
+                return
+
+            if btn == discardBtn:
+                self.dirty = False
+                self.closeTab()
+
+            if btn == retakeBtn:
+                self.worldEditor.stealSessionLock()
+
+                self.save()
+
         self.dirty = False
         self.actionSave.setEnabled(False)
         self.lastSaveIndex = self.undoStack.index()

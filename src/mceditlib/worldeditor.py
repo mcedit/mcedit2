@@ -403,6 +403,10 @@ class WorldEditor(object):
         for status in self.adapter.saveChangesIter():
             yield status
 
+    def stealSessionLock(self):
+        if hasattr(self.adapter, "stealSessionLock"):
+            self.adapter.stealSessionLock()
+
     def saveToFile(self, filename):
         # XXXX only works with .schematics!!!
         self.adapter.saveToFile(filename)
