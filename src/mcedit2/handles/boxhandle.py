@@ -181,7 +181,7 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
     # --- Resize ---
 
     def beginResize(self, event):
-        log.info("beginResize")
+        log.debug("beginResize")
         point, face = boxFaceUnderCursor(self.bounds, event.ray)
 
         if face is not None:
@@ -216,7 +216,7 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
         self.changeBounds(newBox)
 
     def endResize(self, event):
-        log.info("endResize")
+        log.debug("endResize")
         self.bounds = self.boxFromDragResize(self.oldBounds, event.ray)
         oldBounds = self.oldBounds
         self.oldBounds = None
