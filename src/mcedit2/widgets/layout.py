@@ -61,7 +61,16 @@ def setWidgetError(widget, exc, msg = "An error has occurred."):
     textArea.setReadOnly(True)
     message = msg + "\n"
     # Sometimes str(exc) returns non-ascii bytes - assume they are filenames?
-    message += str(exc).decode(sys.getfilesystemencoding(), errors='replace') + "\n\n"
+    try:
+        excmsg = unicode(exc)
+    except UnicodeError:
+        try:
+            excmsg = str(exc).decode(sys.getfilesystemencoding(), errors='replace')
+        except UnicodeError:
+            excmsg = unicode(type(exc))
+
+
+    message += excmsg + "\n\n"
     message += traceback.format_exc()
     textArea.setText(message)
     layout.addWidget(textArea)
