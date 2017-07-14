@@ -9,6 +9,7 @@ import numpy
 
 from mcedit2.rendering.scenegraph.rendernode import RenderNode
 from mcedit2.rendering.scenegraph.scenenode import Node
+from mcedit2.util import glutils
 from mcedit2.util.glutils import gl
 
 log = logging.getLogger(__name__)
@@ -43,11 +44,26 @@ class VertexRenderNode(RenderNode):
                 bare.append(array)
 
         with gl.glPushAttrib(GL.GL_ENABLE_BIT):
-            GL.glDisable(GL.GL_TEXTURE_2D)
-            self.drawArrays(bare, False, False)
-            GL.glEnable(GL.GL_TEXTURE_2D)
-            self.drawArrays(withTex, True, False)
-            self.drawArrays(withLights, True, True)
+            if len(bare):
+                glutils.glActiveTexture(GL.GL_TEXTURE0)
+                GL.glDisable(GL.GL_TEXTURE_2D)
+                glutils.glActiveTexture(GL.GL_TEXTURE1)
+                GL.glDisable(GL.GL_TEXTURE_2D)
+                glutils.glActiveTexture(GL.GL_TEXTURE0)
+                self.drawArrays(bare, False, False)
+
+            if len(withTex) or len(withLights):
+                glutils.glActiveTexture(GL.GL_TEXTURE0)
+                GL.glEnable(GL.GL_TEXTURE_2D)
+
+            if len(withTex):
+                self.drawArrays(withTex, True, False)
+
+            if len(withLights):
+                glutils.glActiveTexture(GL.GL_TEXTURE1)
+                GL.glEnable(GL.GL_TEXTURE_2D)
+                glutils.glActiveTexture(GL.GL_TEXTURE0)
+                self.drawArrays(withLights, True, True)
 
     def drawArrays(self, vertexArrays, textures, lights):
         if textures:
