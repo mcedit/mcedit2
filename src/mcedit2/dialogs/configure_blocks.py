@@ -273,7 +273,7 @@ class ConfigureBlocksDialog(QtGui.QDialog, Ui_configureBlocks):
 
         self.blocksView.clicked.connect(self.currentBlockClicked)
 
-        self.internalNameBox.textChanged.connect(self.nameTextChanged)
+        self.internalNameBox.editTextChanged.connect(self.nameTextChanged)
 
         self.addBlockButton.clicked.connect(self.addBlock)
         self.removeBlockButton.clicked.connect(self.removeBlock)
