@@ -250,9 +250,11 @@ class BrushTool(EditorTool):
         if self.cursorWorldScene:
             self.brushLoader.timer.stop()
             self.cursorNode.removeChild(self.cursorWorldScene)
+            self.cursorWorldScene = None
 
         if self.cursorBoxNode:
             self.cursorNode.removeChild(self.cursorBoxNode)
+            self.cursorBoxNode = None
 
         cursorLevel = self.brushMode.createCursorLevel(self)
         if cursorLevel is not None:
