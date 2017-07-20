@@ -51,6 +51,20 @@ class Enable(states.SceneNodeState):
         self.enables = enables
 
 
+class Disable(states.SceneNodeState):
+    def enter(self):
+        GL.glPushAttrib(GL.GL_ENABLE_BIT)
+        for e in self.enables:
+            GL.glDisable(e)
+
+    def exit(self):
+        GL.glPopAttrib()
+
+    def __init__(self, *enables):
+        super(Disable, self).__init__()
+        self.enables = enables
+
+
 class ClearRenderNode(rendernode.RenderNode):
     def drawSelf(self):
         color = self.sceneNode.clearColor

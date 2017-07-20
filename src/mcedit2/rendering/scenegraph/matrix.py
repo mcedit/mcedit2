@@ -10,6 +10,17 @@ from mceditlib.geometry import Vector
 log = logging.getLogger(__name__)
 
 
+class Identity(states.SceneNodeState):
+    def enter(self):
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glPushMatrix()
+        GL.glLoadIdentity()
+
+    def exit(self):
+        GL.glMatrixMode(GL.GL_MODELVIEW)
+        GL.glPopMatrix()
+
+
 class Rotate(states.SceneNodeState):
     def __repr__(self):
         return "Rotate(%s, %s)" % (self.degrees, self.axis)
@@ -65,7 +76,7 @@ class Translate(states.SceneNodeState):
 
     def __init__(self, translateOffset=Vector(0., 0., 0.)):
         super(Translate, self).__init__()
-        self._translateOffset = translateOffset
+        self.translateOffset = translateOffset
 
     @property
     def translateOffset(self):

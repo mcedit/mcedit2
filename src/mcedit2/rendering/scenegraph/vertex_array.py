@@ -112,7 +112,9 @@ class VertexNode(Node):
     def __init__(self, vertexArrays):
         """
 
-        :type vertexArrays: list[VertexArrayBuffer]
+        Parameters
+        ----------
+        vertexArrays : Union[List[mcedit2.rendering.vertexarraybuffer.QuadVertexArrayBuffer], mcedit2.rendering.vertexarraybuffer.VertexArrayBuffer]
         """
         super(VertexNode, self).__init__()
         if not isinstance(vertexArrays, (list, tuple)):
