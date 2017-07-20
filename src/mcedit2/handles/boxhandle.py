@@ -267,6 +267,9 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
     # --- Move ---
 
     def beginMove(self, event):
+        if self.bounds is None:
+            return
+
         point, face = boxFaceUnderCursor(self.bounds, event.ray)
         self.dragStartFace = face
         self.dragStartPoint = point
@@ -275,6 +278,9 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
         self.isMoving = True
 
     def continueMove(self, event):
+        if self.bounds is None:
+            return
+
         if self.dragStartFace is None:
             return
 
@@ -283,6 +289,9 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
         self.bounds = BoundingBox(movePosition, self.bounds.size)
 
     def endMove(self, event):
+        if self.bounds is None:
+            return
+
         self.boundsChangedDone.emit(self.bounds, self.oldBounds)
         self.dragStartFace = None
         self.isMoving = False
