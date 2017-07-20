@@ -273,6 +273,13 @@ class NBTTreeItem(object):
     def setValue(self, value):
         if self.tag.tagID == nbt.ID_LONG:
             value = long(value)
+        if self.tag.tagID == nbt.ID_INT:
+            value = min(0x7FFFFFFF, max(-0x80000000, value))
+        if self.tag.tagID == nbt.ID_SHORT:
+            value = min(0x7FFF, max(-0x8000, value))
+        if self.tag.tagID == nbt.ID_BYTE:
+            value = min(0x7F, max(-0x80, value))
+
         if value != self.tag.value:
             log.info("Changing NBT tag %s because old %s != new %s", self.nbtPath, self.tag.value, value)
             self.tag.value = value
