@@ -206,6 +206,9 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
             self.changeBounds(None)
 
     def continueResize(self, event):
+        if self.oldBounds is None:
+            return
+
         # Hilite face being dragged
         newBox = self.boxFromDragResize(self.oldBounds, event.ray)
         self.faceDragNode.selectionBox = newBox
@@ -216,6 +219,9 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
         self.changeBounds(newBox)
 
     def endResize(self, event):
+        if self.oldBounds is None:
+            return
+
         log.debug("endResize")
         self.bounds = self.boxFromDragResize(self.oldBounds, event.ray)
         oldBounds = self.oldBounds
