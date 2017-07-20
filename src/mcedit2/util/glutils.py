@@ -80,19 +80,6 @@ class gl(object):
         finally:
             GL.glPopAttrib()
 
-
-    @classmethod
-    @contextmanager
-    def glEnableClientState(cls, *enables):
-        try:
-            GL.glPushClientAttrib(GL.GL_CLIENT_ALL_ATTRIB_BITS)
-            for e in enables:
-                GL.glEnableClientState(e)
-
-            yield
-        finally:
-            GL.glPopClientAttrib()
-
     listCount = 0
 
     @classmethod

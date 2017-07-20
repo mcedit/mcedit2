@@ -175,20 +175,22 @@ def drawFace(box, face, elementType=GL.GL_QUADS):
     faceVertices.shape = (12,)
 
     texVertices *= 16
-    with gl.glEnableClientState(GL.GL_TEXTURE_COORD_ARRAY):
+    GL.glEnableClientState(GL.GL_TEXTURE_COORD_ARRAY)
 
-        GL.glVertexPointer(3, GL.GL_FLOAT, 0, faceVertices)
-        GL.glTexCoordPointer(2, GL.GL_FLOAT, 0, texVertices)
+    GL.glVertexPointer(3, GL.GL_FLOAT, 0, faceVertices)
+    GL.glTexCoordPointer(2, GL.GL_FLOAT, 0, texVertices)
 
-        with gl.glPushAttrib(GL.GL_POLYGON_BIT):
-            GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
-            GL.glEnable(GL.GL_POLYGON_OFFSET_LINE)
+    with gl.glPushAttrib(GL.GL_POLYGON_BIT):
+        GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
+        GL.glEnable(GL.GL_POLYGON_OFFSET_LINE)
 
-            if elementType is GL.GL_LINE_STRIP:
-                indexes = numpy.array((0, 1, 2, 3, 0), dtype='uint32')
-                GL.glDrawElements(elementType, 5, GL.GL_UNSIGNED_INT, indexes)
-            else:
-                GL.glDrawArrays(elementType, 0, 4)
+        if elementType is GL.GL_LINE_STRIP:
+            indexes = numpy.array((0, 1, 2, 3, 0), dtype='uint32')
+            GL.glDrawElements(elementType, 5, GL.GL_UNSIGNED_INT, indexes)
+        else:
+            GL.glDrawArrays(elementType, 0, 4)
+
+    GL.glDisableClientState(GL.GL_TEXTURE_COORD_ARRAY)
 
 
 def drawConstructionCube(box, color, texture=None):
