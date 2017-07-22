@@ -365,7 +365,7 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
             if self.isResizing:
                 self.continueResize(event)
 
-        if self.hiliteFace:
+        if self.hiliteFace and not self.isMoving:
             self.updateMouseHover(event)
 
     ignoreNextRelease = False
