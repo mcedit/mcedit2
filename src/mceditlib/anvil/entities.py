@@ -11,6 +11,7 @@ from mceditlib.blocktypes.itemtypes import ItemType
 from mceditlib.geometry import Vector
 from mceditlib import faces
 from mceditlib import nbtattr
+from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
 
@@ -185,6 +186,23 @@ class _PCEntityRef(object):
         return cls(rootTag, chunk)
 
 PCEntityRef = _PCEntityRef()
+
+
+class EntityPtr(object):
+    def __init__(self, dim, box, uuid):
+        self.dim = dim
+        self.box = box
+        self.uuid = uuid
+
+    def get(self):
+        entities = self.dim.getEntities(self.box, UUID=self.uuid)
+        for entity in entities:
+            return entity
+
+    @staticmethod
+    def create(entity):
+        box = BoundingBox(entity.Position.intfloor(), (1, 1, 1)).chunkBox(entity.chunk.dimension)
+        return EntityPtr(entity.chunk.dimension, box, entity.UUID)
 
 
 class CommandStatsRef(nbtattr.NBTCompoundRef):

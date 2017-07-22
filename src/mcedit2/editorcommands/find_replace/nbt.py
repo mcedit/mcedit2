@@ -14,6 +14,7 @@ from mcedit2.util import settings
 from mcedit2.util.showprogress import showProgress
 from mcedit2.widgets.mcedockwidget import MCEDockWidget
 from mceditlib import nbt
+from mceditlib.anvil.entities import EntityPtr
 from mceditlib.selection import BoundingBox
 
 log = logging.getLogger(__name__)
@@ -58,16 +59,13 @@ class NBTResultsEntry(object):
         self.tagName = value
         self.model.dataChanged.emit(self.tagNameIndex, self.tagNameIndex)
 
-    def getEntity(self):
+    def getEntityPtr(self):
         assert self.resultType == self.EntityResult
         dim = self.dimension
         
         box = BoundingBox(self.position.intfloor(), (1, 1, 1)).chunkBox(dim)
-        entities = dim.getEntities(box, UUID=self.uuid)
-        for entity in entities:
-            return entity
-        return None
-    
+        return EntityPtr(dim, box, self.uuid)
+
     def getTargetRef(self):
         dim = self.dimension
         if self.resultType == self.TileEntityResult:
@@ -343,12 +341,11 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
     def resultsViewIndexClicked(self, modelIndex):
         row = modelIndex.row()
         result = self.resultsModel.results[row]
+
         if result.resultType == result.EntityResult:
-            entity = result.getEntity()
-            if entity is not None:
-                self.editorSession.zoomAndInspectEntity(entity)  # xxxxxxx!!!
-            else:
-                log.error("Entity not found for result %s", str(result))
+            entityPtr = result.getEntityPtr()
+            self.editorSession.zoomAndInspectEntity(entityPtr)
+
         if result.resultType == result.TileEntityResult:
             self.editorSession.zoomAndInspectBlock(result.position)
 

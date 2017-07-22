@@ -1406,9 +1406,9 @@ class EditorSession(QtCore.QObject):
         self.inspectorDockWidget.show()
         self.inspectorWidget.inspectBlock(pos)
 
-    def inspectEntity(self, entity):
+    def inspectEntity(self, entityPtr):
         self.inspectorDockWidget.show()
-        self.inspectorWidget.inspectEntity(entity)
+        self.inspectorWidget.inspectEntity(entityPtr)
 
     def inspectChunk(self, cx, cz):
         self.inspectorDockWidget.show()
@@ -1420,9 +1420,12 @@ class EditorSession(QtCore.QObject):
         self.zoomToPoint(pos)
         self.inspectBlock(pos)
 
-    def zoomAndInspectEntity(self, entity):
+    def zoomAndInspectEntity(self, entityPtr):
+        entity = entityPtr.get()
+        if entity is None:
+            return
         self.zoomToPoint(entity.Position)
-        self.inspectEntity(entity)
+        self.inspectEntity(entityPtr)
 
     def zoomToPoint(self, point):
         self.editorTab.currentView().centerOnPoint(point, 15)

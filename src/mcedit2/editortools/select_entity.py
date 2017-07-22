@@ -10,7 +10,7 @@ from PySide.QtCore import Qt
 from mcedit2.editortools import EditorTool
 from mcedit2.ui.editortools.select_entity import Ui_selectEntityWidget
 from mcedit2.util.bresenham import bresenham
-
+from mceditlib.anvil.entities import EntityPtr
 
 log = logging.getLogger(__name__)
 
@@ -35,12 +35,11 @@ class SelectEntityToolWidget(QtGui.QWidget, Ui_selectEntityWidget):
         super(SelectEntityToolWidget, self).__init__(*args, **kwargs)
         self.setupUi(self)
 
-
 class SelectEntityTool(EditorTool):
     name = "Inspect Entity"
     iconName = "edit_entity"
     selectionRay = None
-    currentEntity = None
+
     def __init__(self, editorSession, *args, **kwargs):
         """
         :type editorSession: EditorSession
@@ -51,7 +50,7 @@ class SelectEntityTool(EditorTool):
         self.toolWidget.tableWidget.cellClicked.connect(self.cellWasClicked)
         self.toolWidget.tableWidget.setColumnCount(2)
         self.toolWidget.tableWidget.setHorizontalHeaderLabels(["ID", "Position"])
-        self.selectedEntities = []
+        self.selectedEntityPtrs = []
 
     def mousePress(self, event):
         command = SelectEntityCommand(self, event.ray)
@@ -61,13 +60,15 @@ class SelectEntityTool(EditorTool):
         self.selectionRay = ray
         editorSession = self.editorSession
         entities = entitiesOnRay(editorSession.currentDimension, ray)
+        entityPtrs = [EntityPtr.create(e) for e in entities]
 
         tableWidget = self.toolWidget.tableWidget
         tableWidget.clear()
-        self.selectedEntities = list(entities)
-        if len(self.selectedEntities):
-            tableWidget.setRowCount(len(self.selectedEntities))
-            for row, e in enumerate(self.selectedEntities):
+        self.selectedEntityPtrs = list(entityPtrs)
+        if len(self.selectedEntityPtrs):
+            tableWidget.setRowCount(len(self.selectedEntityPtrs))
+            for row, ePtr in enumerate(self.selectedEntityPtrs):
+                e = ePtr.get()
                 pos = e.Position
                 flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled
                 idItem = QtGui.QTableWidgetItem(e.id)
@@ -81,9 +82,8 @@ class SelectEntityTool(EditorTool):
             self.cellWasClicked(0, 0)
 
     def cellWasClicked(self, row, column):
-        if len(self.selectedEntities):
-            self.currentEntity = self.selectedEntities[row]
-            self.editorSession.inspectEntity(self.currentEntity)
+        if len(self.selectedEntityPtrs):
+            self.editorSession.inspectEntity(self.selectedEntityPtrs[row])
         else:
             self.editorSession.inspectEntity(None)
 
