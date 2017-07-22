@@ -93,7 +93,7 @@ def entitiesOnRay(dimension, ray, rayWidth=0.75, maxDistance = 1000):
             return self.positions
 
         def __contains__(self, position):
-            evec = (position + (0.5, 0.5, 0.5)) - pos
+            evec = (position + (0.0, 0.5, 0.0)) - pos
             dist = ray_dir.cross(evec).length()
             return dist < rayWidth
 
