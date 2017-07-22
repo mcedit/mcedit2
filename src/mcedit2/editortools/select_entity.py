@@ -37,14 +37,22 @@ class SelectEntityTool(EditorTool):
         self.toolWidget.tableWidget.setHorizontalHeaderLabels(["ID", "Position"])
         self.selectedEntityPtrs = []
 
+        self.editorSession.revisionChanged.connect(self.revisionDidChange)
+
+    def revisionDidChange(self):
+        self.setSelectionRay(self.selectionRay)
+
     def mousePress(self, event):
         self.setSelectionRay(event.ray)
 
     def setSelectionRay(self, ray):
         self.selectionRay = ray
         editorSession = self.editorSession
-        entities = entitiesOnRay(editorSession.currentDimension, ray)
-        entityPtrs = [EntityPtr.create(e) for e in entities]
+        if ray is not None:
+            entities = entitiesOnRay(editorSession.currentDimension, ray)
+            entityPtrs = [EntityPtr.create(e) for e in entities]
+        else:
+            entityPtrs = []
 
         tableWidget = self.toolWidget.tableWidget
         tableWidget.clear()
