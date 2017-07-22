@@ -334,7 +334,18 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
         parent = self.parent(index)
         parentItem = self.getItem(parent) if parent else None
 
-        if self.editable and (index.column() == 1 or (index.column() == 0 and self.allowNameChanges and parentItem and parentItem.isCompound)):
+        if (self.editable
+            and (
+                    (index.column() == 1
+                     and self.tagID(index) not in (nbt.ID_BYTE_ARRAY,
+                                                   nbt.ID_INT_ARRAY,
+                                                   nbt.ID_SHORT_ARRAY,
+                                                   nbt.ID_LIST,
+                                                   nbt.ID_COMPOUND))
+                 or (index.column() == 0
+                     and self.allowNameChanges
+                     and parentItem
+                     and parentItem.isCompound))):
             flags |= QtCore.Qt.ItemIsEditable
         return flags
 
