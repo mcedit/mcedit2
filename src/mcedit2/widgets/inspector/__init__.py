@@ -265,8 +265,7 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
         if self.tileEntity is not None:
             with self.editorSession.beginSimpleCommand("Remove TileEntity"):
                 self.editorSession.currentDimension.removeTileEntity(self.tileEntity)
-
-        self.updateTileEntity()
+                self.tileEntity = None
 
     def inspectEntity(self, entityPtr):
         self.tileEntity = None
@@ -305,12 +304,9 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
         if self.entity is None:
             return
 
-        command = SimpleRevisionCommand(self.editorSession, "Remove Entity")
-        with command.begin():
+        with self.editorSession.beginSimpleCommand(self.tr("Remove Entity")):
             self.entity.chunk.Entities.remove(self.entity)
-
-        self.entity = None
-        self.hide()
+            self.entity = None
 
     def inspectChunk(self, cx, cz):
         self.clearVisuals()
