@@ -15,21 +15,6 @@ from mceditlib.anvil.entities import EntityPtr
 log = logging.getLogger(__name__)
 
 
-class SelectEntityCommand(QtGui.QUndoCommand):
-    def __init__(self, tool, ray, *args, **kwargs):
-        QtGui.QUndoCommand.__init__(self, *args, **kwargs)
-        self.setText("Inspect Entity")
-        self.ray = ray
-        self.tool = tool
-
-    def undo(self):
-        self.tool.setSelectionRay(self.ray)
-
-    def redo(self):
-        self.previousRay = self.tool.selectionRay
-        self.tool.setSelectionRay(self.ray)
-
-
 class SelectEntityToolWidget(QtGui.QWidget, Ui_selectEntityWidget):
     def __init__(self, *args, **kwargs):
         super(SelectEntityToolWidget, self).__init__(*args, **kwargs)
@@ -53,8 +38,7 @@ class SelectEntityTool(EditorTool):
         self.selectedEntityPtrs = []
 
     def mousePress(self, event):
-        command = SelectEntityCommand(self, event.ray)
-        self.editorSession.pushCommand(command)
+        self.setSelectionRay(event.ray)
 
     def setSelectionRay(self, ray):
         self.selectionRay = ray
