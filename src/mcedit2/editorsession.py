@@ -3,6 +3,7 @@ import logging
 import os
 from contextlib import contextmanager
 
+import numpy
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
 from mcedit2.rendering.blockmodels import BlockModels
@@ -1427,8 +1428,20 @@ class EditorSession(QtCore.QObject):
         self.zoomToPoint(entity.Position)
         self.inspectEntity(entityPtr)
 
-    def zoomToPoint(self, point):
-        self.editorTab.currentView().centerOnPoint(point, 15)
+    def zoomAndInspectChunk(self, pos):
+        cx, cz = pos
+        try:
+            chunk = self.currentDimension.getChunk(cx, cz)
+            y = numpy.mean(chunk.HeightMap)
+        except ChunkNotPresent:
+            y = 64
+
+        point = cx * 16 + 8, y, cz * 16 + 8
+        self.zoomToPoint(point)
+        self.inspectChunk(cx, cz)
+
+    def zoomToPoint(self, point, distance=15):
+        self.editorTab.currentView().centerOnPoint(point, distance)
 
     # --- Blocktype handling ---
 
