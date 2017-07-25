@@ -251,7 +251,7 @@ class BoxHandle(scenenode.Node, QtCore.QObject):
         newBox = self.boxFromDragSelect(event)
         self.isCreating = False
         self.dragStartPoint = None
-        self.dragResizeFace = None
+        self.dragStartFace = None
 
         self.bounds = newBox
         self.boundsChangedDone.emit(newBox, None)
