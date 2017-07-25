@@ -110,6 +110,9 @@ class NBTEditorWidget(QtGui.QWidget):
 
         self.treeView.setItemDelegate(NBTEditorItemDelegate())
 
+    def refresh(self):
+        self.model.dataChanged.emit(QtCore.QModelIndex(), QtCore.QModelIndex())
+
     def setRootTagRef(self, rootTagRef, keepExpanded=False):
         if rootTagRef is self.rootTagRef:
             return

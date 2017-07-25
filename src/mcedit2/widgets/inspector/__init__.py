@@ -118,6 +118,7 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
 
         elif self.chunkPos is not None:
             self.inspectChunk(*self.chunkPos)
+            self.chunkNBTEditor.refresh()
 
         else:
             self.inspectNothing()
@@ -194,14 +195,18 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
         self.updateTileEntity()
 
     def updateTileEntity(self):
-        pos = self.blockPos
-
-        self.tileEntity = self.editorSession.currentDimension.getTileEntity(pos)
-        log.info("Inspecting TileEntity %s at %s", self.tileEntity, pos)
-
         if self.blockEditorWidget:
             self.blockTabWidget.removeTab(0)
             self.blockEditorWidget = None
+
+        pos = self.blockPos
+
+        if pos is None:
+            self.blockNBTEditor.setRootTagRef(None)
+            return
+
+        self.tileEntity = self.editorSession.currentDimension.getTileEntity(pos)
+        log.info("Inspecting TileEntity %s at %s", self.tileEntity, pos)
 
         if self.tileEntity is not None:
             editorClass = tileEntityEditorClasses.get(self.tileEntity.id)
@@ -275,8 +280,10 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
         self.clearVisuals()
 
         self.entityPtr = entityPtr
-
-        self.entity = entity = entityPtr.get()
+        if self.entityPtr is not None:
+            self.entity = entity = entityPtr.get()
+        else:
+            self.entity = None
 
         if self.entity is not None:
             self.stackedWidget.setCurrentWidget(self.pageInspectEntity)
@@ -298,7 +305,9 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
             entityBox = BoundingBox((x-.5, y, z-.5), (1, 2, 1))
 
             self.selectionNode.selectionBox = entityBox
-
+        else:
+            self.selectionNode.selectionBox = None
+            self.entityNBTEditor.setRootTagRef(None)
 
     def removeEntity(self):
         if self.entity is None:
@@ -324,11 +333,13 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
     def inspectNothing(self):
         self.clearVisuals()
         self.chunkPos = None
+        self.currentChunk = None
         self.entityPtr = None
         self.tileEntity = None
         self.blockPos = None
         self.stackedWidget.setCurrentWidget(self.pageInspectNothing)
 
+        self.updateChunkNBTView()
 
     def setSelectedChunk(self, chunk):
         self.selectionNode.selectionBox = chunk.bounds
