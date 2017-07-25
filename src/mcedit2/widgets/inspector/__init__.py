@@ -123,13 +123,11 @@ class InspectorWidget(QtGui.QWidget, Ui_inspectorWidget):
         else:
             self.inspectNothing()
 
-
-
     def _changed(self, value, idx):
         if self.blockPos is None:
             return
 
-        if self.blockPos[0] == value:
+        if self.blockPos[idx] == value:
             return
 
         pos = list(self.blockPos)
