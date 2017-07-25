@@ -878,6 +878,9 @@ class EditorSession(QtCore.QObject):
         outputDialog.exec_()
 
     def deleteSelection(self):
+        if self.currentSelection is None:
+            return
+
         command = SimpleRevisionCommand(self, "Delete")
         with command.begin():
             fillTask = self.currentDimension.fillBlocksIter(self.currentSelection, "air")
@@ -887,6 +890,9 @@ class EditorSession(QtCore.QObject):
         self.pushCommand(command)
 
     def deleteBlocks(self):
+        if self.currentSelection is None:
+            return
+
         command = SimpleRevisionCommand(self, "Delete Blocks")
         with command.begin():
             fillTask = self.currentDimension.fillBlocksIter(self.currentSelection, "air")
@@ -894,6 +900,9 @@ class EditorSession(QtCore.QObject):
         self.pushCommand(command)
 
     def deleteEntities(self):
+        if self.currentSelection is None:
+            return
+
         command = SimpleRevisionCommand(self, "Delete Entities")
         with command.begin():
             entitiesTask = RemoveEntitiesOperation(self.currentDimension, self.currentSelection, removeItems=False)
@@ -901,6 +910,9 @@ class EditorSession(QtCore.QObject):
         self.pushCommand(command)
 
     def deleteEntitiesAndItems(self):
+        if self.currentSelection is None:
+            return
+        
         command = SimpleRevisionCommand(self, "Delete Entities And Items")
         with command.begin():
             entitiesTask = RemoveEntitiesOperation(self.currentDimension, self.currentSelection)
