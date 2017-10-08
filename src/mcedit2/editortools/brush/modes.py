@@ -202,6 +202,8 @@ class Biome(BrushMode):
 
                 touched = True
                 sectionMask = selection.section_mask(cx, cy, cz)
+                if sectionMask is None:
+                    continue
 
                 # collapse by column
                 sectionMask = sectionMask.any(0)
