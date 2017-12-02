@@ -15,7 +15,7 @@ from mcedit2 import plugins
 from mcedit2.appsettings import RecentFilesSetting, EnableLightingSetting, DevModeSetting
 from mcedit2.dialogs import configure_blocks
 from mcedit2.dialogs.error_dialog import showErrorDialog
-from mcedit2.dialogs.plugins_dialog import PluginsDialog
+from mcedit2.dialogs.plugins_dialog import PluginsDialog, showPluginLoadError, showPluginUnloadError
 from mcedit2.editorsession import EditorSession
 from mcedit2.library import LibraryWidget
 from mcedit2.rendering.chunkloader import ChunkLoaderInfo
@@ -402,7 +402,7 @@ class MCEditApp(QtGui.QApplication):
         for pluginRef in plugins.getAllPlugins():
             if pluginRef.enabled:
                 if not pluginRef.load():
-                    showErrorDialog("%s while loading plugin \"%s\"" % (pluginRef.loadError[0].__name__, pluginRef.displayName), pluginRef.loadError, False)
+                    showPluginLoadError(pluginRef)
 
         log.info("Opening worlds from command line.")
 
@@ -1064,8 +1064,8 @@ class MCEditApp(QtGui.QApplication):
             if pluginRef.checkTimestamps():
                 log.info("Plugin %s changed. Reloading plugin module...", pluginRef.displayName)
                 if not pluginRef.unload():
-                    showErrorDialog("%s while unloading plugin \"%s\"" % (pluginRef.unloadError[0].__name__, pluginRef.displayName), pluginRef.unloadError, False)
+                    showPluginUnloadError(pluginRef)
                 elif not pluginRef.load():
-                    showErrorDialog("%s while loading plugin \"%s\"" % (pluginRef.loadError[0].__name__, pluginRef.displayName), pluginRef.loadError, False)
+                    showPluginLoadError(pluginRef)
                 else:
                     log.info("Plugin %s reloaded.", pluginRef.displayName)

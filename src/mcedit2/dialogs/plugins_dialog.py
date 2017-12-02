@@ -3,8 +3,12 @@
 """
 from __future__ import absolute_import, division, print_function
 import logging
+import os
+
 from PySide import QtGui, QtCore
 from PySide.QtCore import Qt
+from PySide.QtGui import QMessageBox
+
 from mcedit2 import plugins
 from mcedit2.dialogs.error_dialog import showErrorDialog
 from mcedit2.ui.dialogs.plugins import Ui_pluginsDialog
@@ -79,11 +83,11 @@ class PluginsTableModel(QtCore.QAbstractTableModel):
 
         if value:
             if not pluginRef.load():
-                showErrorDialog("%s while loading plugin \"%s\"" % (pluginRef.loadError[0].__name__, pluginRef.displayName), pluginRef.loadError, False)
+                showPluginLoadError(pluginRef)
 
         else:
             if not pluginRef.unload():
-                showErrorDialog("%s while unloading plugin \"%s\"" % (pluginRef.unloadError[0].__name__, pluginRef.displayName), pluginRef.unloadError, False)
+                showPluginUnloadError(pluginRef)
 
         self.dataChanged.emit(index, index)
         return True
@@ -95,6 +99,26 @@ class PluginsTableModel(QtCore.QAbstractTableModel):
         else:
             return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
+def showPluginUnloadError(pluginRef):
+    return showPluginLoadError(pluginRef, True)
+
+def showPluginLoadError(pluginRef, unloading=False):
+    doing = "loading"
+    loadError = pluginRef.loadError
+    if unloading:
+        doing = "unloading"
+        loadError = pluginRef.unloadError
+
+    if loadError[0] == ImportError:
+        if 'pymclevel' in loadError[1].message:
+            QMessageBox.warning(None, ("MCEdit 1.0 Filters not supported"),
+                                ("The file `{filename}` is an MCEdit 1.0 filter, which cannot be used in this version of MCEdit.\n\nRemove it from your plugins folder to avoid this error.").format(
+                                    filename=os.path.basename(pluginRef.filename)
+                                ))
+            return
+
+    showErrorDialog("%s while %s plugin \"%s\"" % (loadError[0].__name__, doing, pluginRef.displayName),
+                    loadError, fatal=False, report=False)
 
 class PluginsDialog(QtGui.QDialog, Ui_pluginsDialog):
     def __init__(self, *args, **kwargs):
