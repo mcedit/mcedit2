@@ -760,6 +760,13 @@ class MCEditApp(QtGui.QApplication):
         return getattr(tab, 'editorSession', None)
 
     def loadFile(self, filename, readonly=False):
+        filename = os.path.normpath(filename)
+
+        for s in self.sessions:
+            if s.filename == filename:
+                self.tabWidget.setCurrentWidget(s.editorTab)
+                return
+
         self.hideWorldList()
         fileLoadingDialog = MCEProgressDialog(self.tr("Loading world..."),
                                               None,
