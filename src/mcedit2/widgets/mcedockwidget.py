@@ -9,6 +9,8 @@ log = logging.getLogger(__name__)
 
 
 class MCEDockWidget(QtGui.QDockWidget):
+    wasVisible = None
+
     def __init__(self, *a, **kw):
         super(MCEDockWidget, self).__init__(*a, **kw)
         self._unfocusedOpacity = 1.0

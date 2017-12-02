@@ -651,11 +651,14 @@ class MCEditApp(QtGui.QApplication):
             for pos, dw in session.dockWidgets:
                 self.mainWindow.addDockWidget(pos, dw)
                 self.sessionDockWidgets.append(dw)
+                if dw.wasVisible is not None:
+                    dw.setVisible(dw.wasVisible)
 
             session.focusWorldView()
 
     def removeSessionDockWidgets(self):
         for dw in self.sessionDockWidgets:
+            dw.wasVisible = dw.isVisible()
             self.mainWindow.removeDockWidget(dw)
             dw.setParent(None)
 
@@ -720,7 +723,6 @@ class MCEditApp(QtGui.QApplication):
                 self.tabWidget.removeTab(index)
                 # IMPORTANT: Even after removeTab is called, the tab widget must be unparented
                 tab.setParent(None)
-                self.removeSessionDockWidgets()
                 self.undoGroup.removeStack(session.undoStack)
                 self.sessions.remove(session)
                 session.dealloc()
