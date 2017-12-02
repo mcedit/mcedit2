@@ -73,7 +73,11 @@ class SpinSlider(QtGui.QWidget):
         return value * self.sliderFactor
         
     def fromSlider(self, value):
-        return value / self.sliderFactor
+        result = value / self.sliderFactor
+        if self.isDouble:
+            return result
+
+        return int(result)
         
     def spinBoxChanged(self, value):
         if self._changing:
