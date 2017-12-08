@@ -26,7 +26,7 @@ settings = Settings()
 ReportErrorSetting = settings.getOption("errors/reporting_enabled", bool, True)
 
 
-def showErrorDialog(text, tb=None, fatal=True):
+def showErrorDialog(text, tb=None, fatal=True, report=True):
     global _errorShown
     if tb is None:
         tb = sys.exc_info()
@@ -35,7 +35,7 @@ def showErrorDialog(text, tb=None, fatal=True):
     if grabber:
         grabber.releaseMouse()
         
-    dialog = ErrorDialog(text, tb, fatal)
+    dialog = ErrorDialog(text, tb, fatal, report)
     dialog.exec_()
     _errorShown = False
 
@@ -47,11 +47,12 @@ class ErrorDialog(QtGui.QDialog, Ui_errorDialog):
     Used to report compile and run errors for plugin modules and classes, and
     to report errors in MCEdit itself during signal or event handlers.
     """
-    def __init__(self, text, exc_info, fatal):
+    def __init__(self, text, exc_info, fatal, report):
         super(ErrorDialog, self).__init__()
         self.setupUi(self)
         self.setModal(True)
         self.exc_info = exc_info
+        self.shouldReport = report
 
         exc_type, exc_value, exc_tb = exc_info
 
@@ -90,8 +91,10 @@ class ErrorDialog(QtGui.QDialog, Ui_errorDialog):
         self.debugButton.setEnabled(isSrcCheckout())
         self.debugButton.clicked.connect(self.debugPdb)
 
+        self.reportingLabelStack.setVisible(self.shouldReport)
+        self.reportErrorCheckbox.setVisible(self.shouldReport)
         self.reportErrorCheckbox.toggled.connect(self.reportErrorToggled)
-        self.reportErrorCheckbox.setChecked(ReportErrorSetting.value())
+        self.reportErrorCheckbox.setChecked(ReportErrorSetting.value() and self.shouldReport)
 
         try:
             import Pastebin
@@ -152,7 +155,7 @@ class ErrorDialog(QtGui.QDialog, Ui_errorDialog):
         self.accept()
 
     def reportToSentry(self):
-        if not self.reportErrorCheckbox.isChecked():
+        if not self.reportErrorCheckbox.isChecked() or not self.shouldReport:
             return
 
         client = get_sentry_client()
