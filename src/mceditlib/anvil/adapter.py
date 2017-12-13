@@ -3,6 +3,7 @@
 """
 from __future__ import absolute_import, division, print_function
 import logging
+import sys
 import os
 import random
 import re
@@ -900,8 +901,8 @@ class AnvilWorldAdapter(object):
             chunkData = AnvilChunkData(self, cx, cz, dimName, chunkTag)
         except ChunkNotPresent:
             raise
-        except (KeyError, IndexError, zlib.error) as e:  # Missing nbt keys, lists too short, decompression failure
-            raise AnvilChunkFormatError("Error loading chunk: %r" % e)
+        except (KeyError, IndexError, zlib.error, UnicodeError) as e:  # Missing nbt keys, lists too short, decompression failure, unknown NBT tags
+            raise AnvilChunkFormatError("Error loading chunk: %r" % e, None, sys.exc_info[2])
 
         return chunkData
 
