@@ -93,7 +93,7 @@ cdef char _ID_STRING = 8
 cdef char _ID_LIST = 9
 cdef char _ID_COMPOUND = 10
 cdef char _ID_INT_ARRAY = 11
-cdef char _ID_SHORT_ARRAY = 12
+cdef char _ID_LONG_ARRAY = 12
 cdef char _ID_MAX = 13
 
 # Make IDs python visible
@@ -110,7 +110,7 @@ ID_STRING = _ID_STRING
 ID_LIST = _ID_LIST
 ID_COMPOUND = _ID_COMPOUND
 ID_INT_ARRAY = _ID_INT_ARRAY
-ID_SHORT_ARRAY = _ID_SHORT_ARRAY
+ID_LONG_ARRAY = _ID_LONG_ARRAY
 ID_MAX = _ID_MAX
 
 class NBTFormatError (LevelFormatError):
@@ -307,9 +307,9 @@ cdef class TAG_Int_Array(TAG_Value):
     def copy(self):
         return TAG_Int_Array(numpy.array(self.value), self.name)
 
-cdef class TAG_Short_Array(TAG_Value):
+cdef class TAG_Long_Array(TAG_Value):
     cdef public object value
-    dtype = numpy.dtype('>u2')
+    dtype = numpy.dtype('>u8')
 
     def __init__(self, value=None, name=""):
         if value is None:
@@ -317,10 +317,10 @@ cdef class TAG_Short_Array(TAG_Value):
 
         self.value = value
         self.name = name
-        self.tagID = _ID_SHORT_ARRAY
+        self.tagID = _ID_LONG_ARRAY
 
     cdef void save_value(self, buf):
-        save_array(self.value, buf, 2)
+        save_array(self.value, buf, 8)
 
     def __repr__(self):
         return "<%s name=%r length=%d>" % (self.__class__.__name__, self.name, len(self.value))
@@ -333,7 +333,7 @@ cdef class TAG_Short_Array(TAG_Value):
         return NotImplemented
 
     def copy(self):
-        return TAG_Short_Array(numpy.array(self.value), self.name)
+        return TAG_Long_Array(numpy.array(self.value), self.name)
 
 cdef class TAG_String(TAG_Value):
     cdef unicode _value
@@ -558,6 +558,7 @@ def load(filename="", buf=None):
     Load an NBT tree from a file and return the root TAG_Compound. The root tag is the only tag that can have a name
     itself without being inside a TAG_Compound.
     If filename is given, loads NBT data from that file. If buf is given, loads NBT data from the bytes or filehandle.
+
     :param filename: Filename to load data from
     :type filename: basestring
     :param buf: File-like object to load data from
@@ -606,7 +607,7 @@ IF UNICODE_CACHE:
 
 cdef char * read(load_ctx self, size_t s) except NULL:
     if s > self.size - self.offset:
-        raise NBTFormatError("NBT Stream too short. Asked for %d, only had %d" % (s, (self.size - self.offset)))
+        raise NBTFormatError("NBT Stream too short. Asked for %d, only had %d (offset 0x%x)" % (s, (self.size - self.offset), self.offset))
 
     cdef char * ret = self.buffer + self.offset
     self.offset += s
@@ -754,14 +755,14 @@ cdef TAG_Byte_Array load_byte_array(load_ctx ctx):
     cdef char *arr = read(ctx, byte_length)
     return TAG_Byte_Array(numpy.fromstring(arr[:byte_length], dtype=TAG_Byte_Array.dtype, count=length))
 
-cdef TAG_Short_Array load_short_array(load_ctx ctx):
+cdef TAG_Long_Array load_long_array(load_ctx ctx):
     cdef int * ptr = <int *> read(ctx, 4)
     cdef int length = ptr[0]
     swab(&length, 4)
 
-    byte_length = length * 2
+    byte_length = length * 8
     cdef char *arr = read(ctx, byte_length)
-    return TAG_Short_Array(numpy.fromstring(arr[:byte_length], dtype=TAG_Short_Array.dtype, count=length))
+    return TAG_Long_Array(numpy.fromstring(arr[:byte_length], dtype=TAG_Long_Array.dtype, count=length))
 
 cdef TAG_Int_Array load_int_array(load_ctx ctx):
     cdef int * ptr = <int *> read(ctx, 4)
@@ -809,8 +810,8 @@ cdef load_tag(char tagID, load_ctx ctx):
     if tagID == _ID_INT_ARRAY:
         return load_int_array(ctx)
 
-    if tagID == _ID_SHORT_ARRAY:
-        return load_short_array(ctx)
+    if tagID == _ID_LONG_ARRAY:
+        return load_long_array(ctx)
 
 
 def hexdump(src, length=8):
@@ -927,12 +928,12 @@ cdef void save_tag_value(TAG_Value tag, object buf):
     if tagID == _ID_INT_ARRAY:
         (<TAG_Int_Array> tag).save_value(buf)
 
-    if tagID == _ID_SHORT_ARRAY:
-        (<TAG_Short_Array> tag).save_value(buf)
+    if tagID == _ID_LONG_ARRAY:
+        (<TAG_Long_Array> tag).save_value(buf)
 
 
 tag_classes = {TAG().tagID: TAG for TAG in (TAG_Byte, TAG_Short, TAG_Int, TAG_Long, TAG_Float, TAG_Double, TAG_String,
-                                            TAG_Byte_Array, TAG_List, TAG_Compound, TAG_Int_Array, TAG_Short_Array)}
+                                            TAG_Byte_Array, TAG_List, TAG_Compound, TAG_Int_Array, TAG_Long_Array)}
 
 #
 # --- Pretty print NBT trees ---
