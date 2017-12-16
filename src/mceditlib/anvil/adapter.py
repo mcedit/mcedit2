@@ -9,6 +9,7 @@ import random
 import re
 import struct
 import traceback
+import collections
 import weakref
 
 import numpy
@@ -1107,6 +1108,14 @@ class AnvilWorldAdapter(object):
     def deleteMap(self, mapID):
         self.selectedRevision.deleteFile(self._getMapPath(mapID))
 
+    # --- Metadata ---
+
+    def getWorldVersionInfo(self):
+        versionTag = self.metadata.Version
+        return VersionInfo('java', versionTag.Id, versionTag.Name, versionTag.Snapshot)
+
+
+VersionInfo = collections.namedtuple('VersionInfo', 'format id name snapshot')
 
 class AnvilMapData(NBTCompoundRef):
     def __init__(self, mapTag, mapID, adapter):

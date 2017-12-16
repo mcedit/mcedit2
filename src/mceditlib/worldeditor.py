@@ -587,6 +587,23 @@ class WorldEditor(object):
         """
         return self.adapter.metadata
 
+    def getWorldVersionInfo(self):
+        """ Returns a named tuple indicating the latest version of Minecraft that has played this world.
+        The named tuple will have the following fields:
+
+        format: The string "java" for Java Edition worlds.
+        id: The Minecraft build number. This is the definitive version number for this world file. Example versions:
+            184: version 1.9.4
+            922: version 1.11.2
+            1457: snapshot 17w50a
+        name: A human-readable version string. Used only to display the version number in world lists.
+        snapshot: Boolean. Whether this version is a prerelease.
+
+        Note that this only indicates the latest version of the game that has played the world. It is possible that
+        some chunks have not been touched by this version and have data structures from an older version.
+        """
+        return self.adapter.getWorldVersionInfo()
+
     # --- Maps ---
 
     def listMaps(self):
