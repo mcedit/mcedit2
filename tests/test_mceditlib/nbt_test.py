@@ -81,7 +81,7 @@ def created_nbt():
 
     # Save a few more tag types for completeness
 
-    level["ShortArray"] = nbt.TAG_Short_Array(numpy.zeros((16, 16), dtype='uint16'))
+    level["LongArray"] = nbt.TAG_Long_Array(numpy.zeros((16, 16), dtype='uint16'))
     level["IntArray"] = nbt.TAG_Int_Array(numpy.zeros((16, 16), dtype='uint32'))
     level["Float"] = nbt.TAG_Float(0.3)
 

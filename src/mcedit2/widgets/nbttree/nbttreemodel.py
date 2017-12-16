@@ -253,7 +253,7 @@ class NBTTreeItem(object):
         if column == 0:
             return self.tag.name or self.childNumber()
         if column == 1:
-            if self.tag.tagID in (nbt.ID_BYTE_ARRAY, nbt.ID_SHORT_ARRAY, nbt.ID_INT_ARRAY):
+            if self.tag.tagID in (nbt.ID_BYTE_ARRAY, nbt.ID_LONG_ARRAY, nbt.ID_INT_ARRAY):
                 size = self.tag.value.size
                 maxsize = min(8, size)
                 hexchars = self.tag.value.dtype.itemsize * 2
@@ -339,7 +339,7 @@ class NBTTreeModel(QtCore.QAbstractItemModel):
                     (index.column() == 1
                      and self.tagID(index) not in (nbt.ID_BYTE_ARRAY,
                                                    nbt.ID_INT_ARRAY,
-                                                   nbt.ID_SHORT_ARRAY,
+                                                   nbt.ID_LONG_ARRAY,
                                                    nbt.ID_LIST,
                                                    nbt.ID_COMPOUND))
                  or (index.column() == 0
@@ -495,7 +495,7 @@ _NBTTagTypeSortOrder = [
     'TAG_Compound',
     'TAG_List',
     'TAG_Int_Array',
-    'TAG_Short_Array',
+    'TAG_Long_Array',
     'TAG_Byte_Array',
     'TAG_String',
     'TAG_Double',
