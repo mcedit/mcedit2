@@ -345,6 +345,11 @@ class AnvilChunkData(object):
 
 # --- World info ---
 
+class WorldVersionRef(nbtattr.NBTCompoundRef):
+    Id = nbtattr.NBTAttr('Id', 'i')
+    Name = nbtattr.NBTAttr('Name', 's')
+    Snapshot = nbtattr.NBTAttr('Snapshot', 'b')
+
 
 class AnvilWorldMetadata(object):
 
@@ -376,6 +381,8 @@ class AnvilWorldMetadata(object):
     version = nbtattr.NBTAttr('version', nbt.TAG_Int, VERSION_ANVIL)
 
     Spawn = nbtattr.KeyedVectorAttr('SpawnX', 'SpawnY', 'SpawnZ', nbt.TAG_Int)
+
+    Version = nbtattr.NBTCompoundAttr('Version', WorldVersionRef)
 
     def is1_8World(self):
         # Minecraft 1.8 adds a dozen tags to level.dat/Data. These tags are removed if
@@ -503,16 +510,25 @@ class AnvilWorldAdapter(object):
 
             version = "Unknown Version"
             try:
-                metadata = AnvilWorldMetadata(levelTag)
-                stackVersion = VERSION_1_8 if metadata.is1_8World() else VERSION_1_7
+                try:
+                    metadata = AnvilWorldMetadata(levelTag)
+                    versionTag = metadata.Version
+                    if versionTag.Snapshot:
+                        version = "Minecraft Snapshot " + versionTag.Name
+                    else:
+                        version = "Minecraft " + versionTag.Name
 
-                if stackVersion == VERSION_1_7:
-                    version = "Minecraft 1.7"
-                    if "FML" in metadata.metadataTag:
-                        version = "MinecraftForge 1.7"
+                except Exception as e:
 
-                if stackVersion == VERSION_1_8:
-                    version = "Minecraft 1.8+"
+                    stackVersion = VERSION_1_8 if metadata.is1_8World() else VERSION_1_7
+
+                    if stackVersion == VERSION_1_7:
+                        version = "Minecraft 1.7"
+                        if "FML" in metadata.metadataTag:
+                            version = "MinecraftForge 1.7"
+
+                    if stackVersion == VERSION_1_8:
+                        version = "Minecraft 1.8+"
 
             except Exception as e:
                 log.warn("Failed to get version info for %s: %r", filename, e, exc_info=1)
