@@ -289,7 +289,7 @@ class AnvilChunkData(object):
         :returns: The requested section, or None if it wasn't created.
         :rtype: AnvilSection
         """
-        if (cy << 4) > self.adapter.maxHeight or cy < 0:
+        if (cy << 4) >= self.adapter.maxHeight or cy < 0:
             return None
 
         section = self._sections.get(cy)
