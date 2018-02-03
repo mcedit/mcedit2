@@ -279,7 +279,7 @@ class DimensionTransform(DimensionTransformBase):
 
         rotation: float[3]
             The angles to rotate the dimension around, along each axis respectively.
-            The angles are given in radians.
+            The angles are given in degrees.
             
         scale: float[3]
             The scales to resize the dimension along each axis respectively. 1.0 is
