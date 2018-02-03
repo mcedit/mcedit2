@@ -437,14 +437,15 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
             selection = dim.bounds
 
         def _matchTag(name_or_index, tag):
+            ok = True
             if searchValues and not tag.isCompound() and not tag.isList():
-                if tag.tagID == nbt.ID_STRING and targetValue in tag.value:
-                    return True
-                elif targetValue == tag.value:
-                    return True
-            if searchNames and isinstance(name_or_index, basestring) and targetName == name_or_index:
-                return True
-            return False
+                if not (tag.tagID == nbt.ID_STRING and targetValue in tag.value):
+                    ok = False
+                elif not (targetValue == tag.value):
+                    ok = False
+            if searchNames and isinstance(name_or_index, basestring) and not (targetName == name_or_index):
+                ok = False
+            return ok
 
         def _findTag(name_or_index, tag, path):
             if _matchTag(name_or_index, tag):
