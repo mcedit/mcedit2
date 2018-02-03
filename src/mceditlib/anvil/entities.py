@@ -373,6 +373,13 @@ class PCPaintingEntityRefBase(PCEntityRefBase):
 
     }
 
+    def copyWithOffset(self, copyOffset, newEntityClass=None):
+        ref = super(PCPaintingEntityRefBase, self).copyWithOffset(copyOffset)
+
+        ref.TilePos += copyOffset
+
+        return ref
+
     def facingForMCEditFace(self, face):
         return self._mceditFacings.get(face, None)
 
@@ -486,11 +493,6 @@ class PCTileEntityRefBase(object):
         tag = self.rootTag.copy()
         entity = newEntityClass(tag)
         entity.Position = self.Position + copyOffset
-
-        if tag["id"].value in ("Painting", "ItemFrame"):
-            tag["TileX"].value += copyOffset[0]
-            tag["TileY"].value += copyOffset[1]
-            tag["TileZ"].value += copyOffset[2]
 
         return self.__class__(tag)
 
