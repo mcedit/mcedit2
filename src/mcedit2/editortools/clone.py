@@ -306,6 +306,8 @@ class CloneTool(EditorTool):
         log.info("Begin clone: %s", pendingImport)
         self._pendingClone = pendingImport
         self.pointInput.setEnabled(pendingImport is not None)
+        if pendingImport:
+            self.pointInput.point = pendingImport.basePosition
         self.updateTiling()
 
     def toolActive(self):
@@ -318,7 +320,7 @@ class CloneTool(EditorTool):
             # If the cloned area is changed between "Clone" and "Confirm", the changed
             # blocks will be cloned.
             pos = self.editorSession.currentSelection.origin
-            self.originPoint = pos
+            self.pointInput.origin = self.originPoint = pos
             pendingImport = PendingImport(self.editorSession.currentDimension, pos,
                                           self.editorSession.currentSelection,
                                           self.tr("<Cloned Object>"))
