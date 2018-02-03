@@ -153,7 +153,7 @@ class CloneTool(EditorTool):
         confirmButton.clicked.connect(self.confirmClone)
 
         self.repeatCount = 1
-        self.repeatCountInput = QtGui.QSpinBox(minimum=1, maximum=100, value=1)
+        self.repeatCountInput = QtGui.QSpinBox(minimum=1, maximum=10000, value=1)
         self.repeatCountInput.valueChanged.connect(self.setRepeatCount)
 
         self.rotateRepeatsCheckbox = QtGui.QCheckBox(self.tr("Rotate Repeats"))
