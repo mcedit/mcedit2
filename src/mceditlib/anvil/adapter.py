@@ -919,7 +919,7 @@ class AnvilWorldAdapter(object):
         except ChunkNotPresent:
             raise
         except (KeyError, IndexError, zlib.error, UnicodeError) as e:  # Missing nbt keys, lists too short, decompression failure, unknown NBT tags
-            raise AnvilChunkFormatError("Error loading chunk: %r" % e, None, sys.exc_info[2])
+            raise AnvilChunkFormatError("Error loading chunk: %r" % e, None, sys.exc_info()[2])
 
         return chunkData
 
