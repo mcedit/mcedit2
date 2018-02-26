@@ -187,7 +187,7 @@ class EditorSession(QtCore.QObject):
         except UndoFolderExists:
             msgBox = QtGui.QMessageBox()
             msgBox.setIcon(QtGui.QMessageBox.Warning)
-            msgBox.setWindowTitle(self.tr("MCEdit %(version)s") % {"version": v})
+            msgBox.setWindowTitle("MCEdit %(version)s" % {"version": v})
             msgBox.setText(self.tr("This world was not properly closed by MCEdit."))
             msgBox.setInformativeText(self.tr(
                 "MCEdit may have crashed. An undo history was found for this world. You may try "
