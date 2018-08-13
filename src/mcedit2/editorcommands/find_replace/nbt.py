@@ -443,8 +443,13 @@ class FindReplaceNBT(QtGui.QWidget, Ui_findNBTWidget):
                     ok = False
                 elif not (targetValue == tag.value):
                     ok = False
-            if searchNames and isinstance(name_or_index, basestring) and not (targetName == name_or_index):
-                ok = False
+            if searchNames:
+                if not isinstance(name_or_index, basestring):
+                    ok = False
+                elif (targetName == name_or_index):
+                    ok = True
+                else:
+                    ok = False
             return ok
 
         def _findTag(name_or_index, tag, path):
