@@ -26,7 +26,7 @@ install:
   # Install dependencies for tests.
   - pip install -r tests/requirements.txt | cat
 
-  - pip install git+http://github.com/pyinstaller/pyinstaller
+  - pip install git+http://github.com/pyinstaller/pyinstaller@5f91905
 
   # Install qt4 from third-party source
   # https://github.com/cartr/homebrew-qt4
