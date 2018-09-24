@@ -88,8 +88,8 @@ As a bonus, you can use the `-debug` flag to enable the Debug menu and a few ext
     cd (Your mcedit2 location)
     virtualenv ENV
     . ENV/bin/activate
-    pip install -r requirements.txt
-    python setup.py develop
+    ENV/bin/pip install -r requirements.txt
+    ENV/bin/python setup.py develop
     mcedit2
 
 If your distro packages python3 as the default version of python instead of python2, you will probably want to set your virtualenv to use python2, i.e.
