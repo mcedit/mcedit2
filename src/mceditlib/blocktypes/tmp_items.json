@@ -1065,7 +1065,7 @@
         "displayName": "Spawn Egg",
         "texture": "spawn_egg.png",
         "obtainable": true,
-        "maxdamage": 120,
+        "maxdamage": 0,
         "stacksize": 64
     },
     "experience_bottle": {
