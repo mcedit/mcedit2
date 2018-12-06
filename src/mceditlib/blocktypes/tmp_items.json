@@ -531,7 +531,10 @@
     },
     "golden_apple": {
         "id": 322,
-        "displayName": "Golden Apple",
+        "displayName": [
+            "Golden Apple",
+            "Enchanted Golden Apple"
+         ],
         "texture": "apple_golden.png",
         "obtainable": true,
         "maxdamage": 1,
