@@ -495,7 +495,6 @@
         "texture": "gold_boots.png",
         "obtainable": true,
         "maxdamage": 91,
-        "maxdamage": 0,
         "stacksize": 1
     },
     "flint": {
@@ -532,7 +531,10 @@
     },
     "golden_apple": {
         "id": 322,
-        "displayName": "Golden Apple",
+        "displayName": [
+            "Golden Apple",
+            "Enchanted Golden Apple"
+         ],
         "texture": "apple_golden.png",
         "obtainable": true,
         "maxdamage": 1,
@@ -1063,7 +1065,7 @@
         "displayName": "Spawn Egg",
         "texture": "spawn_egg.png",
         "obtainable": true,
-        "maxdamage": 120,
+        "maxdamage": 0,
         "stacksize": 64
     },
     "experience_bottle": {
@@ -1463,7 +1465,7 @@
         "stacksize": 64
     },
     "record_13": {
-        "id": 432,
+        "id": 2256,
         "displayName": "13 Disc",
         "texture": "record_13.png",
         "obtainable": true,
@@ -1471,79 +1473,79 @@
         "stacksize": 1
     },
     "record_cat": {
-        "id": 433,
-        "displayName": "cat Disc",
+        "id": 2257,
+        "displayName": "Cat Disc",
         "texture": "record_cat.png",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 1
     },
     "record_blocks": {
-        "id": 434,
-        "displayName": "blocks Disc",
+        "id": 2258,
+        "displayName": "Blocks Disc",
         "texture": "record_blocks.png",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 1
     },
     "record_chirp": {
-        "id": 435,
-        "displayName": "chirp Disc",
+        "id": 2259,
+        "displayName": "Chirp Disc",
         "texture": "record_chirp.png",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 1
     },
     "record_far": {
-        "id": 436,
-        "displayName": "far Disc",
+        "id": 2260,
+        "displayName": "Far Disc",
         "texture": "record_far.png",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 1
     },
     "record_mall": {
-        "id": 437,
-        "displayName": "mall Disc",
+        "id": 2261,
+        "displayName": "Mall Disc",
         "texture": "record_mall.png",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 1
     },
     "record_mellohi": {
-        "id": 438,
-        "displayName": "mellohi Disc",
+        "id": 2262,
+        "displayName": "Mellohi Disc",
         "texture": "record_mellohi.png",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 1
     },
     "record_stal": {
-        "id": 439,
-        "displayName": "stal Disc",
+        "id": 2263,
+        "displayName": "Stal Disc",
         "texture": "record_stal.png",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 1
     },
     "record_strad": {
-        "id": 440,
-        "displayName": "strad Disc",
+        "id": 2264,
+        "displayName": "Strad Disc",
         "texture": "record_strad.png",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 1
     },
     "record_ward": {
-        "id": 441,
-        "displayName": "ward Disc",
+        "id": 2265,
+        "displayName": "Ward Disc",
         "texture": "record_ward.png",
         "obtainable": true,
         "maxdamage": 0,
         "stacksize": 1
     },
     "record_11": {
-        "id": 442,
+        "id": 2266,
         "displayName": "11 Disc",
         "texture": "record_11.png",
         "obtainable": true,
@@ -1551,8 +1553,8 @@
         "stacksize": 1
     },
     "record_wait": {
-        "id": 443,
-        "displayName": "wait Disc",
+        "id": 2267,
+        "displayName": "Wait Disc",
         "texture": "record_wait.png",
         "obtainable": true,
         "maxdamage": 0,
