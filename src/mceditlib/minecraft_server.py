@@ -28,6 +28,7 @@ import time
 import urllib
 
 from mceditlib import worldeditor
+from mceditlib.anvil.adapter import AnvilWorldAdapter
 from mceditlib.exceptions import ChunkNotPresent
 from mceditlib.directories import appSupportDir
 from mceditlib.util import exhaust
@@ -317,11 +318,12 @@ class MCServerChunkGenerator(object):
     def tempWorldForLevel(self, level):
 
         # tempDir = tempfile.mkdtemp("mclevel_servergen")
-        tempDir = os.path.join(self.worldCacheDir, self.jarStorage.checksumForVersion(self.serverVersion), str(level.RandomSeed))
+        seed = level.getWorldMetadata().RandomSeed
+        tempDir = os.path.join(self.worldCacheDir, self.jarStorage.checksumForVersion(self.serverVersion), str(seed))
         propsFile = os.path.join(tempDir, "server.properties")
         properties = readProperties(propsFile)
 
-        tempWorld = self.tempWorldCache.get((self.serverVersion, level.RandomSeed))
+        tempWorld = self.tempWorldCache.get((self.serverVersion, seed))
 
         if tempWorld is None:
             if not os.path.exists(tempDir):
@@ -332,12 +334,14 @@ class MCServerChunkGenerator(object):
             worldName = properties.setdefault("level-name", worldName)
 
             tempWorldDir = os.path.join(tempDir, worldName)
-            tempWorld = worldeditor.WorldEditor(tempWorldDir, create=not os.path.exists(tempWorldDir), random_seed=level.RandomSeed)
+            tempWorld = worldeditor.WorldEditor(tempWorldDir, create=not os.path.exists(tempWorldDir), adapterClass=AnvilWorldAdapter)
+            tempWorld.getWorldMetadata().RandomSeed = seed
+            tempWorld.adapter.syncToDisk()  # Write updated seed to level.dat
             tempWorld.close()
 
             tempWorldRO = worldeditor.WorldEditor(tempWorldDir, readonly=True)
 
-            self.tempWorldCache[self.serverVersion, level.RandomSeed] = tempWorldRO
+            self.tempWorldCache[self.serverVersion, seed] = tempWorldRO
 
         if level.dimNo == 0:
             properties["allow-nether"] = "false"
