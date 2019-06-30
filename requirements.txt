@@ -7,3 +7,5 @@ qtconsole
 pygments
 pastebin
 raven
+numpy
+cython
