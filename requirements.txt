@@ -1,9 +1,9 @@
 -r requirements-mceditlib.txt
 pyzmq==15.0.0  # v15.4.0 fails to freeze with PyInstaller - see pyinstaller/issues/2147
-pyside>=1.2.0 ; sys.platform != 'darwin'  # install this via homebrew, not visible to pip
+pyside>=1.2.0 ; sys.platform != 'darwin'  # install this via homebrew or macports, not visible to pip
 pyopengl
 ipython
-qtconsole
+qtconsole==4.1.1  # later versions may require higher versions of pyzmq
 pygments
 pastebin
 raven
